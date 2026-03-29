@@ -314,7 +314,10 @@ namespace Automation4 {
 			dia->Margin[2] = get_int_field(L, "margin_t", "dialogue");
 			dia->Effect = get_string_field(L, "effect", "dialogue");
 			dia->Text = get_string_field(L, "text", "dialogue");
-			dia->SourceLineText = get_string_field(L, "source_line_text", "dialogue");
+
+			lua_getfield(L, -1, "source_line_text");
+			dia->SourceLineText = lua_isstring(L, -1) ? std::string(lua_tostring(L, -1)) : "";
+			lua_pop(L, 1);
 
 			std::vector<uint32_t> new_ids;
 
