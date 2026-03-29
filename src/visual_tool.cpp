@@ -262,10 +262,10 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 		// start drag
 		if (active_feature) {
 			sel_changed = false;
+			bool canChangeSelection = true;
 
 			if (!ctrl_down) {
 				auto const& selectedSet = c->selectionController->GetSelectedSet();
-				bool canChangeSelection = true;
 
 				// do not change selection if we try dragging at least one of the currently selected lines
 				for (auto sel : sel_features)
@@ -273,11 +273,11 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 						canChangeSelection = false;
 						break;
 					}
+			}
 
-				if (canChangeSelection && !sel_features.count(active_feature)) {
-					sel_changed = true;
-					SetSelection(active_feature, !ctrl_down);
-				}
+			if ((canChangeSelection || ctrl_down) && !sel_features.count(active_feature)) {
+				sel_changed = true;
+				SetSelection(active_feature, !ctrl_down);
 			}
 
 			if (active_feature->line && sel_changed)

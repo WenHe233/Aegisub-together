@@ -567,7 +567,10 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 		UpdateMaps(false);
 
 		SelectRow(vis_lookup[target], false);
+
 		context->selectionController->SetActiveLine(target);
+		context->audioBox->ScrollToActiveLine();
+		context->videoController->JumpToTime(dlg->Start);
 
 		return;
 	}

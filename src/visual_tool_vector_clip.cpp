@@ -588,6 +588,9 @@ struct FeatureKey {
 };
 
 void VisualToolVectorClip::DoRefresh() {
+	FILE *log = fopen("app.log", "a");
+	fprintf(log, "DoRefresh() \n");
+	fclose(log);
 	if (!active_line) return;
 
 	int scale;
@@ -595,11 +598,11 @@ void VisualToolVectorClip::DoRefresh() {
 	spline.SetScale(scale);
 	spline.DecodeFromAss(vect);
 
-	MakeFeatures();
-
 	std::set<FeatureKey> restore_sel_features;
 	for (auto* f : sel_features)
 		restore_sel_features.insert({ f->idx, f->point });
+
+	MakeFeatures();
 
 	for (auto& f : features) {
 		FeatureKey key { f.idx, f.point };

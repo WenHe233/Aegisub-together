@@ -18,6 +18,16 @@ static std::string StripOverrides(const std::string& s) {
     return out;
 }
 
+static std::string MakeGroupKey(const AssDialogue* l) {
+    return StripOverrides(l->Text.get()) + "|" +
+           std::to_string(int(l->Start)) + "|" +
+           std::to_string(int(l->End));
+}
+
+static bool HasSameTiming(const AssDialogue* a, const AssDialogue* b) {
+    return a->Start == b->Start && a->End == b->End;
+}
+
 static bool IsMaskLine(const AssDialogue* d) {
     const std::string& raw = d->Text.get();
 
@@ -38,18 +48,22 @@ static bool IsSameGroup(const std::vector<AssDialogue*>& old_lines, const std::v
     if (old_lines.empty() || new_lines.empty())
         return false;
 
+    if (!HasSameTiming(old_lines.front(), new_lines.front()))
+        return false;
+
+    if (!HasSameTiming(old_lines.back(), new_lines.back()))
+        return false;
+
     std::unordered_set<std::string> old_set;
 
     for (auto* l : old_lines)
-        old_set.insert(StripOverrides(l->Text.get()));
+        old_set.insert(MakeGroupKey(l));
 
     int matches = 0;
 
-    for (auto* l : new_lines) {
-        std::string t = StripOverrides(l->Text.get());
-        if (old_set.count(t))
+    for (auto* l : new_lines)
+        if (old_set.count(MakeGroupKey(l)))
             matches++;
-    }
 
     int min_size = std::min((int)old_lines.size(), (int)new_lines.size());
 
@@ -84,7 +98,9 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines) {
         int start = i;
         int j = i;
 
-        while (j < n && IsMaskLine(lines[j]))
+        AssDialogue* base = lines[start];
+
+        while (j < n && HasSameTiming(base, lines[j]) && IsMaskLine(lines[j]))
             j++;
 
         int count = j - start;
@@ -111,7 +127,7 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines) {
             i = j;
         }
         else {
-            i = start + 1;
+            i = start + j;
         }
     }
 }
