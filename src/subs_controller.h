@@ -20,6 +20,7 @@
 #include <boost/container/list.hpp>
 #include <wx/timer.h>
 
+class AssFile;
 class SelectionController;
 namespace agi {
 	namespace dispatch {
@@ -119,8 +120,12 @@ public:
 	/// expensive to always keep up to date
 	agi::signal::Signal<> UpdateProperties;
 
+	/// Before save
+	agi::signal::Signal<AssFile&> BeforeSave;
+
 	DEFINE_SIGNAL_ADDERS(FileOpen, AddFileOpenListener)
 	DEFINE_SIGNAL_ADDERS(FileSave, AddFileSaveListener)
+	DEFINE_SIGNAL_ADDERS(BeforeSave, AddBeforeSaveListener)
 
 	/// @brief Undo the last set of changes to the file
 	void Undo();

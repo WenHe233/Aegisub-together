@@ -53,6 +53,7 @@
 #include "subs_controller.h"
 #include "text_selection_controller.h"
 #include "video_controller.h"
+#include "video_display.h"
 #include "video_frame.h"
 #include "utils.h"
 
@@ -353,6 +354,72 @@ namespace {
 			push_value(L, c->project->Keyframes());
 		else
 			lua_pushnil(L);
+		return 1;
+	}
+
+	int get_cursor_position(lua_State *L)
+	{
+		if (const agi::Context *c = get_context(L))
+			push_value(L, c->videoDisplay->GetMousePosition().Str());
+		else
+			lua_pushnil(L);
+		return 1;
+	}
+
+	int is_editbox_active(lua_State *L)
+	{
+		push_value(L, get_context(L)->textSelectionController->GetControl()->GetSTCFocus());
+		return 1;
+	}
+
+	int get_opt_value(lua_State *L)
+	{
+		std::string opt = check_string(L, 1);
+
+		std::string type = "string";
+		if (lua_gettop(L) >= 2 && !lua_isnil(L, 2))
+			type = check_string(L, 2);
+
+		auto optres = OPT_GET(opt);
+		if (!optres)
+			lua_pushnil(L);
+		else {
+			if (type == "bool")
+				push_value(L, optres->GetBool());
+			else if (type == "int")
+				push_value(L, optres->GetInt());
+			else
+				push_value(L, optres->GetString());
+		}
+
+		return 1;
+	}
+
+	int get_recent_color(lua_State *L)
+	{
+		std::vector<agi::Color> colors = OPT_GET("Tool/Colour Picker/Recent Colours")->GetListColor();
+
+		push_value(L, colors.front());
+		return 1;
+	}
+
+	int add_picked_color(lua_State *L)
+	{
+		agi::Color color = std::string_view(check_string(L, 1));
+
+		std::vector<agi::Color> colors = OPT_GET("Tool/Colour Picker/Recent Colours")->GetListColor();
+
+		auto existing = find(colors.begin(), colors.end(), color);
+		if (existing != colors.end())
+			rotate(colors.begin(), existing, existing + 1);
+		else {
+			colors.insert(colors.begin(), color);
+			colors.pop_back();
+		}
+
+		OPT_SET("Tool/Colour Picker/Recent Colours")->SetListColor(colors);
+
+		lua_pushnil(L);
 		return 1;
 	}
 
@@ -672,6 +739,11 @@ namespace {
 		set_field<ms_from_frame>(L, "ms_from_frame");
 		set_field<video_size>(L, "video_size");
 		set_field<get_keyframes>(L, "keyframes");
+		set_field<get_cursor_position>(L, "get_cursor_position");
+		set_field<is_editbox_active>(L, "is_editbox_active");
+		set_field<get_opt_value>(L, "get_opt_value");
+		set_field<add_picked_color>(L, "add_picked_color");
+		set_field<get_recent_color>(L, "get_recent_color");
 		set_field<decode_path>(L, "decode_path");
 		set_field<cancel_script>(L, "cancel");
 		set_field(L, "lua_automation_version", 4);

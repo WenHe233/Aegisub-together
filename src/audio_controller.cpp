@@ -100,6 +100,7 @@ void AudioController::OnAudioPlayerChanged()
 	try
 	{
 		player = AudioPlayerFactory::GetAudioPlayer(provider, context->parent);
+		SetPlaybackSpeed(playback_speed);
 	}
 	catch (...)
 	{
@@ -183,6 +184,15 @@ void AudioController::Stop()
 bool AudioController::IsPlaying()
 {
 	return player && playback_mode != PM_NotPlaying;
+}
+
+void AudioController::SetPlaybackSpeed(double speed) {
+	playback_speed = std::max(0.01, speed);
+
+	if (player && player->SupportsPlaybackSpeed())
+		player->SetPlaybackSpeed(playback_speed);
+
+	AnnouncePlaybackSpeed(playback_speed);
 }
 
 int AudioController::GetPlaybackPosition()

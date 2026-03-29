@@ -18,7 +18,8 @@
         { "command" : "time/continuous/end", "text" : "&Make times continuous (change end)" },
         { "command" : "edit/line/recombine" },
         {},
-        { "command" : "audio/save/clip" },
+        { "command" : "grid/copytext/translator" },
+        { "command" : "edit/line/change-text" },
         {},
         { "command" : "grid/fold/create" },
         { "command" : "grid/fold/toggle" },
@@ -155,6 +156,10 @@
         { "command" : "app/log" }
     ],
     "video_context" : [
+        { "command" : "video/clip/toggle_info" },
+        { "command" : "video/toggle_mask" },
+        { "command" : "video/toggle_subtitle" },
+        {},
         { "command" : "video/frame/save" },
         { "command" : "video/frame/copy" },
         {},

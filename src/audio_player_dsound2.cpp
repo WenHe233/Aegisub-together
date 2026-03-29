@@ -44,6 +44,11 @@
 #include <libaegisub/scoped_ptr.h>
 #include <libaegisub/log.h>
 
+#include <rubberband/RubberBandStretcher.h>
+
+#include <atomic>
+#include <cmath>
+#include <memory>
 #include <mmsystem.h>
 #include <process.h>
 #include <dsound.h>
@@ -108,6 +113,10 @@ public:
 	/// @brief Change playback volume
 	/// @param vol Amplification factor
 	void SetVolume(double vol);
+
+	void SetPlaybackSpeed(double s) override;
+
+	bool SupportsPlaybackSpeed() const override { return true; }
 };
 
 /// @brief RAII support class to init and de-init the COM library
@@ -237,6 +246,37 @@ class DirectSoundPlayer2Thread {
 	/// Audio provider to take sample data from
 	agi::AudioProvider *provider;
 
+	/// Audio playback speed
+	double playback_speed = 1.0;
+
+	std::unique_ptr<RubberBand::RubberBandStretcher> stretcher;
+	
+	std::vector<float> rb_fifo;
+	size_t rb_fifo_read_pos = 0;
+
+	std::vector<float> rb_input;
+	std::vector<float> rb_output;
+
+	std::vector<std::vector<float>> rb_channels;
+	std::vector<float*> rb_channel_ptrs;
+
+	int rb_start_delay = 0;
+	bool rb_delay_drained = false;
+	bool rb_finalized = false;
+	int64_t rb_input_start_frame = 0;
+	bool rb_draining = false;
+	int64_t last_queued_bytes_during_drain = 0;
+
+	bool audio_is_float = false;
+	bool use_rubberband = true;
+
+	DWORD ds_buffer_size = 0;
+	DWORD ds_bytes_per_frame = 0;
+	DWORD ds_write_offset = 0;
+	int64_t ds_next_input_frame = 0;
+	bool ds_using_buffer = false;
+	IDirectSoundBuffer8* ds_buffer = nullptr;
+
 public:
 	/// @brief Constructor, creates and starts playback thread
 	/// @param provider       Audio provider to take sample data from
@@ -281,6 +321,8 @@ public:
 	/// @brief Tell whether playback thread has died
 	/// @return True if thread is no longer running
 	bool IsDead();
+
+	void SetPlaybackSpeed(double s);
 };
 
 unsigned int __stdcall DirectSoundPlayer2Thread::ThreadProc(void *parameter)
@@ -328,7 +370,7 @@ void DirectSoundPlayer2Thread::Run()
 	int aim = waveFormat.nAvgBytesPerSec * (wanted_latency*buffer_length)/1000;
 	int min = DSBSIZE_MIN;
 	int max = DSBSIZE_MAX;
-	DWORD bufSize = mid(min,aim,max); // size of entire playback buffer
+	DWORD bufSize = mid(min, aim, max);
 	DSBUFFERDESC desc;
 	desc.dwSize = sizeof(DSBUFFERDESC);
 	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS;
@@ -339,7 +381,7 @@ void DirectSoundPlayer2Thread::Run()
 
 	// And then create the buffer
 	IDirectSoundBuffer *bfr7 = 0;
-	if FAILED(ds->CreateSoundBuffer(&desc, &bfr7, 0))
+	if (FAILED(ds->CreateSoundBuffer(&desc, &bfr7, 0)))
 		REPORT_ERROR("Could not create buffer")
 
 	// But it's an old version interface we get, query it for the DSound8 interface
@@ -351,6 +393,13 @@ void DirectSoundPlayer2Thread::Run()
 	bfr7 = 0;
 
 	//wx Log Debug("DirectSoundPlayer2: Created buffer of %d bytes, supposed to be %d milliseconds or %d frames", bufSize, WANTED_LATENCY*BUFFER_LENGTH, bufSize/provider->GetBytesPerSample());
+
+	ds_buffer = bfr.get();
+	ds_buffer_size = bufSize;
+	ds_bytes_per_frame = waveFormat.nBlockAlign;
+	ds_write_offset = 0;
+	ds_next_input_frame = 0;
+	ds_using_buffer = false;
 
 	// Now we're ready to roll!
 	SetEvent(thread_running);
@@ -364,11 +413,11 @@ void DirectSoundPlayer2Thread::Run()
 		event_kill_self
 	};
 
-	int64_t next_input_frame = 0;
-	DWORD buffer_offset = 0;
 	bool playback_should_be_running = false;
 	int current_latency = wanted_latency;
-	const DWORD wanted_latency_bytes = wanted_latency*waveFormat.nSamplesPerSec*provider->GetBytesPerSample()/1000;
+	const DWORD wanted_latency_bytes = use_rubberband ?
+		wanted_latency * waveFormat.nAvgBytesPerSec / 1000
+		: wanted_latency*waveFormat.nSamplesPerSec*provider->GetBytesPerSample()/1000;
 
 	while (running)
 	{
@@ -381,23 +430,26 @@ void DirectSoundPlayer2Thread::Run()
 				// Start or restart playback
 				bfr->Stop();
 
-				next_input_frame = start_frame;
+				ds_next_input_frame = use_rubberband ? rb_input_start_frame : start_frame;
+				ds_write_offset = 0;
+				ds_buffer_size = bufSize;
+				ds_bytes_per_frame = waveFormat.nBlockAlign;
+				ds_using_buffer = false;
 
-				DWORD buf_size; // size of buffer locked for filling
+				DWORD buf_size;
 				void *buf;
-				buffer_offset = 0;
 
 				if (FAILED(bfr->SetCurrentPosition(0)))
 					REPORT_ERROR("Could not reset playback buffer cursor before filling first buffer.")
 
-				HRESULT res = bfr->Lock(buffer_offset, 0, &buf, &buf_size, 0, 0, DSBLOCK_ENTIREBUFFER);
+				HRESULT res = bfr->Lock(ds_write_offset, 0, &buf, &buf_size, 0, 0, DSBLOCK_ENTIREBUFFER);
 				if (FAILED(res))
 				{
 					if (res == DSERR_BUFFERLOST)
 					{
 						// Try to regain the buffer
 						if (FAILED(bfr->Restore()) ||
-							FAILED(bfr->Lock(buffer_offset, 0, &buf, &buf_size, 0, 0, DSBLOCK_ENTIREBUFFER)))
+							FAILED(bfr->Lock(ds_write_offset, 0, &buf, &buf_size, 0, 0, DSBLOCK_ENTIREBUFFER)))
 						{
 							REPORT_ERROR("Lost buffer and could not restore it.")
 						}
@@ -411,9 +463,11 @@ void DirectSoundPlayer2Thread::Run()
 				// Clear the buffer in case we can't fill it completely
 				memset(buf, 0, buf_size);
 
-				DWORD bytes_filled = FillAndUnlockBuffers(buf, buf_size, 0, 0, next_input_frame, bfr.get());
-				buffer_offset += bytes_filled;
-				if (buffer_offset >= bufSize) buffer_offset -= bufSize;
+				rb_fifo_read_pos = 0;
+
+				DWORD bytes_filled = FillAndUnlockBuffers(buf, buf_size, 0, 0, ds_next_input_frame, bfr.get());
+				ds_write_offset += bytes_filled;
+				if (ds_write_offset >= ds_buffer_size) ds_write_offset -= ds_buffer_size;
 
 				if (FAILED(bfr->SetCurrentPosition(0)))
 					REPORT_ERROR("Could not reset playback buffer cursor before playback.")
@@ -421,7 +475,9 @@ void DirectSoundPlayer2Thread::Run()
 				if (bytes_filled < wanted_latency_bytes)
 				{
 					// Very short playback length, do without streaming playback
-					current_latency = (bytes_filled*1000) / (waveFormat.nSamplesPerSec*provider->GetBytesPerSample());
+					current_latency = use_rubberband ?
+						(bytes_filled * 1000) / waveFormat.nAvgBytesPerSec
+						: (bytes_filled*1000) / (waveFormat.nSamplesPerSec*provider->GetBytesPerSample());
 					if (FAILED(bfr->Play(0, 0, 0)))
 						REPORT_ERROR("Could not start single-buffer playback.")
 				}
@@ -433,9 +489,11 @@ void DirectSoundPlayer2Thread::Run()
 						REPORT_ERROR("Could not start looping playback.")
 				}
 
+				ds_using_buffer = true;
+				rb_draining = false;
+				last_queued_bytes_during_drain = 0;
 				SetEvent(is_playing);
 				playback_should_be_running = true;
-
 				break;
 			}
 
@@ -445,11 +503,12 @@ stop_playback:
 			bfr->Stop();
 			ResetEvent(is_playing);
 			playback_should_be_running = false;
+			ds_using_buffer = false;
 			break;
 
 		case WAIT_OBJECT_0+2:
 			// Set end frame
-			if (end_frame <= next_input_frame)
+			if ((!use_rubberband && end_frame <= ds_next_input_frame) || (use_rubberband && GetCurrentFrame() >= end_frame))
 			{
 				goto stop_playback;
 			}
@@ -489,37 +548,48 @@ do_fill_buffer:
 					goto stop_playback;
 				}
 
-				DWORD play_cursor;
+				DWORD play_cursor = 0;
 				if (FAILED(bfr->GetCurrentPosition(&play_cursor, 0)))
 					REPORT_ERROR("Could not get play cursor position for filling buffer.")
 
-				int bytes_needed = (int)play_cursor - (int)buffer_offset;
-				if (bytes_needed < 0) bytes_needed += (int)bufSize;
+				int bytes_needed = (int)play_cursor - (int)ds_write_offset;
+				if (bytes_needed < 0) bytes_needed += (int)ds_buffer_size;
 
 				// Requesting zero buffer makes Windows cry, and zero buffer seemed to be
 				// a common request on Windows 7. (Maybe related to the new timer coalescing?)
 				// We'll probably get non-zero bytes requested on the next iteration.
 				if (bytes_needed == 0)
 					break;
+				
+				if (use_rubberband) {
+					bool source_finished = rb_finalized;
+					bool rb_finished = (rb_fifo_read_pos >= rb_fifo.size()) && (stretcher->available() <= 0);
+
+					if (source_finished && rb_finished && !rb_draining)
+						rb_draining = true;
+				}
 
 				DWORD buf1sz, buf2sz;
 				void *buf1, *buf2;
 
 				assert(bytes_needed > 0);
-				assert(buffer_offset < bufSize);
-				assert((DWORD)bytes_needed <= bufSize);
+				assert(ds_write_offset < ds_buffer_size);
+				assert((DWORD)bytes_needed <= ds_buffer_size);
 
-				HRESULT res = bfr->Lock(buffer_offset, bytes_needed, &buf1, &buf1sz, &buf2, &buf2sz, 0);
+				HRESULT res = bfr->Lock(ds_write_offset, bytes_needed, &buf1, &buf1sz, &buf2, &buf2sz, 0);
 				switch (res)
 				{
 				case DSERR_BUFFERLOST:
 					// Try to regain the buffer
 					// When the buffer was lost the entire contents was lost too, so we have to start over
 					if (SUCCEEDED(bfr->Restore()) &&
-					    SUCCEEDED(bfr->Lock(0, bufSize, &buf1, &buf1sz, &buf2, &buf2sz, 0)) &&
-					    SUCCEEDED(bfr->Play(0, 0, DSBPLAY_LOOPING)))
+						SUCCEEDED(bfr->Lock(0, ds_buffer_size, &buf1, &buf1sz, &buf2, &buf2sz, 0)) &&
+						SUCCEEDED(bfr->Play(0, 0, DSBPLAY_LOOPING)))
 					{
 						LOG_D("audio/player/dsound") << "Lost and restored buffer";
+						ds_write_offset = 0;
+						ds_next_input_frame = use_rubberband ? rb_input_start_frame : start_frame;
+						ds_using_buffer = true;
 						break;
 					}
 					REPORT_ERROR("Lost buffer and could not restore it.")
@@ -539,9 +609,16 @@ do_fill_buffer:
 					break;
 				}
 
-				DWORD bytes_filled = FillAndUnlockBuffers(buf1, buf1sz, buf2, buf2sz, next_input_frame, bfr.get());
-				buffer_offset += bytes_filled;
-				if (buffer_offset >= bufSize) buffer_offset -= bufSize;
+				DWORD bytes_filled = 0;
+				if (use_rubberband && rb_draining) {
+					bfr->Unlock(buf1, buf1sz, buf2, buf2sz);
+					bytes_filled = 0;
+				} else {
+					bytes_filled = FillAndUnlockBuffers(buf1, buf1sz, buf2, buf2sz, ds_next_input_frame, bfr.get());
+				}
+
+				ds_write_offset += bytes_filled;
+				if (ds_write_offset >= ds_buffer_size) ds_write_offset -= ds_buffer_size;
 
 				if (bytes_filled < 1024)
 				{
@@ -552,12 +629,34 @@ do_fill_buffer:
 				else if (bytes_filled < wanted_latency_bytes)
 				{
 					// Didn't fill as much as we wanted to, let's get back to filling sooner than normal
-					current_latency = (bytes_filled*1000) / (waveFormat.nSamplesPerSec*provider->GetBytesPerSample());
+					current_latency = use_rubberband ?
+						(bytes_filled * 1000) / waveFormat.nAvgBytesPerSec
+						: (bytes_filled*1000) / (waveFormat.nSamplesPerSec*provider->GetBytesPerSample());
 				}
 				else
 				{
 					// Plenty filled in, do regular latency
 					current_latency = wanted_latency;
+				}
+
+				if (rb_draining) {
+					current_latency = 1;
+
+					if (FAILED(bfr->GetCurrentPosition(&play_cursor, 0)))
+						REPORT_ERROR("Could not get play cursor position for draining check.")
+
+					int queued_bytes = (int)ds_write_offset - (int)play_cursor;
+					if (queued_bytes < 0) queued_bytes += (int)ds_buffer_size;
+
+					if (last_queued_bytes_during_drain > 0 &&  queued_bytes > last_queued_bytes_during_drain + 1024)
+						goto stop_playback;
+
+					last_queued_bytes_during_drain = queued_bytes;
+
+					if (queued_bytes == 0 || queued_bytes < 32) {
+						bfr->Play(0, 0, 0);
+						current_latency = 30;
+					}
 				}
 
 				break;
@@ -568,64 +667,205 @@ do_fill_buffer:
 			break;
 		}
 	}
+
+	ds_using_buffer = false;
+	ds_buffer = nullptr;
 }
 
 #undef REPORT_ERROR
 
-DWORD DirectSoundPlayer2Thread::FillAndUnlockBuffers(void *buf1, DWORD buf1sz, void *buf2, DWORD buf2sz, int64_t &input_frame, IDirectSoundBuffer8 *bfr)
-{
-	// Assume buffers have been locked and are ready to be filled
+DWORD DirectSoundPlayer2Thread::FillAndUnlockBuffers(void *buf1, DWORD buf1sz, void *buf2, DWORD buf2sz, int64_t &input_frame, IDirectSoundBuffer8 *bfr) {
+	int ch = provider->GetChannels();
 
-	DWORD bytes_per_frame = provider->GetChannels() * provider->GetBytesPerSample();
+	DWORD bytes_per_frame = ch * provider->GetBytesPerSample();
 	DWORD buf1szf = buf1sz / bytes_per_frame;
 	DWORD buf2szf = buf2sz / bytes_per_frame;
 
-	if (input_frame >= end_frame)
-	{
-		// Silence
+	if (!use_rubberband) {
+		if (input_frame >= end_frame) {
+			// Silence
 
-		if (buf1)
-			memset(buf1, 0, buf1sz);
+			if (buf1)
+				memset(buf1, 0, buf1sz);
 
-		if (buf2)
-			memset(buf2, 0, buf2sz);
+			if (buf2)
+				memset(buf2, 0, buf2sz);
 
-		input_frame += buf1szf + buf2szf;
+			input_frame += buf1szf + buf2szf;
 
-		bfr->Unlock(buf1, buf1sz, buf2, buf2sz); // should be checking for success
+			bfr->Unlock(buf1, buf1sz, buf2, buf2sz); // should be checking for success
 
-		return buf1sz + buf2sz;
-	}
-
-	if (buf1 && buf1sz)
-	{
-		if (buf1szf + input_frame > end_frame)
-		{
-			buf1szf = end_frame - input_frame;
-			buf1sz = buf1szf * bytes_per_frame;
-			buf2szf = 0;
-			buf2sz = 0;
+			return buf1sz + buf2sz;
 		}
 
-		provider->GetAudioWithVolume(buf1, input_frame, buf1szf, volume);
+		if (buf1 && buf1sz) {
+			if (buf1szf + input_frame > end_frame) {
+				buf1szf = end_frame - input_frame;
+				buf1sz = buf1szf * bytes_per_frame;
+				buf2szf = 0;
+				buf2sz = 0;
+			}
 
-		input_frame += buf1szf;
-	}
+			provider->GetAudioWithVolume(buf1, input_frame, buf1szf, volume);
 
-	if (buf2 && buf2sz)
-	{
-		if (buf2szf + input_frame > end_frame)
-		{
-			buf2szf = end_frame - input_frame;
-			buf2sz = buf2szf * bytes_per_frame;
+			input_frame += buf1szf;
 		}
 
-		provider->GetAudioWithVolume(buf2, input_frame, buf2szf, volume);
+		if (buf2 && buf2sz) {
+			if (buf2szf + input_frame > end_frame) {
+				buf2szf = end_frame - input_frame;
+				buf2sz = buf2szf * bytes_per_frame;
+			}
 
-		input_frame += buf2szf;
+			provider->GetAudioWithVolume(buf2, input_frame, buf2szf, volume);
+
+			input_frame += buf2szf;
+		}
+	} else {
+		auto process_block = [&](void* buf, DWORD bufszf) {
+			if (!buf || !bufszf)
+				return;
+
+			int frames_out = bufszf;
+			int samples_needed = frames_out * ch;
+
+			rb_output.resize(samples_needed);
+
+			// fill fifo
+			while ((int)(rb_fifo.size() - rb_fifo_read_pos) < samples_needed) {
+				if (!rb_finalized) {
+					int feed = stretcher->getSamplesRequired();
+					if (feed <= 0)
+						feed = 256;
+
+					int64_t remaining = end_frame - input_frame;
+					if (remaining <= 0) {
+						stretcher->process(nullptr, 0, true);
+						rb_finalized = true;
+					} else {
+						if (feed > remaining)
+							feed = (int)remaining;
+
+						rb_input.resize(feed * ch);
+
+						if (audio_is_float) {
+							provider->GetAudioWithVolume(rb_input.data(), input_frame, feed, volume);
+						} else {
+							std::vector<int16_t> tmp(feed * ch);
+							provider->GetAudioWithVolume(tmp.data(), input_frame, feed, volume);
+
+							for (int i = 0; i < feed * ch; i++)
+								rb_input[i] = tmp[i] / 32768.0f;
+						}
+
+						input_frame += feed;
+
+						// interleaved -> planar
+						rb_channels.resize(ch);
+						rb_channel_ptrs.resize(ch);
+
+						for (int c = 0; c < ch; c++) {
+							rb_channels[c].resize(feed);
+							rb_channel_ptrs[c] = rb_channels[c].data();
+						}
+
+						for (int i = 0; i < feed; i++) {
+							for (int c = 0; c < ch; c++) {
+								rb_channels[c][i] = rb_input[i * ch + c];
+							}
+						}
+
+						bool final = (input_frame >= end_frame);
+						stretcher->process(rb_channel_ptrs.data(), feed, final);
+						if (final)
+							rb_finalized = true;
+					}
+				}
+
+				int available_frames = stretcher->available();
+				if (available_frames <= 0) {
+					if (rb_finalized)
+						break;
+
+					continue;
+				}
+
+				int out_frames = std::max(available_frames, samples_needed / ch);
+				rb_channels.resize(ch);
+				rb_channel_ptrs.resize(ch);
+
+				for (int c = 0; c < ch; c++) {
+					rb_channels[c].resize(out_frames);
+					rb_channel_ptrs[c] = rb_channels[c].data();
+				}
+
+				int got = stretcher->retrieve(rb_channel_ptrs.data(), out_frames);
+				if (got <= 0) {
+					if (rb_finalized)
+						break;
+					continue;
+				}
+
+				for (int i = 0; i < got; i++) {
+					for (int c = 0; c < ch; c++) {
+						rb_fifo.push_back(rb_channels[c][i]);
+					}
+				}
+			}
+
+			if (!rb_delay_drained && rb_start_delay > 0) {
+				int delay_samples = rb_start_delay * ch;
+				int available_samples = (int)(rb_fifo.size() - rb_fifo_read_pos);
+				int skip = std::min(delay_samples, available_samples);
+
+				rb_fifo_read_pos += skip;
+				rb_start_delay -= skip / ch;
+
+				if (rb_start_delay <= 0)
+					rb_delay_drained = true;
+
+				if (rb_fifo_read_pos > rb_fifo.size() / 2) {
+					rb_fifo.erase(rb_fifo.begin(), rb_fifo.begin() + rb_fifo_read_pos);
+					rb_fifo_read_pos = 0;
+				}
+			}
+
+			// fifo output
+			int available = rb_fifo.size() - rb_fifo_read_pos;
+			for (int i = 0; i < samples_needed; i++) {
+				if (i < available)
+					rb_output[i] = rb_fifo[rb_fifo_read_pos + i];
+				else
+					rb_output[i] = 0.0f;
+			}
+
+			rb_fifo_read_pos += std::min(samples_needed, available);
+
+			if (rb_fifo_read_pos > rb_fifo.size() / 2) {
+				rb_fifo.erase(rb_fifo.begin(), rb_fifo.begin() + rb_fifo_read_pos);
+				rb_fifo_read_pos = 0;
+			}
+
+			// write
+			if (audio_is_float) {
+				memcpy(buf, rb_output.data(), samples_needed * sizeof(float));
+			} else {
+				int16_t* out = (int16_t*)buf;
+
+				for (int i = 0; i < samples_needed; i++) {
+					float v = rb_output[i];
+					if (v > 1.0f) v = 1.0f;
+					if (v < -1.0f) v = -1.0f;
+					out[i] = (int16_t)(v * 32767.0f);
+				}
+			}
+		};
+
+		process_block(buf1, buf1szf);
+		process_block(buf2, buf2szf);
 	}
 
-	bfr->Unlock(buf1, buf1sz, buf2, buf2sz); // bad? should check for success
+	bfr->Unlock(buf1, buf1sz, buf2, buf2sz);
 
 	return buf1sz + buf2sz;
 }
@@ -703,24 +943,69 @@ void DirectSoundPlayer2Thread::Play(int64_t start, int64_t count)
 {
 	CheckError();
 
+	if (use_rubberband && IsPlaying()) {
+		Stop();
+		while (IsPlaying())
+			Sleep(1);
+	}
+
 	start_frame = start;
-	end_frame = start+count;
+	end_frame = start + count;
+	rb_input_start_frame = start;
+
+	audio_is_float = provider->AreSamplesFloat();
+	use_rubberband = (fabs(playback_speed - 1.0) > 0.01);
+
+	if (use_rubberband) {
+		rb_fifo.clear();
+		rb_input.clear();
+		rb_output.clear();
+		rb_channels.clear();
+		rb_channel_ptrs.clear();
+		rb_fifo_read_pos = 0;
+		rb_finalized = false;
+		rb_delay_drained = false;
+
+		int sr = provider->GetSampleRate();
+		int ch = provider->GetChannels();
+
+		stretcher.reset(new RubberBand::RubberBandStretcher(sr, ch, RubberBand::RubberBandStretcher::OptionProcessRealTime | RubberBand::RubberBandStretcher::OptionWindowShort | RubberBand::RubberBandStretcher::OptionThreadingAuto | RubberBand::RubberBandStretcher::OptionFormantPreserved));
+		stretcher->reset();
+		stretcher->setMaxProcessSize(512);
+		stretcher->setTimeRatio(playback_speed > 0.001 ? (1.0 / playback_speed) : 1.0);
+
+		int pad = stretcher->getPreferredStartPad();
+		rb_start_delay = stretcher->getStartDelay();
+
+		rb_input_start_frame -= pad;
+		if (rb_input_start_frame < 0)
+			rb_input_start_frame = 0;
+
+		int prime = 1024;
+
+		rb_input.assign(prime * ch, 0.0f);
+		rb_channels.resize(ch);
+		rb_channel_ptrs.resize(ch);
+
+		for (int c = 0; c < ch; c++) {
+			rb_channels[c].assign(prime, 0.0f);
+			rb_channel_ptrs[c] = rb_channels[c].data();
+		}
+
+		stretcher->process(rb_channel_ptrs.data(), prime, false);
+
+		rb_fifo.reserve(sr * ch / 5);
+	}
+
 	SetEvent(event_start_playback);
 
 	last_playback_restart = GetTickCount();
 
-	// Block until playback actually begins to avoid race conditions with
-	// checking if playback is in progress
 	HANDLE events_to_wait[] = { is_playing, error_happened };
-	switch (WaitForMultipleObjects(2, events_to_wait, FALSE, INFINITE))
-	{
-	case WAIT_OBJECT_0+0: // Playing
-		LOG_D("audio/player/dsound") << "Playback begun";
-		break;
-	case WAIT_OBJECT_0+1: // Error
-		throw error_message;
-	default:
-		throw agi::InternalError("Unexpected result from WaitForMultipleObjects in DirectSoundPlayer2Thread::Play");
+	switch (WaitForMultipleObjects(2, events_to_wait, FALSE, INFINITE)) {
+		case WAIT_OBJECT_0+0: break;
+		case WAIT_OBJECT_0+1: throw error_message;
+		default: throw agi::InternalError("Unexpected wait result");
 	}
 }
 
@@ -772,11 +1057,48 @@ int64_t DirectSoundPlayer2Thread::GetCurrentFrame()
 {
 	CheckError();
 
-	if (!IsPlaying()) return 0;
+	if (!IsPlaying())
+		return 0;
 
-	int64_t milliseconds_elapsed = GetTickCount() - last_playback_restart;
+	if (!use_rubberband) {
+		int64_t milliseconds_elapsed = GetTickCount() - last_playback_restart;
+		return start_frame + milliseconds_elapsed * provider->GetSampleRate() / 1000;
+	}
 
-	return start_frame + milliseconds_elapsed * provider->GetSampleRate() / 1000;
+	if (!ds_using_buffer || !ds_buffer || ds_bytes_per_frame == 0 || ds_buffer_size == 0)
+		return 0;
+
+	DWORD play_cursor = 0;
+	if (FAILED(ds_buffer->GetCurrentPosition(&play_cursor, 0)))
+		return start_frame;
+
+	int queued_bytes = (int)ds_write_offset - (int)play_cursor;
+	if (queued_bytes < 0)
+		queued_bytes += (int)ds_buffer_size;
+
+	int64_t queued_output_frames = queued_bytes / ds_bytes_per_frame;
+
+	if (rb_draining) {
+		int64_t remaining_source_frames = (int64_t)std::llround(queued_output_frames * playback_speed);
+		int64_t current = end_frame - remaining_source_frames;
+		if (current < start_frame) current = start_frame;
+
+		return current;
+	}
+
+	int64_t fifo_samples = (int64_t)(rb_fifo.size() - rb_fifo_read_pos);
+	int64_t fifo_output_frames = fifo_samples / provider->GetChannels();
+
+	int64_t queued_source_frames = (int64_t)std::llround(queued_output_frames * playback_speed);
+	int64_t fifo_source_frames   = (int64_t)std::llround(fifo_output_frames * playback_speed);
+	int64_t current = ds_next_input_frame - queued_source_frames - fifo_source_frames;
+
+	if (current < start_frame)
+		current = start_frame;
+	if (current > end_frame)
+		current = end_frame;
+
+	return current;
 }
 
 int64_t DirectSoundPlayer2Thread::GetEndFrame()
@@ -795,6 +1117,21 @@ bool DirectSoundPlayer2Thread::IsDead()
 
 	default:
 		return true;
+	}
+}
+
+void DirectSoundPlayer2Thread::SetPlaybackSpeed(double s)
+{
+	playback_speed = s;
+
+	if (IsPlaying()) {
+		int64_t cur = GetCurrentFrame();
+		Stop();
+
+		while (IsPlaying())
+			Sleep(1);
+
+		Play(cur, end_frame - cur);
 	}
 }
 
@@ -924,6 +1261,11 @@ void DirectSoundPlayer2::SetVolume(double vol)
 	{
 		LOG_E("audio/player/dsound") << msg;
 	}
+}
+
+void DirectSoundPlayer2::SetPlaybackSpeed(double s)
+{
+	thread->SetPlaybackSpeed(s);
 }
 }
 

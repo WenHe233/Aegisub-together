@@ -191,6 +191,7 @@ namespace Automation4 {
 			set_field(L, "margin_b", dia->Margin[2]);
 
 			set_field(L, "text", dia->Text);
+			set_field(L, "source_line_text", dia->SourceLineText);
 
 			// create extradata table
 			lua_newtable(L);
@@ -313,6 +314,7 @@ namespace Automation4 {
 			dia->Margin[2] = get_int_field(L, "margin_t", "dialogue");
 			dia->Effect = get_string_field(L, "effect", "dialogue");
 			dia->Text = get_string_field(L, "text", "dialogue");
+			dia->SourceLineText = get_string_field(L, "source_line_text", "dialogue");
 
 			std::vector<uint32_t> new_ids;
 

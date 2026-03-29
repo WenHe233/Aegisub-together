@@ -49,6 +49,7 @@
 #include "../video_controller.h"
 #include "../video_display.h"
 #include "../video_frame.h"
+#include "../visual_tool_drag.h"
 
 #include <libaegisub/ass/time.h>
 #include <libaegisub/fs.h>
@@ -769,6 +770,103 @@ struct video_zoom_out final : public validator_video_attached {
 		c->videoDisplay->SetWindowZoom(c->videoDisplay->GetWindowZoom() - .125);
 	}
 };
+
+struct video_opt_colorautotransition final : public Command {
+	CMD_NAME("video/opt/colorautotransition")
+	CMD_ICON(toggle_colorautotransition)
+	CMD_TYPE(COMMAND_TOGGLE)
+	STR_MENU("Toggle auto transition of color")
+	STR_DISP("Toggle auto transition of color")
+	STR_HELP("Toggle adding \\t() for color picker")
+
+	bool IsActive(const agi::Context *) override {
+		return OPT_GET("Video/Color Auto Transition")->GetBool();
+	}
+
+	void operator()(agi::Context *) override {
+		OPT_SET("Video/Color Auto Transition")->SetBool(!OPT_GET("Video/Color Auto Transition")->GetBool());
+	}
+};
+
+struct video_opt_colorrecent final : public Command {
+	CMD_NAME("video/opt/colorrecent")
+	CMD_ICON(toggle_colorrecent)
+	CMD_TYPE(COMMAND_TOGGLE)
+	STR_MENU("Toggle recent color")
+	STR_DISP("Toggle recent color")
+	STR_HELP("Toggle adding recent for color picker")
+
+	bool IsActive(const agi::Context *) override {
+		return OPT_GET("Video/Color Recent")->GetBool();
+	}
+
+	void operator()(agi::Context *) override {
+		OPT_SET("Video/Color Recent")->SetBool(!OPT_GET("Video/Color Recent")->GetBool());
+	}
+};
+
+struct video_toggle_mask final : public validator_video_loaded {
+	CMD_NAME("video/toggle_mask")
+	CMD_ICON(toggle_mask)
+	CMD_TYPE(COMMAND_TOGGLE)
+	STR_MENU("Show Masks")
+	STR_DISP("Toggle Masks")
+	STR_HELP("Toggle mask rendering in the video")
+
+	bool IsActive(const agi::Context *) override {
+		return OPT_GET("Video/Toggle Mask")->GetBool();
+	}
+
+	void operator()(agi::Context *c) override {
+		OPT_SET("Video/Toggle Mask")->SetBool(!OPT_GET("Video/Toggle Mask")->GetBool());
+
+		c->project->VideoProvider()->ResetCurrentFrame(true);
+
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolDrag))) {
+			c->videoDisplay->ResetTool();
+		}
+	}
+};
+
+struct video_toggle_subtitle final : public validator_video_loaded {
+	CMD_NAME("video/toggle_subtitle")
+	CMD_ICON(toggle_subtitle)
+	CMD_TYPE(COMMAND_TOGGLE)
+	STR_MENU("Show Subtitle")
+	STR_DISP("Toggle Subtitle")
+	STR_HELP("Toggle subtitle rendering in the video")
+
+	bool IsActive(const agi::Context *) override {
+		return OPT_GET("Video/Toggle Subtitle")->GetBool();
+	}
+
+	void operator()(agi::Context *c) override {
+		OPT_SET("Video/Toggle Subtitle")->SetBool(!OPT_GET("Video/Toggle Subtitle")->GetBool());
+
+		c->project->VideoProvider()->ResetCurrentFrame();
+
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolDrag))) {
+			c->videoDisplay->ResetTool();
+		}
+	}
+};
+
+struct video_clip_toggle_info final : public validator_video_loaded {
+	CMD_NAME("video/clip/toggle_info")
+	CMD_TYPE(COMMAND_TOGGLE)
+	STR_MENU("Show Clip Info")
+	STR_DISP("Toggle Clip Info")
+	STR_HELP("Vect Clip will display hovered points coordinates and line's direction")
+
+	bool IsActive(const agi::Context *) override {
+		return OPT_GET("Video/Clip Info")->GetBool();
+	}
+
+	void operator()(agi::Context *c) override {
+		OPT_SET("Video/Clip Info")->SetBool(!OPT_GET("Video/Clip Info")->GetBool());
+	}
+};
+
 }
 
 namespace cmd {
@@ -814,5 +912,10 @@ namespace cmd {
 		reg(std::make_unique<video_zoom_50>());
 		reg(std::make_unique<video_zoom_in>());
 		reg(std::make_unique<video_zoom_out>());
+		reg(std::make_unique<video_opt_colorautotransition>());
+		reg(std::make_unique<video_opt_colorrecent>());
+		reg(std::make_unique<video_toggle_mask>());
+		reg(std::make_unique<video_toggle_subtitle>());
+		reg(std::make_unique<video_clip_toggle_info>());
 	}
 }

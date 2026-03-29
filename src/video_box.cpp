@@ -45,6 +45,7 @@
 #include <boost/range/algorithm/binary_search.hpp>
 #include <wx/combobox.h>
 #include <wx/sizer.h>
+#include <wx/slider.h>
 #include <wx/statline.h>
 #include <wx/textctrl.h>
 #include <wx/toolbar.h>
@@ -72,7 +73,17 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached, agi::Context *context)
 	auto visualToolBar = toolbar::GetToolbar(this, "visual_tools", context, "Video", true);
 	auto visualSubToolBar = new wxToolBar(this, -1, wxDefaultPosition, wxDefaultSize, wxTB_VERTICAL | wxTB_BOTTOM | wxTB_NODIVIDER | wxTB_FLAT);
 
-	auto videoDisplay = new VideoDisplay(visualSubToolBar, isDetached, zoomBox, this, context);
+	wxArrayString speedChoices;
+	double speeds[] = {0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 5, 6, 8, 10};
+	for (double s : speeds)
+		speedChoices.Add(fmt_wx("%gx", s));
+
+	auto speedBox = new wxComboBox(this, -1, "1x", wxDefaultPosition, wxDefaultSize, speedChoices, wxCB_READONLY);
+
+	auto brightnessSlider = new wxSlider(this, -1, 100, 0, 400, wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
+	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", 100) + " (" + _("Right click to reset") + ")");
+
+	auto videoDisplay = new VideoDisplay(visualSubToolBar, isDetached, zoomBox, speedBox, brightnessSlider, this, context);
 	videoDisplay->MoveBeforeInTabOrder(videoSlider);
 
 	auto toolbarSizer = new wxBoxSizer(wxVERTICAL);
@@ -87,7 +98,9 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached, agi::Context *context)
 	videoBottomSizer->Add(mainToolbar, wxSizerFlags(0).Center());
 	videoBottomSizer->Add(VideoPosition, wxSizerFlags(1).Center().Border(wxLEFT));
 	videoBottomSizer->Add(VideoSubsPos, wxSizerFlags(1).Center().Border(wxLEFT));
-	videoBottomSizer->Add(zoomBox, wxSizerFlags(0).Center().Border(wxLEFT | wxRIGHT));
+	videoBottomSizer->Add(speedBox, wxSizerFlags(0).Center().Border(wxLEFT));
+	videoBottomSizer->Add(brightnessSlider, wxSizerFlags(0).Center().Border(wxLEFT, 0));
+	videoBottomSizer->Add(zoomBox, wxSizerFlags(0).Center().Border(wxLEFT, 0));
 
 	auto VideoSizer = new wxBoxSizer(wxVERTICAL);
 	VideoSizer->Add(topSizer, 1, wxEXPAND, 0);

@@ -42,6 +42,7 @@ aegisub_src = files(
     'command/automation.cpp',
     'command/command.cpp',
     'command/edit.cpp',
+    'command/edit_change_text.cpp',
     'command/grid.cpp',
     'command/help.cpp',
     'command/keyframe.cpp',
@@ -63,6 +64,7 @@ aegisub_src = files(
     'dialog_dummy_video.cpp',
     'dialog_export.cpp',
     'dialog_export_ebu3264.cpp',
+    'dialog_fontpicker.cpp',
     'dialog_fonts_collector.cpp',
     'dialog_jumpto.cpp',
     'dialog_kara_timing_copy.cpp',
@@ -97,6 +99,7 @@ aegisub_src = files(
     'help_button.cpp',
     'hotkey.cpp',
     'hotkey_data_view_model.cpp',
+    'image_mask_combiner.cpp',
     'initial_line_state.cpp',
     'main.cpp',
     'menu.cpp',
@@ -112,6 +115,7 @@ aegisub_src = files(
     'spellchecker.cpp',
     'spline.cpp',
     'spline_curve.cpp',
+    'source_line_controller.cpp',
     'string_codec.cpp',
     'subs_controller.cpp',
     'subs_edit_box.cpp',
@@ -187,6 +191,8 @@ elif host_machine.system() == 'windows'
     else
         error('Missing Windows SDK DirectWrite Library (dwrite.h / dwrite.lib)')
     endif
+
+    deps += rubberband_dep
 
     res_inc = include_directories('bitmaps/windows')
     res_dep_files = files(

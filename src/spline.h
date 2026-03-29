@@ -41,14 +41,15 @@ class Spline final : private std::vector<SplineCurve> {
 	int scale = 0;
 	int raw_scale = 0;
 
-	/// Video coordinates -> Script coordinates
-	Vector2D ToScript(Vector2D vec) const;
-
-	/// Script coordinates -> Video coordinates
-	Vector2D FromScript(Vector2D vec) const;
 public:
 	Spline() {};
 	Spline(const VisualToolBase *scale);
+
+	/// Video coordinates -> Script coordinates
+	Vector2D FromScript(Vector2D vec) const;
+
+	/// Script coordinates -> Video coordinates
+	Vector2D ToScript(Vector2D vec) const;
 
 	/// Encode to an ASS vector drawing
 	std::string EncodeToAss() const;

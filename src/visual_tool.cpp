@@ -117,12 +117,18 @@ void VisualToolBase::OnActiveLineChanged(AssDialogue *new_line) {
 	}
 }
 
-bool VisualToolBase::IsDisplayed(AssDialogue *line) const {
+bool VisualToolBase::IsDisplayed(AssDialogue *line, bool forceDisplayOnHide) const {
+	if (!forceDisplayOnHide && !OPT_GET("Video/Toggle Subtitle")->GetBool()) {
+		return false;
+	}
+
 	int frame = c->videoController->GetFrameN();
+
 	return line
 		&& !line->Comment
 		&& c->videoController->FrameAtTime(line->Start, agi::vfr::START) <= frame
-		&& c->videoController->FrameAtTime(line->End, agi::vfr::END) >= frame;
+		&& c->videoController->FrameAtTime(line->End, agi::vfr::END) >= frame
+		&& (forceDisplayOnHide || OPT_GET("Video/Toggle Mask")->GetBool() || line->Text.get().find("\\p1") == std::string::npos);
 }
 
 void VisualToolBase::Commit(wxString message) {
@@ -191,11 +197,22 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 	if (!dragging) {
 		int max_layer = INT_MIN;
 		active_feature = nullptr;
+		FeatureType *activeSelectedFeature = nullptr;
 		for (auto& feature : features) {
-			if (feature.IsMouseOver(mouse_pos) && feature.layer >= max_layer) {
-				active_feature = &feature;
-				max_layer = feature.layer;
+			if (feature.IsMouseOver(mouse_pos)) {
+				if (feature.layer >= max_layer) {
+					active_feature = &feature;
+					max_layer = feature.layer;
+				}
+
+				if (c->selectionController->GetSelectedSet().size() == 1 && active_feature->line && c->selectionController->GetActiveLine() == active_feature->line) {
+					activeSelectedFeature = active_feature;
+				}
 			}
+		}
+
+		if (activeSelectedFeature && !left_double && !ctrl_down) {
+			active_feature = activeSelectedFeature;
 		}
 	}
 
@@ -267,10 +284,27 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 		}
 		// start hold
 		else {
-			if (!alt_down && features.size() > 1) {
-				sel_features.clear();
-				c->selectionController->SetSelectedSet({ c->selectionController->GetActiveLine() });
+			if (!ctrl_down && !alt_down && features.size() > 1) {
+				if (c->videoDisplay->ToolIsType(typeid(VisualToolDrag))) {
+					FeatureType *activeLineFeature = nullptr;
+					for (auto sel : sel_features)
+						if (sel->line && sel->line == c->selectionController->GetActiveLine())
+							activeLineFeature = sel;
+
+					if (activeLineFeature) {
+						auto line = activeLineFeature->line;
+						c->selectionController->SetSelectionAndActive({ line }, line);
+						c->selectionController->NextLine();
+						c->selectionController->PrevLine();
+					}
+				} else {
+					sel_features.clear();
+
+					if (!c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip)) && !c->videoDisplay->ToolIsType(typeid(VisualToolClip)))
+						c->selectionController->SetSelectedSet({ c->selectionController->GetActiveLine() });
+				}
 			}
+
 			if (active_line && InitializeHold()) {
 				holding = true;
 				parent->CaptureMouse();
@@ -286,6 +320,32 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 	// Only coalesce the changes made in a single drag
 	if (!event.LeftIsDown())
 		commit_id = -1;
+}
+
+template<class FeatureType>
+bool VisualTool<FeatureType>::OnMouseWheel(wxMouseEvent &event) {
+	int wheel = event.GetWheelRotation();
+
+	if (wheel && event.LeftIsDown() && active_feature && c->videoDisplay->ToolIsType(typeid(VisualToolDrag))) {
+		int actual = OPT_GET("Tool/Drag Type")->GetInt();
+		int value = 0; // default, no lock (will increase after operator run)
+
+		// lock X
+		if (wheel > 0 && actual != 1) {
+			value = 1;
+		}
+		// lock Y
+		else if (wheel < 0 && actual != 2) {
+			value = 2;
+		}
+
+		OPT_SET("Tool/Drag Type")->SetInt(value);
+		UpdateTool(DRAG_LOCK);
+
+		return false;
+	}
+
+	return true;
 }
 
 template<class FeatureType>

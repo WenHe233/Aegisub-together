@@ -6649,3 +6649,153 @@ msgstr ""
 
 #~ msgid "Drawings"
 #~ msgstr "Rajzok"
+
+msgid "Bold"
+msgstr "Félkövér"
+
+msgid "Italics"
+msgstr "Dőlt"
+
+msgid "Strikeout"
+msgstr "Áthúzott"
+
+msgid "Underline"
+msgstr "Aláhúzott"
+
+msgid "change text"
+msgstr "szöveg módosítása"
+
+msgid "Change text"
+msgstr "Szöveg módosítása"
+
+msgid "Change only text in the selected lines"
+msgstr "Csak a szöveg átírása a kijelölt sorokban"
+
+msgid "Copy text for Translator"
+msgstr "Szöveg másolása a fordítónak"
+
+msgid "Copy text and time for Translator"
+msgstr "Szöveg másolása a fordítónak időbélyeggel"
+
+msgid "Show Clip Info"
+msgstr "Clip információk mutatása"
+
+msgid "Show Masks"
+msgstr "Maszkok mutatása"
+
+msgid "Toggle Masks"
+msgstr "Maszkok kapcsolása"
+
+msgid "Toggle mask rendering in the video"
+msgstr "Maszkok megjelenítésének kapcsolása"
+
+msgid "Show Subtitle"
+msgstr "Felirat sorok mutatása"
+
+msgid "Toggle Subtitle"
+msgstr "Felirat sorok kapcsolása"
+
+msgid "Toggle subtitle rendering in the video"
+msgstr "Felirat sorok megjelenítésének kapcsolása"
+
+msgid "Append"
+msgstr "Hozzáad"
+
+msgid "Append a control point"
+msgstr "Hozzáad egy vezérlőpontot"
+
+msgid "Keep gradients"
+msgstr "Színátmenetek megtartása"
+
+msgid "Right click to reset"
+msgstr "Jobb klikk a resethez"
+
+msgid "Hold CTRL, SHIFT or both to be more precise while using mouse wheel"
+msgstr "Tarts nyomva a CTRL, SHIFT vagy mindkettő gombokat a precízebb állításért görgővel"
+
+msgid "Double click to see options"
+msgstr "Dupla kattintás az opciók listázásáért"
+
+msgid "Brightness: %d%%"
+msgstr "Fényerő: %d%%"
+
+msgid "All fonts"
+msgstr "Minden betűtípus"
+
+msgid "Recent fonts"
+msgstr "Legutóbbi"
+
+msgid "Most used"
+msgstr "Leggyakoribb"
+
+msgid "Favorites"
+msgstr "Kedvencek"
+
+msgid "Own lists"
+msgstr "Saját listák"
+
+msgid "Create new list"
+msgstr "Új lista"
+
+msgid "Name cannot be empty"
+msgstr "A név nem lehet üres"
+
+msgid "List with this name already exists"
+msgstr "Ilyen nevű lista már van"
+
+msgid "Rename"
+msgstr "Átnevez"
+
+msgid "Duplicate"
+msgstr "Duplikál"
+
+msgid "Remove from Favorites"
+msgstr "Törlés a kedvencekből"
+
+msgid "Add to Favorites"
+msgstr "Kedvencekhez adás"
+
+msgid "Assign to list"
+msgstr "Listához rendelés"
+
+msgid "Remove from current list"
+msgstr "Törlés a jelenlegi listából"
+
+msgid "Font picker"
+msgstr "Betűtípus választó"
+
+msgid "Refresh"
+msgstr "Frissítés"
+
+msgid "Preview size"
+msgstr "Minta mérete"
+
+msgid "Show @ fonts"
+msgstr "@ betűtípusok mutatása"
+
+msgid "Import from the subtitle"
+msgstr "Importálás a feliratból"
+
+msgid "Collecting fonts..."
+msgstr "Betűtípusok összegyűjtése..."
+
+msgid "Temporary List"
+msgstr "Ideiglenes lista"
+
+msgid "Copy font's name"
+msgstr "Font nevének másolása"
+
+msgid "Remove from Temporary List"
+msgstr "Törlés az ideiglenes listából"
+
+msgid "Add to Temporary List"
+msgstr "Ideiglenes listába mentés"
+
+msgid "Image Mask (%d lines)"
+msgstr "Kép maszk (%d sor)"
+
+msgid "Image Mask background"
+msgstr "Kép maszk háttere"
+
+msgid "Show Source"
+msgstr "Forrás mutatása"

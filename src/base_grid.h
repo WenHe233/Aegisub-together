@@ -85,10 +85,12 @@ class BaseGrid final : public wxWindow {
 		wxBrush LeftCol;
 		wxBrush FoldOpen;
 		wxBrush FoldClosed;
+		wxBrush ImageMask;
 	} row_colors;
 
 	std::vector<AssDialogue*> index_line_map;  ///< Row number -> dialogue line
 	std::vector<AssDialogue*> vis_index_line_map;  ///< Visible Row number -> dialogue line
+	std::unordered_map<AssDialogue*, int> vis_lookup;
 
 	/// Connection for video seek event. Stored explicitly so that it can be
 	/// blocked if the relevant option is disabled
@@ -116,7 +118,7 @@ class BaseGrid final : public wxWindow {
 
 	bool IsDisplayed(const AssDialogue *line) const;
 
-	void UpdateMaps();
+	void UpdateMaps(bool rebuild = true);
 	void UpdateStyle();
 
 	void SelectRow(int row, bool addToSelected = false, bool select=true);
@@ -124,7 +126,6 @@ class BaseGrid final : public wxWindow {
 	int GetRows() const { return index_line_map.size(); }
 	int GetVisRows() const { return vis_index_line_map.size(); }
 	void MakeRowVisible(int row);
-	void MakeVisRowVisible(int row);
 
 	/// @brief Get dialogue by index
 	/// @param n Index to look up

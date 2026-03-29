@@ -38,10 +38,13 @@
 #include "../compat.h"
 #include "../dialog_search_replace.h"
 #include "../dialogs.h"
+#include "../font_size_object.h"
 #include "../format.h"
+#include "../image_mask_combiner.h"
 #include "../include/aegisub/context.h"
 #include "../initial_line_state.h"
 #include "../libresrc/libresrc.h"
+#include "../line_change_flags.h"
 #include "../options.h"
 #include "../project.h"
 #include "../selection_controller.h"
@@ -70,6 +73,8 @@
 #include <wx/fontdlg.h>
 #include <wx/textentry.h>
 
+void EditChangeText(agi::Context *c);
+
 namespace {
 	using namespace boost::adaptors;
 	using cmd::Command;
@@ -92,6 +97,67 @@ struct validate_sel_multiple : public Command {
 	CMD_TYPE(COMMAND_VALIDATE)
 	bool Validate(const agi::Context *c) override {
 		return c->selectionController->GetSelectedSet().size() > 1;
+	}
+};
+
+struct validate_no_imagemask : public Command {
+	CMD_TYPE(COMMAND_VALIDATE)
+	bool Validate(const agi::Context *c) override {
+		const auto& sel = c->selectionController->GetSelectedSet();
+
+		for (auto* line : sel)
+			if (c->imageMask && c->imageMask->IsGroupStart(line))
+				return false;
+
+		return true;
+	}
+};
+
+struct validate_sel_multiple_no_imagemask : public Command {
+	CMD_TYPE(COMMAND_VALIDATE)
+	bool Validate(const agi::Context *c) override {
+		const auto& sel = c->selectionController->GetSelectedSet();
+
+		if (sel.size() <= 1)
+			return false;
+
+		for (auto* line : sel)
+			if (c->imageMask && c->imageMask->IsGroupStart(line))
+				return false;
+
+		return true;
+	}
+};
+
+struct validate_sel_nonempty_no_imagemask : public Command {
+	CMD_TYPE(COMMAND_VALIDATE)
+	bool Validate(const agi::Context *c) override {
+		const auto& sel = c->selectionController->GetSelectedSet();
+
+		if (sel.size() <= 0)
+			return false;
+
+		for (auto* line : sel)
+			if (c->imageMask && c->imageMask->IsGroupStart(line))
+				return false;
+
+		return true;
+	}
+};
+
+struct validate_video_and_sel_nonempty_no_imagemask : public Command {
+	CMD_TYPE(COMMAND_VALIDATE)
+	bool Validate(const agi::Context *c) override {
+		const auto& sel = c->selectionController->GetSelectedSet();
+
+		if (!c->project->VideoProvider() || sel.size() <= 0)
+			return false;
+
+		for (auto* line : sel)
+			if (c->imageMask && c->imageMask->IsGroupStart(line))
+				return false;
+
+		return true;
 	}
 };
 
@@ -385,6 +451,118 @@ void show_color_picker(const agi::Context *c, agi::Color (AssStyle::*field), con
 	}
 }
 
+static void cleanup_override_block(parsed_line& parsed, int blockn, AssStyle const* style, LineChangeFlags const& flags)
+{
+	if (blockn < 0 || blockn >= (int)parsed.blocks.size() || !flags.Any())
+		return;
+
+	auto* block = parsed.blocks[blockn].get();
+	if (block->GetType() != AssBlockType::OVERRIDE)
+		return;
+
+	auto* ovr = static_cast<AssDialogueBlockOverride*>(block);
+	int cur_b;
+	int cur_i;
+	int cur_u;
+	int cur_s;
+	std::string cur_fn;
+	double cur_fs;
+	double cur_fscx;
+	double cur_fscy;
+	double cur_fsp;
+
+	if (flags.b)
+		cur_b = parsed.get_value(blockn - 1, style->bold, "\\b");
+	if (flags.i)
+		cur_i = parsed.get_value(blockn - 1, style->italic, "\\i");
+	if (flags.u)
+		cur_u = parsed.get_value(blockn - 1, style->underline, "\\u");
+	if (flags.s)
+		cur_s = parsed.get_value(blockn - 1, style->strikeout, "\\s");
+	if (flags.fn)
+		cur_fn = parsed.get_value(blockn - 1, style->font, "\\fn");
+
+	if (flags.fs)
+		cur_fs   = parsed.get_value(blockn - 1, (double)style->fontsize, "\\fs");
+	if (flags.fscx)
+		cur_fscx = parsed.get_value(blockn - 1, style->scalex, "\\fscx");
+	if (flags.fscy)
+		cur_fscy = parsed.get_value(blockn - 1, style->scaley, "\\fscy");
+	if (flags.fsp)
+		cur_fsp  = parsed.get_value(blockn - 1, style->spacing, "\\fsp");
+
+	for (size_t i = 0; i < ovr->Tags.size(); ) {
+		auto& tag = ovr->Tags[i];
+		bool erase = false;
+
+		if (flags.b && tag.Name == "\\b") {
+			int v = tag.Params[0].Get<int>(cur_b);
+			if (v == cur_b) erase = true;
+			else cur_b = v;
+		}
+		else if (flags.i && tag.Name == "\\i") {
+			int v = tag.Params[0].Get<int>(cur_i);
+			if (v == cur_i) erase = true;
+			else cur_i = v;
+		}
+		else if (flags.u && tag.Name == "\\u") {
+			int v = tag.Params[0].Get<int>(cur_u);
+			if (v == cur_u) erase = true;
+			else cur_u = v;
+		}
+		else if (flags.s && tag.Name == "\\s") {
+			int v = tag.Params[0].Get<int>(cur_s);
+			if (v == cur_s) erase = true;
+			else cur_s = v;
+		}
+		else if (flags.fn && tag.Name == "\\fn") {
+			std::string v = tag.Params[0].Get<std::string>(cur_fn);
+			if (v == cur_fn) erase = true;
+			else cur_fn = v;
+		}
+		else if (flags.fs && tag.Name == "\\fs") {
+			double v = tag.Params[0].Get<double>(cur_fs);
+			if (v == cur_fs) erase = true;
+			else cur_fs = v;
+		}
+		else if (flags.fscx && tag.Name == "\\fscx") {
+			double v = tag.Params[0].Get<double>(cur_fscx);
+			if (v == cur_fscx) erase = true;
+			else cur_fscx = v;
+		}
+		else if (flags.fscy && tag.Name == "\\fscy") {
+			double v = tag.Params[0].Get<double>(cur_fscy);
+			if (v == cur_fscy) erase = true;
+			else cur_fscy = v;
+		}
+		else if (flags.fsp && tag.Name == "\\fsp") {
+			double v = tag.Params[0].Get<double>(cur_fsp);
+			if (v == cur_fsp) erase = true;
+			else cur_fsp = v;
+		}
+
+		if (erase)
+			ovr->Tags.erase(ovr->Tags.begin() + i);
+		else
+			++i;
+	}
+
+	parsed.line->UpdateText(parsed.blocks);
+	parsed.blocks = parsed.line->ParseTags();
+
+	if (ovr->Tags.empty()) {
+		std::string text = parsed.line->Text.get();
+
+		size_t pos = text.find("{}");
+		if (pos != std::string::npos)
+			text.erase(pos, 2);
+
+		parsed.line->Text = text;
+		parsed.blocks = parsed.line->ParseTags();
+		return;
+	}
+}
+
 struct edit_color_primary final : public Command {
 	CMD_NAME("edit/color/primary")
 	CMD_ICON(button_color_one)
@@ -490,9 +668,40 @@ struct edit_font final : public Command {
 
 	void operator()(agi::Context *c) override {
 		const parsed_line active(c->selectionController->GetActiveLine());
-		const int insertion_point = normalize_pos(active.line->Text, c->textSelectionController->GetInsertionPoint());
+
+		int orig_pos = c->textSelectionController->GetInsertionPoint();
+		int insertion_point = normalize_pos(active.line->Text, orig_pos);
+		auto const& sel = c->selectionController->GetSelectedSet();
+
+		if (sel.size() > 1) {
+			insertion_point = 0;
+			orig_pos = 0;
+		}
 
 		auto font_for_line = [&](parsed_line const& line) -> wxFont {
+			const int blockn = line.block_at_pos(insertion_point);
+
+			const AssStyle *style = c->ass->GetStyle(line.line->Style);
+			const AssStyle default_style;
+			if (!style) {
+				style = &default_style;
+			}
+
+			wxFont result = wxFont(
+				line.get_value(blockn, (int)style->fontsize, "\\fs"),
+				wxFONTFAMILY_DEFAULT,
+				line.get_value(blockn, style->italic, "\\i") ? wxFONTSTYLE_ITALIC : wxFONTSTYLE_NORMAL,
+				line.get_value(blockn, style->bold, "\\b") ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL,
+				line.get_value(blockn, style->underline, "\\u"),
+				to_wx(line.get_value(blockn, style->font, "\\fn")));
+
+			if (line.get_value(blockn, style->underline, "\\s"))
+				result.SetStrikethrough(true);
+
+			return result;
+		};
+
+		auto face_for_line = [&](parsed_line const& line) -> wxString {
 			const int blockn = line.block_at_pos(insertion_point);
 
 			const AssStyle *style = c->ass->GetStyle(line.line->Style);
@@ -500,40 +709,122 @@ struct edit_font final : public Command {
 			if (!style)
 				style = &default_style;
 
-			return wxFont(
-				line.get_value(blockn, (int)style->fontsize, "\\fs"),
-				wxFONTFAMILY_DEFAULT,
-				line.get_value(blockn, style->italic, "\\i") ? wxFONTSTYLE_ITALIC : wxFONTSTYLE_NORMAL,
-				line.get_value(blockn, style->bold, "\\b") ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL,
-				line.get_value(blockn, style->underline, "\\u"),
-				to_wx(line.get_value(blockn, style->font, "\\fn")));
+			return to_wx(line.get_value(blockn, style->font, "\\fn"));
 		};
 
+
 		const wxFont initial = font_for_line(active);
-		const wxFont font = wxGetFontFromUser(c->parent, initial);
-		if (!font.Ok() || font == initial) return;
+		const wxString initialFace = face_for_line(active);
 
-		update_lines(c, _("set font"), [&](AssDialogue *line, int sel_start, int, int norm_sel_start, int) {
-			parsed_line parsed(line);
-			const wxFont startfont = font_for_line(parsed);
-			int shift = 0;
-			auto do_set_tag = [&](const char *tag_name, std::string const& value) {
-				shift += parsed.set_tag(tag_name, value, norm_sel_start, sel_start + shift);
-			};
+		FontSizeObject curSizeObj;
+		{
+			int blockn = active.block_at_pos(insertion_point);
 
-			if (font.GetFaceName() != startfont.GetFaceName())
-				do_set_tag("\\fn", from_wx(font.GetFaceName()));
-			if (font.GetPointSize() != startfont.GetPointSize())
-				do_set_tag("\\fs", std::to_string(font.GetPointSize()));
-			if (font.GetWeight() != startfont.GetWeight())
-				do_set_tag("\\b", std::to_string(font.GetWeight() == wxFONTWEIGHT_BOLD));
-			if (font.GetStyle() != startfont.GetStyle())
-				do_set_tag("\\i", std::to_string(font.GetStyle() == wxFONTSTYLE_ITALIC));
-			if (font.GetUnderlined() != startfont.GetUnderlined())
-				do_set_tag("\\i", std::to_string(font.GetUnderlined()));
+			const AssStyle* style = c->ass->GetStyle(active.line->Style);
+			const AssStyle default_style;
+			if (!style)
+				style = &default_style;
 
-			return shift;
+			curSizeObj.fs   = active.get_value(blockn, (double)style->fontsize, "\\fs");
+			curSizeObj.fscx = active.get_value(blockn, style->scalex, "\\fscx");
+			curSizeObj.fscy = active.get_value(blockn, style->scaley, "\\fscy");
+			curSizeObj.fsp  = active.get_value(blockn,style->spacing, "\\fsp");
+		}
+
+		using line_info = parsed_line;
+		std::vector<line_info> lines;
+
+		for (auto line : sel)
+			lines.emplace_back(line);
+
+		int active_shift = 0;
+		int commit_id = -1;
+
+		bool ok = GetFontFromUser(c->parent, initialFace, initial, curSizeObj, c->ass.get(), [&](wxString const& face, wxFont const& new_font, FontSizeObject const& size, LineChangeFlags const& flags) {
+			if (!flags.Any())
+				return;
+
+			bool isChanged = false;
+
+			for (auto& parsed : lines) {
+				int total_shift = 0;
+
+				std::string old_text = parsed.line->Text.get();
+				int old_len = parsed.line->Text.get().size();
+
+				const AssStyle* style = c->ass->GetStyle(parsed.line->Style);
+				const AssStyle default_style;
+				if (!style) style = &default_style;
+
+				if (flags.fn) {
+					int s = parsed.set_tag("\\fn", from_wx(face), insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				if (flags.b) {
+					int s = parsed.set_tag("\\b", new_font.GetWeight() == wxFONTWEIGHT_BOLD ? "1" : "0", insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				if (flags.i) {
+					int s = parsed.set_tag("\\i", new_font.GetStyle() == wxFONTSTYLE_ITALIC ? "1" : "0", insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				if (flags.u) {
+					int s = parsed.set_tag("\\u", new_font.GetUnderlined() ? "1" : "0", insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				if (flags.s) {
+					int s = parsed.set_tag("\\s", new_font.GetStrikethrough() ? "1" : "0", insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				if (flags.fs) {
+					int s = parsed.set_tag("\\fs", agi::format("%g", size.fs), insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				if (flags.fscx) {
+					int s = parsed.set_tag("\\fscx", agi::format("%g", size.fscx), insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				if (flags.fscy) {
+					int s = parsed.set_tag("\\fscy", agi::format("%g", size.fscy), insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				if (flags.fsp) {
+					int s = parsed.set_tag("\\fsp", agi::format("%g", size.fsp), insertion_point, orig_pos + total_shift);
+					total_shift += s;
+				}
+
+				cleanup_override_block(parsed, parsed.block_at_pos(insertion_point), style, flags);
+
+				if (parsed.line == active.line) {
+					int new_len = parsed.line->Text.get().size();
+					active_shift = new_len - old_len;
+				}
+
+				if (parsed.line->Text.get() != old_text)
+					isChanged = true;
+			}
+
+			if (isChanged) {
+				commit_id = c->ass->Commit(_("set font"), AssFile::COMMIT_DIAG_TEXT, commit_id, sel.size() == 1 ? *sel.begin() : nullptr);
+			}
+
+			if (active_shift) {
+				int new_pos = orig_pos + active_shift;
+				c->textSelectionController->SetSelection(new_pos, new_pos);
+			}
 		});
+
+		if (!ok && commit_id != -1) {
+			c->subsController->Undo();
+		}
 	}
 };
 
@@ -718,7 +1009,7 @@ static void duplicate_lines(agi::Context *c, int shift) {
 	c->selectionController->SetSelectionAndActive(std::move(new_sel), new_active);
 }
 
-struct edit_line_duplicate final : public validate_sel_nonempty {
+struct edit_line_duplicate final : public validate_sel_nonempty_no_imagemask {
 	CMD_NAME("edit/line/duplicate")
 	STR_MENU("&Duplicate Lines")
 	STR_DISP("Duplicate Lines")
@@ -729,7 +1020,7 @@ struct edit_line_duplicate final : public validate_sel_nonempty {
 	}
 };
 
-struct edit_line_duplicate_shift final : public validate_video_and_sel_nonempty {
+struct edit_line_duplicate_shift final : public validate_video_and_sel_nonempty_no_imagemask {
 	CMD_NAME("edit/line/split/after")
 	STR_MENU("Split lines after current frame")
 	STR_DISP("Split lines after current frame")
@@ -741,7 +1032,7 @@ struct edit_line_duplicate_shift final : public validate_video_and_sel_nonempty 
 	}
 };
 
-struct edit_line_duplicate_shift_back final : public validate_video_and_sel_nonempty {
+struct edit_line_duplicate_shift_back final : public validate_video_and_sel_nonempty_no_imagemask {
 	CMD_NAME("edit/line/split/before")
 	STR_MENU("Split lines before current frame")
 	STR_DISP("Split lines before current frame")
@@ -774,16 +1065,20 @@ static void combine_karaoke(AssDialogue *first, AssDialogue *second) {
 		first->Text = agi::Str(first->Text.get(), "{\\k", std::to_string((second->End - second->Start) / 10), "}", second->Text.get());
 	else
 		first->Text = agi::Str("{\\k", std::to_string((first->End - first->Start) / 10), "}", first->Text.get());
+
+	first->SourceLineText = first->GetStrippedText();
 }
 
 static void combine_concat(AssDialogue *first, AssDialogue *second) {
 	if (second)
 		first->Text = agi::Str(first->Text.get(), " ", second->Text.get());
+
+	first->SourceLineText = first->GetStrippedText();
 }
 
 static void combine_drop(AssDialogue *, AssDialogue *) { }
 
-struct edit_line_join_as_karaoke final : public validate_sel_multiple {
+struct edit_line_join_as_karaoke final : public validate_sel_multiple_no_imagemask {
 	CMD_NAME("edit/line/join/as_karaoke")
 	STR_MENU("As &Karaoke")
 	STR_DISP("As Karaoke")
@@ -794,7 +1089,7 @@ struct edit_line_join_as_karaoke final : public validate_sel_multiple {
 	}
 };
 
-struct edit_line_join_concatenate final : public validate_sel_multiple {
+struct edit_line_join_concatenate final : public validate_sel_multiple_no_imagemask {
 	CMD_NAME("edit/line/join/concatenate")
 	STR_MENU("&Concatenate")
 	STR_DISP("Concatenate")
@@ -805,7 +1100,7 @@ struct edit_line_join_concatenate final : public validate_sel_multiple {
 	}
 };
 
-struct edit_line_join_keep_first final : public validate_sel_multiple {
+struct edit_line_join_keep_first final : public validate_sel_multiple_no_imagemask {
 	CMD_NAME("edit/line/join/keep_first")
 	STR_MENU("Keep &First")
 	STR_DISP("Keep First")
@@ -1266,6 +1561,18 @@ struct edit_insert_original final : public Command {
 	}
 };
 
+struct edit_line_change_text final : public Command {
+	CMD_NAME("edit/line/change-text")
+	STR_MENU("Change text")
+	STR_DISP("Change text")
+	STR_HELP("Change only text in the selected lines")
+	CMD_TYPE(COMMAND_VALIDATE)
+
+	void operator()(agi::Context *c) override {
+		EditChangeText(c);
+	}
+};
+
 }
 
 namespace cmd {
@@ -1292,6 +1599,7 @@ namespace cmd {
 		reg(std::make_unique<edit_line_split_estimate>());
 		reg(std::make_unique<edit_line_split_preserve>());
 		reg(std::make_unique<edit_line_split_video>());
+		reg(std::make_unique<edit_line_change_text>());
 		reg(std::make_unique<edit_style_bold>());
 		reg(std::make_unique<edit_style_italic>());
 		reg(std::make_unique<edit_style_underline>());

@@ -38,6 +38,7 @@
 
 #include "ass_file.h"
 #include "async_video_provider.h"
+#include "audio_controller.h"
 #include "command/command.h"
 #include "compat.h"
 #include "format.h"
@@ -51,11 +52,13 @@
 #include "video_out_gl.h"
 #include "video_controller.h"
 #include "visual_tool.h"
+#include "visual_tool_cross.h"
 
 
 #include <algorithm>
 #include <wx/combobox.h>
 #include <wx/menu.h>
+#include <wx/slider.h>
 #include <wx/textctrl.h>
 #include <wx/toolbar.h>
 
@@ -96,19 +99,27 @@ enum {
 	NOTHING,
 };
 
-VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBox, wxWindow *parent, agi::Context *c)
+VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBox, wxComboBox *speedBox, wxSlider *brightnessSlider, wxWindow *parent, agi::Context *c)
 : wxGLCanvas(parent, buildGLAttributes())
 , autohideTools(OPT_GET("Tool/Visual/Autohide"))
 , con(c)
 , windowZoomValue(OPT_GET("Video/Default Zoom")->GetInt() * .125 + .125)
 , toolBar(toolbar)
 , zoomBox(zoomBox)
+, speedBox(speedBox)
+, brightnessSlider(brightnessSlider)
 , freeSize(freeSize)
 , scale_factor(GetContentScaleFactor())
 {
 	zoomBox->SetValue(fmt_wx("%g%%", windowZoomValue * 100.));
 	zoomBox->Bind(wxEVT_COMBOBOX, &VideoDisplay::SetWindowZoomFromBox, this);
 	zoomBox->Bind(wxEVT_TEXT_ENTER, &VideoDisplay::SetWindowZoomFromBoxText, this);
+
+	speedBox->Bind(wxEVT_COMBOBOX, &VideoDisplay::OnSpeedBoxChange, this);
+	speedBox->Bind(wxEVT_RIGHT_DOWN, &VideoDisplay::OnSpeedBoxReset, this);
+
+	brightnessSlider->Bind(wxEVT_SLIDER, &VideoDisplay::OnBrightnessSlider, this);
+	brightnessSlider->Bind(wxEVT_RIGHT_DOWN, &VideoDisplay::OnBrightnessReset, this);
 
 	con->videoController->Bind(EVT_FRAME_READY, &VideoDisplay::UploadFrameData, this);
 	connections = agi::signal::make_vector({
@@ -123,9 +134,11 @@ VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBo
 		LOG_E("video/display") << "Failed to enable touch events.";
 	}
 
+	rightClickTimer.SetOwner(this);
+	Bind(wxEVT_TIMER, &VideoDisplay::OnRightClickTimer, this);
+
 	Bind(wxEVT_PAINT, std::bind(&VideoDisplay::Render, this));
 	Bind(wxEVT_SIZE, &VideoDisplay::OnSizeEvent, this);
-	Bind(wxEVT_CONTEXT_MENU, &VideoDisplay::OnContextMenu, this);
 	Bind(wxEVT_ENTER_WINDOW, &VideoDisplay::OnMouseEvent, this);
 	Bind(wxEVT_CHAR_HOOK, &VideoDisplay::OnKeyDown, this);
 	Bind(wxEVT_LEAVE_WINDOW, &VideoDisplay::OnMouseLeave, this);
@@ -134,6 +147,8 @@ VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBo
 	Bind(wxEVT_LEFT_UP, &VideoDisplay::OnMouseEvent, this);
 	Bind(wxEVT_MIDDLE_DOWN, &VideoDisplay::OnMouseEvent, this);
 	Bind(wxEVT_MIDDLE_UP, &VideoDisplay::OnMouseEvent, this);
+	Bind(wxEVT_RIGHT_DOWN, &VideoDisplay::OnMouseEvent, this);
+	Bind(wxEVT_RIGHT_UP, &VideoDisplay::OnMouseEvent, this);
 	Bind(wxEVT_MOTION, &VideoDisplay::OnMouseEvent, this);
 	Bind(wxEVT_MOUSEWHEEL, &VideoDisplay::OnMouseWheel, this);
 	Bind(wxEVT_GESTURE_ZOOM, &VideoDisplay::OnGestureZoom, this);
@@ -192,7 +207,7 @@ void VideoDisplay::Render() try {
 
 	try {
 		if (pending_frame) {
-			videoOut->UploadFrameData(*pending_frame);
+			videoOut->UploadFrameData(*pending_frame, brightnessSlider->GetValue() / 100.0f);
 			pending_frame.reset();
 		}
 	}
@@ -243,7 +258,7 @@ void VideoDisplay::Render() try {
 		}
 	}
 
-	if ((mouse_pos || !autohideTools->GetBool()) && tool)
+	if ((mouse_pos || !autohideTools->GetBool()) && tool && !isRightHold)
 		tool->Draw();
 
 	SwapBuffers();
@@ -395,7 +410,25 @@ void VideoDisplay::OnSizeEvent(wxSizeEvent &) {
 }
 
 void VideoDisplay::OnMouseEvent(wxMouseEvent& event) {
-	if (event.ButtonDown())
+	if (event.RightDown()) {
+		isRightHold = false;
+		rightClickTimer.StartOnce(150);
+	}
+
+	if (event.RightUp()) {
+		rightClickTimer.Stop();
+
+		if (isRightHold) {
+			SetCursor(wxNullCursor);
+			Render();
+		} else {
+			VideoDisplay::OnContextMenu();
+		}
+
+		isRightHold = false;
+	}
+
+	if (event.ButtonDown() && !event.RightDown())
 		SetFocus();
 
 	if (event.Dragging() && event.MiddleIsDown()) {
@@ -404,8 +437,15 @@ void VideoDisplay::OnMouseEvent(wxMouseEvent& event) {
 
 	last_mouse_pos = mouse_pos = event.GetPosition();
 
-	if (tool)
-		tool->OnMouseEvent(event);
+	if (tool && !isRightHold) {
+		if (!con->videoController->IsPlaying()) {
+			tool->OnMouseEvent(event);
+		}
+
+		if (ToolIsType(typeid(VisualToolCross))) {
+			SetCursor(con->videoController->IsPlaying() ? wxNullCursor : wxCursor(wxCURSOR_BLANK));
+		}
+	}
 }
 
 void VideoDisplay::OnMouseLeave(wxMouseEvent& event) {
@@ -415,6 +455,13 @@ void VideoDisplay::OnMouseLeave(wxMouseEvent& event) {
 }
 
 void VideoDisplay::OnMouseWheel(wxMouseEvent& event) {
+	bool cont = true;
+	if (tool)
+		cont = tool->OnMouseWheel(event);
+
+	if (!cont)
+		return;
+
 	if (int wheel = event.GetWheelRotation()) {
 		if (ForwardMouseWheelEvent(this, event)) {
 			const char *opt = "Scroll Action";
@@ -496,10 +543,19 @@ void VideoDisplay::Pan(Vector2D delta) {
 	PositionVideo();
 }
 
-void VideoDisplay::OnContextMenu(wxContextMenuEvent&) {
+void VideoDisplay::OnContextMenu() {
 	if (!context_menu) context_menu = menu::GetMenu("video_context", (wxID_HIGHEST + 1) + 9000, con);
 	SetCursor(wxNullCursor);
 	menu::OpenPopupMenu(context_menu.get(), this);
+}
+
+void VideoDisplay::OnRightClickTimer(wxTimerEvent&) {
+	if (wxGetMouseState().RightIsDown()) {
+		isRightHold = true;
+
+		SetCursor(wxCursor(wxCURSOR_BLANK));
+		Render();
+	}
 }
 
 void VideoDisplay::OnKeyDown(wxKeyEvent &event) {
@@ -580,6 +636,48 @@ void VideoDisplay::SetWindowZoomFromBoxText(wxCommandEvent &) {
 	double value;
 	if (strValue.ToDouble(&value))
 		SetWindowZoom(value / 100.);
+}
+
+void VideoDisplay::OnSpeedBoxChange(wxCommandEvent &) {
+	int sel = speedBox->GetSelection();
+
+	if (sel == wxNOT_FOUND)
+		return;
+
+	static const double speeds[] = {
+		0.25, 0.5, 0.75,
+		1.0,
+		1.25, 1.5, 1.75,
+		2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0
+	};
+
+	if (sel < 0 || sel >= (int)(sizeof(speeds)/sizeof(double)))
+		return;
+
+	double speed = speeds[sel];
+
+	con->audioController->SetPlaybackSpeed(speed);
+	con->videoController->SetPlaybackSpeed(speed);
+}
+
+void VideoDisplay::OnSpeedBoxReset(wxMouseEvent &) {
+	speedBox->SetSelection(3);
+
+	con->audioController->SetPlaybackSpeed(1.0);
+	con->videoController->SetPlaybackSpeed(1.0);
+}
+
+void VideoDisplay::OnBrightnessSlider(wxCommandEvent &) {
+	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", brightnessSlider->GetValue()) + " (" + _("Right click to reset") + ")");
+
+	con->videoController->JumpToFrame(con->videoController->GetFrameN());
+}
+
+void VideoDisplay::OnBrightnessReset(wxMouseEvent &) {
+	brightnessSlider->SetValue(100);
+	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", brightnessSlider->GetValue()) + " (" + _("Right click to reset") + ")");
+
+	con->videoController->JumpToFrame(con->videoController->GetFrameN());
 }
 
 void VideoDisplay::SetTool(std::unique_ptr<VisualToolBase> new_tool) {

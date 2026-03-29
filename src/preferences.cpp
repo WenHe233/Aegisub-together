@@ -241,6 +241,10 @@ void Interface(wxTreebook *book, Preferences *parent) {
 	auto visual_tools = p->PageSizer(_("Visual Tools"));
 	p->OptionAdd(visual_tools, _("Shape handle size"), "Tool/Visual/Shape Handle Size");
 
+	auto font_picker = p->PageSizer(_("Font Picker"));
+	p->OptionAddMultiline(font_picker, "Tool/Font Picker/Preview");
+	p->OptionAddMultiline(font_picker, "Tool/Font Picker/Sample");
+
 #if defined(__WXMSW__) && wxVERSION_NUMBER >= 3300
 	auto dark_mode = p->PageSizer(_("Dark Mode"));
 	p->OptionAdd(dark_mode, _("Enable experimental dark mode (restart required)"), "App/Dark Mode");
@@ -306,6 +310,7 @@ void Interface_Colours(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(grid, _("Selected comment background"), "Colour/Subtitle Grid/Background/Selected Comment");
 	p->OptionAdd(grid, _("Open fold background"), "Colour/Subtitle Grid/Background/Open Fold");
 	p->OptionAdd(grid, _("Closed fold background"), "Colour/Subtitle Grid/Background/Closed Fold");
+	p->OptionAdd(grid, _("Image Mask background"), "Colour/Subtitle Grid/Background/Image Mask");
 	p->OptionAdd(grid, _("Header background"), "Colour/Subtitle Grid/Header");
 	p->OptionAdd(grid, _("Left Column"), "Colour/Subtitle Grid/Left Column");
 	p->OptionAdd(grid, _("Active Line Border"), "Colour/Subtitle Grid/Active Border");

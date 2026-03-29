@@ -97,6 +97,7 @@ class SubsEditBox final : public wxPanel {
 	wxRadioButton *by_frame;
 	wxTextCtrl *char_count;
 	wxCheckBox *split_box;
+	wxCheckBox *sourceline_box;
 
 	wxSizer *top_sizer;
 	wxSizer *middle_right_sizer;
@@ -154,6 +155,8 @@ class SubsEditBox final : public wxPanel {
 	void OnSplit(wxCommandEvent&);
 	void DoOnSplit(bool show_original);
 
+	void OnSourceLineChanged(wxCommandEvent&);
+
 	void SetPlaceholderCtrl(wxControl *ctrl, wxString const& value);
 
 	/// @brief Set a field in each selected line to a specified value
@@ -198,6 +201,7 @@ class SubsEditBox final : public wxPanel {
 
 	SubsTextEditCtrl *edit_ctrl;
 	wxTextCtrl *secondary_editor;
+	wxTextCtrl *souceline_editor;
 
 public:
 	/// @brief Constructor

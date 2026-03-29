@@ -38,7 +38,9 @@
 #include "audio_box.h"
 #include "compat.h"
 #include "fold_controller.h"
+#include "format.h"
 #include "grid_column.h"
+#include "image_mask_combiner.h"
 #include "options.h"
 #include "project.h"
 #include "utils.h"
@@ -54,6 +56,18 @@
 #include <wx/menu.h>
 #include <wx/scrolbar.h>
 #include <wx/sizer.h>
+
+static bool IsMaskLine(const AssDialogue* d) {
+	const std::string& raw = d->Text.get();
+
+	if (raw.find("\\p1") == std::string::npos)
+		return false;
+
+	if (raw.find("}m 0 0 l 0 ") == std::string::npos)
+		return false;
+
+	return true;
+}
 
 // Check menu.h for id range allocation before editing this enum
 enum {
@@ -103,6 +117,7 @@ BaseGrid::BaseGrid(wxWindow* parent, agi::Context *context)
 		OPT_SUB("Colour/Subtitle Grid/Background/Selection", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Background/Open Fold", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Background/Closed Fold", &BaseGrid::UpdateStyle, this),
+		OPT_SUB("Colour/Subtitle Grid/Background/Image Mask", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Collision", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Header", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Left Column", &BaseGrid::UpdateStyle, this),
@@ -149,6 +164,10 @@ void BaseGrid::OnSubtitlesCommit(int type) {
 	else if (type & AssFile::COMMIT_DIAG_TEXT) {
 		for (auto const& rect : text_refresh_rects)
 			RefreshRect(rect, false);
+
+		AssDialogue* activeLine = context->selectionController->GetActiveLine();
+		if (activeLine && (IsMaskLine(activeLine) || context->imageMask->IsInGroup(activeLine)))
+			UpdateMaps();
 	}
 }
 
@@ -196,6 +215,7 @@ void BaseGrid::UpdateStyle() {
 	row_colors.FoldOpen.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Open Fold")->GetColor()));
 	row_colors.FoldClosed.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Closed Fold")->GetColor()));
 	row_colors.LeftCol.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Left Column")->GetColor()));
+	row_colors.ImageMask.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Image Mask")->GetColor()));
 
 	if (width_helper)
 		width_helper->ClearCache();
@@ -206,15 +226,29 @@ void BaseGrid::UpdateStyle() {
 	Refresh(false);
 }
 
-void BaseGrid::UpdateMaps() {
+void BaseGrid::UpdateMaps(bool rebuild) {
 	index_line_map.clear();
 	vis_index_line_map.clear();
+	vis_lookup.clear();
 
 	for (auto& curdiag : context->ass->Events)
 		index_line_map.push_back(&curdiag);
 
+	std::vector<AssDialogue*> temp;
 	for (AssDialogue *curdiag = &*context->ass->Events.begin(); curdiag != nullptr; curdiag = curdiag->Fold.getNextVisible())
-		vis_index_line_map.push_back(&*curdiag);
+		temp.push_back(curdiag);
+
+	if (rebuild)
+		context->imageMask->Rebuild(temp);
+
+	for (auto* d : temp) {
+		if (context->imageMask->IsVisible(d))
+			vis_index_line_map.push_back(d);
+	}
+
+	for (int i = 0; i < (int)vis_index_line_map.size(); ++i) {
+		vis_lookup[vis_index_line_map[i]] = i;
+	}
 
 	SetColumnWidths();
 	AdjustScrollbar();
@@ -223,8 +257,13 @@ void BaseGrid::UpdateMaps() {
 
 void BaseGrid::OnActiveLineChanged(AssDialogue *new_active) {
 	if (new_active) {
-		if (new_active->Row != active_row)
-			MakeRowVisible(new_active->Row);
+		auto it = vis_lookup.find(new_active);
+
+		if (it != vis_lookup.end()) {
+			int vis = it->second;
+			MakeRowVisible(vis);
+		}
+
 		extendRow = active_row = new_active->Row;
 		Refresh(false);
 	}
@@ -233,10 +272,6 @@ void BaseGrid::OnActiveLineChanged(AssDialogue *new_active) {
 }
 
 void BaseGrid::MakeRowVisible(int row) {
-	MakeVisRowVisible(GetDialogue(row)->Fold.getVisibleRow());
-}
-
-void BaseGrid::MakeVisRowVisible(int row) {
 	int h = GetClientSize().GetHeight();
 
 	if (row < yPos + 1)
@@ -250,14 +285,45 @@ void BaseGrid::SelectRow(int row, bool addToSelected, bool select) {
 
 	AssDialogue *line = vis_index_line_map[row];
 
+	auto selection = context->selectionController->GetSelectedSet();
+
+	if (context->imageMask->IsGroupStart(line) && context->imageMask->IsCollapsed(line)) {
+		const auto& group = context->imageMask->GetGroupLines(line);
+
+		if (!addToSelected) {
+			Selection sel;
+			for (auto* l : group)
+				sel.insert(l);
+
+			context->selectionController->SetSelectedSet(std::move(sel));
+			return;
+		}
+
+		bool anySelected = false;
+		for (auto* l : group)
+			if (selection.count(l)) {
+				anySelected = true;
+				break;
+			}
+
+		for (auto* l : group) {
+			if (select && !anySelected)
+				selection.insert(l);
+			else
+				selection.erase(l);
+		}
+
+		context->selectionController->SetSelectedSet(std::move(selection));
+		return;
+	}
+
 	if (!addToSelected) {
 		context->selectionController->SetSelectedSet(Selection{line});
 		return;
 	}
 
-	bool selected = !!context->selectionController->GetSelectedSet().count(line);
+	bool selected = !!selection.count(line);
 	if (select != selected) {
-		auto selection = context->selectionController->GetSelectedSet();
 		if (select)
 			selection.insert(line);
 		else
@@ -379,6 +445,10 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		else if (curDiag->Comment)
 			color = row_colors.Comment;
 
+		if (context->imageMask->IsInGroup(curDiag)) {
+			color = row_colors.ImageMask;
+		}
+
 		if (OPT_GET("Subtitle/Grid/Highlight Subtitles in Frame")->GetBool() && IsDisplayed(curDiag)) {
 			if (color == row_colors.Default)
 				color = row_colors.Visible;
@@ -408,8 +478,23 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		int x = 0;
 		int y = (i + 1) * lineHeight;
 		for (size_t j : agi::util::range(columns.size())) {
-			if (paint_columns[j])
-				columns[j]->Paint(dc, x, y, curDiag, context);
+			if (paint_columns[j]) {
+				if (context->imageMask->IsGroupStart(curDiag) && context->imageMask->IsCollapsed(curDiag) && j == columns.size() - 1) {
+					wxString text = "--- " + fmt_tl("Image Mask (%d lines)", context->imageMask->GetGroupSize(curDiag)) + " ---";
+
+					int left = x + 4;
+					if (columns[j]->Centered()) {
+						wxSize ext = dc.GetTextExtent(text);
+						left += (columns[j]->Width() - 6 - ext.GetWidth()) / 2;
+					}
+
+					dc.DrawText(text, left, y + 2);
+				}
+				else {
+					columns[j]->Paint(dc, x, y, curDiag, context);
+				}	
+			}
+
 			x += columns[j]->Width();
 		}
 
@@ -468,6 +553,25 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 	AssDialogue *dlg = GetVisDialogue(row);
 	if (!dlg) row = 0;
 
+	if (dclick && dlg && context->imageMask->IsInGroup(dlg)) {
+		AssDialogue* target = dlg;
+
+		if (!context->imageMask->IsGroupStart(dlg)) {
+			const auto& group = context->imageMask->GetGroupLines(dlg);
+			if (!group.empty())
+				target = group.front();
+		}
+
+		context->imageMask->Toggle(target);
+
+		UpdateMaps(false);
+
+		SelectRow(vis_lookup[target], false);
+		context->selectionController->SetActiveLine(target);
+
+		return;
+	}
+
 	// Find the column the mouse is over
 	int colx = event.GetX();
 	int col;
@@ -485,7 +589,7 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 	if (holding) {
 		if (!event.LeftIsDown()) {
 			if (dlg)
-				MakeVisRowVisible(row);
+				MakeRowVisible(row);
 			holding = false;
 			ReleaseMouse();
 		}
@@ -559,8 +663,18 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 			// Toggle each
 			Selection newsel;
 			if (ctrl) newsel = selection;
-			for (int i = i1; i <= i2; i++)
-				newsel.insert(GetDialogue(i));
+			for (int i = i1; i <= i2; i++) {
+				AssDialogue* d = GetDialogue(i);
+
+				if (context->imageMask->IsGroupStart(d)) {
+					const auto& group = context->imageMask->GetGroupLines(d);
+					for (auto* l : group)
+						newsel.insert(l);
+				}
+				else {
+					newsel.insert(d);
+				}
+			}
 			context->selectionController->SetSelectedSet(std::move(newsel));
 			return;
 		}
@@ -584,7 +698,18 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 
 void BaseGrid::OnContextMenu(wxContextMenuEvent &evt) {
 	wxPoint pos = evt.GetPosition();
-	if (pos == wxDefaultPosition || ScreenToClient(pos).y > lineHeight) {
+	if (pos != wxDefaultPosition)
+		pos = ScreenToClient(pos);
+
+	int row = pos.y / lineHeight + yPos - 1;
+	AssDialogue* d = GetVisDialogue(row);
+
+	if (d && context->imageMask->IsGroupStart(d)) {
+		SelectRow(row, false);
+		context->selectionController->SetActiveLine(d);
+	}
+
+	if (pos == wxDefaultPosition || pos.y > lineHeight) {
 		if (!context_menu) context_menu = menu::GetMenu("grid_context", (wxID_HIGHEST + 1) + 8000, context);
 		menu::OpenPopupMenu(context_menu.get(), this);
 	}
@@ -762,7 +887,7 @@ void BaseGrid::OnKeyDown(wxKeyEvent &event) {
 
 		context->selectionController->SetSelectedSet(std::move(newsel));
 
-		MakeVisRowVisible(next);
+		MakeRowVisible(next);
 		return;
 	}
 }

@@ -124,6 +124,12 @@ class VideoDisplay final : public wxGLCanvas {
 	/// The dropdown box for selecting window zoom levels
 	wxComboBox *zoomBox;
 
+	/// The dropdown box for selecting speed levels
+	wxComboBox *speedBox;
+
+	/// The dropdown box for selecting brightness levels
+	wxSlider *brightnessSlider;
+
 	/// Whether the display can be freely resized by the user
 	bool freeSize;
 
@@ -131,6 +137,9 @@ class VideoDisplay final : public wxGLCanvas {
 	std::shared_ptr<VideoFrame> pending_frame;
 
 	int scale_factor;
+
+	wxTimer rightClickTimer;
+	bool isRightHold = false;
 
 	/// @brief Draw an overscan mask
 	/// @param horizontal_percent The percent of the video reserved horizontally
@@ -156,6 +165,14 @@ class VideoDisplay final : public wxGLCanvas {
 	/// Set the window zoom level to that indicated by the text
 	void SetWindowZoomFromBoxText(wxCommandEvent&);
 
+	/// Set the brightness level to that indicated by the slider
+	void OnSpeedBoxChange(wxCommandEvent&);
+	void OnSpeedBoxReset(wxMouseEvent&);
+
+	/// Set the brightness level to that indicated by the slider
+	void OnBrightnessSlider(wxCommandEvent&);
+	void OnBrightnessReset(wxMouseEvent&);
+
 	/// @brief Key event handler
 	void OnKeyDown(wxKeyEvent &event);
 	/// @brief Mouse event handler
@@ -165,7 +182,9 @@ class VideoDisplay final : public wxGLCanvas {
 	void OnGestureZoom(wxZoomGestureEvent& event);
 	/// @brief Recalculate video positioning and scaling when the available area or zoom changes
 	void OnSizeEvent(wxSizeEvent &event);
-	void OnContextMenu(wxContextMenuEvent&);
+	void OnContextMenu();
+
+	void OnRightClickTimer(wxTimerEvent& evt);
 
 	/// @brief Pan the video by delta
 	/// @param delta Delta in logical pixels
@@ -202,6 +221,8 @@ public:
 		wxToolBar *visualSubToolBar,
 		bool isDetached,
 		wxComboBox *zoomBox,
+		wxComboBox *speedBox,
+		wxSlider *brightnessSlider,
 		wxWindow* parent,
 		agi::Context *context);
 	~VideoDisplay();
@@ -224,6 +245,10 @@ public:
 	void SetTool(std::unique_ptr<VisualToolBase> new_tool);
 
 	void SetSubTool(int subtool) const { tool->SetSubTool(subtool); };
+
+	void UpdateTool(int subtool) const { tool->UpdateTool(subtool); };
+
+	void ResetTool() const { tool->ResetTool(); };
 
 	bool ToolIsType(std::type_info const& type) const;
 

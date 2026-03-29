@@ -20,6 +20,7 @@
 #include "ass_file.h"
 #include "export_fixstyle.h"
 #include "include/aegisub/subtitles_provider.h"
+#include "options.h"
 #include "video_frame.h"
 #include "video_provider_manager.h"
 
@@ -32,7 +33,7 @@ enum {
 	SUBS_FILE_ALREADY_LOADED = -2
 };
 
-std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, double time, bool raw) {
+std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, double time, bool raw, bool forceSub) {
 	// Find an unused buffer to use or allocate a new one if needed
 	std::shared_ptr<VideoFrame> frame;
 	for (auto& buffer : buffers) {
@@ -55,7 +56,7 @@ std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, doub
 	if (raw || !subs_provider || !subs) return frame;
 
 	try {
-		if (single_frame != frame_number && single_frame != SUBS_FILE_ALREADY_LOADED) {
+		if (forceSub || (single_frame != frame_number && single_frame != SUBS_FILE_ALREADY_LOADED)) {
 			// Generally edits and seeks come in groups; if the last thing done
 			// was seek it is more likely that the user will seek again and
 			// vice versa. As such, if this is the first frame requested after
@@ -76,7 +77,9 @@ std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, doub
 	catch (agi::Exception const& err) { throw SubtitlesProviderErrorEvent(err.GetMessage()); }
 
 	try {
-		subs_provider->DrawSubtitles(*frame, time / 1000.);
+		if (OPT_GET("Video/Toggle Subtitle")->GetBool()) {
+			subs_provider->DrawSubtitles(*frame, time / 1000.);
+		}
 	}
 	catch (agi::UserCancelException const&) { }
 
@@ -185,6 +188,14 @@ void AsyncVideoProvider::UpdateSubtitles(const AssDialogue *changed) throw() {
 	});
 }
 
+void AsyncVideoProvider::ResetCurrentFrame(bool forceSub) throw() {
+	uint_fast32_t req_version = ++version;
+
+	worker->Async([=, this]{
+		ProcAsync(req_version, false, forceSub);
+	});
+}
+
 void AsyncVideoProvider::RequestFrame(int new_frame, double new_time) throw() {
 	uint_fast32_t req_version = ++version;
 
@@ -224,7 +235,7 @@ bool AsyncVideoProvider::NeedUpdate(std::vector<AssDialogueBase const*> const& v
 	return false;
 }
 
-void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated) {
+void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated, bool forceSub) {
 	// Only actually produce the frame if there's no queued changes waiting
 	if (req_version < version || frame_number < 0) return;
 
@@ -243,7 +254,7 @@ void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated
 	last_rendered = frame_number;
 
 	try {
-		auto evt = new FrameReadyEvent(ProcFrame(frame_number, time), time);
+		auto evt = new FrameReadyEvent(ProcFrame(frame_number, time, false, forceSub), time);
 		evt->SetEventType(EVT_FRAME_READY);
 		parent->QueueEvent(evt);
 	}

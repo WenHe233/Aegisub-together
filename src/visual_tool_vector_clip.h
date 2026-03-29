@@ -21,6 +21,9 @@
 #include "spline.h"
 #include "command/command.h"
 
+#include <memory>
+
+class OpenGLText;
 class wxToolBar;
 
 /// Button IDs
@@ -29,6 +32,7 @@ enum VisualToolVectorClipMode {
 	VCLIP_LINE,
 	VCLIP_BICUBIC,
 	VCLIP_CONVERT,
+	VCLIP_APPEND,
 	VCLIP_INSERT,
 	VCLIP_REMOVE,
 	VCLIP_FREEHAND,
@@ -47,9 +51,10 @@ struct VisualToolVectorClipDraggableFeature final : public VisualDraggableFeatur
 };
 
 class VisualToolVectorClip final : public VisualTool<VisualToolVectorClipDraggableFeature> {
+	std::unique_ptr<OpenGLText> gl_text;
 	Spline spline; /// The current spline
 	wxToolBar *toolBar = nullptr; /// The subtoolbar
-	int mode = VCLIP_DRAG; /// 0-7
+	int mode = VCLIP_DRAG; /// 0-8
 	bool inverse = false; /// is iclip?
 	int featureSize = 0;
 
@@ -74,6 +79,7 @@ class VisualToolVectorClip final : public VisualTool<VisualToolVectorClipDraggab
 
 public:
 	VisualToolVectorClip(VideoDisplay *parent, agi::Context *context);
+	~VisualToolVectorClip();
 	void SetToolbar(wxToolBar *tb) override;
 
 	void SetSubTool(int subtool) override;

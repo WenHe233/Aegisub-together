@@ -34,6 +34,12 @@ class wxBitmapButton;
 class wxCommandEvent;
 class wxToolBar;
 
+/// Button IDs
+enum VisualToolDragMode {
+	DRAG_TOGGLE = 1,
+	DRAG_LOCK = 2
+};
+
 /// @class VisualToolDrag
 /// @brief Moveable features for the positions of each visible line
 class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
@@ -50,6 +56,9 @@ class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
 	/// When the button is pressed, will it convert the line to a move (vs. from
 	/// move to pos)? Used to avoid changing the button's icon unnecessarily
 	bool button_is_move = false;
+
+	void AddTool(int id);
+	void UpdateTool(int id);
 
 	/// @brief Create the features for a line
 	/// @param diag Line to create the features for
@@ -74,5 +83,5 @@ class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
 	void OnSubTool(wxCommandEvent &event);
 public:
 	VisualToolDrag(VideoDisplay *parent, agi::Context *context);
-	void SetToolbar(wxToolBar *tb) override;
+	void SetToolbar(wxToolBar *toolbar) override;
 };

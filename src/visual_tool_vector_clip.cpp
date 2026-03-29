@@ -18,10 +18,15 @@
 
 #include "ass_dialogue.h"
 #include "compat.h"
+#include "gl_text.h"
 #include "include/aegisub/context.h"
 #include "libresrc/libresrc.h"
 #include "options.h"
 #include "selection_controller.h"
+#include "video_display.h"
+
+#include <libaegisub/color.h>
+#include <libaegisub/format.h>
 
 #include <algorithm>
 #include <boost/range/algorithm/copy.hpp>
@@ -32,10 +37,13 @@ int BUTTON_ID_BASE = 1300;
 
 VisualToolVectorClip::VisualToolVectorClip(VideoDisplay *parent, agi::Context *context)
 : VisualTool<VisualToolVectorClipDraggableFeature>(parent, context)
+, gl_text(std::make_unique<OpenGLText>())
 , spline(this)
 , featureSize(OPT_GET("Tool/Visual/Shape Handle Size")->GetInt())
 {
 }
+
+VisualToolVectorClip::~VisualToolVectorClip() = default;
 
 void VisualToolVectorClip::AddTool(std::string command_name, VisualToolVectorClipMode mode) {
 	cmd::Command *command = cmd::get(command_name);
@@ -54,6 +62,7 @@ void VisualToolVectorClip::SetToolbar(wxToolBar *toolBar) {
 	AddTool("video/tool/vclip/bicubic", VCLIP_BICUBIC);
 	toolBar->AddSeparator();
 	AddTool("video/tool/vclip/convert", VCLIP_CONVERT);
+	AddTool("video/tool/vclip/append", VCLIP_APPEND);
 	AddTool("video/tool/vclip/insert", VCLIP_INSERT);
 	AddTool("video/tool/vclip/remove", VCLIP_REMOVE);
 	toolBar->AddSeparator();
@@ -106,6 +115,58 @@ void VisualToolVectorClip::Draw() {
 	// draw the shade over clipped out areas and line showing the clip
 	gl.DrawMultiPolygon(points, start, count, video_pos, video_size, !inverse);
 
+	// draw direction of the points
+	if (OPT_GET("Video/Clip Info")->GetBool()) {
+		gl.SetLineColour(to_wx(agi::Color(255, 255, 255)), .5f, 2);
+
+		float arrowLength = 6.0f;
+		float arrowWidth  = 2.5f;
+		for (auto const& curve : spline) {
+			if (curve.type == SplineCurve::LINE) {
+				Vector2D dir = curve.p2 - curve.p1;
+
+				float len = std::sqrt(dir.X()*dir.X() + dir.Y()*dir.Y());
+				if (len < 1e-6f)
+					continue;
+
+				dir = dir * (1.0f / len);
+
+				Vector2D perp(-dir.Y(), dir.X());
+				Vector2D tip = (curve.p1 + curve.p2) * 0.5f;
+				Vector2D left  = tip - dir * arrowLength + perp * arrowWidth;
+				Vector2D right = tip - dir * arrowLength - perp * arrowWidth;
+
+				gl.DrawLine(tip, left);
+				gl.DrawLine(tip, right);
+			} else if (curve.type == SplineCurve::BICUBIC) {
+				float t = 0.5f;
+				float u = 1.0f - t;
+
+				Vector2D point = curve.p1 * (u*u*u) + curve.p2 * (3*u*u*t) + curve.p3 * (3*u*t*t) + curve.p4 * (t*t*t);
+				Vector2D tangent = (curve.p2 - curve.p1) * (3*u*u) + (curve.p3 - curve.p2) * (6*u*t) + (curve.p4 - curve.p3) * (3*t*t);
+
+				float len = std::sqrt(tangent.X()*tangent.X() + tangent.Y()*tangent.Y());
+				if (len < 1e-6f)
+					continue;
+
+				tangent = tangent * (1.0f / len);
+
+				Vector2D perp(-tangent.Y(), tangent.X());
+
+				float arrowLength = 6.0f;
+				float arrowWidth  = 2.5f;
+
+				Vector2D left  = point - tangent * arrowLength + perp * arrowWidth;
+				Vector2D right = point - tangent * arrowLength - perp * arrowWidth;
+
+				gl.DrawLine(point, left);
+				gl.DrawLine(point, right);
+			}
+		}
+
+		gl.SetLineColour(line_color, .5f, 1);
+	}
+
 	if (mode == VCLIP_DRAG && holding && drag_start && mouse_pos) {
 		// Draw drag-select box
 		Vector2D top_left = drag_start.Min(mouse_pos);
@@ -156,6 +217,59 @@ void VisualToolVectorClip::Draw() {
 			gl.SetLineColour(feature_color, .5f, 1);
 			gl.DrawCircle(feature.pos, featureSize * 2.f / 3.f);
 		}
+
+		// draw position of the point
+		if (&feature == active_feature && OPT_GET("Video/Clip Info")->GetBool()) {
+			wxColour color = to_wx(agi::Color(255, 255, 255));
+			agi::Color color2 = agi::Color(255, 255, 255, 175);
+			int lineWidth = 11;
+
+			if (feature.type == DRAG_SMALL_SQUARE) {
+				lineWidth = 8;
+				color = to_wx(agi::Color(160, 160, 160));
+				color2 = agi::Color(160, 160, 160, 175);
+			}
+
+			gl.SetLineColour(color, .5f, 1);
+			gl_text->SetFont("Verdana", 10, false, false);
+			gl_text->SetColour(color2);
+
+			Vector2D hlp1 = Vector2D(0.0f, feature.pos);
+			Vector2D hlp2 = Vector2D(video_size, feature.pos);
+			Vector2D vlp1 = Vector2D(feature.pos, 0.0f);
+			Vector2D vlp2 = Vector2D(feature.pos, video_size);
+			gl.DrawDashedLine(hlp1, hlp2, lineWidth);
+			gl.DrawDashedLine(vlp1, vlp2, lineWidth);
+
+			std::string text = spline.ToScript(feature.pos).Str();
+			int tw, th;
+			gl_text->GetExtent(text, tw, th);
+
+			// Place the text in the corner of the cross closest to the center of the video
+			int dx = feature.pos.X();
+			int dy = feature.pos.Y();
+			int r = 1;
+			if (dx + tw + 14 > canvas_size.X()) {
+				dx -= tw + 4;
+				r = 0;
+			}
+			else {
+				dx += 4;
+			}
+
+			dy -= th + 4;
+
+			if (dy < 4) {
+				dy += th + 8;
+
+				if (r == 1) {
+					dx += 10;
+				}
+			}
+
+			gl_text->Print(text, dx, dy);
+			gl.SetLineColour(feature_color, .5f, 1);
+		}
 	}
 
 	// Draw preview of inserted line
@@ -172,6 +286,10 @@ void VisualToolVectorClip::Draw() {
 	// Draw preview of insert point
 	if (mode == VCLIP_INSERT)
 		gl.DrawCircle(pt, 4);
+
+	// Draw preview of insert point
+	if (mode == VCLIP_APPEND)
+		gl.DrawCircle(mouse_pos, 3);
 }
 
 void VisualToolVectorClip::MakeFeature(size_t idx) {
@@ -245,7 +363,7 @@ void VisualToolVectorClip::UpdateDrag(Feature *feature) {
 }
 
 bool VisualToolVectorClip::InitializeDrag(Feature *feature) {
-	if (mode != 5) return true;
+	if (mode != VCLIP_REMOVE) return true;
 
 	auto curve = spline.begin() + feature->idx;
 	if (curve->type == SplineCurve::BICUBIC && (feature->point == 1 || feature->point == 2)) {
@@ -278,7 +396,11 @@ bool VisualToolVectorClip::InitializeDrag(Feature *feature) {
 bool VisualToolVectorClip::InitializeHold() {
 	// Box selection
 	if (mode == VCLIP_DRAG) {
-		box_added.clear();
+		if (ctrl_down)
+			box_added = sel_features;
+		else
+			box_added.clear();
+
 		return true;
 	}
 
@@ -305,8 +427,8 @@ bool VisualToolVectorClip::InitializeHold() {
 		return true;
 	}
 
-	// Convert and insert
-	if (mode == VCLIP_CONVERT || mode == VCLIP_INSERT) {
+	// Convert, insert and append
+	if (mode == VCLIP_CONVERT || mode == VCLIP_INSERT || mode == VCLIP_APPEND) {
 		// Get closest point
 		Vector2D pt;
 		Spline::iterator curve;
@@ -328,6 +450,14 @@ bool VisualToolVectorClip::InitializeHold() {
 					curve->p2 = curve->p4;
 				}
 			}
+		}
+		// Append
+		else if (mode == VCLIP_APPEND) {
+			SplineCurve ct;
+			ct.p1 = mouse_pos;
+			ct.type = SplineCurve::POINT;
+
+			spline.push_back(ct);
 		}
 		// Insert
 		else {
@@ -361,7 +491,7 @@ bool VisualToolVectorClip::InitializeHold() {
 		return true;
 	}
 
-	// Nothing to do for mode 5 (remove)
+	// Nothing to do for mode VCLIP_REMOVE
 	return false;
 }
 
@@ -376,24 +506,27 @@ void VisualToolVectorClip::UpdateHold() {
 	// Box selection
 	if (mode == VCLIP_DRAG) {
 		std::set<Feature *> boxed_features;
+
 		Vector2D p1 = drag_start.Min(mouse_pos);
 		Vector2D p2 = drag_start.Max(mouse_pos);
+
 		for (auto& feature : features) {
 			if (in_box(p1, p2, feature.pos))
 				boxed_features.insert(&feature);
 		}
 
-		// Keep track of which features were selected by the box selection so
-		// that only those are deselected if the user is holding ctrl
-		boost::set_difference(boxed_features, sel_features,
-			std::inserter(box_added, end(box_added)));
+		sel_features = boxed_features;
 
-		boost::copy(boxed_features, std::inserter(sel_features, end(sel_features)));
+		if (ctrl_down) {
+			sel_features = box_added;
 
-		std::vector<Feature *> to_deselect;
-		boost::set_difference(box_added, boxed_features, std::back_inserter(to_deselect));
-		for (auto feature : to_deselect)
-			sel_features.erase(feature);
+			for (auto* feature : boxed_features) {
+				if (sel_features.count(feature))
+					sel_features.erase(feature);
+				else
+					sel_features.insert(feature);
+			}
+		}
 
 		return;
 	}
@@ -431,7 +564,8 @@ void VisualToolVectorClip::UpdateHold() {
 		}
 	}
 
-	if (mode == VCLIP_CONVERT || mode == VCLIP_INSERT) return;
+	if (mode == VCLIP_CONVERT || mode == VCLIP_INSERT || mode == VCLIP_APPEND)
+		return;
 
 	// Smooth spline
 	if (!holding && mode == VCLIP_FREEHAND_SMOOTH)
@@ -444,6 +578,15 @@ void VisualToolVectorClip::UpdateHold() {
 	}
 }
 
+struct FeatureKey {
+	size_t idx;
+	int point;
+
+	bool operator<(FeatureKey const& other) const {
+		return std::tie(idx, point) < std::tie(other.idx, other.point);
+	}
+};
+
 void VisualToolVectorClip::DoRefresh() {
 	if (!active_line) return;
 
@@ -453,4 +596,15 @@ void VisualToolVectorClip::DoRefresh() {
 	spline.DecodeFromAss(vect);
 
 	MakeFeatures();
+
+	std::set<FeatureKey> restore_sel_features;
+	for (auto* f : sel_features)
+		restore_sel_features.insert({ f->idx, f->point });
+
+	for (auto& f : features) {
+		FeatureKey key { f.idx, f.point };
+
+		if (restore_sel_features.count(key))
+			sel_features.insert(&f);
+	}
 }

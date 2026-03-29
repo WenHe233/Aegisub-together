@@ -286,12 +286,15 @@ public:
 	/// @param scale New amplitude scale factor, 1.0 is no scaling
 	void SetAmplitudeScale(float scale);
 
+	double GetPlaybackSpeedSafe() const;
+	void OnPlaybackSpeed(double speed);
+
 	/// Get a time in milliseconds from an X coordinate relative to current scroll
-	int TimeFromRelativeX(int x) const { return int((scroll_left + x) * ms_per_pixel); }
+	int TimeFromRelativeX(int x) const { return int((scroll_left + x) * ms_per_pixel) * GetPlaybackSpeedSafe(); }
 	/// Get a time in milliseconds from an absolute X coordinate
-	int TimeFromAbsoluteX(int x) const { return int(x * ms_per_pixel); }
+	int TimeFromAbsoluteX(int x) const { return int(x * ms_per_pixel * GetPlaybackSpeedSafe()); }
 	/// Get an X coordinate relative to the current scroll from a time in milliseconds
-	int RelativeXFromTime(int ms) const { return int(ms / ms_per_pixel) - scroll_left; }
+	int RelativeXFromTime(int ms) const { return int((ms / GetPlaybackSpeedSafe()) / ms_per_pixel) - scroll_left; }
 	/// Get an absolute X coordinate from a time in milliseconds
-	int AbsoluteXFromTime(int ms) const { return int(ms / ms_per_pixel); }
+	int AbsoluteXFromTime(int ms) const { return int((ms / GetPlaybackSpeedSafe()) / ms_per_pixel); }
 };

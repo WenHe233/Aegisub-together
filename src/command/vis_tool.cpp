@@ -29,7 +29,6 @@
 #include "../visual_tool_scale.h"
 #include "../visual_tool_vector_clip.h"
 
-
 namespace {
 	using cmd::Command;
 
@@ -304,6 +303,13 @@ namespace {
 		STR_DISP("Insert")
 		STR_HELP("Insert a control point")
 	};
+	struct visual_mode_vclip_append final : public visual_tool_vclip_command<VCLIP_APPEND> {
+		CMD_NAME("video/tool/vclip/append")
+		CMD_ICON(visual_vector_clip_append)
+		STR_MENU("Append")
+		STR_DISP("Append")
+		STR_HELP("Append a control point")
+	};
 	struct visual_mode_vclip_remove final : public visual_tool_vclip_command<VCLIP_REMOVE> {
 		CMD_NAME("video/tool/vclip/remove")
 		CMD_ICON(visual_vector_clip_remove)
@@ -325,6 +331,61 @@ namespace {
 		STR_DISP("Freehand smooth")
 		STR_HELP("Draw a smoothed freehand shape")
 	};
+
+	struct visual_mode_drag_change final : public Command {
+		CMD_NAME("video/tool/drag/change")
+		CMD_TYPE(COMMAND_DYNAMIC_NAME | COMMAND_DYNAMIC_HELP | COMMAND_DYNAMIC_ICON)
+
+		bool Validate(const agi::Context *c) override {
+			return !!c->project->VideoProvider();
+		}
+
+		wxBitmapBundle Icon(int height, wxLayoutDirection dir = wxLayout_LeftToRight) const override {
+			int mode = OPT_GET("Tool/Drag Type")->GetInt();
+
+			if (mode == 1)
+				return GETBUNDLEDIR(drag_lockx, height, dir);
+			
+			if (mode == 2)
+				return GETBUNDLEDIR(drag_locky, height, dir);
+
+			return GETBUNDLEDIR(drag_nolock, height, dir);
+		}
+
+		wxString StrMenu(const agi::Context *c) const override {
+			int mode = OPT_GET("Tool/Drag Type")->GetInt();
+
+			if (mode == 1)
+				return _("X locked");
+			
+			if (mode == 2)
+				return _("Y locked");
+
+			return _("Toggle locking");
+		}
+
+		wxString StrDisplay(const agi::Context *c) const override {
+			return StrMenu(nullptr);
+		}
+
+		wxString StrHelp() const override {
+			return StrMenu(nullptr);
+		}
+
+		void operator()(agi::Context *c) override {
+			int mode = OPT_GET("Tool/Drag Type")->GetInt();
+			mode = mode + 1;
+
+			if (mode > 2)
+				mode = 0;
+
+			OPT_SET("Tool/Drag Type")->SetInt(mode);
+
+			if (c->videoDisplay->ToolIsType(typeid(VisualToolDrag))) {
+				c->videoDisplay->UpdateTool(DRAG_LOCK);
+			}
+		}
+	};
 }
 
 namespace cmd {
@@ -343,6 +404,7 @@ namespace cmd {
 		reg(std::make_unique<visual_mode_vclip_bicubic>());
 		reg(std::make_unique<visual_mode_vclip_convert>());
 		reg(std::make_unique<visual_mode_vclip_insert>());
+		reg(std::make_unique<visual_mode_vclip_append>());
 		reg(std::make_unique<visual_mode_vclip_remove>());
 		reg(std::make_unique<visual_mode_vclip_freehand>());
 		reg(std::make_unique<visual_mode_vclip_freehand_smooth>());
@@ -354,5 +416,7 @@ namespace cmd {
 		reg(std::make_unique<visual_mode_perspective_orgmode_nofax>());
 		reg(std::make_unique<visual_mode_perspective_orgmode_keep>());
 		reg(std::make_unique<visual_mode_perspective_orgmode_cycle>());
+
+		reg(std::make_unique<visual_mode_drag_change>());
 	}
 }

@@ -65,7 +65,11 @@
         "video/play",
         "video/play/line",
         "video/stop",
-        "video/opt/autoscroll"
+        "video/opt/autoscroll",
+        "video/opt/colorautotransition",
+        "video/opt/colorrecent",
+        "video/toggle_subtitle",
+        "video/toggle_mask"
     ],
     "visual_tools" : [
         "video/tool/cross",

@@ -275,6 +275,8 @@ class AudioDisplayTimeline final : public AudioDisplayInteractionObject {
 	double ms_per_pixel = 1.0; ///< Milliseconds per pixel
 	int pixel_left = 0;        ///< Leftmost visible pixel (i.e. scroll position)
 
+	double playback_speed = 1.0;
+
 	wxRect bounds;
 
 	wxPoint drag_lastpos;
@@ -328,6 +330,11 @@ public:
 	void ChangeAudio(int new_duration)
 	{
 		duration = new_duration;
+	}
+
+	void ChangePlaybackSpeed(double new_speed)
+	{
+		playback_speed = new_speed < 0.001 ? 1.0 : new_speed;
 	}
 
 	void ChangeZoom(double new_ms_per_pixel)
@@ -416,7 +423,7 @@ public:
 		dc.SetTextForeground(colours.Light());
 
 		// Figure out the first scale mark to show
-		int ms_left = int(pixel_left * ms_per_pixel);
+		int ms_left = int(pixel_left * ms_per_pixel * playback_speed);
 		int next_scale_mark = int(ms_left / scale_minor_divisor);
 		if (next_scale_mark * scale_minor_divisor < ms_left)
 			next_scale_mark += 1;
@@ -428,7 +435,7 @@ public:
 		int last_hour = -1, last_minute = -1;
 		if (duration < 3600) last_hour = 0; // Trick to only show hours if audio is longer than 1 hour
 		do {
-			next_scale_mark_pos = int(next_scale_mark * scale_minor_divisor / ms_per_pixel) - pixel_left;
+			next_scale_mark_pos = int((next_scale_mark * scale_minor_divisor / playback_speed) / ms_per_pixel) - pixel_left;
 			bool mark_is_major = next_scale_mark % scale_major_modulo == 0;
 
 			if (mark_is_major)
@@ -694,13 +701,14 @@ void AudioDisplay::SetZoomLevel(int new_zoom_level)
 
 	int client_width = GetClientSize().GetWidth();
 	double cursor_pos = track_cursor_pos >= 0 ? track_cursor_pos - scroll_left : client_width / 2.0;
-	double cursor_time = (scroll_left + cursor_pos) * ms_per_pixel;
+	double cursor_time = TimeFromAbsoluteX(int(scroll_left + cursor_pos));
 
 	ms_per_pixel = new_ms_per_pixel;
-	pixel_audio_width = std::max(1, int(GetDuration() / ms_per_pixel));
+	pixel_audio_width = std::max(1, int((GetDuration() / GetPlaybackSpeedSafe()) / ms_per_pixel));
 
 	audio_renderer->SetMillisecondsPerPixel(ms_per_pixel);
 	scrollbar->ChangeLengths(pixel_audio_width, client_width);
+	timeline->ChangePlaybackSpeed(GetPlaybackSpeedSafe());
 	timeline->ChangeZoom(ms_per_pixel);
 
 	ScrollPixelToLeft(AbsoluteXFromTime(cursor_time) - cursor_pos);
@@ -813,8 +821,8 @@ void AudioDisplay::OnLoadTimer(wxTimerEvent&)
 		if (new_pos > audio_load_position)
 			audio_load_position = new_pos;
 
-		const double left = last_sample_decoded * 1000.0 / provider->GetSampleRate() / ms_per_pixel;
-		const double right = new_decoded_count * 1000.0 / provider->GetSampleRate() / ms_per_pixel;
+		const double left = AbsoluteXFromTime(int(last_sample_decoded * 1000.0 / provider->GetSampleRate()));
+		const double right = AbsoluteXFromTime(int(new_decoded_count * 1000.0 / provider->GetSampleRate()));
 
 		if (left < scroll_left + pixel_audio_width && right >= scroll_left)
 			Refresh();
@@ -1025,7 +1033,7 @@ void AudioDisplay::SetTrackCursor(int new_pos, bool show_time)
 
 	if (show_time)
 	{
-		agi::Time new_label_time = TimeFromAbsoluteX(track_cursor_pos);
+		agi::Time new_label_time = agi::Time(int(track_cursor_pos * ms_per_pixel));
 		track_cursor_label = to_wx(new_label_time.GetAssFormatted());
 		track_cursor_label_rect.x += new_pos - old_pos;
 		RefreshRect(track_cursor_label_rect, false);
@@ -1243,6 +1251,7 @@ void AudioDisplay::OnAudioOpen(agi::AudioProvider *provider)
 			connections = agi::signal::make_vector({
 				controller->AddPlaybackPositionListener(&AudioDisplay::OnPlaybackPosition, this),
 				controller->AddPlaybackStopListener(&AudioDisplay::RemoveTrackCursor, this),
+				controller->AddPlaybackSpeedListener(&AudioDisplay::OnPlaybackSpeed, this),
 				controller->AddTimingControllerListener(&AudioDisplay::OnTimingController, this),
 				OPT_SUB("Audio/Spectrum", &AudioDisplay::ReloadRenderingSettings, this),
 				OPT_SUB("Audio/Display/Waveform Style", &AudioDisplay::ReloadRenderingSettings, this),
@@ -1365,4 +1374,31 @@ void AudioDisplay::OnStyleRangesChanged()
 void AudioDisplay::OnMarkerMoved()
 {
 	RefreshRect(wxRect(0, audio_top, GetClientSize().GetWidth(), audio_height), false);
+}
+
+double AudioDisplay::GetPlaybackSpeedSafe() const {
+	if (!controller)
+		return 1.0;
+
+	double s = controller->GetPlaybackSpeed();
+
+	return s < 0.001 ? 1.0 : s;
+}
+
+void AudioDisplay::OnPlaybackSpeed(double)
+{
+	int client_width = GetClientSize().GetWidth();
+	double center_time = TimeFromRelativeX(client_width / 2);
+
+	timeline->ChangeAudio(GetDuration());
+	timeline->ChangePlaybackSpeed(GetPlaybackSpeedSafe());
+
+	ms_per_pixel = 0;
+	SetZoomLevel(zoom_level);
+
+	ScrollPixelToLeft(std::max(0, AbsoluteXFromTime((int)center_time) - client_width / 2));
+
+	OnSelectionChanged();
+	OnMarkerMoved();
+	Refresh();
 }

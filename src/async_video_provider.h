@@ -67,10 +67,10 @@ class AsyncVideoProvider {
 	/// lines have actually changed
 	bool NeedUpdate(std::vector<AssDialogueBase const*> const& visible_lines);
 
-	std::shared_ptr<VideoFrame> ProcFrame(int frame, double time, bool raw = false);
+	std::shared_ptr<VideoFrame> ProcFrame(int frame, double time, bool raw = false, bool forceSub = false);
 
 	/// Produce a frame if req_version is still the current version
-	void ProcAsync(uint_fast32_t req_version, bool check_updated);
+	void ProcAsync(uint_fast32_t req_version, bool check_updated, bool forceSub = false);
 
 	/// Monotonic counter used to drop frames when changes arrive faster than
 	/// they can be rendered
@@ -103,6 +103,11 @@ public:
 	/// This merely queues up a request and deletes any pending requests; there
 	/// is no guarantee that the requested frame will ever actually be produced
 	void RequestFrame(int frame, double time) throw();
+
+	/// @brief Resets the current frame
+	/// This merely queues up a request and deletes any pending requests; there
+	/// is no guarantee that the requested frame will ever actually be produced
+	void ResetCurrentFrame(bool forceSub = false) throw();
 
 	/// @brief Synchronously get a frame
 	/// @brief frame Frame number

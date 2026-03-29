@@ -41,6 +41,11 @@ static const DraggableFeatureType DRAG_ORIGIN = DRAG_BIG_TRIANGLE;
 static const DraggableFeatureType DRAG_START = DRAG_BIG_SQUARE;
 static const DraggableFeatureType DRAG_END = DRAG_BIG_CIRCLE;
 
+#define COMMAND_NAME(id) ( \
+	id == DRAG_LOCK ? "video/tool/drag/change" : \
+	"" \
+)
+
 VisualToolDrag::VisualToolDrag(VideoDisplay *parent, agi::Context *context)
 : VisualTool<VisualToolDragDraggableFeature>(parent, context)
 {
@@ -49,10 +54,26 @@ VisualToolDrag::VisualToolDrag(VideoDisplay *parent, agi::Context *context)
 	selection.insert(begin(selection), begin(sel_set), end(sel_set));
 }
 
+void VisualToolDrag::AddTool(int id) {
+	cmd::Command *command = cmd::get(COMMAND_NAME(id));
+	int icon_size = OPT_GET("App/Toolbar Icon Size")->GetInt();
+	toolbar->AddTool(id, command->StrDisplay(c), command->Icon(icon_size), command->GetTooltip("Video"));
+}
+
+void VisualToolDrag::UpdateTool(int id) {
+	cmd::Command *command = cmd::get(COMMAND_NAME(id));
+	int icon_size = OPT_GET("App/Toolbar Icon Size")->GetInt();
+
+	toolbar->SetToolLongHelp(id, command->StrDisplay(c));
+	toolbar->SetToolNormalBitmap(id, command->Icon(icon_size));
+	toolbar->SetToolShortHelp(id, command->GetTooltip("Video"));
+}
+
 void VisualToolDrag::SetToolbar(wxToolBar *tb) {
 	toolbar = tb;
 	toolbar->AddSeparator();
-	toolbar->AddTool(-1, _("Toggle between \\move and \\pos"), GETBUNDLE(visual_move_conv_move, OPT_GET("App/Toolbar Icon Size")->GetInt()));
+	toolbar->AddTool(DRAG_TOGGLE, _("Toggle between \\move and \\pos"), GETBUNDLE(visual_move_conv_move, OPT_GET("App/Toolbar Icon Size")->GetInt()));
+	AddTool(DRAG_LOCK);
 	toolbar->Realize();
 	toolbar->Show(true);
 
@@ -70,12 +91,20 @@ void VisualToolDrag::UpdateToggleButtons() {
 	if (to_move == button_is_move) return;
 
 	int icon_size = OPT_GET("App/Toolbar Icon Size")->GetInt();
-	toolbar->SetToolNormalBitmap(toolbar->GetToolByPos(1)->GetId(),
-		to_move ? GETBUNDLE(visual_move_conv_move, icon_size) : GETBUNDLE(visual_move_conv_pos, icon_size));
+	toolbar->SetToolNormalBitmap(DRAG_TOGGLE, to_move ? GETBUNDLE(visual_move_conv_move, icon_size) : GETBUNDLE(visual_move_conv_pos, icon_size));
 	button_is_move = to_move;
 }
 
-void VisualToolDrag::OnSubTool(wxCommandEvent &) {
+void VisualToolDrag::OnSubTool(wxCommandEvent &e) {
+	int id = e.GetId();
+
+	if (id == DRAG_LOCK) {
+		cmd::Command *command = cmd::get(COMMAND_NAME(id));
+		command->operator()(c);
+
+		return;
+	}
+
 	// Toggle \move <-> \pos
 	VideoController *vc = c->videoController.get();
 	for (auto line : selection) {
@@ -112,7 +141,7 @@ void VisualToolDrag::OnFileChanged() {
 	active_feature = nullptr;
 
 	for (auto& diag : c->ass->Events) {
-		if (IsDisplayed(&diag))
+		if (IsDisplayed(&diag, false))
 			MakeFeatures(&diag);
 	}
 
@@ -120,14 +149,14 @@ void VisualToolDrag::OnFileChanged() {
 }
 
 void VisualToolDrag::OnFrameChanged() {
-	if (primary && !IsDisplayed(primary->line))
+	if (primary && !IsDisplayed(primary->line, false))
 		primary = nullptr;
 
 	auto feat = features.begin();
 	auto end = features.end();
 
 	for (auto& diag : c->ass->Events) {
-		if (IsDisplayed(&diag)) {
+		if (IsDisplayed(&diag, false)) {
 			// Features don't exist and should
 			if (feat == end || feat->line != &diag)
 				MakeFeatures(&diag, feat);
@@ -289,6 +318,12 @@ bool VisualToolDrag::InitializeDrag(Feature *feature) {
 }
 
 void VisualToolDrag::UpdateDrag(Feature *feature) {
+	int mode = OPT_GET("Tool/Drag Type")->GetInt();
+	if (mode == 1)
+		feature->pos = Vector2D(feature->pos, FromScriptCoords(GetLinePosition(feature->line)));
+	else if (mode == 2)
+		feature->pos = Vector2D(FromScriptCoords(GetLinePosition(feature->line)), feature->pos);
+
 	if (feature->type == DRAG_ORIGIN) {
 		SetOverride(feature->line, "\\org", ToScriptCoords(feature->pos).PStr());
 		return;
@@ -297,6 +332,18 @@ void VisualToolDrag::UpdateDrag(Feature *feature) {
 	Feature *end_feature = feature->parent;
 	if (feature->type == DRAG_END)
 		std::swap(feature, end_feature);
+
+	if (feature->parent) {
+		Vector2D p1;
+		Vector2D p2 = ToScriptCoords(end_feature->pos);
+		int t1; int t2;
+		GetLineMove(feature->line, p1, p2, t1, t2);
+
+		if (mode == 1)
+			end_feature->pos = Vector2D(end_feature->pos, FromScriptCoords(p2));
+		else if (mode == 2)
+			end_feature->pos = Vector2D(FromScriptCoords(p2), end_feature->pos);
+	}
 
 	if (!feature->parent)
 		SetOverride(feature->line, "\\pos", ToScriptCoords(feature->pos).PStr());

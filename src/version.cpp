@@ -48,7 +48,7 @@
 #endif
 
 const char *GetAegisubLongVersionString() {
-	return BUILD_GIT_VERSION_STRING BUILD_CREDIT_SUFFIX DEBUG_SUFFIX;
+	return "-- nyaa's edition v3.5";
 }
 
 const char *GetAegisubShortVersionString() {

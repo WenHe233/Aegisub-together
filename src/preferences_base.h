@@ -49,6 +49,7 @@ public:
 
 	void CellSkip(PageSection section);
 	wxControl *OptionAdd(PageSection section, const wxString &name, const char *opt_name, double min=0, double max=INT_MAX, double inc=1);
+	wxTextCtrl *OptionAddMultiline(PageSection section, const char *opt_name);
 	void OptionChoice(PageSection section, const wxString &name, const wxArrayString &choices, const char *opt_name, bool translate = false);
 	void OptionBrowse(PageSection section, const wxString &name, const char *opt_name, wxControl *enabler = nullptr, bool do_enable = false);
 	void OptionFont(PageSection section, std::string opt_prefix);

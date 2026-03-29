@@ -37,6 +37,7 @@
 #include "../dialog_search_replace.h"
 #include "../dialogs.h"
 #include "../frame_main.h"
+#include "../image_mask_combiner.h"
 #include "../include/aegisub/context.h"
 #include "../libresrc/libresrc.h"
 #include "../main.h"
@@ -70,6 +71,22 @@ struct validate_nonempty_selection_video_loaded : public Command {
 	CMD_TYPE(COMMAND_VALIDATE)
 	bool Validate(const agi::Context *c) override {
 		return c->project->VideoProvider() && !c->selectionController->GetSelectedSet().empty();
+	}
+};
+
+struct validate_video_and_sel_nonempty_no_imagemask : public Command {
+	CMD_TYPE(COMMAND_VALIDATE)
+	bool Validate(const agi::Context *c) override {
+		const auto& sel = c->selectionController->GetSelectedSet();
+
+		if (!c->project->VideoProvider() || sel.size() <= 0)
+			return false;
+
+		for (auto* line : sel)
+			if (c->imageMask && c->imageMask->IsGroupStart(line))
+				return false;
+
+		return true;
 	}
 };
 
@@ -143,18 +160,28 @@ struct subtitle_insert_after final : public validate_nonempty_selection {
 		new_line->Start = active_line->End;
 		new_line->End = new_line->Start + OPT_GET("Timing/Default Duration")->GetInt();
 
-		for (auto it = c->ass->Events.begin(); it != c->ass->Events.end(); ++it) {
-			AssDialogue *diag = &*it;
+		if (c->imageMask && c->imageMask->IsGroupStart(active_line)) {
+			AssDialogue* last = c->imageMask->GetLastInGroup(active_line);
 
-			// Limit the line to the available time
-			if (diag->Start >= new_line->Start)
-				new_line->End = std::min(new_line->End, diag->Start);
-
-			// If we just hit the active line, insert the new line after it
-			if (diag == active_line) {
+			if (last) {
+				auto it = c->ass->iterator_to(*last);
 				++it;
 				c->ass->Events.insert(it, *new_line);
-				--it;
+			}
+		} else {
+			for (auto it = c->ass->Events.begin(); it != c->ass->Events.end(); ++it) {
+				AssDialogue *diag = &*it;
+
+				// Limit the line to the available time
+				if (diag->Start >= new_line->Start)
+					new_line->End = std::min(new_line->End, diag->Start);
+
+				// If we just hit the active line, insert the new line after it
+				if (diag == active_line) {
+					++it;
+					c->ass->Events.insert(it, *new_line);
+					--it;
+				}
 			}
 		}
 
@@ -163,7 +190,7 @@ struct subtitle_insert_after final : public validate_nonempty_selection {
 	}
 };
 
-struct subtitle_insert_after_videotime final : public validate_nonempty_selection_video_loaded {
+struct subtitle_insert_after_videotime final : public validate_video_and_sel_nonempty_no_imagemask  {
 	CMD_NAME("subtitle/insert/after/videotime")
 	STR_MENU("After Current, at Video Time")
 	STR_DISP("After Current, at Video Time")
@@ -205,7 +232,7 @@ struct subtitle_insert_before final : public validate_nonempty_selection {
 	}
 };
 
-struct subtitle_insert_before_videotime final : public validate_nonempty_selection_video_loaded {
+struct subtitle_insert_before_videotime final : public validate_video_and_sel_nonempty_no_imagemask {
 	CMD_NAME("subtitle/insert/before/videotime")
 	STR_MENU("Before Current, at Video Time")
 	STR_DISP("Before Current, at Video Time")

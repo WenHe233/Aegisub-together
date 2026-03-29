@@ -115,6 +115,19 @@ void VideoController::JumpToTime(int ms, agi::vfr::Time end) {
 	JumpToFrame(FrameAtTime(ms, end));
 }
 
+void VideoController::SetPlaybackSpeed(double speed) {
+	bool was_playing = IsPlaying();
+	if (was_playing)
+		Stop();
+
+	playback_speed = std::max(0.01, speed);
+
+	if (was_playing) {
+		Seek(frame_n);
+		Play();
+	}
+}
+
 void VideoController::NextFrame() {
 	if (!provider || IsPlaying() || frame_n == provider->GetFrameCount())
 		return;
@@ -178,8 +191,12 @@ void VideoController::Stop() {
 
 void VideoController::OnPlayTimer(wxTimerEvent &) {
 	using namespace std::chrono;
-	int next_frame = FrameAtTime(start_ms + duration_cast<milliseconds>(steady_clock::now() - playback_start_time).count());
-	if (next_frame == frame_n) return;
+
+	auto elapsed = duration_cast<milliseconds>(steady_clock::now() - playback_start_time).count();
+	int next_frame = FrameAtTime(start_ms + elapsed * playback_speed);
+
+	if (next_frame == frame_n)
+		return;
 
 	if (next_frame >= end_frame)
 		Stop();

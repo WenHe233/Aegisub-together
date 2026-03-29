@@ -16,6 +16,7 @@ src/command/automation.cpp
 src/command/command.cpp
 src/command/command.h
 src/command/edit.cpp
+src/command/edit_change_text.cpp
 src/command/grid.cpp
 src/command/keyframe.cpp
 src/command/recent.cpp
@@ -32,6 +33,7 @@ src/dialog_colorpicker.cpp
 src/dialog_dummy_video.cpp
 src/dialog_export.cpp
 src/dialog_export_ebu3264.cpp
+src/dialog_fontpicker.cpp
 src/dialog_fonts_collector.cpp
 src/dialog_jumpto.cpp
 src/dialog_kara_timing_copy.cpp
@@ -82,3 +84,4 @@ src/visual_tool.cpp
 src/visual_tool_cross.cpp
 src/visual_tool_drag.cpp
 src/visual_tool_vector_clip.cpp
+src/ui_numeric_slider.cpp

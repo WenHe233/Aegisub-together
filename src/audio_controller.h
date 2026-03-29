@@ -65,6 +65,9 @@ class AudioController final : public wxEvtHandler {
 	/// A new audio player was created
 	agi::signal::Signal<> AnnounceAudioPlayerOpened;
 
+	/// Playback speed has changed
+	agi::signal::Signal<double> AnnouncePlaybackSpeed;
+
 	/// The audio output object
 	std::unique_ptr<AudioPlayer> player;
 
@@ -82,6 +85,10 @@ class AudioController final : public wxEvtHandler {
 
 	/// Timer used for playback position updates
 	wxTimer playback_timer;
+
+	/// The playback speed
+	/// overriden by the user
+	double playback_speed = 1.0;
 
 	/// The audio provider
 	agi::AudioProvider *provider = nullptr;
@@ -184,8 +191,14 @@ public:
 	/// @param new_controller The new timing controller or nullptr
 	void SetTimingController(std::unique_ptr<AudioTimingController> new_controller);
 
+	/// @brief playback speed getter and setter
+	/// @param speed 
+	void SetPlaybackSpeed(double speed);
+	double GetPlaybackSpeed() const { return playback_speed; }
+
 	DEFINE_SIGNAL_ADDERS(AnnouncePlaybackPosition,        AddPlaybackPositionListener)
 	DEFINE_SIGNAL_ADDERS(AnnouncePlaybackStop,            AddPlaybackStopListener)
 	DEFINE_SIGNAL_ADDERS(AnnounceTimingControllerChanged, AddTimingControllerListener)
 	DEFINE_SIGNAL_ADDERS(AnnounceAudioPlayerOpened,       AddAudioPlayerOpenListener)
+	DEFINE_SIGNAL_ADDERS(AnnouncePlaybackSpeed,           AddPlaybackSpeedListener)
 };

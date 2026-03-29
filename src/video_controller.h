@@ -92,6 +92,10 @@ class VideoController final : public wxEvtHandler {
 	/// overridden by the user
 	double ar_value = 1.;
 
+	/// The playback speed
+	/// overriden by the user
+	double playback_speed = 1.0;
+
 	/// The current AR type
 	AspectRatio ar_type = AspectRatio::Default;
 
@@ -143,6 +147,11 @@ public:
 	/// @param ms Time to jump to in milliseconds
 	/// @param end Type of time
 	void JumpToTime(int ms, agi::vfr::Time end = agi::vfr::START);
+
+	/// @brief playback speed getter and setter
+	/// @param speed 
+	void SetPlaybackSpeed(double speed);
+	double GetPlaybackSpeed() const { return playback_speed; }
 
 	/// Starting playing the video
 	void Play();

@@ -98,10 +98,14 @@ void SubtitlesProvider::LoadSubtitles(AssFile *subs, int time) {
 				push_line(attachment.GetEntryData());
 	}
 
+	bool showMask = OPT_GET("Video/Toggle Mask")->GetBool();
+
 	push_header("[Events]\n");
 	for (auto const& line : subs->Events) {
-		if (!line.Comment && (time < 0 || !(line.Start > time || line.End <= time)))
-			push_line(line.GetEntryData());
+		if (!line.Comment && (time < 0 || !(line.Start > time || line.End <= time))) {
+			if (showMask || line.Text.get().find("\\p1") == std::string::npos)
+				push_line(line.GetEntryData());
+		}
 	}
 
 	LoadSubtitles(&buffer[0], buffer.size());

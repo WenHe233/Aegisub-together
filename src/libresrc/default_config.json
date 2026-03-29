@@ -216,7 +216,8 @@
 				"Selected Comment" : "rgb(211, 238, 238)",
 				"Selection" : "rgb(206, 255, 231)",
 				"Open Fold" : "rgb(235, 235, 235)",
-				"Closed Fold" : "rgb(200, 200, 200)"
+				"Closed Fold" : "rgb(200, 200, 200)",
+				"Image Mask" : "rgb(241, 222, 244)"
 			},
 			"Collision" : "rgb(255,0,0)",
 			"CPS Error" : "rgb(255,0,0)",
@@ -465,8 +466,19 @@
 			},
 			"Maximized" : false
 		},
+		"Drag Type": 0,
 		"Fonts Collector" : {
 			"Action" : 0
+		},
+		"Font Picker" : {
+			"Sample" : "Sample áéóöőúüű 日本語",
+			"Preview" : "abcdefghijklmnopqrstuvwz áéóöőúüű \n ABCDEFGHIJKLMNOPQRSTUVWZ ÁÉÓÖŐÚÜŰ",
+			"Preview Size" : 25,
+			"Sample Size" : 11,
+			"Dialog Width" : 600,
+			"Dialog Height" : 600,
+			"Dialog Pos X" : -1,
+			"Dialog Pos Y" : -1
 		},
 		"Import" : {
 			"Text" : {
@@ -636,6 +648,11 @@
 			"Fast Jump Step" : 10,
 			"Show Keyframes" : true
 		},
-		"Subtitle Sync" : true
+		"Subtitle Sync" : true,
+		"Color Auto Transition" : false,
+		"Color Recent" : false,
+		"Toggle Mask" : true,
+		"Toggle Subtitle" : true,
+		"Clip Info" : true
 	}
 }

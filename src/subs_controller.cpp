@@ -211,6 +211,7 @@ void SubsController::Save(agi::fs::path const& filename, const char *encoding) {
 		this->filename = filename;
 		context->path->SetToken("?script", filename.parent_path());
 
+		BeforeSave(*context->ass);
 		context->ass->CleanExtradata();
 		writer->WriteFile(context->ass.get(), filename, 0, encoding);
 		FileSave();
@@ -267,6 +268,7 @@ void SubsController::AutoSave() {
 	autosaved_commit_id = commit_id;
 	auto frame = context->frame;
 	auto subs_copy = new AssFile(*context->ass);
+	BeforeSave(*subs_copy);
 	autosave_queue->Async([subs_copy, name, directory, frame] {
 		wxString msg;
 		std::unique_ptr<AssFile> subs(subs_copy);

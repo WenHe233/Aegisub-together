@@ -96,6 +96,9 @@ elif host_machine.system() != 'windows'
     deps += dependency('fontconfig')
 endif
 
+rubberband_sp = subproject('rubberband')
+rubberband_dep = rubberband_sp.get_variable('rubberband_dep')
+
 cxx = meson.get_compiler('cpp')
 cc = meson.get_compiler('c')
 deps += cc.find_library('m', required: false)

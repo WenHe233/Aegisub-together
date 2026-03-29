@@ -172,6 +172,20 @@ wxControl *OptionPage::OptionAdd(PageSection section, const wxString &name, cons
 	}
 }
 
+wxTextCtrl *OptionPage::OptionAddMultiline(PageSection section, const char *opt_name) {
+	parent->AddChangeableOption(opt_name);
+	const auto opt = OPT_GET(opt_name);
+
+	if (opt->GetType() != agi::OptionType::String) {
+		throw agi::InternalError("Unsupported type for multiline option");
+	}
+
+	auto text = new wxTextCtrl(this, -1, to_wx(opt->GetString()), wxDefaultPosition, wxSize(-1, 200), wxTE_MULTILINE);
+	text->Bind(wxEVT_TEXT, StringUpdater(opt_name, parent));
+	section.sizer->Add(text, wxSizerFlags().Expand());
+	return text;
+}
+
 void OptionPage::OptionChoice(PageSection section, const wxString &name, const wxArrayString &choices, const char *opt_name, bool translate) {
 	parent->AddChangeableOption(opt_name);
 	const auto opt = OPT_GET(opt_name);

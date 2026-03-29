@@ -42,6 +42,11 @@
 #include "../options.h"
 #include "../selection_controller.h"
 
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <regex>
+
 
 namespace {
 	using cmd::Command;
@@ -515,6 +520,66 @@ struct grid_fold_clear_all final : public Command {
 	}
 };
 
+static std::string msToReadable(int ms)
+{
+	int totalSeconds = ms / 1000;
+	int seconds = totalSeconds % 60;
+	int minutes = (totalSeconds / 60) % 60;
+	int hours   = totalSeconds / 3600;
+
+	std::ostringstream oss;
+
+	if (hours > 0) {
+		oss << hours << ":"
+			<< std::setw(2) << std::setfill('0') << minutes << ":"
+			<< std::setw(2) << std::setfill('0') << seconds;
+	} else {
+		oss << std::setw(2) << std::setfill('0') << minutes << ":"
+			<< std::setw(2) << std::setfill('0') << seconds;
+	}
+
+	return oss.str();
+}
+
+static std::string cleanText(const std::string& input)
+{
+	std::string result = input;
+
+	result = std::regex_replace(result, std::regex(R"(\s*\\N\s*)"), " ");
+	result = std::regex_replace(result, std::regex(R"(\{[^}]*\})"), "");
+
+	return result;
+}
+
+struct grid_copy_text_translator final : public Command {
+	CMD_NAME("grid/copytext/translator")
+	STR_MENU("Copy text for Translator")
+	STR_DISP("Copy text for Translator")
+	STR_HELP("Copy text and time for Translator")
+	CMD_TYPE(COMMAND_VALIDATE)
+
+	bool Validate(const agi::Context *c) override {
+		return !c->selectionController->GetSelectedSet().empty();
+	}
+
+	void operator()(agi::Context *c) override {
+		std::string text;
+
+		for (const auto line : c->selectionController->GetSelectedSet()) {
+			std::string time = msToReadable(line->Start);
+			std::string cleaned = cleanText(line->Text);
+
+			if (text != "") {
+				text += "\n";
+			}
+
+			text += time + " --- \"" + cleaned + "\"";
+		}
+
+		wxTheClipboard->SetData(new wxTextDataObject(wxString::FromUTF8(text.c_str())));
+	}
+};
+
 }
 
 namespace cmd {
@@ -545,6 +610,7 @@ namespace cmd {
 		reg(std::make_unique<grid_fold_open_all>());
 		reg(std::make_unique<grid_fold_close_all>());
 		reg(std::make_unique<grid_fold_clear_all>());
+		reg(std::make_unique<grid_copy_text_translator>());
 		reg(std::make_unique<grid_tag_cycle_hiding>());
 		reg(std::make_unique<grid_tags_hide>());
 		reg(std::make_unique<grid_tags_show>());

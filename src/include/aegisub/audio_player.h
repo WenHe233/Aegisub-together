@@ -56,6 +56,9 @@ public:
 	virtual int64_t GetEndPosition()=0;
 	virtual int64_t GetCurrentPosition()=0;
 	virtual void SetEndPosition(int64_t pos)=0;
+
+	virtual void SetPlaybackSpeed(double) {}
+	virtual bool SupportsPlaybackSpeed() const { return false; }
 };
 
 struct AudioPlayerFactory {

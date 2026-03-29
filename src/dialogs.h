@@ -14,6 +14,9 @@
 //
 // Aegisub Project http://www.aegisub.org/
 
+#include "font_size_object.h"
+#include "line_change_flags.h"
+
 #include <libaegisub/color.h>
 
 #include <functional>
@@ -35,6 +38,16 @@ struct ResampleSettings;
 /// @param callback Function called whenever the selected color changes
 /// @return Did the user accept the new color?
 bool GetColorFromUser(wxWindow *parent, agi::Color original, bool alpha, std::function<void (agi::Color)> callback);
+
+/// @brief Get a font from the user via a font picker dialog
+/// @param parent Parent window
+/// @param initialFace Initial face name to select
+/// @param initial Initial font to select
+/// @param sizeObj Initial font size object to select
+/// @param subs Aegisub subs grid
+/// @param callback Function called whenever the selected font changes
+/// @return Did the user accept the new font?
+bool GetFontFromUser(wxWindow *parent, wxString initialFace, wxFont initial, FontSizeObject sizeObj, AssFile* subs, std::function<void (wxString, wxFont, FontSizeObject, LineChangeFlags)> callback);
 
 /// Ask the user to pick an autosaved file to open
 /// @return Path to file or empty string if canceled

@@ -129,6 +129,9 @@ struct AssDialogueBase {
 	/// Data describing line folds starting or ending at this line
 	FoldInfo Fold;
 
+	/// Source line text (stripped)
+	boost::flyweight<std::string> SourceLineText;
+
 	/// Is this a comment line?
 	bool Comment = false;
 	/// Layer number

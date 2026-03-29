@@ -66,7 +66,7 @@ class VideoOutGL {
 public:
 	/// @brief Set the frame to be displayed when Render() is called
 	/// @param frame The frame to be displayed
-	void UploadFrameData(VideoFrame const& frame);
+	void UploadFrameData(VideoFrame const& frame, float brightness);
 
 	/// @brief Render a frame
 	/// @param client_width Width in physical pixels of client window

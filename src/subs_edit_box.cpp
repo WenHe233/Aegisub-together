@@ -191,6 +191,10 @@ SubsEditBox::SubsEditBox(wxWindow *parent, agi::Context *context)
 	split_box->Bind(wxEVT_CHECKBOX, &SubsEditBox::OnSplit, this);
 	middle_right_sizer->Add(split_box, wxSizerFlags().Center().Left());
 
+	sourceline_box = new wxCheckBox(this,-1,_("Show Source"));
+	sourceline_box->Bind(wxEVT_CHECKBOX, &SubsEditBox::OnSourceLineChanged, this);
+	middle_right_sizer->Add(sourceline_box, wxSizerFlags().Expand());
+
 	// Main sizer
 	wxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 	main_sizer->Add(top_sizer,0,wxEXPAND | wxALL,3);
@@ -202,10 +206,13 @@ SubsEditBox::SubsEditBox(wxWindow *parent, agi::Context *context)
 	edit_ctrl->Bind(wxEVT_CHAR_HOOK, &SubsEditBox::OnKeyDown, this);
 
 	secondary_editor = new wxTextCtrl(this, -1, "", wxDefaultPosition, FromDIP(wxSize(300,50)), (OPT_GET("App/Dark Mode")->GetBool() ? wxBORDER_SIMPLE : wxBORDER_SUNKEN) | wxTE_MULTILINE | wxTE_READONLY);
+	souceline_editor = new wxTextCtrl(this, -1, "", wxDefaultPosition, FromDIP(wxSize(300,50)), (OPT_GET("App/Dark Mode")->GetBool() ? wxBORDER_SIMPLE : wxBORDER_SUNKEN) | wxTE_MULTILINE | wxTE_READONLY);
 
 	main_sizer->Add(secondary_editor,1,wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM,3);
+	main_sizer->Add(souceline_editor,1,wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM,3);
 	main_sizer->Add(edit_ctrl,1,wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM,3);
 	main_sizer->Hide(secondary_editor);
+	main_sizer->Hide(souceline_editor);
 
 	bottom_sizer = new wxBoxSizer(wxHORIZONTAL);
 	bottom_sizer->Add(MakeBottomButton("edit/revert"), wxSizerFlags().Border(wxRIGHT));
@@ -353,6 +360,7 @@ void SubsEditBox::UpdateFields(int type, bool repopulate_lists) {
 
 	if (type & AssFile::COMMIT_DIAG_TEXT) {
 		edit_ctrl->SetTextTo(line->Text);
+		souceline_editor->SetValue(to_wx(line->SourceLineText));
 		UpdateCharacterCount(line->Text);
 	}
 
@@ -586,11 +594,33 @@ void SubsEditBox::OnSplit(wxCommandEvent&) {
 	OPT_SET("Subtitle/Show Original")->SetBool(show_original);
 }
 
-void SubsEditBox::DoOnSplit(bool show_original) {
-	Freeze();
-	if (show_original)
-		secondary_editor->SetValue(to_wx(c->initialLineState->GetInitialText()));
+void SubsEditBox::OnSourceLineChanged(wxCommandEvent&) {
+	bool value = sourceline_box->IsChecked();
 
+	if (value) {
+		split_box->SetValue(0);
+		secondary_editor->Hide();
+		GetSizer()->Show(bottom_sizer, false);
+		souceline_editor->SetValue(to_wx(line->SourceLineText));
+	}
+
+	Freeze();
+	GetSizer()->Show(souceline_editor, value);
+	Fit();
+	SetMinSize(GetSize());
+	wxSizer* parent_sizer = GetParent()->GetSizer();
+	if (parent_sizer) parent_sizer->Layout();
+	Thaw();
+}
+
+void SubsEditBox::DoOnSplit(bool show_original) {
+	if (show_original) {
+		sourceline_box->SetValue(0);
+		souceline_editor->Hide();
+		secondary_editor->SetValue(to_wx(c->initialLineState->GetInitialText()));
+	}
+
+	Freeze();
 	GetSizer()->Show(secondary_editor, show_original);
 	GetSizer()->Show(bottom_sizer, show_original);
 	Fit();

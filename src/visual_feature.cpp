@@ -59,10 +59,10 @@ bool VisualDraggableFeature::IsMouseOver(Vector2D mouse_pos) const {
 		}
 
 		case DRAG_SMALL_SQUARE:
-			return fabs(delta.X()) < size && fabs(delta.Y()) < size;
+			return fabs(delta.X()) < (size * 2) && fabs(delta.Y()) < (size * 2);
 
 		case DRAG_SMALL_CIRCLE:
-			return delta.SquareLen() < 3 * size;
+			return delta.SquareLen() < 3 * (size * 2);
 
 		default:
 			return false;

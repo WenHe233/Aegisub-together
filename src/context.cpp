@@ -21,11 +21,13 @@
 #include "auto4_base.h"
 #include "dialog_manager.h"
 #include "fold_controller.h"
+#include "image_mask_combiner.h"
 #include "initial_line_state.h"
 #include "options.h"
 #include "project.h"
 #include "search_replace_engine.h"
 #include "selection_controller.h"
+#include "source_line_controller.h"
 #include "subs_controller.h"
 #include "text_selection_controller.h"
 #include "video_controller.h"
@@ -40,7 +42,9 @@ Context::Context()
 , project(std::make_unique<Project>(this))
 , local_scripts(std::make_unique<Automation4::LocalScriptManager>(this))
 , selectionController(std::make_unique<SelectionController>(this))
+, imageMask(std::make_unique<ImageMaskCombiner>())
 , foldController(std::make_unique<FoldController>(this))
+, sourceLineController(std::make_unique<SourceLineController>(this))
 , videoController(std::make_unique<VideoController>(this))
 , audioController(std::make_unique<AudioController>(this))
 , initialLineState(std::make_unique<InitialLineState>(this))

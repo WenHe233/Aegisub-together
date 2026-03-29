@@ -247,7 +247,7 @@ void VideoOutGL::InitTextures(int width, int height, GLenum format, int bpp, boo
 	}
 }
 
-void VideoOutGL::UploadFrameData(VideoFrame const& frame) {
+void VideoOutGL::UploadFrameData(VideoFrame const& frame, float brightness) {
 	if (frame.height == 0 || frame.width == 0) return;
 
 	InitTextures(frame.width, frame.height, GL_BGRA_EXT, 4, frame.flipped);
@@ -255,10 +255,22 @@ void VideoOutGL::UploadFrameData(VideoFrame const& frame) {
 	// Set the row length, needed to be able to upload partial rows
 	CHECK_ERROR(glPixelStorei(GL_UNPACK_ROW_LENGTH, frame.pitch / 4));
 
+	if (brightness != 1.0f) {
+		CHECK_ERROR(glPixelTransferf(GL_RED_SCALE,   brightness));
+		CHECK_ERROR(glPixelTransferf(GL_GREEN_SCALE, brightness));
+		CHECK_ERROR(glPixelTransferf(GL_BLUE_SCALE,  brightness));
+	}
+
 	for (auto& ti : textureList) {
 		CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, ti.textureID));
 		CHECK_ERROR(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.sourceW,
 			ti.sourceH, GL_BGRA_EXT, GL_UNSIGNED_BYTE, &frame.data[ti.dataOffset]));
+	}
+
+	if (brightness != 1.0f) {
+		CHECK_ERROR(glPixelTransferf(GL_RED_SCALE,   1.0f));
+		CHECK_ERROR(glPixelTransferf(GL_GREEN_SCALE, 1.0f));
+		CHECK_ERROR(glPixelTransferf(GL_BLUE_SCALE,  1.0f));
 	}
 
 	CHECK_ERROR(glPixelStorei(GL_UNPACK_ROW_LENGTH, 0));

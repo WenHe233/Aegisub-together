@@ -116,7 +116,7 @@ protected:
 	/// @brief Commit the current file state
 	/// @param message Description of changes for undo
 	virtual void Commit(wxString message = wxString());
-	bool IsDisplayed(AssDialogue *line) const;
+	bool IsDisplayed(AssDialogue *line, bool forceDisplayOnHide = true) const;
 
 	/// Get the line's position if it's set, or it's default based on style if not
 	Vector2D GetLinePosition(AssDialogue *diag);
@@ -160,6 +160,7 @@ public:
 
 	// Stuff called by VideoDisplay
 	virtual void OnMouseEvent(wxMouseEvent &event)=0;
+	virtual bool OnMouseWheel(wxMouseEvent &event)=0;
 	virtual void Draw()=0;
 	// Called by VideoDisplay to set the canvas size in GL coordinates (i.e. logical wx coordinates)
 	virtual void SetCanvasSize(int w, int h);
@@ -167,8 +168,10 @@ public:
 	virtual void SetDisplayArea(int x, int y, int w, int h);
 	virtual void SetToolbar(wxToolBar *) { }
 	virtual void SetSubTool([[maybe_unused]] int subtool) { }
+	virtual void UpdateTool([[maybe_unused]] int subtool) { }
 	virtual int GetSubTool() { return 0; }
 	virtual ~VisualToolBase() = default;
+	virtual void ResetTool() { OnFrameChanged(); }
 };
 
 /// Visual tool base class containing all common feature-related functionality
@@ -225,6 +228,10 @@ public:
 	/// @brief Handler for all mouse events
 	/// @param event Shockingly enough, the mouse event
 	void OnMouseEvent(wxMouseEvent &event) override;
+
+	/// @brief Handler for mouse wheel event
+	/// @param event Shockingly enough, the mouse event
+	bool OnMouseWheel(wxMouseEvent &event) override;
 
 	/// @brief Constructor
 	/// @param parent The VideoDisplay to use for coordinate conversion
