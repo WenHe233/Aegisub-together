@@ -233,9 +233,11 @@ void VideoDisplay::Render() try {
 	wxSize client_size = GetClientSize();
 	client_size = wxSize(std::max(1, client_size.GetWidth()), std::max(1, client_size.GetHeight()));
 
-	videoOut->Render(client_size.GetWidth() * scale_factor, client_size.GetHeight() * scale_factor,
-		content_left, content_bottom, content_width, content_height);
-	E(glViewport(0, 0, client_size.GetWidth() * scale_factor, client_size.GetHeight() * scale_factor));
+	int fb_w = client_size.GetWidth() * scale_factor;
+	int fb_h = client_size.GetHeight() * scale_factor;
+
+	E(glViewport(0, 0, fb_w, fb_h));
+	videoOut->Render(fb_w, fb_h, content_left, content_bottom, content_width, content_height);
 
 	E(glMatrixMode(GL_PROJECTION));
 	E(glLoadIdentity());

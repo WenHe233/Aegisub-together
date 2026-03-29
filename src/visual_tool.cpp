@@ -194,26 +194,21 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 		return;
 	}
 
-	if (!dragging) {
-		int max_layer = INT_MIN;
-		active_feature = nullptr;
-		FeatureType *activeSelectedFeature = nullptr;
-		for (auto& feature : features) {
-			if (feature.IsMouseOver(mouse_pos)) {
-				if (feature.layer >= max_layer) {
-					active_feature = &feature;
-					max_layer = feature.layer;
-				}
+	std::set<FeatureType *> hoveringFeatures;
 
-				if (c->selectionController->GetSelectedSet().size() == 1 && active_feature->line && c->selectionController->GetActiveLine() == active_feature->line) {
-					activeSelectedFeature = active_feature;
+	if (!dragging) {
+		int maxLayer = INT_MIN;
+		active_feature = nullptr; // currently hovering feature
+
+		for (auto& feature : features)
+			if (feature.IsMouseOver(mouse_pos)) {
+				hoveringFeatures.insert(&feature);
+
+				if (feature.layer >= maxLayer) {
+					active_feature = &feature;
+					maxLayer = feature.layer;
 				}
 			}
-		}
-
-		if (activeSelectedFeature && !left_double && !ctrl_down) {
-			active_feature = activeSelectedFeature;
-		}
 	}
 
 	if (dragging) {
@@ -266,14 +261,26 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 
 		// start drag
 		if (active_feature) {
-			if (!sel_features.count(active_feature)) {
-				sel_changed = true;
-				SetSelection(active_feature, !ctrl_down);
-			}
-			else
-				sel_changed = false;
+			sel_changed = false;
 
-			if (active_feature->line)
+			if (!ctrl_down) {
+				auto const& selectedSet = c->selectionController->GetSelectedSet();
+				bool canChangeSelection = true;
+
+				// do not change selection if we try dragging at least one of the currently selected lines
+				for (auto sel : sel_features)
+					if (hoveringFeatures.count(sel)) {
+						canChangeSelection = false;
+						break;
+					}
+
+				if (canChangeSelection && !sel_features.count(active_feature)) {
+					sel_changed = true;
+					SetSelection(active_feature, !ctrl_down);
+				}
+			}
+
+			if (active_feature->line && sel_changed)
 				c->selectionController->SetActiveLine(active_feature->line);
 
 			if (InitializeDrag(active_feature)) {
@@ -294,8 +301,15 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 					if (activeLineFeature) {
 						auto line = activeLineFeature->line;
 						c->selectionController->SetSelectionAndActive({ line }, line);
-						c->selectionController->NextLine();
-						c->selectionController->PrevLine();
+
+						auto it = c->ass->iterator_to(*line);
+						auto next = it;
+						++next;
+
+						if (next != c->ass->Events.end()) {
+							c->selectionController->NextLine();
+							c->selectionController->PrevLine();
+						}
 					}
 				} else {
 					sel_features.clear();
