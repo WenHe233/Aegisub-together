@@ -707,7 +707,7 @@ void BaseGrid::OnContextMenu(wxContextMenuEvent &evt) {
 	int row = pos.y / lineHeight + yPos - 1;
 	AssDialogue* d = GetVisDialogue(row);
 
-	if (d && context->imageMask->IsGroupStart(d)) {
+	if (d && context->imageMask->IsGroupStart(d) && !context->selectionController->GetSelectedSet().count(d)) {
 		SelectRow(row, false);
 		context->selectionController->SetActiveLine(d);
 	}

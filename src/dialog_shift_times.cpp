@@ -354,6 +354,10 @@ void DialogShiftTimes::LoadHistory() {
 	catch (json::Exception const& e) {
 		LOG_D("dialog_shift_times/load_history") << "Cannot load shift times history: " << e.what();
 	}
+	catch (std::bad_cast const& e) {
+		LOG_D("dialog_shift_times/load_history") << "Bad cast in shift history: " << e.what();
+		history.clear();
+	}
 	catch (...) {
 		history_box->Thaw();
 		throw;

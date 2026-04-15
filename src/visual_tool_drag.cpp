@@ -283,6 +283,7 @@ void VisualToolDrag::MakeFeatures(AssDialogue *diag, feature_list::iterator pos)
 		feat->line = diag;
 		feat->parent = parent;
 
+		parent->layer = -1;
 		parent->time = t1;
 		parent->parent = feat.get();
 

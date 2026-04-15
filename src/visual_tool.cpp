@@ -202,7 +202,8 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 
 		for (auto& feature : features)
 			if (feature.IsMouseOver(mouse_pos)) {
-				hoveringFeatures.insert(&feature);
+				if (feature.layer > -1)
+					hoveringFeatures.insert(&feature);
 
 				if (feature.layer >= maxLayer) {
 					active_feature = &feature;

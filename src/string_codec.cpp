@@ -58,7 +58,7 @@ std::string inline_string_decode(std::string_view input) {
 		if (input[i] != '#' || i + 2 > input.size())
 			output += input[i];
 		else {
-			char buff[] = {input[i], input[i + 1], 0};
+			char buff[] = {input[i + 1], input[i + 2], 0};
 			output += (char)strtol(buff, nullptr, 16);
 			i += 2;
 		}
