@@ -7285,3 +7285,169 @@ msgstr ""
 #~ msgstr ""
 #~ "Altyazı oluşturmak ve düzenlemek için platformlar arası, özgür ve açık "
 #~ "kaynak kodlu bir program"
+
+msgid "Bold"
+msgstr ""
+
+msgid "Italics"
+msgstr ""
+
+msgid "Strikeout"
+msgstr ""
+
+msgid "Underline"
+msgstr ""
+
+msgid "change text"
+msgstr ""
+
+msgid "Change text"
+msgstr ""
+
+msgid "Change only text in the selected lines"
+msgstr ""
+
+msgid "Copy text for Translator"
+msgstr ""
+
+msgid "Copy text and time for Translator"
+msgstr ""
+
+msgid "Show Clip Info"
+msgstr ""
+
+msgid "Show Masks"
+msgstr ""
+
+msgid "Toggle Masks"
+msgstr ""
+
+msgid "Toggle mask rendering in the video"
+msgstr ""
+
+msgid "Show Subtitle"
+msgstr ""
+
+msgid "Toggle Subtitle"
+msgstr ""
+
+msgid "Toggle subtitle rendering in the video"
+msgstr ""
+
+msgid "Append"
+msgstr ""
+
+msgid "Append a control point"
+msgstr ""
+
+msgid "Keep gradients"
+msgstr ""
+
+msgid "Right click to reset"
+msgstr ""
+
+msgid "Hold CTRL, SHIFT or both to be more precise while using mouse wheel"
+msgstr ""
+
+msgid "Double click to see options"
+msgstr ""
+
+msgid "Brightness: %d%%"
+msgstr ""
+
+msgid "All fonts"
+msgstr ""
+
+msgid "Recent fonts"
+msgstr ""
+
+msgid "Most used"
+msgstr ""
+
+msgid "Favorites"
+msgstr ""
+
+msgid "Own lists"
+msgstr ""
+
+msgid "Create new list"
+msgstr ""
+
+msgid "Name cannot be empty"
+msgstr ""
+
+msgid "List with this name already exists"
+msgstr ""
+
+msgid "Rename"
+msgstr ""
+
+msgid "Duplicate"
+msgstr ""
+
+msgid "Remove from Favorites"
+msgstr ""
+
+msgid "Add to Favorites"
+msgstr ""
+
+msgid "Assign to list"
+msgstr ""
+
+msgid "Remove from current list"
+msgstr ""
+
+msgid "Font picker"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Preview size"
+msgstr ""
+
+msgid "Show @ fonts"
+msgstr ""
+
+msgid "Import from the subtitle"
+msgstr ""
+
+msgid "Collecting fonts..."
+msgstr ""
+
+msgid "Temporary List"
+msgstr ""
+
+msgid "Copy font's name"
+msgstr ""
+
+msgid "Remove from Temporary List"
+msgstr ""
+
+msgid "Add to Temporary List"
+msgstr ""
+
+msgid "Image Mask (%d lines)"
+msgstr ""
+
+msgid "Image Mask background"
+msgstr ""
+
+msgid "Show Source"
+msgstr ""
+
+#: default_menu.json:0
+msgid "&Join (concatenate with typesetting)"
+msgstr ""
+
+#: ../src/command/edit.cpp:799
+msgid "&Concatenate (with typesetting)"
+msgstr ""
+
+#: ../src/command/edit.cpp:800
+msgid "Concatenate (with typesetting)"
+msgstr ""
+
+#: ../src/command/edit.cpp:801
+msgid "Join selected lines in a single one, concatenating text together (with typesetting)"
+msgstr ""

@@ -221,7 +221,10 @@ bool paste_over(wxWindow *parent, std::vector<bool>& pasteOverOptions, AssDialog
 	if (pasteOverOptions[7])  old_line.Margin[1] = new_line.Margin[1];
 	if (pasteOverOptions[8])  old_line.Margin[2] = new_line.Margin[2];
 	if (pasteOverOptions[9])  old_line.Effect    = new_line.Effect;
-	if (pasteOverOptions[10]) old_line.Text      = new_line.Text;
+	if (pasteOverOptions[10]) {
+		old_line.Text = new_line.Text;
+		old_line.SourceLineText = new_line.SourceLineText;
+	}
 
 	return true;
 }
@@ -843,7 +846,21 @@ struct edit_find_replace final : public Command {
 
 static void copy_lines(agi::Context *c) {
 	SetClipboard(join(c->selectionController->GetSortedSelection()
-		| transformed(static_cast<std::string(*)(AssDialogue*)>([](AssDialogue *d) { return d->GetEntryData(); })),
+		| transformed(static_cast<std::string(*)(AssDialogue*)>([](AssDialogue *d) {
+			std::string str = d->GetEntryData();
+
+			if (d->SourceLineText.get().size()) {
+				str += "{Source Line: ";
+
+				for (auto c : d->SourceLineText.get())
+					if (c != '\n' && c != '\r')
+						str += c;
+
+				str += "}";
+			}
+
+			return str;
+		})),
 		"\r\n"));
 }
 
@@ -1044,13 +1061,40 @@ struct edit_line_duplicate_shift_back final : public validate_video_and_sel_none
 	}
 };
 
-static void combine_lines(agi::Context *c, void (*combiner)(AssDialogue *, AssDialogue *), wxString const& message) {
+static std::string remove_override_tags_keep_comments(std::string const& text) {
+	std::string result;
+	size_t pos = 0;
+
+	while (pos < text.size()) {
+		if (text[pos] != '{') {
+			result += text[pos++];
+			continue;
+		}
+
+		size_t end = text.find('}', pos);
+		if (end == std::string::npos) {
+			result += text.substr(pos);
+			break;
+		}
+
+		std::string block = text.substr(pos, end - pos + 1);
+
+		if (block.find('\\') == std::string::npos)
+			result += block;
+
+		pos = end + 1;
+	}
+
+	return result;
+}
+
+static void combine_lines(agi::Context *c, void (*combiner)(AssDialogue *, AssDialogue *, bool), wxString const& message, bool keepTypesetting) {
 	auto sel = c->selectionController->GetSortedSelection();
 
 	AssDialogue *first = sel[0];
-	combiner(first, nullptr);
+	combiner(first, nullptr, keepTypesetting);
 	for (size_t i = 1; i < sel.size(); ++i) {
-		combiner(first, sel[i]);
+		combiner(first, sel[i], keepTypesetting);
 		first->End = std::max(first->End, sel[i]->End);
 		delete sel[i];
 	}
@@ -1060,23 +1104,29 @@ static void combine_lines(agi::Context *c, void (*combiner)(AssDialogue *, AssDi
 	c->ass->Commit(message, AssFile::COMMIT_DIAG_ADDREM | AssFile::COMMIT_DIAG_FULL);
 }
 
-static void combine_karaoke(AssDialogue *first, AssDialogue *second) {
-	if (second)
+static void combine_karaoke(AssDialogue *first, AssDialogue *second, bool keepTypesetting) {
+	if (second) {
 		first->Text = agi::Str(first->Text.get(), "{\\k", std::to_string((second->End - second->Start) / 10), "}", second->Text.get());
+		first->SourceLineText = agi::Str(first->SourceLineText.get(), " ", second->SourceLineText.get());
+	}
 	else
 		first->Text = agi::Str("{\\k", std::to_string((first->End - first->Start) / 10), "}", first->Text.get());
 
-	first->SourceLineText = first->GetStrippedText();
+	
 }
 
-static void combine_concat(AssDialogue *first, AssDialogue *second) {
-	if (second)
-		first->Text = agi::Str(first->Text.get(), " ", second->Text.get());
+static void combine_concat(AssDialogue *first, AssDialogue *second, bool keepTypesetting) {
+	if (second) {
+		if (keepTypesetting)
+			first->Text = agi::Str(first->Text.get(), " ", second->Text.get());
+		else
+			first->Text = agi::Str(first->Text.get(), " ", remove_override_tags_keep_comments(second->Text.get()));
 
-	first->SourceLineText = first->GetStrippedText();
+		first->SourceLineText = agi::Str(first->SourceLineText.get(), " ", second->SourceLineText.get());
+	}
 }
 
-static void combine_drop(AssDialogue *, AssDialogue *) { }
+static void combine_drop(AssDialogue *, AssDialogue *, bool keepTypesetting) { }
 
 struct edit_line_join_as_karaoke final : public validate_sel_multiple_no_imagemask {
 	CMD_NAME("edit/line/join/as_karaoke")
@@ -1085,7 +1135,7 @@ struct edit_line_join_as_karaoke final : public validate_sel_multiple_no_imagema
 	STR_HELP("Join selected lines in a single one, as karaoke")
 
 	void operator()(agi::Context *c) override {
-		combine_lines(c, combine_karaoke, _("join as karaoke"));
+		combine_lines(c, combine_karaoke, _("join as karaoke"), false);
 	}
 };
 
@@ -1096,7 +1146,18 @@ struct edit_line_join_concatenate final : public validate_sel_multiple_no_imagem
 	STR_HELP("Join selected lines in a single one, concatenating text together")
 
 	void operator()(agi::Context *c) override {
-		combine_lines(c, combine_concat, _("join lines"));
+		combine_lines(c, combine_concat, _("join lines"), false);
+	}
+};
+
+struct edit_line_join_concatenate_with_typesetting final : public validate_sel_multiple_no_imagemask {
+	CMD_NAME("edit/line/join/concatenate_with_typesetting")
+	STR_MENU("&Concatenate (with typesetting)")
+	STR_DISP("Concatenate (with typesetting)")
+	STR_HELP("Join selected lines in a single one, concatenating text together (with typesetting)")
+
+	void operator()(agi::Context *c) override {
+		combine_lines(c, combine_concat, _("join lines"), true);
 	}
 };
 
@@ -1107,7 +1168,7 @@ struct edit_line_join_keep_first final : public validate_sel_multiple_no_imagema
 	STR_HELP("Join selected lines in a single one, keeping text of first and discarding remaining")
 
 	void operator()(agi::Context *c) override {
-		combine_lines(c, combine_drop, _("join lines"));
+		combine_lines(c, combine_drop, _("join lines"), false);
 	}
 };
 
@@ -1383,6 +1444,26 @@ struct edit_line_split_by_karaoke final : public validate_sel_nonempty {
 	}
 };
 
+static std::string get_leading_override_blocks(std::string const& text) {
+	std::string result;
+	size_t pos = 0;
+
+	while (pos < text.size() && text[pos] == '{') {
+		size_t end = text.find('}', pos);
+		if (end == std::string::npos)
+			break;
+
+		std::string block = text.substr(pos, end - pos + 1);
+
+		if (block.find('\\') != std::string::npos)
+			result += block;
+
+		pos = end + 1;
+	}
+
+	return result;
+}
+
 void split_lines(agi::Context *c, AssDialogue *&n1, AssDialogue *&n2) {
 	int pos = c->textSelectionController->GetSelectionStart();
 
@@ -1391,8 +1472,10 @@ void split_lines(agi::Context *c, AssDialogue *&n1, AssDialogue *&n2) {
 	c->ass->Events.insert(++c->ass->iterator_to(*n1), *n2);
 
 	std::string orig = n1->Text;
+	std::string leading_tags = get_leading_override_blocks(orig);
+
 	n1->Text = boost::trim_right_copy(orig.substr(0, pos));
-	n2->Text = boost::trim_left_copy(orig.substr(pos));
+	n2->Text = leading_tags + boost::trim_left_copy(orig.substr(pos));
 }
 
 template<typename Func>
@@ -1591,6 +1674,7 @@ namespace cmd {
 		reg(std::make_unique<edit_line_duplicate_shift_back>());
 		reg(std::make_unique<edit_line_join_as_karaoke>());
 		reg(std::make_unique<edit_line_join_concatenate>());
+		reg(std::make_unique<edit_line_join_concatenate_with_typesetting>());
 		reg(std::make_unique<edit_line_join_keep_first>());
 		reg(std::make_unique<edit_line_paste>());
 		reg(std::make_unique<edit_line_paste_over>());

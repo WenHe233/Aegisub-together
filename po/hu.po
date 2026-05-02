@@ -6799,3 +6799,19 @@ msgstr "Kép maszk háttere"
 
 msgid "Show Source"
 msgstr "Forrás mutatása"
+
+#: default_menu.json:0
+msgid "&Join (concatenate with typesetting)"
+msgstr "Ö&sszeillesztés (összefűzés formázással)"
+
+#: ../src/command/edit.cpp:799
+msgid "&Concatenate (with typesetting)"
+msgstr "Ö&sszefűzés (formázással)"
+
+#: ../src/command/edit.cpp:800
+msgid "Concatenate (with typesetting)"
+msgstr "Összefűzés (formázással)"
+
+#: ../src/command/edit.cpp:801
+msgid "Join selected lines in a single one, concatenating text together (with typesetting)"
+msgstr "Összeilleszti a kiválasztott sorokat tartalmuk összevonásával (formázással)"

@@ -135,6 +135,14 @@ void AssDialogue::Parse(std::string const& raw) {
 		}
 	}
 
+	static const boost::regex source_line_regex(R"(\{Source Line: (.*)\}$)");
+	boost::smatch match;
+
+	if (boost::regex_search(text, match, source_line_regex)) {
+		SourceLineText = match[1].str();
+		text.erase(match.position(), match.length());
+	}
+
 	Text = text;
 }
 

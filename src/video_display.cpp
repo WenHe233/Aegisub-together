@@ -445,6 +445,7 @@ void VideoDisplay::OnMouseEvent(wxMouseEvent& event) {
 			Render();
 		} else {
 			VideoDisplay::OnContextMenu();
+			return;
 		}
 
 		isRightHold = false;

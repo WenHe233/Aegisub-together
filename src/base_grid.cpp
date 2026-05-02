@@ -447,6 +447,13 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 
 		if (context->imageMask->IsInGroup(curDiag)) {
 			color = row_colors.ImageMask;
+
+			if (inSel) {
+				if (context->imageMask->IsCollapsed(curDiag))
+					color = wxBrush(row_colors.ImageMask.GetColour().ChangeLightness(85));
+				else
+					color = wxBrush(row_colors.ImageMask.GetColour().ChangeLightness(93));
+			}
 		}
 
 		if (OPT_GET("Subtitle/Grid/Highlight Subtitles in Frame")->GetBool() && IsDisplayed(curDiag)) {
@@ -518,10 +525,25 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		dc.DrawLine(w, 0, w, maxH);
 	}
 
-	if (active_line && active_line->Fold.getVisibleRow() >= yPos && active_line->Fold.getVisibleRow() < yPos + nDraw) {
-		dc.SetPen(wxPen(to_wx(OPT_GET("Colour/Subtitle Grid/Active Border")->GetColor())));
-		dc.SetBrush(*wxTRANSPARENT_BRUSH);
-		dc.DrawRectangle(0, (active_line->Fold.getVisibleRow() - yPos + 1) * lineHeight, w, lineHeight + 1);
+	if (active_line) {
+		auto it = vis_lookup.find(active_line);
+
+		if (it == vis_lookup.end() && context->imageMask->IsInGroup(active_line)) {
+			const auto& group = context->imageMask->GetGroupLines(active_line);
+
+			if (!group.empty())
+				it = vis_lookup.find(group.front());
+		}
+
+		if (it != vis_lookup.end()) {
+			int activeVisRow = it->second;
+
+			if (activeVisRow >= yPos && activeVisRow < yPos + nDraw) {
+				dc.SetPen(wxPen(to_wx(OPT_GET("Colour/Subtitle Grid/Active Border")->GetColor())));
+				dc.SetBrush(*wxTRANSPARENT_BRUSH);
+				dc.DrawRectangle(0, (activeVisRow - yPos + 1) * lineHeight, w, lineHeight + 1);
+			}
+		}
 	}
 }
 
@@ -861,7 +883,26 @@ void BaseGrid::OnKeyDown(wxKeyEvent &event) {
 
 	auto active_line = context->selectionController->GetActiveLine();
 	int old_extend = extendRow;
-	int next = mid(0, (active_line ? active_line->Fold.getVisibleRow() : 0) + dir * step, GetVisRows() - 1);
+	int current = 0;
+
+	if (active_line) {
+		auto it = vis_lookup.find(active_line);
+
+		if (it != vis_lookup.end()) {
+			current = it->second;
+		} else if (context->imageMask->IsInGroup(active_line)) {
+			const auto& group = context->imageMask->GetGroupLines(active_line);
+
+			if (!group.empty()) {
+				auto groupStartIt = vis_lookup.find(group.front());
+
+				if (groupStartIt != vis_lookup.end())
+					current = groupStartIt->second;
+			}
+		}
+	}
+
+	int next = mid(0, current + dir * step, GetVisRows() - 1);
 	context->selectionController->SetActiveLine(GetVisDialogue(next));
 
 	// Move selection
