@@ -45,7 +45,49 @@
 #include <libaegisub/path.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <unordered_map>
+#include <unordered_set>
+#include <wx/dir.h>
 #include <wx/msgdlg.h>
+
+static wxString filename_only(agi::fs::path const& path) {
+	return to_wx(path.filename().string());
+}
+
+static void find_files_recursive(agi::fs::path const& root, std::unordered_set<std::string> const& wanted, std::unordered_map<std::string, agi::fs::path>& found) {
+	if (root.empty() || !agi::fs::DirectoryExists(root))
+		return;
+
+	wxDir dir(to_wx(root.string()));
+	if (!dir.IsOpened())
+		return;
+
+	wxString name;
+	bool cont = dir.GetFirst(&name, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
+
+	while (cont) {
+		auto full = root / from_wx(name);
+
+		if (agi::fs::DirectoryExists(full)) {
+			find_files_recursive(full, wanted, found);
+
+			if (found.size() == wanted.size())
+				return;
+		} else {
+			auto file_name = full.filename().string();
+
+			if (wanted.count(file_name) && !found.count(file_name)) {
+				found[file_name] = full;
+
+				if (found.size() == wanted.size())
+					return;
+			}
+		}
+
+		cont = dir.GetNext(&name);
+	}
+}
 
 Project::Project(agi::Context *c) : context(c) {
 	OPT_SUB("Audio/Cache/Type", &Project::ReloadAudio, this);
@@ -174,40 +216,151 @@ void Project::LoadUnloadFiles(ProjectProperties properties) {
 	auto load_linked = OPT_GET("App/Auto/Load Linked Files")->GetInt();
 	if (!load_linked) return;
 
-	auto audio     = context->path->MakeAbsolute(properties.audio_file, "?script");
-	auto video     = context->path->MakeAbsolute(properties.video_file, "?script");
-	auto timecodes = context->path->MakeAbsolute(properties.timecodes_file, "?script");
-	auto keyframes = context->path->MakeAbsolute(properties.keyframes_file, "?script");
+	auto sources = OPT_GET("Path/Sources")->GetListString();
 
-	if (video == video_file && audio == audio_file && keyframes == keyframes_file && timecodes == timecodes_file)
+	bool hasSources = std::any_of(sources.begin(), sources.end(), [](std::string const& source) {
+		return !source.empty();
+	});
+
+	auto isSameFile = [hasSources](agi::fs::path const& a, agi::fs::path const& b) {
+		if (a.empty() && b.empty())
+			return true;
+
+		if (a.empty() || b.empty())
+			return false;
+
+		if (!hasSources)
+			return a == b;
+
+		auto a_name = a.filename().string();
+		auto b_name = b.filename().string();
+
+		if (a_name.empty() || b_name.empty())
+			return false;
+
+		return a_name == b_name;
+	};
+
+	auto audio     = hasSources ? agi::fs::path(properties.audio_file)     : context->path->MakeAbsolute(properties.audio_file, "?script");
+	auto video     = hasSources ? agi::fs::path(properties.video_file)     : context->path->MakeAbsolute(properties.video_file, "?script");
+	auto timecodes = hasSources ? agi::fs::path(properties.timecodes_file) : context->path->MakeAbsolute(properties.timecodes_file, "?script");
+	auto keyframes = hasSources ? agi::fs::path(properties.keyframes_file) : context->path->MakeAbsolute(properties.keyframes_file, "?script");
+
+	if (!hasSources) {
+		// There are TOCTOU races here but they should not cause any actual harm.
+		if (!agi::fs::Exists(audio) && !context->path->IsDummyPath(audio))
+			audio = "";
+
+		if (!agi::fs::Exists(video) && !context->path->IsDummyPath(video))
+			video = "";
+
+		if (!agi::fs::Exists(timecodes))
+			timecodes = "";
+
+		if (!agi::fs::Exists(keyframes))
+			keyframes = "";
+	}
+
+	if (isSameFile(video, video_file) && isSameFile(audio, audio_file) && isSameFile(keyframes, keyframes_file) && isSameFile(timecodes, timecodes_file))
 		return;
 
 	if (load_linked == 2) {
 		wxString str = _("Do you want to load/unload the associated files?");
 		str += "\n";
 
-		auto append_file = [&](agi::fs::path const& p, wxString const& unload, wxString const& load) {
+		bool appendOccurs = false;
+
+		auto appendFile = [&](agi::fs::path const& p, wxString const& unload, wxString const& load) {
 			if (p.empty())
 				str += "\n" + unload;
-			else
-				str += "\n" + agi::wxformat(load, p);
+			else {
+				if (hasSources && !context->path->IsDummyPath(p))
+					str += "\n" + agi::wxformat(load, filename_only(p));
+				else
+					str += "\n" + agi::wxformat(load, p);
+			}
+
+			appendOccurs = true;
 		};
 
-		if (audio != audio_file)
-			append_file(audio, _("Unload audio"), _("Load audio file: %s"));
-		if (video != video_file)
-			append_file(video, _("Unload video"), _("Load video file: %s"));
-		if (timecodes != timecodes_file)
-			append_file(timecodes, _("Unload timecodes"), _("Load timecodes file: %s"));
-		if (keyframes != keyframes_file)
-			append_file(keyframes, _("Unload keyframes"), _("Load keyframes file: %s"));
+		if (!isSameFile(audio, audio_file))
+			appendFile(audio, _("Unload audio"), _("Load audio file: %s"));
+		if (!isSameFile(video, video_file))
+			appendFile(video, _("Unload video"), _("Load video file: %s"));
+		if (!isSameFile(timecodes, timecodes_file))
+			appendFile(timecodes, _("Unload timecodes"), _("Load timecodes file: %s"));
+		if (!isSameFile(keyframes, keyframes_file))
+			appendFile(keyframes, _("Unload keyframes"), _("Load keyframes file: %s"));
 
-		if (wxMessageBox(str, _("(Un)Load files?"), wxYES_NO | wxCENTRE, context->parent) != wxYES)
+		if (!appendOccurs || wxMessageBox(str, _("(Un)Load files?"), wxYES_NO | wxCENTRE, context->parent) != wxYES)
 			return;
 	}
 
+	if (hasSources) {
+		std::unordered_set<std::string> wanted;
+
+		auto addWanted = [&](agi::fs::path const& p) {
+			if (!p.empty() && !context->path->IsDummyPath(p)) {
+				auto name = p.filename().string();
+
+				if (!name.empty())
+					wanted.insert(name);
+			}
+		};
+
+		addWanted(audio);
+		addWanted(video);
+		addWanted(timecodes);
+		addWanted(keyframes);
+
+		std::unordered_map<std::string, agi::fs::path> source_index;
+
+		for (auto const& source : sources) {
+			if (source.empty())
+				continue;
+
+			find_files_recursive(config::path->Decode(source), wanted, source_index);
+
+			if (source_index.size() == wanted.size())
+				break;
+		}
+
+		bool missingFilesReported = false;
+		auto resolveFromSources = [&](agi::fs::path const& p) -> agi::fs::path {
+			if (p.empty() || p.filename().empty())
+				return {};
+
+			if (context->path->IsDummyPath(p))
+				return p;
+
+			auto name = p.filename().string();
+			auto it = source_index.find(name);
+
+			if (it != source_index.end())
+				return it->second;
+
+			if (!missingFilesReported) {
+				wxMessageBox(
+					to_wx(name),
+					_("File not found"),
+					wxOK | wxICON_WARNING | wxCENTER,
+					context->parent
+				);
+
+				missingFilesReported = true;
+			}
+
+			return {};
+		};
+
+		audio     = resolveFromSources(audio);
+		video     = resolveFromSources(video);
+		timecodes = resolveFromSources(timecodes);
+		keyframes = resolveFromSources(keyframes);
+	}
+
 	bool loaded_video = false;
-	if (video != video_file) {
+	if (!isSameFile(video, video_file)) {
 		if (video.empty())
 			CloseVideo();
 		else if ((loaded_video = DoLoadVideo(video))) {
@@ -226,7 +379,7 @@ void Project::LoadUnloadFiles(ProjectProperties properties) {
 	if (!timecodes.empty()) LoadTimecodes(timecodes);
 	if (!keyframes.empty()) LoadKeyframes(keyframes);
 
-	if (audio != audio_file) {
+	if (!isSameFile(audio, audio_file)) {
 		if (audio.empty())
 			CloseAudio();
 		else
@@ -237,6 +390,9 @@ void Project::LoadUnloadFiles(ProjectProperties properties) {
 }
 
 void Project::DoLoadAudio(agi::fs::path const& path, bool quiet) {
+	if (context->path->IsDummyPath(path))
+		return;
+
 	if (!progress)
 		progress = new DialogProgress(context->parent);
 
@@ -345,9 +501,12 @@ void Project::CloseVideo() {
 	video_provider.reset();
 	SetPath(video_file, "?video", "", "");
 	video_has_subtitles = false;
-	context->ass->Properties.ar_mode = 0;
-	context->ass->Properties.ar_value = 0.0;
-	context->ass->Properties.video_position = 0;
+
+	if (context->ass) {
+		context->ass->Properties.ar_mode = 0;
+		context->ass->Properties.ar_value = 0.0;
+		context->ass->Properties.video_position = 0;
+	}
 }
 
 void Project::DoLoadTimecodes(agi::fs::path const& path) {

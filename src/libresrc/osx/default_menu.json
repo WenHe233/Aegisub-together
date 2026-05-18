@@ -50,6 +50,7 @@
         { "command" : "tool/style/assistant" },
         { "command" : "tool/translation_assistant" },
         { "command" : "tool/resampleres" },
+        { "command" : "subtitle/loadfiles" },
         {},
         { "submenu" : "main/subtitle/insert lines", "text" : "&Insert Lines" },
         { "command" : "edit/line/duplicate" },

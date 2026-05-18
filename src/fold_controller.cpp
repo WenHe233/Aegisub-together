@@ -72,11 +72,14 @@ void FoldController::InvalidateLineFold(AssDialogue &line) {
 	}
 }
 
-void FoldController::AddFold(AssDialogue& start, AssDialogue& end, bool collapsed) {
+int FoldController::AddFold(AssDialogue& start, AssDialogue& end, bool collapsed, int commitId) {
 	if (CanAddFold(start, end)) {
 		RawAddFold(start, end, true);
-		context->ass->Commit(_("add fold"), AssFile::COMMIT_FOLD);
+
+		return context->ass->Commit(_("add fold"), AssFile::COMMIT_FOLD, commitId);
 	}
+
+	return -1;
 }
 
 void FoldController::DoForAllFolds(std::function<void(AssDialogue&)> action) {

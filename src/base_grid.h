@@ -126,6 +126,7 @@ class BaseGrid final : public wxWindow {
 	int GetRows() const { return index_line_map.size(); }
 	int GetVisRows() const { return vis_index_line_map.size(); }
 	void MakeRowVisible(int row);
+	void MakeActiveLineVisible();
 
 	/// @brief Get dialogue by index
 	/// @param n Index to look up

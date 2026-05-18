@@ -135,7 +135,7 @@ void AssDialogue::Parse(std::string const& raw) {
 		}
 	}
 
-	static const boost::regex source_line_regex(R"(\{Source Line: (.*)\}$)");
+	static const boost::regex source_line_regex(R"(\{:Source Line: (.*?)\})");
 	boost::smatch match;
 
 	if (boost::regex_search(text, match, source_line_regex)) {
@@ -166,7 +166,7 @@ static void append_unsafe_str(std::string &out, std::string const& str) {
 	out += ',';
 }
 
-std::string AssDialogue::GetEntryData() const {
+std::string AssDialogue::GetEntryData(bool addExtraData) const {
 	std::string str = Comment ? "Comment: " : "Dialogue: ";
 	str.reserve(51 + Style.get().size() + Actor.get().size() + Effect.get().size() + Text.get().size());
 
@@ -179,7 +179,7 @@ std::string AssDialogue::GetEntryData() const {
 		append_int(str, margin);
 	append_unsafe_str(str, Effect);
 
-	if (ExtradataIds.get().size() > 0) {
+	if (addExtraData && ExtradataIds.get().size() > 0) {
 		str += '{';
 		for (auto id : ExtradataIds.get()) {
 			str += '=';

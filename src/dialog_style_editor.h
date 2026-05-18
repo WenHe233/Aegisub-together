@@ -42,6 +42,7 @@ class wxComboBox;
 class wxCommandEvent;
 class wxRadioBox;
 class wxSpinCtrl;
+class wxSpinCtrlDouble;
 class wxTextCtrl;
 class wxThreadEvent;
 class wxWindow;
@@ -82,6 +83,11 @@ class DialogStyleEditor final : public wxDialog {
 	wxTextCtrl *PreviewText;
 	SubtitlesPreview *SubsPreview;
 
+	wxSpinCtrlDouble *FontSize;
+	wxSpinCtrlDouble *ScaleX;
+	wxSpinCtrlDouble *ScaleY;
+	wxSpinCtrlDouble *Spacing;
+
 	void SetBitmapColor(int n,wxColour color);
 	int AlignToControl(int n);
 	int ControlToAlign(int n);
@@ -91,6 +97,7 @@ class DialogStyleEditor final : public wxDialog {
 
 	void OnChildFocus(wxChildFocusEvent &event);
 	void OnCommandPreviewUpdate(wxCommandEvent &event);
+	void OnFontNameClick(wxMouseEvent &event);
 
 	void OnPreviewTextChange(wxCommandEvent &event);
 	void OnPreviewColourChange(ValueEvent<agi::Color> &event);
@@ -103,7 +110,7 @@ class DialogStyleEditor final : public wxDialog {
 	void OnSetColor(ValueEvent<agi::Color>& evt);
 
 public:
-	DialogStyleEditor(wxWindow *parent, AssStyle *style, agi::Context *c, AssStyleStorage *store, std::string const& new_name, wxArrayString const& font_list);
+	DialogStyleEditor(wxWindow *parent, AssStyle *style, agi::Context *c, AssStyleStorage *store, std::string const& new_name);
 	~DialogStyleEditor();
 
 	std::string GetStyleName() const;

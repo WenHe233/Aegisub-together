@@ -474,6 +474,17 @@ struct subtitle_spellcheck final : public Command {
 		ShowSpellcheckerDialog(c);
 	}
 };
+
+struct subtitle_loadfiles final : public Command {
+	CMD_NAME("subtitle/loadfiles")
+	STR_MENU("Load associated files")
+	STR_DISP("Load associated files")
+	STR_HELP("Attempt to load associated files to the subtitle")
+
+	void operator()(agi::Context *c) override {
+		c->project->LoadUnloadFiles(c->ass->Properties);
+	}
+};
 }
 
 namespace cmd {
@@ -497,5 +508,6 @@ namespace cmd {
 		reg(std::make_unique<subtitle_select_all>());
 		reg(std::make_unique<subtitle_select_visible>());
 		reg(std::make_unique<subtitle_spellcheck>());
+		reg(std::make_unique<subtitle_loadfiles>());
 	}
 }

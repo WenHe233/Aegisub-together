@@ -40,7 +40,10 @@
 #include "ass_style_storage.h"
 #include "colour_button.h"
 #include "compat.h"
+#include "dialogs.h"
 #include "help_button.h"
+#include "font_size_object.h"
+#include "line_change_flags.h"
 #include "include/aegisub/context.h"
 #include "libresrc/libresrc.h"
 #include "options.h"
@@ -53,9 +56,11 @@
 #include <libaegisub/of_type_adaptor.h>
 
 #include <algorithm>
+#include <functional>
 
 #include <wx/bmpbuttn.h>
 #include <wx/checkbox.h>
+#include <wx/font.h>
 #include <wx/msgdlg.h>
 #include <wx/sizer.h>
 #include <wx/spinctrl.h>
@@ -124,7 +129,7 @@ public:
 	}
 };
 
-DialogStyleEditor::DialogStyleEditor(wxWindow *parent, AssStyle *style, agi::Context *c, AssStyleStorage *store, std::string const& new_name, wxArrayString const& font_list)
+DialogStyleEditor::DialogStyleEditor(wxWindow *parent, AssStyle *style, agi::Context *c, AssStyleStorage *store, std::string const& new_name)
 : wxDialog (parent, -1, _("Style Editor"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 , c(c)
 , style(style)
@@ -196,7 +201,7 @@ DialogStyleEditor::DialogStyleEditor(wxWindow *parent, AssStyle *style, agi::Con
 	// Create controls
 	StyleName = new wxTextCtrl(NameSizerBox, -1, to_wx(style->name));
 	FontName = new wxComboBox(FontSizerBox, -1, to_wx(style->font), wxDefaultPosition, wxSize(150, -1), 0, nullptr, wxCB_DROPDOWN);
-	auto FontSize = num_text_ctrl(FontSizerBox, &work->fontsize, 0, 10000.0, 1.0, 0);
+	FontSize = num_text_ctrl(FontSizerBox, &work->fontsize, 0, 10000.0, 1.0, 0);
 	BoxBold = new wxCheckBox(FontSizerBox, -1, _("&Bold"));
 	BoxItalic = new wxCheckBox(FontSizerBox, -1, _("&Italic"));
 	BoxUnderline = new wxCheckBox(FontSizerBox, -1, _("&Underline"));
@@ -216,10 +221,10 @@ DialogStyleEditor::DialogStyleEditor(wxWindow *parent, AssStyle *style, agi::Con
 	auto Outline = num_text_ctrl(OutlineSizerBox, &work->outline_w, 0.0, 1000.0, 0.1, 2);
 	auto Shadow = num_text_ctrl(OutlineSizerBox, &work->shadow_w, 0.0, 1000.0, 0.1, 2);
 	OutlineType = new wxComboBox(OutlineSizerBox, -1, "", wxDefaultPosition, wxDefaultSize, 3, borderStyleValues, wxCB_READONLY);
-	auto ScaleX = num_text_ctrl(MiscSizerBox, &work->scalex, 0.0, 10000.0, 1, 2);
-	auto ScaleY = num_text_ctrl(MiscSizerBox, &work->scaley, 0.0, 10000.0, 1, 2);
+	ScaleX = num_text_ctrl(MiscSizerBox, &work->scalex, 0.0, 10000.0, 1, 2);
+	ScaleY = num_text_ctrl(MiscSizerBox, &work->scaley, 0.0, 10000.0, 1, 2);
 	auto Angle = num_text_ctrl(MiscSizerBox, &work->angle, -360.0, 360.0, 1.0, 2);
-	auto Spacing = num_text_ctrl(MiscSizerBox, &work->spacing, 0.0, 1000.0, 0.1, 3);
+	Spacing = num_text_ctrl(MiscSizerBox, &work->spacing, 0.0, 1000.0, 0.1, 3);
 	Encoding = new wxComboBox(MiscSizerBox, -1, "", wxDefaultPosition, wxDefaultSize, encodingStrings, wxCB_READONLY);
 
 	// Set control tooltips
@@ -250,11 +255,6 @@ DialogStyleEditor::DialogStyleEditor(wxWindow *parent, AssStyle *style, agi::Con
 	BoxStrikeout->SetValue(style->strikeout);
 	OutlineType->SetSelection(BorderStyleToControl(style->borderstyle));
 	Alignment->SetSelection(AlignToControl(style->alignment));
-	// Fill font face list box
-	FontName->Freeze();
-	FontName->Append(font_list);
-	FontName->SetValue(to_wx(style->font));
-	FontName->Thaw();
 
 	// Set encoding value
 	bool found = false;
@@ -398,6 +398,7 @@ DialogStyleEditor::DialogStyleEditor(wxWindow *parent, AssStyle *style, agi::Con
 
 	previewButton->Bind(EVT_COLOR, &DialogStyleEditor::OnPreviewColourChange, this);
 	FontName->Bind(wxEVT_TEXT_ENTER, &DialogStyleEditor::OnCommandPreviewUpdate, this);
+	FontName->Bind(wxEVT_LEFT_DOWN, &DialogStyleEditor::OnFontNameClick, this);
 	PreviewText->Bind(wxEVT_TEXT, &DialogStyleEditor::OnPreviewTextChange, this);
 
 	Bind(wxEVT_BUTTON, std::bind(&DialogStyleEditor::Apply, this, true, true), wxID_OK);
@@ -582,4 +583,63 @@ int DialogStyleEditor::BorderStyleToControl(int border_style) {
 		default:
 			return 0;
 	}
+}
+
+void DialogStyleEditor::OnFontNameClick(wxMouseEvent &event) {
+	UpdateWorkStyle();
+
+	wxFont initial_font(
+		(int)work->fontsize,
+		wxFONTFAMILY_DEFAULT,
+		work->italic ? wxFONTSTYLE_ITALIC : wxFONTSTYLE_NORMAL,
+		work->bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL,
+		work->underline,
+		FontName->GetValue()
+	);
+
+	initial_font.SetStrikethrough(work->strikeout);
+
+	FontSizeObject sizeObj;
+	sizeObj.fs = work->fontsize;
+	sizeObj.fscx = work->scalex;
+	sizeObj.fscy = work->scaley;
+	sizeObj.fsp = work->spacing;
+
+	bool accepted = GetFontFromUser(
+		this,
+		FontName->GetValue(),
+		initial_font,
+		sizeObj,
+		c->ass.get(),
+		[this](wxString face, wxFont font, FontSizeObject size, LineChangeFlags flags) {
+			FontName->SetValue(face);
+
+			BoxBold->SetValue(font.GetWeight() == wxFONTWEIGHT_BOLD);
+			BoxItalic->SetValue(font.GetStyle() == wxFONTSTYLE_ITALIC);
+			BoxUnderline->SetValue(font.GetUnderlined());
+			BoxStrikeout->SetValue(font.GetStrikethrough());
+
+			if (size.fsp < 0)
+				size.fsp = 0;
+
+			FontSize->SetValue(size.fs);
+			ScaleX->SetValue(size.fscx);
+			ScaleY->SetValue(size.fscy);
+			Spacing->SetValue(size.fsp);
+
+			work->fontsize = size.fs;
+			work->scalex = size.fscx;
+			work->scaley = size.fscy;
+			work->spacing = size.fsp;
+		},
+		true
+	);
+
+	if (accepted) {
+		TransferDataToWindow();
+		UpdateWorkStyle();
+		SubsPreview->SetStyle(*work);
+	}
+
+	event.Skip(false);
 }

@@ -316,7 +316,8 @@
 			"Timecodes" : "",
 			"Video" : ""
 		},
-		"Screenshot" : "?video"
+		"Screenshot" : "?video",
+		"Sources" : [{"string": ""}]
 	},
 
 

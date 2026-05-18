@@ -88,6 +88,7 @@ public:
 	// Their behaviour is undefined as soon as any uncommitted change is made to the Events.
 	AssDialogue *getFoldOpener() const { return parent; }
 	AssDialogue *getNextVisible() const { return nextVisible; }
+	AssDialogue *getFoldCloser() const { return counterpart; }
 	int getVisibleRow() const { return visibleRow; }
 };
 
@@ -144,7 +145,7 @@ public:
 	///
 	/// Calling this method should only cause a commit if the fold was
 	/// successfully added.
-	void AddFold(AssDialogue& start, AssDialogue& end, bool collapsed);
+	int AddFold(AssDialogue& start, AssDialogue& end, bool collapsed, int commitId = -1);
 
 	void ClearAllFolds();
 

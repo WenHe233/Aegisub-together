@@ -27,6 +27,9 @@
 #include <libaegisub/path.h>
 
 #include <algorithm>
+#include <functional>
+#include <memory>
+#include <vector>
 
 #include <wx/checkbox.h>
 #include <wx/combobox.h>
@@ -306,4 +309,127 @@ void OptionPage::DisableIfChecked(wxControl *cbx, wxControl *ctrl) {
 
 	ctrl->Enable(!cb->IsChecked());
 	cb->Bind(wxEVT_CHECKBOX, [=](wxCommandEvent& evt) { ctrl->Enable(!evt.GetInt()); evt.Skip(); });
+}
+
+static std::vector<std::string> source_rows_to_vector(std::vector<wxTextCtrl *> const& rows) {
+	std::vector<std::string> values;
+
+	for (auto row : rows)
+		values.push_back(from_wx(row->GetValue()));
+
+	if (values.empty())
+		values.emplace_back("");
+
+	return values;
+}
+
+void OptionPage::OptionBrowseList(PageSection section, const char *opt_name) {
+	parent->AddChangeableOption(opt_name);
+	const auto opt = OPT_GET(opt_name);
+
+	if (opt->GetType() != agi::OptionType::ListString)
+		throw agi::InternalError("Option must be agi::OptionType::ListString for BrowseList.");
+
+	auto panel = new wxPanel(section.box);
+	auto outer = new wxBoxSizer(wxVERTICAL);
+	auto rows_sizer = new wxBoxSizer(wxVERTICAL);
+	auto add_button = new wxButton(panel, -1, _("Add"));
+
+	panel->SetSizer(outer);
+
+	auto rows = std::make_shared<std::vector<wxTextCtrl *>>();
+
+	auto relayout = [=] {
+		rows_sizer->Layout();
+		outer->Layout();
+		panel->Layout();
+		section.box->Layout();
+		this->Layout();
+		this->FitInside();
+	};
+
+	auto save = [=] {
+		parent->SetOption(std::make_unique<agi::OptionValueListString>(
+			opt_name,
+			source_rows_to_vector(*rows)
+		));
+	};
+
+	auto add_row = std::make_shared<std::function<void(wxString)>>();
+
+	*add_row = [=](wxString value) {
+		auto row = new wxBoxSizer(wxHORIZONTAL);
+
+		auto text = new wxTextCtrl(panel, -1, value);
+		text->SetMinSize(wxSize(260, -1));
+
+		auto browse = new wxButton(panel, -1, _("Browse..."));
+
+		row->Add(text, wxSizerFlags(1).Expand());
+		row->Add(browse, wxSizerFlags().Border(wxLEFT, 5));
+
+		rows->push_back(text);
+
+		if (rows->size() > 1) {
+			auto remove = new wxButton(panel, -1, _("Remove"));
+			row->Add(remove, wxSizerFlags().Border(wxLEFT, 5));
+
+			remove->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+				rows->erase(std::remove(rows->begin(), rows->end(), text), rows->end());
+
+				rows_sizer->Detach(row);
+
+				text->Destroy();
+				browse->Destroy();
+				remove->Destroy();
+				delete row;
+
+				save();
+				relayout();
+			});
+		}
+
+		text->Bind(wxEVT_TEXT, [=](wxCommandEvent& evt) {
+			evt.Skip();
+			save();
+		});
+
+		browse->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+			wxDirDialog dlg(
+				panel,
+				_("Please choose the folder:"),
+				config::path->Decode(from_wx(text->GetValue())).wstring()
+			);
+
+			if (dlg.ShowModal() == wxID_OK) {
+				wxString dir = dlg.GetPath();
+				if (!dir.empty()) {
+					text->SetValue(dir);
+					save();
+				}
+			}
+		});
+
+		rows_sizer->Add(row, wxSizerFlags().Expand().Border(wxBOTTOM, 5));
+		relayout();
+	};
+
+	auto values = opt->GetListString();
+	if (values.empty())
+		values.emplace_back("");
+
+	for (auto const& value : values)
+		(*add_row)(to_wx(value));
+
+	add_button->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+		(*add_row)("");
+		save();
+		relayout();
+	});
+
+	outer->Add(rows_sizer, wxSizerFlags().Expand());
+	outer->Add(add_button, wxSizerFlags().Border(wxTOP, 2));
+
+	section.sizer->Add(panel, wxSizerFlags(1).Expand());
+	section.sizer->AddSpacer(0);
 }

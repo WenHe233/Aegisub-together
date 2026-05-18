@@ -79,6 +79,9 @@ void General(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(recent, _("Files"), "Limits/MRU", 0, 16);
 	p->OptionAdd(recent, _("Find/Replace"), "Limits/Find Replace");
 
+	auto sourceFilePaths = p->PageSizer(_("Source File Paths"));
+	p->OptionBrowseList(sourceFilePaths, "Path/Sources");
+
 	p->SetSizerAndFit(p->sizer);
 }
 

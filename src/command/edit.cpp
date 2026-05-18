@@ -73,6 +73,9 @@
 #include <wx/fontdlg.h>
 #include <wx/textentry.h>
 
+const std::string foldStartMarker = "{:Foldstart}";
+const std::string foldEndMarker = "{:Foldend}";
+
 void EditChangeText(agi::Context *c);
 
 namespace {
@@ -186,11 +189,36 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 	AssDialogue *first = nullptr;
 	Selection newsel;
 
+	AssDialogue *pendingFoldStart = nullptr;
+	std::vector<std::pair<AssDialogue*, AssDialogue*>> foldsToAdd;
+
 	boost::char_separator<char> sep("\r\n");
 	for (auto curdata : boost::tokenizer<boost::char_separator<char>>(data, sep)) {
 		AssDialogue *inserted = paste_line(get_dialogue(curdata));
 		if (!inserted)
 			break;
+
+		std::string text = inserted->Text.get();
+		size_t startPos = text.find(foldStartMarker);
+		size_t endPos = text.find(foldEndMarker);
+
+		if (startPos != std::string::npos) {
+			text.replace(startPos, foldStartMarker.length(), "");
+
+			if (!pendingFoldStart)
+				pendingFoldStart = inserted;
+		}
+
+		if (endPos != std::string::npos) {
+			text.replace(endPos, foldEndMarker.length(), "");
+
+			if (pendingFoldStart) {
+				foldsToAdd.emplace_back(pendingFoldStart, inserted);
+				pendingFoldStart = nullptr;
+			}
+		}
+
+		inserted->Text = text;
 
 		newsel.insert(inserted);
 		if (!first)
@@ -198,7 +226,11 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 	}
 
 	if (first) {
-		c->ass->Commit(_("paste"), paste_over ? AssFile::COMMIT_DIAG_FULL : AssFile::COMMIT_DIAG_ADDREM);
+		int commitId = -1;
+		for (auto const& fold : foldsToAdd)
+			commitId = c->foldController->AddFold(*fold.first, *fold.second, true, commitId);
+
+		c->ass->Commit(_("paste"), paste_over ? AssFile::COMMIT_DIAG_FULL : AssFile::COMMIT_DIAG_ADDREM, commitId);
 
 		if (!paste_over)
 			c->selectionController->SetSelectionAndActive(std::move(newsel), first);
@@ -222,7 +254,18 @@ bool paste_over(wxWindow *parent, std::vector<bool>& pasteOverOptions, AssDialog
 	if (pasteOverOptions[8])  old_line.Margin[2] = new_line.Margin[2];
 	if (pasteOverOptions[9])  old_line.Effect    = new_line.Effect;
 	if (pasteOverOptions[10]) {
-		old_line.Text = new_line.Text;
+		std::string text = new_line.Text.get();
+
+		size_t pos = text.find(foldStartMarker);
+		if (pos != std::string::npos) {
+			text.replace(pos, foldStartMarker.length(), "");
+		} else {
+			pos = text.find(foldEndMarker);
+			if (pos != std::string::npos)
+				text.replace(pos, foldEndMarker.length(), "");
+		}
+
+		old_line.Text = text;
 		old_line.SourceLineText = new_line.SourceLineText;
 	}
 
@@ -847,10 +890,16 @@ struct edit_find_replace final : public Command {
 static void copy_lines(agi::Context *c) {
 	SetClipboard(join(c->selectionController->GetSortedSelection()
 		| transformed(static_cast<std::string(*)(AssDialogue*)>([](AssDialogue *d) {
-			std::string str = d->GetEntryData();
+			std::string str = d->GetEntryData(false);
+
+			if (d->Fold.hasFold() && !d->Fold.isEnd())
+				str += "{:Foldstart}";
+
+			if (d->Fold.hasFold() && d->Fold.isEnd())
+				str += "{:Foldend}";
 
 			if (d->SourceLineText.get().size()) {
-				str += "{Source Line: ";
+				str += "{:Source Line: ";
 
 				for (auto c : d->SourceLineText.get())
 					if (c != '\n' && c != '\r')
@@ -1656,6 +1705,93 @@ struct edit_line_change_text final : public Command {
 	}
 };
 
+bool find_comment_block(std::string const& text, int pos, size_t& comment_start, size_t& comment_end) {
+	if (pos < 0) pos = 0;
+	if (pos > (int)text.size()) pos = text.size();
+
+	size_t open = text.rfind('{', pos == 0 ? 0 : pos - 1);
+	if (open == std::string::npos)
+		return false;
+
+	size_t close_before_pos = text.find('}', open + 1);
+	if (close_before_pos != std::string::npos && close_before_pos < (size_t)pos)
+		return false;
+
+	size_t close = text.find('}', pos);
+	if (close == std::string::npos)
+		return false;
+
+	comment_start = open;
+	comment_end = close;
+
+	return true;
+}
+
+bool cursor_is_in_comment(const agi::Context *c) {
+	AssDialogue *line = c->selectionController->GetActiveLine();
+	if (!line)
+		return false;
+
+	size_t comment_start, comment_end;
+
+	return find_comment_block(
+		line->Text.get(),
+		c->textSelectionController->GetInsertionPoint(),
+		comment_start,
+		comment_end
+	);
+}
+
+struct edit_comment final : public Command {
+	CMD_NAME("edit/comment")
+	STR_HELP("Toggle text comment")
+	CMD_TYPE(COMMAND_VALIDATE | COMMAND_DYNAMIC_NAME)
+
+	wxString StrMenu(const agi::Context *c) const override {
+		return cursor_is_in_comment(c) ? _("Uncomment") : _("Comment");
+	}
+
+	wxString StrDisplay(const agi::Context *c) const override {
+		return StrMenu(c);
+	}
+
+	bool Validate(const agi::Context *c) override {
+		return cursor_is_in_comment(c) || c->textSelectionController->GetSelectionStart() != c->textSelectionController->GetSelectionEnd();
+	}
+
+	void operator()(agi::Context *c) override {
+		AssDialogue *line = c->selectionController->GetActiveLine();
+		std::string text = line->Text.get();
+
+		int sel_start = c->textSelectionController->GetSelectionStart();
+		int sel_end = c->textSelectionController->GetSelectionEnd();
+		int cursor_pos = c->textSelectionController->GetInsertionPoint();
+
+		size_t comment_start, comment_end;
+		if (find_comment_block(text, cursor_pos, comment_start, comment_end)) {
+			text.erase(comment_end, 1);
+			text.erase(comment_start, 1);
+			line->Text = text;
+
+			int new_pos = std::max<int>((int)comment_start, cursor_pos - 1);
+			c->ass->Commit(_("Uncomment").Lower(), AssFile::COMMIT_DIAG_TEXT, -1, line);
+			c->textSelectionController->SetSelection(new_pos, new_pos);
+
+			return;
+		}
+
+		if (sel_start > sel_end)
+			std::swap(sel_start, sel_end);
+
+		text.insert(sel_end, "}");
+		text.insert(sel_start, "{");
+		line->Text = text;
+
+		c->ass->Commit(_("Comment").Lower(), AssFile::COMMIT_DIAG_TEXT, -1, line);
+		c->textSelectionController->SetSelection(sel_start + 1, sel_end + 1);
+	}
+};
+
 }
 
 namespace cmd {
@@ -1694,5 +1830,6 @@ namespace cmd {
 		reg(std::make_unique<edit_insert_original>());
 		reg(std::make_unique<edit_clear>());
 		reg(std::make_unique<edit_clear_text>());
+		reg(std::make_unique<edit_comment>());
 	}
 }

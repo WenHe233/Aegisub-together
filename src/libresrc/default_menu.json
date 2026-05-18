@@ -73,6 +73,7 @@
         { "command" : "time/snap/end_video" },
         { "command" : "time/snap/scene" },
         { "command" : "time/frame/current" },
+        { "command" : "time/frame/current_end" },
         {},
         { "submenu" : "main/timing/make times continuous", "text" : "Make Times Continuous" }
     ],

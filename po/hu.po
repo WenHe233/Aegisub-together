@@ -6815,3 +6815,45 @@ msgstr "Összefűzés (formázással)"
 #: ../src/command/edit.cpp:801
 msgid "Join selected lines in a single one, concatenating text together (with typesetting)"
 msgstr "Összeilleszti a kiválasztott sorokat tartalmuk összevonásával (formázással)"
+
+msgid "Confirm"
+msgstr "Megerősítés"
+
+msgid "Recently installed"
+msgstr "Mostanában telepített"
+
+msgid "Are you sure you want to close? You have temporary saved fonts."
+msgstr "Biztosan be akarod zárni? Van ideiglenesen elmentett fontod."
+
+msgid "Source File Paths"
+msgstr "Forrás fájlok elérési útjai"
+
+msgid "Add"
+msgstr "Hozzáad"
+
+msgid "File not found"
+msgstr "Fájl nem található"
+
+msgid "Toggle text comment"
+msgstr "Megjegyzés ki-bekapcsolása"
+
+msgid "Uncomment"
+msgstr "Megjegyzés visszavonása"
+
+msgid "Shift to &Current Frame (End)"
+msgstr "Sorokat a &képkockához tolja (Vége)"
+
+msgid "Shift to Current Frame (End)"
+msgstr "Sorokat a képkockához tolja (Vége)"
+
+msgid "Shift selection so that the active line ends at current frame"
+msgstr "A kijelölt feliratsorokat eltolja úgy, hogy az első végét a jelenlegi képkockával zárja."
+
+msgid "shift to frame end"
+msgstr "képkockához igazítás végéről"
+
+msgid "Load associated files"
+msgstr "Hozzárendelt fájlok betöltése"
+
+msgid "Attempt to load associated files to the subtitle"
+msgstr "A felirathoz hozzárendelt fájlok betöltésének megpróbálása"

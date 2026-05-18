@@ -57,7 +57,6 @@ class Project {
 	void DoLoadTimecodes(agi::fs::path const& path);
 	void DoLoadKeyframes(agi::fs::path const& path);
 
-	void LoadUnloadFiles(ProjectProperties properties);
 	void UpdateRelativePaths();
 	void ReloadAudio();
 	void ReloadVideo();
@@ -71,6 +70,8 @@ public:
 	void LoadSubtitles(agi::fs::path path, std::string encoding="", bool load_linked=true);
 	void CloseSubtitles();
 	bool CanLoadSubtitlesFromVideo() const { return video_has_subtitles; }
+
+	void LoadUnloadFiles(ProjectProperties properties);
 
 	void LoadAudio(agi::fs::path path);
 	void CloseAudio();

@@ -82,8 +82,6 @@ class DialogStyleManager final : public wxDialog {
 	agi::signal::Connection commit_connection;
 	agi::signal::Connection active_line_connection;
 
-	std::shared_future<wxArrayString> font_list;
-
 	/// Styles in the current subtitle file
 	std::vector<AssStyle*> styleMap;
 
@@ -260,11 +258,6 @@ DialogStyleManager::DialogStyleManager(agi::Context *context)
 , c(context)
 , commit_connection(c->ass->AddCommitListener(&DialogStyleManager::LoadCurrentStyles, this))
 , active_line_connection(c->selectionController->AddActiveLineListener(&DialogStyleManager::OnActiveLineChanged, this))
-, font_list(std::async(std::launch::async, []() -> wxArrayString {
-	wxArrayString fontList = wxFontEnumerator::GetFacenames();
-	fontList.Sort();
-	return fontList;
-}))
 {
 	using std::bind;
 	SetIcons(GETICONS(style_toolbutton));
@@ -593,7 +586,7 @@ void DialogStyleManager::PasteToStorage() {
 }
 
 void DialogStyleManager::ShowStorageEditor(AssStyle *style, std::string const& new_name) {
-	DialogStyleEditor editor(this, style, c, &Store, new_name, font_list.get());
+	DialogStyleEditor editor(this, style, c, &Store, new_name);
 	if (editor.ShowModal()) {
 		UpdateStorage();
 		StorageList->SetStringSelection(to_wx(editor.GetStyleName()));
@@ -631,7 +624,7 @@ void DialogStyleManager::OnStorageDelete() {
 }
 
 void DialogStyleManager::ShowCurrentEditor(AssStyle *style, std::string const& new_name) {
-	DialogStyleEditor editor(this, style, c, nullptr, new_name, font_list.get());
+	DialogStyleEditor editor(this, style, c, nullptr, new_name);
 	if (editor.ShowModal()) {
 		CurrentList->DeselectAll();
 		CurrentList->SetStringSelection(to_wx(editor.GetStyleName()));

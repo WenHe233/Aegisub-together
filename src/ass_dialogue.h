@@ -172,7 +172,7 @@ public:
 
 	/// Update the text of the line from parsed blocks
 	void UpdateText(std::vector<std::unique_ptr<AssDialogueBlock>>& blocks);
-	std::string GetEntryData() const;
+	std::string GetEntryData(bool addExtraData = true) const;
 
 	/// Does this line collide with the passed line?
 	bool CollidesWith(const AssDialogue *target) const;

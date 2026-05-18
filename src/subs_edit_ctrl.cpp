@@ -65,6 +65,7 @@ enum {
 	EDIT_MENU_SPLIT_PRESERVE = (wxID_HIGHEST + 1) + 4000,
 	EDIT_MENU_SPLIT_ESTIMATE,
 	EDIT_MENU_SPLIT_VIDEO,
+	EDIT_MENU_COMMENT,
 	EDIT_MENU_CUT,
 	EDIT_MENU_COPY,
 	EDIT_MENU_PASTE,
@@ -109,6 +110,8 @@ SubsTextEditCtrl::SubsTextEditCtrl(wxWindow* parent, wxSize wsize, long style, a
 	using std::bind;
 
 	Bind(wxEVT_CHAR_HOOK, &SubsTextEditCtrl::OnKeyDown, this);
+
+	Bind(wxEVT_MENU, bind(&cmd::call, "edit/comment", context), EDIT_MENU_COMMENT);
 
 	Bind(wxEVT_MENU, bind(&SubsTextEditCtrl::Cut, this), EDIT_MENU_CUT);
 	Bind(wxEVT_MENU, bind(&SubsTextEditCtrl::Copy, this), EDIT_MENU_COPY);
@@ -371,6 +374,11 @@ void SubsTextEditCtrl::OnContextMenu(wxContextMenuEvent &event) {
 	currentWord = line_text.substr(currentWordPos.first, currentWordPos.second);
 
 	wxMenu menu;
+
+	cmd::Command *comment = cmd::get("edit/comment");
+	menu.Append(EDIT_MENU_COMMENT, comment->StrMenu(context));
+	menu.AppendSeparator();
+
 	if (spellchecker) {
 		AddSpellCheckerEntries(menu);
 

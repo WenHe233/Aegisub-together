@@ -47,7 +47,7 @@ bool GetColorFromUser(wxWindow *parent, agi::Color original, bool alpha, std::fu
 /// @param subs Aegisub subs grid
 /// @param callback Function called whenever the selected font changes
 /// @return Did the user accept the new font?
-bool GetFontFromUser(wxWindow *parent, wxString initialFace, wxFont initial, FontSizeObject sizeObj, AssFile* subs, std::function<void (wxString, wxFont, FontSizeObject, LineChangeFlags)> callback);
+bool GetFontFromUser(wxWindow *parent, wxString initialFace, wxFont initial, FontSizeObject sizeObj, AssFile* subs, std::function<void (wxString, wxFont, FontSizeObject, LineChangeFlags)> callback, bool onlyOnConfirm = false);
 
 /// Ask the user to pick an autosaved file to open
 /// @return Path to file or empty string if canceled

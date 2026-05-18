@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <commctrl.h>
+#include <ctime>
 #include <functional>
 #include <regex>
 #include <unordered_map>
@@ -38,6 +39,7 @@ class DialogFontPicker;
 enum class FontCategory {
     All,
     Recent,
+    RecentlyInstalled,
     MostUsed,
     Favorites,
     Temporary,
@@ -58,7 +60,8 @@ static bool filter_kanji = false;
 
 static std::unordered_map<std::string, bool> g_kanji_cache;
 static std::unordered_map<std::string, bool> g_hungarian_cache;
-static std::unordered_map<std::string, int> g_usage_cache;
+static std::unordered_map<std::string, json::Integer> g_usage_cache;
+static std::unordered_map<std::string, json::Integer> g_installed_cache;
 static std::vector<FontListData> g_custom_lists;
 static std::unordered_set<wxString> g_temporary;
 static std::unordered_set<wxString> g_favorites;
@@ -67,6 +70,10 @@ static std::vector<wxString> g_recent;
 static bool g_font_cache_loaded = false;
 static bool g_font_cache_dirty = false;
 
+static json::Integer NowTimestamp()
+{
+    return (json::Integer)std::time(nullptr);
+}
 
 static agi::fs::path GetFontListPath()
 {
@@ -92,8 +99,13 @@ static void LoadFontCache()
         json::Reader::Read(root, *agi::io::Open(path)); 
         json::Object& obj = root;
 
+        FILE *log = fopen("app.log", "a");
+        fprintf(log, "File path: %s \n\n", path.string().c_str());
+
         for (auto it = obj.begin(); it != obj.end(); ++it) {
             const std::string& name = it->first;
+
+            g_installed_cache[name] = NowTimestamp() - 7 * 24 * 60 * 60;
 
             try {
                 json::Object& entry = it->second;
@@ -122,11 +134,23 @@ static void LoadFontCache()
                     }
                     catch (...) {}
                 }
+
+                if (entry.count("installed_at")) {
+
+                    try {
+                        g_installed_cache[name] = entry["installed_at"];
+                    }
+                    catch (...) {}
+                }
             }
             catch (...) {
                 continue;
             }
+
+            fprintf(log, "Font cache: %s installed_at = %lld usage = %lld \n", name.c_str(), (long long)g_installed_cache[name], (long long)g_usage_cache[name]);
         }
+
+        fclose(log);
     }
     catch (...) {
     }
@@ -149,6 +173,7 @@ static void SaveFontCache()
         entry["kanji"] = k;
         entry["custom"] = std::move(custom);
         entry["usage"] = g_usage_cache[font];
+        entry["installed_at"] = g_installed_cache[font];
 
         root[font] = std::move(entry);
     }
@@ -296,6 +321,7 @@ public:
     wxTreeItemId root;
     wxTreeItemId all;
     wxTreeItemId recent;
+    wxTreeItemId recently_installed;
     wxTreeItemId most_used;
     wxTreeItemId favorites;
     wxTreeItemId temporary;
@@ -315,6 +341,7 @@ public:
         tree = new wxTreeCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_HIDE_ROOT | wxTR_SINGLE | wxBORDER_NONE);
         root = tree->AddRoot("root");
         all        = tree->AppendItem(root, _("All fonts"));
+        recently_installed = tree->AppendItem(root, _("Recently installed"));
         recent     = tree->AppendItem(root, _("Recent fonts"));
         most_used  = tree->AppendItem(root, _("Most used"));
         favorites  = tree->AppendItem(root, _("Favorites"));
@@ -529,6 +556,9 @@ public:
             case FontCategory::All:
                 item = all;
                 break;
+            case FontCategory::RecentlyInstalled:
+                item = recently_installed;
+                break;
             case FontCategory::Recent:
                 item = recent;
                 break;
@@ -563,6 +593,7 @@ public:
     void UpdateActiveVisual(wxTreeItemId active)
     {
         tree->SetItemBold(all, false);
+        tree->SetItemBold(recently_installed, false);
         tree->SetItemBold(recent, false);
         tree->SetItemBold(most_used, false);
         tree->SetItemBold(favorites, false);
@@ -576,6 +607,7 @@ public:
         };
 
         resetText(all, _("All fonts"));
+        resetText(recently_installed, _("Recently installed"));
         resetText(recent, _("Recent fonts"));
         resetText(most_used, _("Most used"));
         resetText(favorites, _("Favorites"));
@@ -607,6 +639,9 @@ private:
         if (item == all) {
             current_list_index = -1;
             current_category = FontCategory::All;
+        } else if (item == recently_installed) {
+            current_list_index = -1;
+            current_category = FontCategory::RecentlyInstalled;
         } else if (item == recent) {
             current_list_index = -1;
             current_category = FontCategory::Recent;
@@ -671,6 +706,16 @@ public:
         for (auto const& f : fonts)
             font_set.insert(f);
 
+        json::Integer now = NowTimestamp();
+        for (auto const& f : fonts) {
+            std::string key = f.ToStdString();
+
+            if (!g_installed_cache.count(key)) {
+                g_installed_cache[key] = now;
+                g_font_cache_dirty = true;
+            }
+        }
+
         filtered = fonts;
     }
 
@@ -702,6 +747,36 @@ public:
     {
         filtered.clear();
         wxString t = text.Lower();
+
+        if (current_category == FontCategory::RecentlyInstalled) {
+            json::Integer now = NowTimestamp();
+            int filter_days = 3 * 24 * 60 * 60;
+
+            for (auto const& f : fonts) {
+                if (f.StartsWith("@"))
+                    continue;
+
+                std::string key = f.ToStdString();
+
+                auto it = g_installed_cache.find(key);
+                if (it == g_installed_cache.end())
+                    continue;
+
+                if (now - it->second > filter_days)
+                    continue;
+
+                if (t.empty() || lower_cache[f].Contains(t))
+                    filtered.push_back(f);
+            }
+
+            std::sort(filtered.begin(), filtered.end(),
+                [](const wxString& a, const wxString& b) {
+                    return g_installed_cache[a.ToStdString()] >
+                        g_installed_cache[b.ToStdString()];
+                });
+
+            return;
+        }
 
         if (current_category == FontCategory::Recent) {
             for (auto const& f : g_recent) {
@@ -745,8 +820,6 @@ public:
         }
 
         if (current_category == FontCategory::MostUsed) {
-            filtered.clear();
-
             for (auto const& f : fonts) {
                 auto it = g_usage_cache.find(f.ToStdString());
                 if (it != g_usage_cache.end() && it->second > 0)
@@ -1281,6 +1354,8 @@ class DialogFontPicker : public wxDialog {
     wxString lastSentFaceName;
 
     std::function<void(wxString const&, wxFont const&, FontSizeObject const&, LineChangeFlags const&)> callback;
+    bool callbackOnlyOnConfirm = false;
+
 public:
     DialogFontPicker(
         wxWindow* parent,
@@ -1288,7 +1363,8 @@ public:
         wxFont const& initial,
         FontSizeObject const& sizeObj,
         AssFile* subs,
-        std::function<void(wxString const&, wxFont const&, FontSizeObject const&, LineChangeFlags const&)> cb)
+        std::function<void(wxString const&, wxFont const&, FontSizeObject const&, LineChangeFlags const&)> cb,
+        bool onlyOnConfirm = false)
         : wxDialog(parent, wxID_ANY, _("Font picker"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
         initialFaceName(initialFace),
         currentFaceName(initialFace),
@@ -1299,7 +1375,8 @@ public:
         initialSizeObject(sizeObj),
         lastSentSizeObject(sizeObj),
         subs(subs),
-        callback(cb)
+        callback(cb),
+        callbackOnlyOnConfirm(onlyOnConfirm)
     {
         LoadFontCache();
         LoadLists();
@@ -1635,13 +1712,17 @@ private:
 
         if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER) {
             CommitSelection();
+            RunCallback(false, true);
             EndModal(wxID_OK);
 
             return;
         }
 
         if (key == WXK_ESCAPE) {
-            RunCallback(true);
+            if (!ConfirmCloseIfTemporary())
+                return;
+
+            RunCallback(true, true);
             EndModal(wxID_CANCEL);
 
             return;
@@ -1660,27 +1741,52 @@ private:
         evt.Skip();
     }
 
+    bool ConfirmCloseIfTemporary()
+    {
+        if (g_temporary.empty())
+            return true;
+
+        return wxMessageBox(
+            _("Are you sure you want to close? You have temporary saved fonts."),
+            _("Confirm"),
+            wxYES_NO | wxNO_DEFAULT | wxICON_WARNING,
+            this
+        ) == wxYES;
+    }
+
     void OnCancel(wxCommandEvent&)
     {
-        RunCallback(true);
+        if (!ConfirmCloseIfTemporary())
+            return;
+
+        RunCallback(true, true);
         EndModal(wxID_CANCEL);
     }
 
-    void OnClose(wxCloseEvent&)
+    void OnClose(wxCloseEvent& evt)
     {
-        RunCallback(true);
+        if (!ConfirmCloseIfTemporary()) {
+            evt.Veto();
+            return;
+        }
+
+        RunCallback(true, true);
         EndModal(wxID_CANCEL);
     }
 
     void OnOK(wxCommandEvent&)
     {
         CommitSelection();
+        RunCallback(false, true);
         EndModal(wxID_OK);
     }
 
-    void RunCallback(bool initial = false)
+    void RunCallback(bool initial = false, bool last = false)
     {
         if (!callback)
+            return;
+
+        if (!last && callbackOnlyOnConfirm)
             return;
 
         FontSizeObject currentSizeObject;
@@ -1758,11 +1864,11 @@ private:
     }
 };
 
-bool GetFontFromUser(wxWindow* parent, wxString initialFace, wxFont initial, FontSizeObject sizeObj, AssFile* subs, std::function<void(wxString, wxFont, FontSizeObject, LineChangeFlags)> callback)
+bool GetFontFromUser(wxWindow* parent, wxString initialFace, wxFont initial, FontSizeObject sizeObj, AssFile* subs, std::function<void(wxString, wxFont, FontSizeObject, LineChangeFlags)> callback, bool onlyOnConfirm)
 {
     g_temporary.clear();
 
-    DialogFontPicker dlg(parent, initialFace, initial, sizeObj, subs, callback);
+    DialogFontPicker dlg(parent, initialFace, initial, sizeObj, subs, callback, onlyOnConfirm);
     wxPoint last_position = wxPoint(OPT_GET("Tool/Font Picker/Dialog Pos X")->GetInt(), OPT_GET("Tool/Font Picker/Dialog Pos Y")->GetInt());
     wxSize last_size = wxSize(OPT_GET("Tool/Font Picker/Dialog Width")->GetInt(), OPT_GET("Tool/Font Picker/Dialog Height")->GetInt());
 

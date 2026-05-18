@@ -151,8 +151,26 @@ void BaseGrid::OnDPIChanged(wxDPIChangedEvent &e) {
 }
 
 void BaseGrid::OnSubtitlesCommit(int type) {
-	if (type == AssFile::COMMIT_NEW || type & AssFile::COMMIT_ORDER || type & AssFile::COMMIT_DIAG_ADDREM || type & AssFile::COMMIT_FOLD)
+	if (type == AssFile::COMMIT_NEW || type & AssFile::COMMIT_ORDER || type & AssFile::COMMIT_DIAG_ADDREM || type & AssFile::COMMIT_FOLD) {
 		UpdateMaps();
+
+		if (type & AssFile::COMMIT_FOLD) {
+			AssDialogue* activeLine = context->selectionController->GetActiveLine();
+
+			if (activeLine && vis_lookup.find(activeLine) == vis_lookup.end() && context->selectionController->GetSelectedSet().size() <= 1) {
+				AssDialogue* target = activeLine->Fold.getFoldOpener();
+
+				if (target) {
+					auto it = vis_lookup.find(target);
+					if (it != vis_lookup.end()) {
+						context->selectionController->SetActiveLine(target);
+					}
+				}
+			}
+
+			MakeActiveLineVisible();
+		}
+	}
 
 	if (type & AssFile::COMMIT_DIAG_META) {
 		SetColumnWidths();
@@ -257,12 +275,7 @@ void BaseGrid::UpdateMaps(bool rebuild) {
 
 void BaseGrid::OnActiveLineChanged(AssDialogue *new_active) {
 	if (new_active) {
-		auto it = vis_lookup.find(new_active);
-
-		if (it != vis_lookup.end()) {
-			int vis = it->second;
-			MakeRowVisible(vis);
-		}
+		MakeActiveLineVisible();
 
 		extendRow = active_row = new_active->Row;
 		Refresh(false);
@@ -278,6 +291,19 @@ void BaseGrid::MakeRowVisible(int row) {
 		ScrollTo(row - 1);
 	else if (row > yPos + h/lineHeight - 3)
 		ScrollTo(row - h/lineHeight + 3);
+}
+
+void BaseGrid::MakeActiveLineVisible() {
+	AssDialogue* activeLine = context->selectionController->GetActiveLine();
+
+	if (!activeLine)
+		return;
+
+	auto it = vis_lookup.find(activeLine);
+	if (it == vis_lookup.end())
+		return;
+
+	MakeRowVisible(it->second);
 }
 
 void BaseGrid::SelectRow(int row, bool addToSelected, bool select) {
@@ -312,6 +338,40 @@ void BaseGrid::SelectRow(int row, bool addToSelected, bool select) {
 			else
 				selection.erase(l);
 		}
+
+		context->selectionController->SetSelectedSet(std::move(selection));
+		return;
+	}
+
+	if (line->Fold.hasFold() && !line->Fold.isEnd() && addToSelected) {
+		AssDialogue* last = line->Fold.getFoldCloser();
+
+		if (!last)
+			return;
+
+		bool anySelected = false;
+
+		for (int i = line->Row + 1; i <= last->Row; ++i) {
+			AssDialogue* d = GetDialogue(i);
+			if (d && selection.count(d)) {
+				anySelected = true;
+				break;
+			}
+		}
+
+		for (int i = line->Row; i <= last->Row; ++i) {
+			AssDialogue* d = GetDialogue(i);
+			if (!d)
+				continue;
+
+			if (!anySelected)
+				selection.insert(d);
+			else
+				selection.erase(d);
+		}
+
+		if (selection.size() == 0)
+			selection.insert(line);
 
 		context->selectionController->SetSelectedSet(std::move(selection));
 		return;
@@ -437,6 +497,9 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		wxBrush color = row_colors.Default;
 		AssDialogue *curDiag = vis_index_line_map[i + yPos];
 
+		bool boldFirstColumnInFrame = false;
+		bool boldLastColumnInFrame = false;
+
 		bool inSel = !!selection.count(curDiag);
 		if (inSel && curDiag->Comment)
 			color = row_colors.SelectedComment;
@@ -457,13 +520,40 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		}
 
 		if (OPT_GET("Subtitle/Grid/Highlight Subtitles in Frame")->GetBool() && IsDisplayed(curDiag)) {
-			if (color == row_colors.Default)
-				color = row_colors.Visible;
+			if (context->imageMask->IsInGroup(curDiag) || curDiag->Fold.hasFold()) {
+				boldFirstColumnInFrame = !curDiag->Fold.isEnd();
+				boldLastColumnInFrame = (curDiag->Fold.hasFold() && !curDiag->Fold.isEnd()) || context->imageMask->IsCollapsed(curDiag);
+			} else {
+				if (color == row_colors.Default)
+					color = row_colors.Visible;
+			}
+
 			visible_rows.push_back(i + yPos);
 		}
 
-		if (curDiag->Fold.hasFold() && !inSel) {
-			color = curDiag->Fold.isFolded() ? row_colors.FoldClosed : row_colors.FoldOpen;
+		if (curDiag->Fold.hasFold()) {
+			if (curDiag->Fold.isFolded()) {
+				bool fullFoldSelected = false;
+
+				if (AssDialogue* last = curDiag->Fold.getFoldCloser()) {
+					fullFoldSelected = true;
+
+					for (int j = curDiag->Row; j <= last->Row; ++j) {
+						AssDialogue* d = GetDialogue(j);
+						if (!d || !selection.count(d)) {
+							fullFoldSelected = false;
+							break;
+						}
+					}
+				}
+
+				if (fullFoldSelected)
+					color = wxBrush(row_colors.FoldClosed.GetColour().ChangeLightness(78));
+				else if (!inSel)
+					color = row_colors.FoldClosed;
+			} else if (!inSel) {
+				color = row_colors.FoldOpen;
+			}
 		}
 
 		dc.SetBrush(color);
@@ -474,7 +564,21 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 			dc.DrawRectangle(grid_x, (i + 1) * lineHeight + 1, w, lineHeight);
 		}
 
-		if (active_line != curDiag && curDiag->CollidesWith(active_line))
+		bool sameImageMaskGroup = false;
+		if (active_line && context->imageMask->IsInGroup(active_line) && context->imageMask->IsInGroup(curDiag)) {
+			const auto& activeGroup = context->imageMask->GetGroupLines(active_line);
+			const auto& curGroup = context->imageMask->GetGroupLines(curDiag);
+
+			if (!activeGroup.empty() && !curGroup.empty() && activeGroup.front() == curGroup.front())
+				sameImageMaskGroup = true;
+		}
+
+		bool sameFoldGroup = false;
+		if (active_line && curDiag->Fold.hasFold() && active_line->Fold.getFoldOpener() == curDiag) {
+			sameFoldGroup = true;
+		}
+
+		if (active_line != curDiag && !sameImageMaskGroup && !sameFoldGroup && curDiag->CollidesWith(active_line))
 			dc.SetTextForeground(text_collision);
 		else if (inSel)
 			dc.SetTextForeground(text_selection);
@@ -486,6 +590,15 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		int y = (i + 1) * lineHeight;
 		for (size_t j : agi::util::range(columns.size())) {
 			if (paint_columns[j]) {
+				bool useBoldFont = (boldFirstColumnInFrame && j == 0) || (boldLastColumnInFrame && j == columns.size() - 1);
+				wxFont oldFont = dc.GetFont();
+
+				if (useBoldFont) {
+					wxFont boldFont = oldFont;
+					boldFont.SetWeight(wxFONTWEIGHT_BOLD);
+					dc.SetFont(boldFont);
+				}
+
 				if (context->imageMask->IsGroupStart(curDiag) && context->imageMask->IsCollapsed(curDiag) && j == columns.size() - 1) {
 					wxString text = "--- " + fmt_tl("Image Mask (%d lines)", context->imageMask->GetGroupSize(curDiag)) + " ---";
 
@@ -499,7 +612,10 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 				}
 				else {
 					columns[j]->Paint(dc, x, y, curDiag, context);
-				}	
+				}
+
+				if (useBoldFont)
+					dc.SetFont(oldFont);
 			}
 
 			x += columns[j]->Width();
@@ -575,7 +691,7 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 	AssDialogue *dlg = GetVisDialogue(row);
 	if (!dlg) row = 0;
 
-	if (dclick && dlg && context->imageMask->IsInGroup(dlg)) {
+	if (event.MiddleDown() && dlg && context->imageMask->IsInGroup(dlg)) {
 		AssDialogue* target = dlg;
 
 		if (!context->imageMask->IsGroupStart(dlg)) {
@@ -584,15 +700,24 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 				target = group.front();
 		}
 
+		const bool wasCollapsed = context->imageMask->IsCollapsed(target);
+
 		context->imageMask->Toggle(target);
 
 		UpdateMaps(false);
 
 		SelectRow(vis_lookup[target], false);
-
 		context->selectionController->SetActiveLine(target);
-		context->audioBox->ScrollToActiveLine();
-		context->videoController->JumpToTime(dlg->Start);
+
+		if (!wasCollapsed) {
+			MakeActiveLineVisible();
+		}
+
+		return;
+	}
+
+	if (event.MiddleDown() && dlg && (dlg->Fold.hasFold() || dlg->Fold.getFoldOpener())) {
+		context->foldController->ToggleFoldsAt({ dlg });
 
 		return;
 	}
@@ -610,6 +735,10 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 
 	if (event.ButtonDown() && OPT_GET("Subtitle/Grid/Focus Allow")->GetBool())
 		SetFocus();
+
+	if (dlg && columns[col]->OnMouseEvent(dlg, context, event)) {
+		return;
+	}
 
 	if (holding) {
 		if (!event.LeftIsDown()) {
@@ -637,10 +766,6 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 		CaptureMouse();
 	}
 
-	if (dlg && columns[col]->OnMouseEvent(dlg, context, event)) {
-		return;
-	}
-
 	if ((click || holding || dclick) && dlg) {
 		int old_extend = extendRow;
 
@@ -657,7 +782,7 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 		// Toggle selected
 		if (click && ctrl && !shift && !alt) {
 			bool isSel = !!selection.count(dlg);
-			if (isSel && selection.size() == 1) return;
+			if (isSel && selection.size() == 1 && (!dlg || !dlg->Fold.hasFold())) return;
 			SelectRow(row, true, !isSel);
 			return;
 		}
@@ -695,8 +820,18 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 					const auto& group = context->imageMask->GetGroupLines(d);
 					for (auto* l : group)
 						newsel.insert(l);
-				}
-				else {
+				} else if (d->Fold.hasFold() && !d->Fold.isEnd()) {
+					AssDialogue* last = d->Fold.getFoldCloser();
+
+					if (last) {
+						for (int j = d->Row; j <= last->Row; ++j) {
+							if (AssDialogue* fd = GetDialogue(j))
+								newsel.insert(fd);
+						}
+					} else {
+						newsel.insert(d);
+					}
+				} else {
 					newsel.insert(d);
 				}
 			}

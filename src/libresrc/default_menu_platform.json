@@ -47,6 +47,7 @@
         { "command" : "tool/translation_assistant" },
         { "command" : "tool/resampleres" },
         { "command" : "subtitle/spellcheck" },
+        { "command" : "subtitle/loadfiles" },
         {},
         { "submenu" : "main/subtitle/insert lines", "text" : "&Insert Lines" },
         { "command" : "edit/line/duplicate" },

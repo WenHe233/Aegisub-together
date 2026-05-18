@@ -52,6 +52,7 @@ public:
 	wxTextCtrl *OptionAddMultiline(PageSection section, const char *opt_name);
 	void OptionChoice(PageSection section, const wxString &name, const wxArrayString &choices, const char *opt_name, bool translate = false);
 	void OptionBrowse(PageSection section, const wxString &name, const char *opt_name, wxControl *enabler = nullptr, bool do_enable = false);
+	void OptionBrowseList(PageSection section, const char *opt_name);
 	void OptionFont(PageSection section, std::string opt_prefix);
 
 	/// Enable ctrl only when cbx is checked

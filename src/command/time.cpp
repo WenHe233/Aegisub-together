@@ -147,6 +147,31 @@ struct time_frame_current final : public validate_video_loaded {
 	}
 };
 
+struct time_frame_current_end final : public validate_video_loaded {
+	CMD_NAME("time/frame/current_end")
+	CMD_ICON(shift_to_frame)
+	STR_MENU("Shift to &Current Frame (End)")
+	STR_DISP("Shift to Current Frame (End)")
+	STR_HELP("Shift selection so that the active line ends at current frame")
+
+	void operator()(agi::Context *c) override {
+		auto const& sel = c->selectionController->GetSelectedSet();
+		const auto active_line = c->selectionController->GetActiveLine();
+
+		if (sel.empty() || !active_line) return;
+
+		int target_end = std::max(0, c->videoController->TimeAtFrame(c->videoController->GetFrameN(), agi::vfr::END));
+		int shift_by = target_end - active_line->End;
+
+		for (auto line : sel) {
+			line->Start = line->Start + shift_by;
+			line->End = line->End + shift_by;
+		}
+
+		c->ass->Commit(_("shift to frame end"), AssFile::COMMIT_DIAG_TIME);
+	}
+};
+
 struct time_shift final : public Command {
 	CMD_NAME("time/shift")
 	CMD_ICON(shift_times_toolbutton)
@@ -382,6 +407,7 @@ namespace cmd {
 		reg(std::make_unique<time_continuous_end>());
 		reg(std::make_unique<time_continuous_start>());
 		reg(std::make_unique<time_frame_current>());
+		reg(std::make_unique<time_frame_current_end>());
 		reg(std::make_unique<time_length_decrease>());
 		reg(std::make_unique<time_length_decrease_shift>());
 		reg(std::make_unique<time_length_increase>());
