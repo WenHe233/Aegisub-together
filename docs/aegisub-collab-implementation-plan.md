@@ -3,7 +3,7 @@
 ## 1. 基线与已修正的设计问题
 
 - 正式编码前从 `8165f1a` 新建 `feat/collaboration`，保留现有 `feature` 分支，不重写远端历史。
-- 先完善并提交 `aegisub-collab-spec.md`；其后每个可测试功能完成即单独提交，全部使用 Conventional Commits。
+- 先完善并提交 `docs/aegisub-collab-spec.md`；其后每个可测试功能完成即单独提交，全部使用 Conventional Commits。
 - v1 同步核心 ASS：Dialogue、Styles、Script Info 和协作 Extradata；不传输附件、视频或 Aegisub Project Garbage。
 - shadow 只能在服务器确认后推进，客户端使用 `confirmed shadow + pending batches + projected shadow`。
 - 协作模式不用 Aegisub 原生全文件快照 undo，改用本成员已确认批次的逆 op。
