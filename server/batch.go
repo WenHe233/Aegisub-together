@@ -42,9 +42,10 @@ func (hub *hub) applyBatch(ctx context.Context, roomID, actorID string, input pr
 
 	working := cloneRoomState(value)
 	working.revision++
+	now := time.Now()
 	result := protocol.BatchApplied{BatchID: input.BatchID, ActorID: actorID, IDRemap: make(map[string]string)}
 	for index, raw := range input.Operations {
-		applied, err := applyOperation(working, actorID, raw, result.IDRemap)
+		applied, err := applyOperation(working, actorID, raw, result.IDRemap, now)
 		if err != nil {
 			var failure *batchFailure
 			if errors.As(err, &failure) {
@@ -73,7 +74,7 @@ func (hub *hub) applyBatch(ctx context.Context, roomID, actorID string, input pr
 	return result, value.revision, connectedMembers(value), false, nil
 }
 
-func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[string]string) (protocol.AppliedOperation, error) {
+func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[string]string, now time.Time) (protocol.AppliedOperation, error) {
 	var header struct {
 		Op string `json:"op"`
 	}
@@ -100,6 +101,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 		}
 		line.Version++
 		value.snapshot.Lines[index] = *line
+		touchLineLock(value, operation.LineID, actorID, now)
 		return applied(operation, line, 0, 0)
 
 	case "insert":
@@ -124,6 +126,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 		value.reindexed = value.reindexed || reindexed
 		line := protocol.Line{LineID: operation.LineID, PosKey: position, Version: 1, Fields: operation.Fields}
 		value.snapshot.Lines = insertLine(value.snapshot.Lines, index, line)
+		assignLineLock(value, operation.LineID, actorID, now)
 		return applied(operation, &line, 0, 0)
 
 	case "delete":
@@ -141,6 +144,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 		}
 		value.tombstones[line.LineID] = *line
 		value.snapshot.Lines = append(value.snapshot.Lines[:index], value.snapshot.Lines[index+1:]...)
+		delete(value.locks, operation.LineID)
 		return applied(operation, nil, 0, 0)
 
 	case "move":
@@ -165,6 +169,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 		value.reindexed = value.reindexed || reindexed
 		line.PosKey = position
 		value.snapshot.Lines = insertLine(lines, target, *line)
+		touchLineLock(value, operation.LineID, actorID, now)
 		return applied(operation, line, 0, 0)
 
 	case "restore":
@@ -188,6 +193,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 			line.PosKey = position
 		}
 		value.snapshot.Lines = insertLine(value.snapshot.Lines, target, line)
+		assignLineLock(value, operation.LineID, actorID, now)
 		return applied(operation, &line, 0, 0)
 
 	case "replace_styles":
@@ -215,6 +221,22 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 		return applied(operation, nil, 0, value.snapshot.ScriptInfoVersion)
 	default:
 		return protocol.AppliedOperation{}, &batchFailure{code: "batch_conflict", message: "unknown operation type"}
+	}
+}
+
+func assignLineLock(value *room, lineID, memberID string, now time.Time) {
+	if !value.lockEnabled {
+		return
+	}
+	if joined := memberByID(value, memberID); joined != nil {
+		value.locks[lineID] = lineLock{memberID: memberID, nickname: joined.nickname, lastActivity: now}
+	}
+}
+
+func touchLineLock(value *room, lineID, memberID string, now time.Time) {
+	if existing, ok := value.locks[lineID]; ok && existing.memberID == memberID {
+		existing.lastActivity = now
+		value.locks[lineID] = existing
 	}
 }
 

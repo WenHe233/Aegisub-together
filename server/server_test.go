@@ -670,6 +670,62 @@ func TestFocusChangeReleasesPreviousLock(t *testing.T) {
 	}
 }
 
+func TestInsertedLineIsLeasedToCreatorAndActivityRenewsLease(t *testing.T) {
+	server, _, url := configuredTestServer(t, Config{})
+	owner := dial(t, url)
+	authenticate(t, owner, "")
+	created := createRoom(t, owner, "episode-01", "translator")
+	other := dial(t, url)
+	authenticate(t, other, "")
+	joinRoom(t, other, "episode-01", "proofreader")
+
+	fields := sampleSnapshot().Lines[0].Fields
+	_, _, rejected := submitBatch(t, owner, "insert-owned", protocol.InsertOperation{
+		Op: "insert", LineID: "9K3MT7Q2CD-2", LeftID: stringPointer("9K3MT7Q2CD-1"), Fields: fields,
+	})
+	if rejected != nil {
+		t.Fatalf("creator insert was rejected: %#v", rejected)
+	}
+	receiveType(t, other, "batch_applied")
+
+	server.hub.mu.Lock()
+	value := server.hub.roomByID(created.RoomID)
+	insertedLock, exists := value.locks["9K3MT7Q2CD-2"]
+	server.hub.mu.Unlock()
+	if !exists || insertedLock.memberID != created.MemberID {
+		t.Fatalf("inserted line was not leased to its creator: %#v", insertedLock)
+	}
+
+	time.Sleep(time.Millisecond)
+	_, _, rejected = submitBatch(t, owner, "touch-owned", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-2", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("updated")},
+	})
+	if rejected != nil {
+		t.Fatalf("creator could not edit inserted line: %#v", rejected)
+	}
+	receiveType(t, other, "batch_applied")
+	server.hub.mu.Lock()
+	renewed := value.locks["9K3MT7Q2CD-2"].lastActivity
+	server.hub.mu.Unlock()
+	if !renewed.After(insertedLock.lastActivity) {
+		t.Fatal("editing an owned line did not renew its idle lease")
+	}
+
+	_, _, rejected = submitBatch(t, owner, "delete-owned", protocol.DeleteOperation{
+		Op: "delete", LineID: "9K3MT7Q2CD-2", BaseVersion: 2,
+	})
+	if rejected != nil {
+		t.Fatalf("creator could not delete inserted line: %#v", rejected)
+	}
+	receiveType(t, other, "batch_applied")
+	server.hub.mu.Lock()
+	_, exists = value.locks["9K3MT7Q2CD-2"]
+	server.hub.mu.Unlock()
+	if exists {
+		t.Fatal("deleting a line left a stale line lock")
+	}
+}
+
 func TestLockExpiresDespiteConnectionHeartbeat(t *testing.T) {
 	_, _, url := configuredTestServer(t, Config{LockIdleTimeout: 60 * time.Millisecond, HeartbeatTimeout: time.Second, SweepInterval: 5 * time.Millisecond})
 	owner := dial(t, url)
