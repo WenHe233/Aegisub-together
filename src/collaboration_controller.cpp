@@ -19,6 +19,9 @@
 
 #include <libaegisub/collaboration_room.h>
 #include <libaegisub/collaboration_sync.h>
+#include <libaegisub/fs.h>
+#include <libaegisub/io.h>
+#include <libaegisub/path.h>
 #include <libaegisub/signal.h>
 
 #include <wx/button.h>
@@ -34,7 +37,10 @@
 #include <chrono>
 #include <cstdint>
 #include <deque>
+#include <iomanip>
+#include <iterator>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
@@ -194,6 +200,11 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	std::unordered_map<std::string, std::string> lock_holders;
 	std::vector<PresenceMember> presence;
 	MaintenanceStateMessage maintenance;
+	bool offline_session = false;
+	OfflineJournal offline_journal;
+	agi::fs::path offline_journal_path;
+	std::optional<Snapshot> reconciliation_target;
+	std::string reconciliation_batch_id;
 	struct HistoryEntry { Snapshot undo_target; Snapshot redo_target; Snapshot expected; };
 	struct HistoryAction { std::string batch_id; bool undo = true; };
 	std::vector<HistoryEntry> undo_history;
@@ -209,7 +220,9 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	void update_editability() {
 		if (!context->subsEditBox) return;
 		bool owns_maintenance = phase == Phase::joined && maintenance.active && maintenance.holder_id && *maintenance.holder_id == room.member_id;
-		bool editable = phase == Phase::idle || owns_maintenance || (phase == Phase::joined && !maintenance.active && !room.lock_enabled);
+		bool editable = phase == Phase::idle || (offline_session && phase != Phase::joined) || owns_maintenance ||
+			(phase == Phase::joined && !maintenance.active && !room.lock_enabled);
+		if (reconciliation_target) editable = false;
 		if (!editable && phase == Phase::joined && !maintenance.active && context->selectionController->GetSelectedSet().size() == 1 && !active_line_id.empty()) {
 			auto holder = lock_holders.find(active_line_id);
 			editable = holder != lock_holders.end() && holder->second == room.member_id;
@@ -271,6 +284,64 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		return id;
 	}
 
+	agi::fs::path journal_path(ConnectionInput const& selected) const {
+		std::uint64_t hash = 1469598103934665603ULL;
+		for (unsigned char value : selected.server_url + "\n" + selected.room_name) {
+			hash ^= value;
+			hash *= 1099511628211ULL;
+		}
+		std::ostringstream name;
+		name << "offline-" << std::hex << std::setw(16) << std::setfill('0') << hash << ".json";
+		return context->path->Decode("?user/collaboration") / name.str();
+	}
+
+	void persist_offline_journal() {
+		if (offline_journal_path.empty()) return;
+		agi::fs::CreateDirectory(offline_journal_path.parent_path());
+		agi::io::Save output(offline_journal_path);
+		output.Get() << EncodeOfflineJournal(offline_journal);
+	}
+
+	void remove_offline_journal() {
+		if (!offline_journal_path.empty() && agi::fs::FileExists(offline_journal_path)) agi::fs::Remove(offline_journal_path);
+	}
+
+	void capture_offline_document() {
+		SanitizeContext sanitize;
+		for (auto const& line : offline_journal.baseline.lines) sanitize.known_live_ids.insert(line.id);
+		for (auto const& line : offline_journal.local.lines) sanitize.known_live_ids.insert(line.id);
+		auto cleaned = ass::SanitizeFileMetadata(*context->ass, *allocator, sanitize);
+		if (cleaned.changed()) OPT_SET("Collaboration/Next ID")->SetString(std::to_string(allocator->NextCounter()));
+		std::unordered_map<std::string, std::int64_t> versions;
+		for (auto const& line : offline_journal.baseline.lines) versions[line.id] = line.version;
+		for (auto const& line : offline_journal.local.lines) versions[line.id] = line.version;
+		offline_journal.local = ass::CaptureSnapshot(*context->ass, versions,
+			offline_journal.baseline.styles_version, offline_journal.baseline.script_info_version);
+		persist_offline_journal();
+	}
+
+	void enter_offline_mode() {
+		if (!sync.IsInitialized()) return;
+		if (!offline_session) {
+			offline_session = true;
+			offline_journal_path = journal_path(input);
+			offline_journal.base_revision = sync.Revision();
+			offline_journal.baseline = sync.Confirmed().snapshot;
+			offline_journal.local = sync.Projected().snapshot;
+			offline_journal.pending = sync.Pending();
+			try { capture_offline_document(); }
+			catch (std::exception const& error) {
+				context->frame->StatusTimeout(to_wx(std::string("Could not persist offline collaboration state: ") + error.what()));
+			}
+		}
+		lock_holders.clear();
+		presence.clear();
+		maintenance = MaintenanceStateMessage{};
+		phase = Phase::connecting;
+		context->frame->SetCollaborationBanner(_("Connection lost. Offline edits are being saved and will be reconciled after reconnecting."));
+		update_editability();
+	}
+
 	void request_snapshot() {
 		if (sync.IsInitialized()) send("snapshot_request", EncodeSnapshotRequest(sync.Revision()));
 	}
@@ -303,7 +374,15 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	}
 
 	void on_local_commit(int, AssDialogue const*) {
-		if (phase != Phase::joined || applying_snapshot || !sync.IsInitialized()) return;
+		if (applying_snapshot) return;
+		if (offline_session && phase != Phase::joined) {
+			try { capture_offline_document(); }
+			catch (std::exception const& error) {
+				context->frame->StatusTimeout(to_wx(std::string("Offline collaboration edit could not be saved: ") + error.what()));
+			}
+			return;
+		}
+		if (phase != Phase::joined || !sync.IsInitialized() || reconciliation_target) return;
 		try {
 			SanitizeContext sanitize;
 			for (auto const& line : sync.Projected().snapshot.lines) sanitize.known_live_ids.insert(line.id);
@@ -357,6 +436,37 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		maintenance = DecodeMaintenanceState(envelope.payload_json);
 		lock_holders.clear();
 		update_editability();
+		if (reconciliation_target) {
+			bool owned = maintenance.active && maintenance.holder_id && *maintenance.holder_id == room.member_id;
+			if (owned && reconciliation_batch_id.empty()) {
+				OfflineMergeResolution resolution;
+				if (!resolve_offline_conflicts(sync.Confirmed().snapshot, resolution)) {
+					send("maintenance_release", "{}");
+					context->frame->StatusTimeout(_("Offline reconciliation was cancelled; the journal was preserved."));
+					disconnect();
+					return;
+				}
+				*reconciliation_target = MergeOfflineSnapshots(offline_journal.baseline, offline_journal.local,
+					sync.Confirmed().snapshot, &resolution).merged;
+				auto batch = sync.QueueLocalSnapshot(mint_batch_id(), *reconciliation_target);
+				if (batch.operations.empty()) {
+					reconciliation_target.reset();
+					offline_session = false;
+					remove_offline_journal();
+					send("maintenance_release", "{}");
+					apply_projected_snapshot();
+				}
+				else {
+					reconciliation_batch_id = batch.batch_id;
+					send("submit_batch", EncodeSubmitBatch(batch));
+					apply_projected_snapshot();
+				}
+			}
+			context->frame->SetCollaborationBanner(owned
+				? _("Reconciling offline edits atomically; editing is temporarily frozen.")
+				: _("Waiting for room maintenance mode to reconcile offline edits."));
+			return;
+		}
 		if (!maintenance.active) {
 			context->frame->SetCollaborationBanner({});
 			if (!active_line_id.empty()) send("lock_request", EncodeLineReference(active_line_id));
@@ -373,6 +483,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	void handle_applied_batch(WireEnvelope const& envelope) {
 		auto batch = DecodeAppliedBatch(envelope.payload_json);
+		bool reconciliation_ack = !reconciliation_batch_id.empty() && batch.batch_id == reconciliation_batch_id;
 		auto before = sync.Confirmed().snapshot;
 		if (batch.actor_id == room.member_id && room.lock_enabled) {
 			for (auto const& operation : batch.operations) {
@@ -417,7 +528,18 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			request_snapshot();
 			return;
 		}
-		if (result.document_changed) apply_projected_snapshot(batch.id_remap);
+		if (result.document_changed && (!reconciliation_target || !reconciliation_batch_id.empty()))
+			apply_projected_snapshot(batch.id_remap);
+		if (reconciliation_ack && result.own_batch_confirmed) {
+			reconciliation_batch_id.clear();
+			reconciliation_target.reset();
+			offline_session = false;
+			offline_journal = OfflineJournal{};
+			remove_offline_journal();
+			send("maintenance_release", "{}");
+			context->frame->SetCollaborationBanner({});
+			context->frame->StatusTimeout(_("Offline collaboration edits were reconciled successfully."));
+		}
 		update_editability();
 	}
 
@@ -433,6 +555,11 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		}
 		auto removed = sync.RejectBatch(rejection);
 		if (history_action && history_action->batch_id == rejection.batch_id) history_action.reset();
+		if (reconciliation_batch_id == rejection.batch_id) {
+			reconciliation_batch_id.clear();
+			reconciliation_target.reset();
+			send("maintenance_release", "{}");
+		}
 		rejected_batches.insert(rejected_batches.end(), removed.begin(), removed.end());
 		revision = (std::max)(revision, envelope.room_revision);
 		context->frame->StatusTimeout(to_wx("Collaboration batch rejected: " + rejection.message));
@@ -442,10 +569,57 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	void handle_snapshot_state(WireEnvelope const& envelope) {
 		std::int64_t snapshot_revision = 0;
 		auto snapshot = DecodeSnapshotState(envelope.payload_json, snapshot_revision);
+		if (offline_session) {
+			prepare_offline_reconciliation(std::move(snapshot), snapshot_revision);
+			return;
+		}
 		if (!sync.ResetConfirmed(std::move(snapshot), snapshot_revision, true))
 			throw std::runtime_error("pending collaboration changes cannot be replayed over the refreshed snapshot");
 		revision = sync.Revision();
 		apply_projected_snapshot();
+	}
+
+	bool resolve_offline_conflicts(Snapshot const& server, OfflineMergeResolution& resolution) {
+		auto detected = MergeOfflineSnapshots(offline_journal.baseline, offline_journal.local, server);
+		for (auto const& conflict : detected.conflicts) {
+			wxString subject;
+			if (conflict.kind == OfflineConflictKind::Line) subject = fmt_tl("subtitle line %s", conflict.line_id);
+			else if (conflict.kind == OfflineConflictKind::Styles) subject = _("the Styles section");
+			else subject = _("the Script Info section");
+			wxMessageDialog dialog(context->parent,
+				fmt_tl("Both the server and your offline copy changed %s. Which version should be kept?", subject),
+				_("Resolve offline collaboration conflict"), wxYES_NO | wxCANCEL | wxICON_WARNING);
+			dialog.SetYesNoLabels(_("Keep local"), _("Use server"));
+			auto choice = dialog.ShowModal();
+			if (choice == wxID_CANCEL) return false;
+			if (choice != wxID_YES) continue;
+			if (conflict.kind == OfflineConflictKind::Line) resolution.local_lines.insert(conflict.line_id);
+			else if (conflict.kind == OfflineConflictKind::Styles) resolution.local_styles = true;
+			else resolution.local_script_info = true;
+		}
+		return true;
+	}
+
+	void prepare_offline_reconciliation(Snapshot server, std::int64_t server_revision) {
+		auto detected = MergeOfflineSnapshots(offline_journal.baseline, offline_journal.local, server);
+		sync.Initialize(std::move(server), server_revision);
+		sync.RememberTombstonesFrom(offline_journal.baseline);
+		revision = sync.Revision();
+		auto operations = DiffSnapshots(sync.Confirmed(), detected.merged);
+		if (operations.empty() && detected.conflicts.empty()) {
+			offline_session = false;
+			offline_journal = OfflineJournal{};
+			remove_offline_journal();
+			apply_projected_snapshot();
+			context->frame->SetCollaborationBanner({});
+			context->frame->StatusTimeout(_("Reconnected; no offline changes needed to be submitted."));
+			return;
+		}
+		reconciliation_target = std::move(detected.merged);
+		reconciliation_batch_id.clear();
+		context->frame->SetCollaborationBanner(_("Waiting for room maintenance mode to reconcile offline edits."));
+		send("maintenance_request", "{}");
+		update_editability();
 	}
 
 	void forget_credentials(ConnectionInput const& selected) {
@@ -460,6 +634,16 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	void apply_joined_room(WireEnvelope const& envelope) {
 		auto joined = DecodeRoomJoined(envelope.payload_json);
+		if (offline_session) {
+			room = joined;
+			input.mode = RoomMode::join;
+			load_snapshot_on_join = false;
+			phase = Phase::joined;
+			last_heartbeat = std::chrono::steady_clock::now();
+			persist_credentials();
+			prepare_offline_reconciliation(std::move(joined.snapshot), envelope.room_revision);
+			return;
+		}
 		bool reconnecting = sync.IsInitialized();
 		if (reconnecting) {
 			if (!sync.ResetConfirmed(joined.snapshot, envelope.room_revision, true))
@@ -535,7 +719,10 @@ class CollaborationController::Impl final : public wxEvtHandler {
 				phase = Phase::connecting;
 				update_editability();
 			}
-			else if (event->state == TransportState::retry_wait) context->frame->StatusTimeout(_("Collaboration connection lost; retrying..."));
+			else if (event->state == TransportState::retry_wait) {
+				enter_offline_mode();
+				context->frame->StatusTimeout(_("Collaboration connection lost; retrying while offline edits remain enabled..."));
+			}
 		}
 		if (phase == Phase::joined && std::chrono::steady_clock::now() - last_heartbeat >= std::chrono::seconds(10)) {
 			send("heartbeat", "{}");
@@ -578,8 +765,36 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			create_snapshot = ass::CaptureSnapshot(*context->ass, {});
 		}
 		input = std::move(selected);
+		offline_journal_path = journal_path(input);
+		if (mode == RoomMode::join && agi::fs::FileExists(offline_journal_path)) {
+			try {
+				auto stream = agi::io::Open(offline_journal_path);
+				std::string encoded{std::istreambuf_iterator<char>(*stream), std::istreambuf_iterator<char>()};
+				auto saved = DecodeOfflineJournal(encoded);
+				wxMessageDialog resume(context->parent,
+					_("A saved offline collaboration journal exists for this room. Resume and reconcile those edits?"),
+					_("Resume offline collaboration edits"), wxYES_NO | wxCANCEL | wxICON_QUESTION);
+				resume.SetYesNoLabels(_("Resume"), _("Discard journal"));
+				auto choice = resume.ShowModal();
+				if (choice == wxID_CANCEL) { input = ConnectionInput{}; return; }
+				if (choice == wxID_YES) {
+					offline_session = true;
+					offline_journal = std::move(saved);
+					FlagGuard applying(applying_snapshot);
+					ass::LoadSnapshot(*context->ass, offline_journal.local);
+					context->ass->Commit(_("restore offline collaboration edits"), AssFile::COMMIT_NEW);
+				}
+				else remove_offline_journal();
+			}
+			catch (std::exception const& error) {
+				wxMessageBox(to_wx(std::string("The offline collaboration journal could not be loaded: ") + error.what()),
+					_("Invalid offline journal"), wxOK | wxICON_ERROR, context->parent);
+				input = ConnectionInput{};
+				return;
+			}
+		}
 		if (!input.remember_passwords) forget_credentials(input);
-		load_snapshot_on_join = mode == RoomMode::join;
+		load_snapshot_on_join = mode == RoomMode::join && !offline_session;
 		room = RoomJoined{};
 		revision = 0;
 		phase = Phase::connecting;
@@ -705,6 +920,11 @@ public:
 		lock_holders.clear();
 		presence.clear();
 		maintenance = MaintenanceStateMessage{};
+		offline_session = false;
+		offline_journal = OfflineJournal{};
+		offline_journal_path.clear();
+		reconciliation_target.reset();
+		reconciliation_batch_id.clear();
 		undo_history.clear();
 		redo_history.clear();
 		history_action.reset();

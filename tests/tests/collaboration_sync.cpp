@@ -153,3 +153,35 @@ TEST(collaboration_sync, protocol_codec_matches_batch_shapes) {
 	EXPECT_EQ("batch-1", applied.batch_id);
 	EXPECT_EQ("hello", applied.operations[0].line.fields.text);
 }
+
+TEST(collaboration_sync, offline_journal_round_trips_baseline_local_and_pending_batches) {
+	SyncState state;
+	state.Initialize(baseline(), 7);
+	auto local = baseline();
+	local.lines[0].fields.text = "offline";
+	auto batch = state.QueueLocalSnapshot("offline-1", local);
+	OfflineJournal journal{7, baseline(), local, {batch}};
+	auto decoded = DecodeOfflineJournal(EncodeOfflineJournal(journal));
+	EXPECT_EQ(7, decoded.base_revision);
+	EXPECT_EQ("one", decoded.baseline.lines[0].fields.text);
+	EXPECT_EQ("offline", decoded.local.lines[0].fields.text);
+	ASSERT_EQ(1u, decoded.pending.size());
+	EXPECT_EQ("offline-1", decoded.pending[0].batch_id);
+	ASSERT_EQ(1u, decoded.pending[0].operations.size());
+	EXPECT_EQ(OperationKind::Modify, decoded.pending[0].operations[0].kind);
+}
+
+TEST(collaboration_sync, offline_baseline_marks_server_deletions_as_restorable) {
+	SyncState state;
+	auto server = baseline();
+	server.lines.erase(server.lines.begin());
+	ReindexPositions(server.lines);
+	state.Initialize(server, 8);
+	state.RememberTombstonesFrom(baseline());
+	auto target = server;
+	target.lines.insert(target.lines.begin(), baseline().lines[0]);
+	ReindexPositions(target.lines);
+	auto batch = state.QueueLocalSnapshot("restore-offline", target);
+	ASSERT_FALSE(batch.operations.empty());
+	EXPECT_EQ(OperationKind::Restore, batch.operations[0].kind);
+}

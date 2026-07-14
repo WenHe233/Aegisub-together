@@ -255,6 +255,36 @@ Line decode_line(json::UnknownElement const& value) {
 	return line;
 }
 
+json::Object encode_line(Line const& line) {
+	json::Object object;
+	object["line_id"] = line.id;
+	object["pos_key"] = line.position;
+	object["version"] = line.version;
+	object["fields"] = encode_full_fields(line.fields);
+	return object;
+}
+
+json::Object encode_snapshot(Snapshot const& snapshot) {
+	json::Object object;
+	json::Array lines;
+	for (auto const& line : snapshot.lines) lines.emplace_back(encode_line(line));
+	object["lines"] = std::move(lines);
+	json::Array styles;
+	for (auto const& style : snapshot.styles) styles.emplace_back(style);
+	object["styles"] = std::move(styles);
+	object["styles_version"] = snapshot.styles_version;
+	json::Array script_info;
+	for (auto const& item : snapshot.script_info) {
+		json::Object entry;
+		entry["key"] = item.key;
+		entry["value"] = item.value;
+		script_info.emplace_back(std::move(entry));
+	}
+	object["script_info"] = std::move(script_info);
+	object["script_info_version"] = snapshot.script_info_version;
+	return object;
+}
+
 Snapshot decode_snapshot(json::UnknownElement const& value) {
 	auto const& object = static_cast<json::Object const&>(value);
 	Snapshot snapshot;
@@ -414,6 +444,51 @@ Snapshot DecodeSnapshotState(std::string const& payload_json, std::int64_t& revi
 	return snapshot;
 }
 
+std::string EncodeOfflineJournal(OfflineJournal const& journal) {
+	if (journal.base_revision < 0 || !validate_snapshot(journal.baseline) || !validate_snapshot(journal.local))
+		throw std::invalid_argument("invalid offline collaboration journal");
+	json::Object object;
+	object["format_version"] = 1;
+	object["base_revision"] = journal.base_revision;
+	object["baseline"] = encode_snapshot(journal.baseline);
+	object["local"] = encode_snapshot(journal.local);
+	json::Array pending;
+	for (auto const& batch : journal.pending) {
+		if (batch.batch_id.empty() || batch.operations.empty()) throw std::invalid_argument("invalid pending offline batch");
+		json::Object encoded;
+		encoded["batch_id"] = batch.batch_id;
+		json::Array operations;
+		for (auto const& operation : batch.operations) operations.emplace_back(encode_operation(operation));
+		encoded["operations"] = std::move(operations);
+		pending.emplace_back(std::move(encoded));
+	}
+	object["pending"] = std::move(pending);
+	return write(json::UnknownElement(std::move(object)));
+}
+
+OfflineJournal DecodeOfflineJournal(std::string const& input) {
+	auto root = parse(input);
+	auto const& object = static_cast<json::Object const&>(root);
+	if (static_cast<json::Integer const&>(required(object, "format_version")) != 1)
+		throw std::invalid_argument("unsupported offline collaboration journal");
+	OfflineJournal journal;
+	journal.base_revision = static_cast<json::Integer const&>(required(object, "base_revision"));
+	journal.baseline = decode_snapshot(required(object, "baseline"));
+	journal.local = decode_snapshot(required(object, "local"));
+	for (auto const& item : static_cast<json::Array const&>(required(object, "pending"))) {
+		auto const& encoded = static_cast<json::Object const&>(item);
+		PendingBatch batch;
+		batch.batch_id = static_cast<json::String const&>(required(encoded, "batch_id"));
+		for (auto const& operation : static_cast<json::Array const&>(required(encoded, "operations")))
+			batch.operations.push_back(decode_operation(operation));
+		if (batch.batch_id.empty() || batch.operations.empty()) throw std::invalid_argument("invalid pending offline batch");
+		journal.pending.push_back(std::move(batch));
+	}
+	if (journal.base_revision < 0 || !validate_snapshot(journal.baseline) || !validate_snapshot(journal.local))
+		throw std::invalid_argument("invalid offline collaboration journal");
+	return journal;
+}
+
 void SyncState::Initialize(Snapshot snapshot, std::int64_t room_revision) {
 	if (room_revision < 0 || !validate_snapshot(snapshot)) throw std::invalid_argument("invalid collaboration synchronization baseline");
 	confirmed = DocumentState{};
@@ -441,6 +516,16 @@ bool SyncState::ResetConfirmed(Snapshot snapshot, std::int64_t room_revision, bo
 	projected = std::move(previous_projected);
 	revision = previous_revision;
 	return false;
+}
+
+void SyncState::RememberTombstonesFrom(Snapshot const& baseline) {
+	if (!initialized) throw std::logic_error("collaboration synchronization is not initialized");
+	for (auto const& line : baseline.lines) {
+		if (find_line(confirmed.snapshot.lines, line.id) == confirmed.snapshot.lines.size()) {
+			confirmed.tombstones.emplace(line.id, line);
+			projected.tombstones.emplace(line.id, line);
+		}
+	}
 }
 
 bool SyncState::rebuild_projected() {

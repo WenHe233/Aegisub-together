@@ -507,4 +507,117 @@ std::vector<Operation> BuildSelectiveTransition(DocumentState const& current, Sn
 	}
 }
 
+OfflineMergeResult MergeOfflineSnapshots(Snapshot const& base, Snapshot const& local, Snapshot const& server,
+	OfflineMergeResolution const* resolution) {
+	auto index_lines = [](std::vector<Line> const& lines) {
+		std::unordered_map<std::string, Line const*> result;
+		for (auto const& line : lines) result.emplace(line.id, &line);
+		return result;
+	};
+	auto base_lines = index_lines(base.lines);
+	auto local_lines = index_lines(local.lines);
+	auto server_lines = index_lines(server.lines);
+	auto adjacency = [](std::vector<Line> const& left, std::unordered_map<std::string, Line const*> const& right) {
+		std::vector<std::string> common;
+		for (auto const& line : left) if (right.count(line.id)) common.push_back(line.id);
+		std::unordered_map<std::string, std::pair<std::string, std::string>> result;
+		for (std::size_t index = 0; index < common.size(); ++index)
+			result[common[index]] = {index ? common[index - 1] : std::string{}, index + 1 < common.size() ? common[index + 1] : std::string{}};
+		return result;
+	};
+	auto base_local_order = adjacency(base.lines, local_lines);
+	auto local_base_order = adjacency(local.lines, base_lines);
+	auto base_server_order = adjacency(base.lines, server_lines);
+	auto server_base_order = adjacency(server.lines, base_lines);
+	auto local_server_order = adjacency(local.lines, server_lines);
+	auto server_local_order = adjacency(server.lines, local_lines);
+	auto changed = [](std::string const& id, auto const& baseline, auto const& variant, auto const& baseline_order, auto const& variant_order) {
+		auto before = baseline.find(id);
+		auto after = variant.find(id);
+		if ((before == baseline.end()) != (after == variant.end())) return true;
+		if (before == baseline.end()) return false;
+		return before->second->fields != after->second->fields || baseline_order.at(id) != variant_order.at(id);
+	};
+	auto equivalent = [](std::string const& id, auto const& left, auto const& right, auto const& left_order, auto const& right_order) {
+		auto a = left.find(id);
+		auto b = right.find(id);
+		if ((a == left.end()) != (b == right.end())) return false;
+		if (a == left.end()) return true;
+		return a->second->fields == b->second->fields && left_order.at(id) == right_order.at(id);
+	};
+
+	OfflineMergeResult result;
+	result.merged = server;
+	std::unordered_set<std::string> ids;
+	for (auto const& item : base_lines) ids.insert(item.first);
+	for (auto const& item : local_lines) ids.insert(item.first);
+	for (auto const& item : server_lines) ids.insert(item.first);
+	std::unordered_set<std::string> use_local;
+	std::unordered_set<std::string> local_order_changes;
+	for (auto const& id : ids) {
+		bool local_changed = changed(id, base_lines, local_lines, base_local_order, local_base_order);
+		bool server_changed = changed(id, base_lines, server_lines, base_server_order, server_base_order);
+		bool conflict = local_changed && server_changed && !equivalent(id, local_lines, server_lines,
+			local_server_order, server_local_order);
+		if (conflict) result.conflicts.push_back({OfflineConflictKind::Line, id});
+		if (local_changed && (!server_changed || !conflict || (resolution && resolution->local_lines.count(id)))) use_local.insert(id);
+		if (local_changed && (base_lines.count(id) == 0 || (base_lines.count(id) && local_lines.count(id) && base_local_order.at(id) != local_base_order.at(id))))
+			local_order_changes.insert(id);
+	}
+
+	auto find_output = [&](std::string const& id) {
+		return std::find_if(result.merged.lines.begin(), result.merged.lines.end(), [&](Line const& line) { return line.id == id; });
+	};
+	for (auto const& id : use_local) {
+		auto output = find_output(id);
+		auto source = local_lines.find(id);
+		if (source == local_lines.end()) {
+			if (output != result.merged.lines.end()) result.merged.lines.erase(output);
+		}
+		else if (output == result.merged.lines.end()) result.merged.lines.push_back(*source->second);
+		else {
+			auto version = output->version;
+			*output = *source->second;
+			output->version = version;
+		}
+	}
+	for (std::size_t local_index = 0; local_index < local.lines.size(); ++local_index) {
+		auto const& id = local.lines[local_index].id;
+		if (!use_local.count(id) || !local_order_changes.count(id)) continue;
+		auto output = find_output(id);
+		if (output == result.merged.lines.end()) continue;
+		Line line = *output;
+		result.merged.lines.erase(output);
+		auto insertion = result.merged.lines.end();
+		for (std::size_t cursor = local_index; cursor > 0; --cursor) {
+			auto anchor = find_output(local.lines[cursor - 1].id);
+			if (anchor != result.merged.lines.end()) { insertion = anchor + 1; break; }
+		}
+		if (insertion == result.merged.lines.end()) {
+			for (std::size_t cursor = local_index + 1; cursor < local.lines.size(); ++cursor) {
+				auto anchor = find_output(local.lines[cursor].id);
+				if (anchor != result.merged.lines.end()) { insertion = anchor; break; }
+			}
+		}
+		result.merged.lines.insert(insertion, std::move(line));
+	}
+
+	bool local_styles_changed = base.styles != local.styles;
+	bool server_styles_changed = base.styles != server.styles;
+	if (local_styles_changed && server_styles_changed && local.styles != server.styles)
+		result.conflicts.push_back({OfflineConflictKind::Styles, {}});
+	if (local_styles_changed && (!server_styles_changed || local.styles == server.styles || (resolution && resolution->local_styles)))
+		result.merged.styles = local.styles;
+	bool local_info_changed = base.script_info != local.script_info;
+	bool server_info_changed = base.script_info != server.script_info;
+	if (local_info_changed && server_info_changed && local.script_info != server.script_info)
+		result.conflicts.push_back({OfflineConflictKind::ScriptInfo, {}});
+	if (local_info_changed && (!server_info_changed || local.script_info == server.script_info || (resolution && resolution->local_script_info)))
+		result.merged.script_info = local.script_info;
+	result.merged.styles_version = server.styles_version;
+	result.merged.script_info_version = server.script_info_version;
+	ReindexPositions(result.merged.lines);
+	return result;
+}
+
 } }

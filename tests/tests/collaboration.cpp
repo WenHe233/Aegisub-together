@@ -208,6 +208,57 @@ TEST(collaboration_undo, selective_transition_rejects_changed_target_version) {
 	EXPECT_FALSE(error.empty());
 }
 
+TEST(collaboration_offline, merges_unrelated_local_and_server_changes) {
+	Snapshot base;
+	base.styles = {"Style: Default,Arial,48"};
+	base.script_info = {{"ScriptType", "v4.00+"}};
+	base.lines = {make_line("9K3MT7Q2CD-1", "one"), make_line("9K3MT7Q2CD-2", "two")};
+	ReindexPositions(base.lines);
+	auto local = base;
+	local.lines[0].fields.text = "local one";
+	auto server = base;
+	server.lines[1].fields.text = "server two";
+	server.lines[1].version = 2;
+	auto merged = MergeOfflineSnapshots(base, local, server);
+	EXPECT_TRUE(merged.conflicts.empty());
+	EXPECT_EQ("local one", merged.merged.lines[0].fields.text);
+	EXPECT_EQ("server two", merged.merged.lines[1].fields.text);
+	EXPECT_EQ(2, merged.merged.lines[1].version);
+}
+
+TEST(collaboration_offline, reports_line_and_section_conflicts_and_applies_choices) {
+	Snapshot base;
+	base.styles = {"Style: Default,Arial,48"};
+	base.script_info = {{"PlayResX", "1280"}};
+	base.lines = {make_line("9K3MT7Q2CD-1", "base")};
+	ReindexPositions(base.lines);
+	auto local = base;
+	local.lines[0].fields.text = "local";
+	local.styles[0] = "Style: Default,Arial,52";
+	local.script_info[0].value = "1920";
+	auto server = base;
+	server.lines[0].fields.text = "server";
+	server.lines[0].version = 2;
+	server.styles = {"Style: Default,Arial,60"};
+	server.styles_version = 2;
+	server.script_info[0].value = "2560";
+	server.script_info_version = 2;
+	auto detected = MergeOfflineSnapshots(base, local, server);
+	ASSERT_EQ(3u, detected.conflicts.size());
+	EXPECT_EQ("server", detected.merged.lines[0].fields.text);
+	OfflineMergeResolution resolution;
+	resolution.local_lines.insert("9K3MT7Q2CD-1");
+	resolution.local_styles = true;
+	resolution.local_script_info = true;
+	auto merged = MergeOfflineSnapshots(base, local, server, &resolution);
+	EXPECT_EQ("local", merged.merged.lines[0].fields.text);
+	EXPECT_EQ(local.styles, merged.merged.styles);
+	EXPECT_EQ(local.script_info, merged.merged.script_info);
+	EXPECT_EQ(2, merged.merged.lines[0].version);
+	EXPECT_EQ(2, merged.merged.styles_version);
+	EXPECT_EQ(2, merged.merged.script_info_version);
+}
+
 TEST(collaboration_order, ten_thousand_dense_insertions_remain_strictly_ordered) {
 	DocumentState state;
 	state.snapshot.lines = {make_line("9K3MT7Q2CD-1", "left"), make_line("9K3MT7Q2CD-2", "right")};

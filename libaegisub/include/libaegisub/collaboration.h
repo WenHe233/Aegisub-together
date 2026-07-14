@@ -71,6 +71,24 @@ struct DocumentState {
 	std::unordered_map<std::string, Line> tombstones;
 };
 
+enum class OfflineConflictKind { Line, Styles, ScriptInfo };
+
+struct OfflineConflict {
+	OfflineConflictKind kind = OfflineConflictKind::Line;
+	std::string line_id;
+};
+
+struct OfflineMergeResolution {
+	std::unordered_set<std::string> local_lines;
+	bool local_styles = false;
+	bool local_script_info = false;
+};
+
+struct OfflineMergeResult {
+	Snapshot merged;
+	std::vector<OfflineConflict> conflicts;
+};
+
 enum class OperationKind { Modify, Insert, Delete, Move, Restore, ReplaceStyles, ReplaceScriptInfo };
 
 struct Operation {
@@ -127,6 +145,10 @@ std::vector<Operation> DiffSnapshots(DocumentState const& confirmed, Snapshot co
 /// between expected and desired are changed; unrelated current remote changes are retained.
 std::vector<Operation> BuildSelectiveTransition(DocumentState const& current, Snapshot const& expected,
 	Snapshot const& desired, std::string* error = nullptr);
+/// Three-way merge an offline document. Non-conflicting local and server changes are
+/// combined. Conflicts use the server side unless the supplied resolution selects local.
+OfflineMergeResult MergeOfflineSnapshots(Snapshot const& base, Snapshot const& local, Snapshot const& server,
+	OfflineMergeResolution const* resolution = nullptr);
 bool ApplyOperation(DocumentState& state, Operation const& operation, std::string* error = nullptr);
 bool ApplyOperations(DocumentState& state, std::vector<Operation> const& operations, std::string* error = nullptr);
 

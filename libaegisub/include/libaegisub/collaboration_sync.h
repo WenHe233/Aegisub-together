@@ -40,6 +40,13 @@ struct RejectedBatch {
 	int operation_index = -1;
 };
 
+struct OfflineJournal {
+	std::int64_t base_revision = 0;
+	Snapshot baseline;
+	Snapshot local;
+	std::vector<PendingBatch> pending;
+};
+
 enum class SyncApplyStatus {
 	applied,
 	duplicate,
@@ -58,6 +65,8 @@ AppliedBatch DecodeAppliedBatch(std::string const& payload_json);
 RejectedBatch DecodeRejectedBatch(std::string const& payload_json);
 std::string EncodeSnapshotRequest(std::int64_t after_revision);
 Snapshot DecodeSnapshotState(std::string const& payload_json, std::int64_t& revision);
+std::string EncodeOfflineJournal(OfflineJournal const& journal);
+OfflineJournal DecodeOfflineJournal(std::string const& json);
 
 class SyncState final {
 	DocumentState confirmed;
@@ -71,6 +80,9 @@ class SyncState final {
 public:
 	void Initialize(Snapshot snapshot, std::int64_t room_revision);
 	bool ResetConfirmed(Snapshot snapshot, std::int64_t room_revision, bool preserve_pending);
+	/// Remember lines which existed at the offline baseline but were deleted on the
+	/// server, allowing a selected local resolution to emit restore rather than insert.
+	void RememberTombstonesFrom(Snapshot const& baseline);
 	bool IsInitialized() const { return initialized; }
 	std::int64_t Revision() const { return revision; }
 	DocumentState const& Confirmed() const { return confirmed; }
