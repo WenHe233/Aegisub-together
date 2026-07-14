@@ -22,3 +22,42 @@ TEST(collaboration_transport, credential_targets_do_not_have_delimiter_collision
 	EXPECT_NE(first, second);
 	EXPECT_EQ(first, CredentialTarget("wss://example.test/a:b", "c", "room-password"));
 }
+
+TEST(collaboration_transport, parses_secure_and_insecure_server_urls) {
+	auto secure = ParseCollaborationServerUrl("WSS://Example.TEST");
+	EXPECT_TRUE(secure.secure);
+	EXPECT_EQ("example.test", secure.host);
+	EXPECT_EQ(443, secure.port);
+	EXPECT_EQ("/v1/ws", secure.path);
+	EXPECT_EQ("wss://example.test/v1/ws", secure.canonical_url);
+
+	auto insecure = ParseCollaborationServerUrl("ws://Example.TEST:8080/custom/socket?token=test");
+	EXPECT_FALSE(insecure.secure);
+	EXPECT_EQ("example.test", insecure.host);
+	EXPECT_EQ(8080, insecure.port);
+	EXPECT_EQ("/custom/socket?token=test", insecure.path);
+	EXPECT_EQ("ws://example.test:8080/custom/socket?token=test", insecure.canonical_url);
+
+	auto query_only = ParseCollaborationServerUrl("ws://example.test/?transport=websocket");
+	EXPECT_EQ("/v1/ws?transport=websocket", query_only.path);
+}
+
+TEST(collaboration_transport, rejects_invalid_or_unsafe_server_urls) {
+	EXPECT_THROW(ParseCollaborationServerUrl("http://example.test"), std::invalid_argument);
+	EXPECT_THROW(ParseCollaborationServerUrl("https://example.test"), std::invalid_argument);
+	EXPECT_THROW(ParseCollaborationServerUrl("ws://"), std::invalid_argument);
+	EXPECT_THROW(ParseCollaborationServerUrl("ws://user:password@example.test"), std::invalid_argument);
+	EXPECT_THROW(ParseCollaborationServerUrl("wss://example.test/v1/ws#fragment"), std::invalid_argument);
+}
+
+TEST(collaboration_transport, remembers_insecure_server_confirmation_by_canonical_url) {
+	std::vector<std::string> confirmed{""};
+	EXPECT_FALSE(RequiresInsecureServerConfirmation("wss://example.test", confirmed));
+	EXPECT_TRUE(RequiresInsecureServerConfirmation("ws://Example.TEST/", confirmed));
+	RememberInsecureServerConfirmation("ws://Example.TEST/", confirmed);
+	EXPECT_FALSE(RequiresInsecureServerConfirmation("ws://example.test/v1/ws", confirmed));
+	EXPECT_TRUE(RequiresInsecureServerConfirmation("ws://example.test:8080", confirmed));
+	EXPECT_EQ(1U, confirmed.size());
+	RememberInsecureServerConfirmation("ws://example.test/v1/ws", confirmed);
+	EXPECT_EQ(1U, confirmed.size());
+}

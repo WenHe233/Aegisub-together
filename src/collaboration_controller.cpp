@@ -196,8 +196,11 @@ class ConnectDialog final : public wxDialog {
 		auto room_value = from_wx(room->GetValue());
 		auto nickname_value = from_wx(nickname->GetValue());
 		auto password_value = from_wx(room_password->GetValue());
-		if (server_value.compare(0, 6, "wss://") != 0) {
-			wxMessageBox(_("The collaboration server address must begin with wss://."), _("Invalid server"), wxOK | wxICON_ERROR, this);
+		try {
+			ParseCollaborationServerUrl(server_value);
+		}
+		catch (std::exception const&) {
+			wxMessageBox(_("The collaboration server address must be a valid ws:// or wss:// URL without credentials or a fragment."), _("Invalid server"), wxOK | wxICON_ERROR, this);
 			return;
 		}
 		if (room_value.empty() || room->GetValue().length() > 64 || nickname_value.empty() || nickname->GetValue().length() > 32) {
@@ -885,6 +888,15 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		ConnectDialog dialog(context->parent, mode, server, room_name, nickname, access_password, room_password);
 		if (dialog.ShowModal() != wxID_OK) return;
 		auto selected = dialog.Input();
+		auto confirmed_insecure_servers = OPT_GET("Collaboration/Insecure Servers Confirmed")->GetListString();
+		if (RequiresInsecureServerConfirmation(selected.server_url, confirmed_insecure_servers)) {
+			auto result = wxMessageBox(
+				_("This ws:// connection is not encrypted. Server passwords, room passwords, subtitles, and collaboration data can be read or changed in transit. Continue only on a trusted local network."),
+				_("Unencrypted collaboration connection"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING, context->parent);
+			if (result != wxYES) return;
+			RememberInsecureServerConfirmation(selected.server_url, confirmed_insecure_servers);
+			OPT_SET("Collaboration/Insecure Servers Confirmed")->SetListString(std::move(confirmed_insecure_servers));
+		}
 		if (mode == RoomMode::join && !prompt_to_save_before_join()) return;
 
 		OPT_SET("Collaboration/Server")->SetString(selected.server_url);

@@ -101,6 +101,7 @@
 
 	"Collaboration" : {
 		"Client Prefix" : "",
+		"Insecure Servers Confirmed" : [{"string": ""}],
 		"Next ID" : "1",
 		"Nickname" : "",
 		"Room" : "",

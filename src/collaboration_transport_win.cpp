@@ -7,7 +7,9 @@
 #include <winhttp.h>
 
 #include <algorithm>
+#include <cctype>
 #include <condition_variable>
+#include <cwctype>
 #include <deque>
 #include <limits>
 #include <mutex>
@@ -29,6 +31,16 @@ std::wstring widen(std::string const& value) {
 	std::wstring output(static_cast<std::size_t>(size), L'\0');
 	if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(), static_cast<int>(value.size()), output.data(), size))
 		throw std::runtime_error("could not convert string to UTF-16");
+	return output;
+}
+
+std::string narrow(std::wstring const& value) {
+	if (value.empty()) return {};
+	auto size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, value.data(), static_cast<int>(value.size()), nullptr, 0, nullptr, nullptr);
+	if (!size) throw std::invalid_argument("invalid UTF-16 string");
+	std::string output(static_cast<std::size_t>(size), '\0');
+	if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, value.data(), static_cast<int>(value.size()), output.data(), size, nullptr, nullptr))
+		throw std::runtime_error("could not convert string to UTF-8");
 	return output;
 }
 
@@ -63,35 +75,19 @@ struct WebSocketConnection {
 };
 
 WebSocketConnection connect_websocket(std::string const& server_url) {
-	if (server_url.compare(0, 6, "wss://") != 0)
-		throw std::invalid_argument("collaboration server URL must use wss://");
-	auto normalized = widen("https://" + server_url.substr(6));
-	URL_COMPONENTS components{};
-	components.dwStructSize = sizeof(components);
-	components.dwHostNameLength = static_cast<DWORD>(-1);
-	components.dwUrlPathLength = static_cast<DWORD>(-1);
-	components.dwExtraInfoLength = static_cast<DWORD>(-1);
-	if (!WinHttpCrackUrl(normalized.c_str(), static_cast<DWORD>(normalized.size()), 0, &components))
-		throw winhttp_error("WinHttpCrackUrl");
-	if (components.nScheme != INTERNET_SCHEME_HTTPS || !components.lpszHostName || components.dwHostNameLength == 0)
-		throw std::invalid_argument("collaboration server URL is invalid");
-	std::wstring host(components.lpszHostName, components.dwHostNameLength);
-	std::wstring path;
-	if (components.lpszUrlPath && components.dwUrlPathLength)
-		path.assign(components.lpszUrlPath, components.dwUrlPathLength);
-	if (components.lpszExtraInfo && components.dwExtraInfoLength)
-		path.append(components.lpszExtraInfo, components.dwExtraInfoLength);
-	if (path.empty() || path == L"/") path = L"/v1/ws";
+	auto parsed = ParseCollaborationServerUrl(server_url);
+	auto host = widen(parsed.host);
+	auto path = widen(parsed.path);
 
 	WebSocketConnection output;
 	output.session = InternetHandle(WinHttpOpen(UserAgent, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
 	if (!output.session.get()) throw winhttp_error("WinHttpOpen");
 	if (!WinHttpSetTimeouts(output.session.get(), 5000, 10000, 10000, 30000))
 		throw winhttp_error("WinHttpSetTimeouts");
-	output.connection = InternetHandle(WinHttpConnect(output.session.get(), host.c_str(), components.nPort, 0));
+	output.connection = InternetHandle(WinHttpConnect(output.session.get(), host.c_str(), parsed.port, 0));
 	if (!output.connection.get()) throw winhttp_error("WinHttpConnect");
 	InternetHandle request(WinHttpOpenRequest(output.connection.get(), L"GET", path.c_str(), nullptr,
-		WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE));
+		WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, parsed.secure ? WINHTTP_FLAG_SECURE : 0));
 	if (!request.get()) throw winhttp_error("WinHttpOpenRequest");
 	if (!WinHttpSetOption(request.get(), WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, nullptr, 0))
 		throw winhttp_error("WinHttpSetOption(WEB_SOCKET)");
@@ -119,6 +115,67 @@ std::wstring credential_name(std::string const& target) {
 	if (name.size() > CRED_MAX_GENERIC_TARGET_NAME_LENGTH) throw std::length_error("credential target is too large");
 	return name;
 }
+}
+
+CollaborationServerUrl ParseCollaborationServerUrl(std::string const& server_url) {
+	auto delimiter = server_url.find("://");
+	if (delimiter == std::string::npos || server_url.find('#') != std::string::npos)
+		throw std::invalid_argument("collaboration server URL must use ws:// or wss:// without a fragment");
+	auto scheme = server_url.substr(0, delimiter);
+	std::transform(scheme.begin(), scheme.end(), scheme.begin(), [](unsigned char value) { return static_cast<char>(std::tolower(value)); });
+	bool secure;
+	if (scheme == "wss") secure = true;
+	else if (scheme == "ws") secure = false;
+	else throw std::invalid_argument("collaboration server URL must use ws:// or wss://");
+	if (delimiter + 3 == server_url.size()) throw std::invalid_argument("collaboration server URL has no host");
+
+	auto normalized = widen(std::string(secure ? "https://" : "http://") + server_url.substr(delimiter + 3));
+	URL_COMPONENTS components{};
+	components.dwStructSize = sizeof(components);
+	components.dwHostNameLength = static_cast<DWORD>(-1);
+	components.dwUrlPathLength = static_cast<DWORD>(-1);
+	components.dwExtraInfoLength = static_cast<DWORD>(-1);
+	components.dwUserNameLength = static_cast<DWORD>(-1);
+	components.dwPasswordLength = static_cast<DWORD>(-1);
+	if (!WinHttpCrackUrl(normalized.c_str(), static_cast<DWORD>(normalized.size()), 0, &components))
+		throw winhttp_error("WinHttpCrackUrl");
+	auto expected_scheme = secure ? INTERNET_SCHEME_HTTPS : INTERNET_SCHEME_HTTP;
+	if (components.nScheme != expected_scheme || !components.lpszHostName || components.dwHostNameLength == 0 ||
+		components.dwUserNameLength || components.dwPasswordLength)
+		throw std::invalid_argument("collaboration server URL is invalid");
+	std::wstring host(components.lpszHostName, components.dwHostNameLength);
+	std::transform(host.begin(), host.end(), host.begin(), [](wchar_t value) { return static_cast<wchar_t>(std::towlower(value)); });
+	std::wstring path;
+	if (components.lpszUrlPath && components.dwUrlPathLength)
+		path.assign(components.lpszUrlPath, components.dwUrlPathLength);
+	if (path.empty() || path == L"/") path = L"/v1/ws";
+	if (components.lpszExtraInfo && components.dwExtraInfoLength)
+		path.append(components.lpszExtraInfo, components.dwExtraInfoLength);
+
+	CollaborationServerUrl output;
+	output.secure = secure;
+	output.host = narrow(host);
+	output.path = narrow(path);
+	output.port = components.nPort;
+	std::string canonical_host = output.host.find(':') == std::string::npos ? output.host : "[" + output.host + "]";
+	auto default_port = secure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+	output.canonical_url = scheme + "://" + canonical_host;
+	if (output.port != default_port) output.canonical_url += ":" + std::to_string(output.port);
+	output.canonical_url += output.path;
+	return output;
+}
+
+bool RequiresInsecureServerConfirmation(std::string const& server_url, std::vector<std::string> const& confirmed_servers) {
+	auto parsed = ParseCollaborationServerUrl(server_url);
+	return !parsed.secure && std::find(confirmed_servers.begin(), confirmed_servers.end(), parsed.canonical_url) == confirmed_servers.end();
+}
+
+void RememberInsecureServerConfirmation(std::string const& server_url, std::vector<std::string>& confirmed_servers) {
+	auto parsed = ParseCollaborationServerUrl(server_url);
+	if (parsed.secure) return;
+	confirmed_servers.erase(std::remove(confirmed_servers.begin(), confirmed_servers.end(), std::string{}), confirmed_servers.end());
+	if (std::find(confirmed_servers.begin(), confirmed_servers.end(), parsed.canonical_url) == confirmed_servers.end())
+		confirmed_servers.emplace_back(std::move(parsed.canonical_url));
 }
 
 class CollaborationTransport::Impl {
