@@ -11,7 +11,7 @@
         "operation": {"op": "modify", "line_id": "9K3MT7Q2CD-1", "base_version": 3, "fields": {"text": "你好"}},
         "line": {
           "line_id": "9K3MT7Q2CD-1",
-          "pos_key": "V",
+          "pos_key": "Uzzzzzzzzzzzzzzz",
           "version": 4,
           "fields": {"comment": false, "layer": 0, "start_ms": 0, "end_ms": 5000, "style": "Default", "actor": "", "effect": "", "margins": [0, 0, 0], "text": "你好"}
         }

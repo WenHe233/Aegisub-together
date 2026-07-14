@@ -37,7 +37,8 @@ is applied atomically.
   `9K3MT7Q2CD-128`). Lowercase, ambiguous Base32 characters, leading zeroes,
   and out-of-range counters are rejected.
 - `insert` and `move` name the client's known `left_id` and `right_id`. The
-  server assigns the canonical `pos_key` and returns it in `batch_applied`.
+  server assigns the canonical 16-character Base62 `pos_key` and returns it in
+  `batch_applied`.
 - `modify`, `delete`, and `move` carry the line version observed by the client.
 - Each entry in `batch_applied.operations` contains the normalized input
   `operation` and, when a line remains live, its complete canonical `line`.

@@ -188,7 +188,7 @@
       "required": ["line_id", "pos_key", "version", "fields"],
       "properties": {
         "line_id": {"$ref": "#/$defs/line_id"},
-        "pos_key": {"type": "string", "minLength": 1, "maxLength": 64},
+        "pos_key": {"type": "string", "pattern": "^[0-9A-Za-z]{16}$"},
         "version": {"type": "integer", "minimum": 1},
         "fields": {"$ref": "#/$defs/line_fields"}
       },
