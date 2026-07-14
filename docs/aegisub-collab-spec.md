@@ -30,7 +30,7 @@
 ### 基线选择
 - fork 严格基于提交 **`8165f1ad5ec8b5f3c56e0c3b19b8126f581abd58`**，开发分支为 `feat/collaboration`；不得混入该提交之后的上游改动。
 - 协作代码尽量收口在少数模块(extradata 发号、commit 钩子、网络子系统、网格锁/presence 绘制),便于后续跟上游 rebase。
-- v1 协作客户端只承诺 Windows；Linux/macOS 必须继续编译并保持原版离线行为，协作模块在这些平台关闭。
+- v1 协作客户端只面向 Windows，并且客户端 CI 只验证 Windows；Linux/macOS 客户端不在支持、构建或兼容性检查范围内。Linux 仅作为协作服务端的发布平台。
 
 ## 3. 用户故事(均发生在同一份实时同步的文件上)
 
@@ -204,7 +204,7 @@
 
 客户端同步状态固定为 `confirmed shadow + pending batches + projected shadow`。文本框逐键 commit 不等待网络；发送顺序由单一队列保证。前序批次拒绝时，其后依赖批次一并保存恢复副本并重取快照。
 
-Windows 网络层使用 WinHTTP WebSocket；`wss://` 使用 TLS 与系统证书库，`ws://` 使用不加密 HTTP。后台线程只收发与解析，主线程通过 wx 事件应用。Linux/macOS 编译时关闭协作模块。
+Windows 网络层使用 WinHTTP WebSocket；`wss://` 使用 TLS 与系统证书库，`ws://` 使用不加密 HTTP。后台线程只收发与解析，主线程通过 wx 事件应用。Linux/macOS 客户端不属于 v1 的构建与支持范围。
 
 UI 增量:
 - 网格行的锁定标识(占用者名字)+ 被他人锁定行的只读态;连接状态指示。
