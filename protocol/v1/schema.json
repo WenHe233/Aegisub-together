@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisub-together.invalid/protocol/v1/schema.json",
+  "title": "Aegisub Together protocol v1 envelope",
+  "type": "object",
+  "required": ["protocol_version", "type", "request_id", "room_revision", "payload"],
+  "properties": {
+    "protocol_version": {"const": 1},
+    "type": {
+      "enum": [
+        "access_auth", "access_ok", "create_room", "join_room", "room_joined",
+        "submit_batch", "batch_applied", "batch_rejected", "snapshot_request",
+        "lock_request", "lock_release", "lock_state", "presence", "heartbeat",
+        "maintenance_request", "maintenance_state", "maintenance_cancel_request",
+        "maintenance_cancel_force", "comment_create", "comment_set_state",
+        "comment_changed", "reindex", "error"
+      ]
+    },
+    "request_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "room_revision": {"type": "integer", "minimum": 0},
+    "payload": {"type": "object"}
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {"properties": {"type": {"const": "access_auth"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/access_auth"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "create_room"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/create_room"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "join_room"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/join_room"}}}
+    },
+    {
+      "if": {"properties": {"type": {"enum": ["room_joined", "snapshot_request"]}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/snapshot_message"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "submit_batch"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/submit_batch"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "batch_applied"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/batch_applied"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "batch_rejected"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/batch_rejected"}}}
+    },
+    {
+      "if": {"properties": {"type": {"enum": ["lock_request", "lock_release"]}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/line_reference"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "comment_create"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/comment_create"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "comment_set_state"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/comment_set_state"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "error"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/error"}}}
+    }
+  ],
+  "$defs": {
+    "non_empty_string": {"type": "string", "minLength": 1},
+    "nullable_line_id": {"type": ["string", "null"], "maxLength": 64},
+    "line_reference": {
+      "type": "object",
+      "required": ["line_id"],
+      "properties": {"line_id": {"$ref": "#/$defs/non_empty_string"}},
+      "additionalProperties": false
+    },
+    "line_fields": {
+      "type": "object",
+      "properties": {
+        "comment": {"type": "boolean"},
+        "layer": {"type": "integer"},
+        "start_ms": {"type": "integer", "minimum": 0},
+        "end_ms": {"type": "integer", "minimum": 0},
+        "style": {"type": "string"},
+        "actor": {"type": "string"},
+        "effect": {"type": "string"},
+        "margins": {
+          "type": "array", "minItems": 3, "maxItems": 3,
+          "items": {"type": "integer", "minimum": 0, "maximum": 9999}
+        },
+        "text": {"type": "string"}
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "line": {
+      "type": "object",
+      "required": ["line_id", "pos_key", "version", "fields"],
+      "properties": {
+        "line_id": {"$ref": "#/$defs/non_empty_string"},
+        "pos_key": {"type": "string", "minLength": 1, "maxLength": 64},
+        "version": {"type": "integer", "minimum": 1},
+        "fields": {"$ref": "#/$defs/line_fields"}
+      },
+      "additionalProperties": false
+    },
+    "script_info_entry": {
+      "type": "object",
+      "required": ["key", "value"],
+      "properties": {"key": {"type": "string"}, "value": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "snapshot": {
+      "type": "object",
+      "required": ["lines", "styles", "styles_version", "script_info", "script_info_version", "comments"],
+      "properties": {
+        "lines": {"type": "array", "items": {"$ref": "#/$defs/line"}},
+        "styles": {"type": "array", "items": {"type": "string"}},
+        "styles_version": {"type": "integer", "minimum": 1},
+        "script_info": {"type": "array", "items": {"$ref": "#/$defs/script_info_entry"}},
+        "script_info_version": {"type": "integer", "minimum": 1},
+        "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}}
+      },
+      "additionalProperties": false
+    },
+    "access_auth": {
+      "type": "object",
+      "required": ["password"],
+      "properties": {"password": {"type": "string", "maxLength": 128}},
+      "additionalProperties": false
+    },
+    "create_room": {
+      "type": "object",
+      "required": ["room_name", "room_password", "nickname", "lock_enabled", "snapshot"],
+      "properties": {
+        "room_name": {"type": "string", "minLength": 1, "maxLength": 64},
+        "room_password": {"type": "string", "minLength": 8, "maxLength": 128},
+        "nickname": {"type": "string", "minLength": 1, "maxLength": 32},
+        "lock_enabled": {"type": "boolean"},
+        "snapshot": {"$ref": "#/$defs/snapshot"}
+      },
+      "additionalProperties": false
+    },
+    "join_room": {
+      "type": "object",
+      "required": ["room_name", "room_password", "nickname"],
+      "properties": {
+        "room_name": {"type": "string", "minLength": 1, "maxLength": 64},
+        "room_password": {"type": "string", "minLength": 8, "maxLength": 128},
+        "nickname": {"type": "string", "minLength": 1, "maxLength": 32},
+        "resume_token": {"type": "string", "maxLength": 256}
+      },
+      "additionalProperties": false
+    },
+    "snapshot_message": {
+      "type": "object",
+      "properties": {
+        "room_id": {"type": "string"},
+        "member_id": {"type": "string"},
+        "resume_token": {"type": "string"},
+        "lock_enabled": {"type": "boolean"},
+        "snapshot": {"$ref": "#/$defs/snapshot"}
+      },
+      "additionalProperties": true
+    },
+    "operation": {
+      "oneOf": [
+        {"$ref": "#/$defs/modify_op"}, {"$ref": "#/$defs/insert_op"},
+        {"$ref": "#/$defs/delete_op"}, {"$ref": "#/$defs/move_op"},
+        {"$ref": "#/$defs/restore_op"}, {"$ref": "#/$defs/replace_styles_op"},
+        {"$ref": "#/$defs/replace_script_info_op"}
+      ]
+    },
+    "modify_op": {
+      "type": "object", "required": ["op", "line_id", "base_version", "fields"],
+      "properties": {"op": {"const": "modify"}, "line_id": {"type": "string"}, "base_version": {"type": "integer", "minimum": 1}, "fields": {"$ref": "#/$defs/line_fields"}},
+      "additionalProperties": false
+    },
+    "insert_op": {
+      "type": "object", "required": ["op", "line_id", "left_id", "right_id", "fields"],
+      "properties": {"op": {"const": "insert"}, "line_id": {"type": "string"}, "left_id": {"$ref": "#/$defs/nullable_line_id"}, "right_id": {"$ref": "#/$defs/nullable_line_id"}, "fields": {"$ref": "#/$defs/line_fields"}},
+      "additionalProperties": false
+    },
+    "delete_op": {
+      "type": "object", "required": ["op", "line_id", "base_version"],
+      "properties": {"op": {"const": "delete"}, "line_id": {"type": "string"}, "base_version": {"type": "integer", "minimum": 1}},
+      "additionalProperties": false
+    },
+    "move_op": {
+      "type": "object", "required": ["op", "line_id", "left_id", "right_id", "base_version"],
+      "properties": {"op": {"const": "move"}, "line_id": {"type": "string"}, "left_id": {"$ref": "#/$defs/nullable_line_id"}, "right_id": {"$ref": "#/$defs/nullable_line_id"}, "base_version": {"type": "integer", "minimum": 1}},
+      "additionalProperties": false
+    },
+    "restore_op": {
+      "type": "object", "required": ["op", "line_id"],
+      "properties": {"op": {"const": "restore"}, "line_id": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "replace_styles_op": {
+      "type": "object", "required": ["op", "base_version", "styles"],
+      "properties": {"op": {"const": "replace_styles"}, "base_version": {"type": "integer", "minimum": 1}, "styles": {"type": "array", "items": {"type": "string"}}},
+      "additionalProperties": false
+    },
+    "replace_script_info_op": {
+      "type": "object", "required": ["op", "base_version", "entries"],
+      "properties": {"op": {"const": "replace_script_info"}, "base_version": {"type": "integer", "minimum": 1}, "entries": {"type": "array", "items": {"$ref": "#/$defs/script_info_entry"}}},
+      "additionalProperties": false
+    },
+    "submit_batch": {
+      "type": "object", "required": ["batch_id", "operations"],
+      "properties": {"batch_id": {"type": "string", "minLength": 1, "maxLength": 64}, "operations": {"type": "array", "minItems": 1, "maxItems": 100000, "items": {"$ref": "#/$defs/operation"}}},
+      "additionalProperties": false
+    },
+    "batch_applied": {
+      "type": "object", "required": ["batch_id", "actor_id", "operations", "id_remap"],
+      "properties": {"batch_id": {"type": "string"}, "actor_id": {"type": "string"}, "operations": {"type": "array", "items": {"$ref": "#/$defs/operation"}}, "id_remap": {"type": "object", "additionalProperties": {"type": "string"}}},
+      "additionalProperties": false
+    },
+    "batch_rejected": {
+      "type": "object", "required": ["batch_id", "code", "message"],
+      "properties": {"batch_id": {"type": "string"}, "code": {"type": "string"}, "message": {"type": "string"}, "line_id": {"type": "string"}, "operation_index": {"type": "integer", "minimum": 0}},
+      "additionalProperties": false
+    },
+    "comment": {
+      "type": "object",
+      "required": ["comment_id", "line_id", "author_id", "author_name", "body", "base_line_version", "state", "created_at"],
+      "properties": {
+        "comment_id": {"type": "string"}, "line_id": {"type": "string"},
+        "author_id": {"type": "string"}, "author_name": {"type": "string"},
+        "body": {"type": "string", "maxLength": 16384},
+        "suggested_text": {"type": ["string", "null"]},
+        "base_line_version": {"type": "integer", "minimum": 1},
+        "state": {"enum": ["open", "accepted", "rejected", "resolved"]},
+        "created_at": {"type": "string", "format": "date-time"},
+        "resolved_by": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "comment_create": {
+      "type": "object", "required": ["line_id", "base_line_version", "body"],
+      "properties": {"line_id": {"type": "string"}, "base_line_version": {"type": "integer", "minimum": 1}, "body": {"type": "string", "minLength": 1, "maxLength": 16384}, "suggested_text": {"type": ["string", "null"]}},
+      "additionalProperties": false
+    },
+    "comment_set_state": {
+      "type": "object", "required": ["comment_id", "state"],
+      "properties": {"comment_id": {"type": "string"}, "state": {"enum": ["accepted", "rejected", "resolved"]}},
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object", "required": ["code", "message", "retryable"],
+      "properties": {"code": {"type": "string"}, "message": {"type": "string"}, "retryable": {"type": "boolean"}, "retry_after_ms": {"type": "integer", "minimum": 0}},
+      "additionalProperties": false
+    }
+  }
+}

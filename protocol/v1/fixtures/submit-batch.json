@@ -1,0 +1,13 @@
+{
+  "protocol_version": 1,
+  "type": "submit_batch",
+  "request_id": "req-3",
+  "room_revision": 7,
+  "payload": {
+    "batch_id": "9K3MT7Q2CD-b4",
+    "operations": [
+      {"op": "modify", "line_id": "9K3MT7Q2CD-1", "base_version": 3, "fields": {"text": "你好"}},
+      {"op": "insert", "line_id": "9K3MT7Q2CD-2", "left_id": "9K3MT7Q2CD-1", "right_id": null, "fields": {"comment": false, "layer": 0, "start_ms": 5000, "end_ms": 8000, "style": "Default", "actor": "", "effect": "", "margins": [0, 0, 0], "text": "World"}}
+    ]
+  }
+}

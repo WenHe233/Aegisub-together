@@ -1,0 +1,7 @@
+{
+  "protocol_version": 1,
+  "type": "access_auth",
+  "request_id": "req-1",
+  "room_revision": 0,
+  "payload": {"password": ""}
+}

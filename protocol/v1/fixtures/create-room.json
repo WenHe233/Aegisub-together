@@ -1,0 +1,25 @@
+{
+  "protocol_version": 1,
+  "type": "create_room",
+  "request_id": "req-2",
+  "room_revision": 0,
+  "payload": {
+    "room_name": "episode-01",
+    "room_password": "correct horse battery staple",
+    "nickname": "translator",
+    "lock_enabled": true,
+    "snapshot": {
+      "lines": [{
+        "line_id": "9K3MT7Q2CD-1",
+        "pos_key": "V",
+        "version": 1,
+        "fields": {"comment": false, "layer": 0, "start_ms": 0, "end_ms": 5000, "style": "Default", "actor": "", "effect": "", "margins": [0, 0, 0], "text": "Hello"}
+      }],
+      "styles": ["Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1"],
+      "styles_version": 1,
+      "script_info": [{"key": "ScriptType", "value": "v4.00+"}],
+      "script_info_version": 1,
+      "comments": []
+    }
+  }
+}

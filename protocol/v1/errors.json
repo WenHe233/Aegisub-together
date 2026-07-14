@@ -1,0 +1,22 @@
+{
+  "protocol_version": 1,
+  "errors": [
+    {"code": "protocol_mismatch", "retryable": false},
+    {"code": "invalid_message", "retryable": false},
+    {"code": "message_too_large", "retryable": false},
+    {"code": "authentication_failed", "retryable": true},
+    {"code": "rate_limited", "retryable": true},
+    {"code": "room_credentials_invalid", "retryable": true},
+    {"code": "room_name_taken", "retryable": false},
+    {"code": "nickname_in_use", "retryable": true},
+    {"code": "revision_gap", "retryable": true},
+    {"code": "batch_conflict", "retryable": true},
+    {"code": "line_locked", "retryable": true},
+    {"code": "line_version_conflict", "retryable": true},
+    {"code": "section_version_conflict", "retryable": true},
+    {"code": "maintenance_active", "retryable": true},
+    {"code": "maintenance_not_held", "retryable": false},
+    {"code": "comment_version_conflict", "retryable": true},
+    {"code": "internal_error", "retryable": true}
+  ]
+}

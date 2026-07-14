@@ -1,0 +1,12 @@
+{
+  "protocol_version": 1,
+  "type": "submit_batch",
+  "request_id": "bad-2",
+  "room_revision": 1,
+  "payload": {
+    "batch_id": "bad-batch",
+    "operations": [
+      {"op": "modify", "line_id": "9K3MT7Q2CD-1", "fields": {"text": "invalid"}}
+    ]
+  }
+}

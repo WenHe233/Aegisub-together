@@ -1,0 +1,7 @@
+{
+  "protocol_version": 1,
+  "type": "future_required_message",
+  "request_id": "bad-1",
+  "room_revision": 0,
+  "payload": {}
+}
