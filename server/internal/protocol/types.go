@@ -110,6 +110,7 @@ type BatchApplied struct {
 	ActorID    string             `json:"actor_id"`
 	Operations []AppliedOperation `json:"operations"`
 	IDRemap    map[string]string  `json:"id_remap"`
+	Positions  map[string]string  `json:"positions,omitempty"`
 }
 
 type BatchRejected struct {

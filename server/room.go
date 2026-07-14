@@ -36,6 +36,7 @@ type room struct {
 	revision     int64
 	members      map[string]*member
 	tombstones   map[string]protocol.Line
+	reindexed    bool
 }
 
 type hub struct {

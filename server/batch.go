@@ -50,6 +50,12 @@ func (hub *hub) applyBatch(ctx context.Context, roomID, actorID string, input pr
 		}
 		result.Operations = append(result.Operations, applied)
 	}
+	if working.reindexed {
+		result.Positions = make(map[string]string, len(working.snapshot.Lines))
+		for _, line := range working.snapshot.Lines {
+			result.Positions[line.LineID] = line.PosKey
+		}
+	}
 	if err := hub.store.saveBatch(ctx, working, result, actorID); err != nil {
 		return protocol.BatchApplied{}, value.revision, nil, false, err
 	}
@@ -103,7 +109,9 @@ func applyOperation(value *room, raw json.RawMessage, remap map[string]string) (
 		operation.LeftID = remappedPointer(operation.LeftID, remap)
 		operation.RightID = remappedPointer(operation.RightID, remap)
 		index := insertionIndex(value.snapshot.Lines, operation.LeftID, operation.RightID)
-		line := protocol.Line{LineID: operation.LineID, PosKey: positionForInsert(value.snapshot.Lines, index), Version: 1, Fields: operation.Fields}
+		position, reindexed := positionForInsert(value.snapshot.Lines, index)
+		value.reindexed = value.reindexed || reindexed
+		line := protocol.Line{LineID: operation.LineID, PosKey: position, Version: 1, Fields: operation.Fields}
 		value.snapshot.Lines = insertLine(value.snapshot.Lines, index, line)
 		return applied(operation, &line, 0, 0)
 
@@ -136,7 +144,9 @@ func applyOperation(value *room, raw json.RawMessage, remap map[string]string) (
 		lines := append(value.snapshot.Lines[:index:index], value.snapshot.Lines[index+1:]...)
 		target := insertionIndex(lines, operation.LeftID, operation.RightID)
 		line.Version++
-		line.PosKey = positionForInsert(lines, target)
+		position, reindexed := positionForInsert(lines, target)
+		value.reindexed = value.reindexed || reindexed
+		line.PosKey = position
 		value.snapshot.Lines = insertLine(lines, target, *line)
 		return applied(operation, line, 0, 0)
 
@@ -152,10 +162,15 @@ func applyOperation(value *room, raw json.RawMessage, remap map[string]string) (
 		}
 		delete(value.tombstones, operation.LineID)
 		line.Version++
-		value.snapshot.Lines = append(value.snapshot.Lines, line)
-		sort.SliceStable(value.snapshot.Lines, func(left, right int) bool {
-			return value.snapshot.Lines[left].PosKey < value.snapshot.Lines[right].PosKey
+		target := sort.Search(len(value.snapshot.Lines), func(index int) bool {
+			return value.snapshot.Lines[index].PosKey >= line.PosKey
 		})
+		if target < len(value.snapshot.Lines) && value.snapshot.Lines[target].PosKey == line.PosKey {
+			position, reindexed := positionForInsert(value.snapshot.Lines, target)
+			value.reindexed = value.reindexed || reindexed
+			line.PosKey = position
+		}
+		value.snapshot.Lines = insertLine(value.snapshot.Lines, target, line)
 		return applied(operation, &line, 0, 0)
 
 	case "replace_styles":
@@ -292,6 +307,7 @@ func remappedPointer(lineID *string, remap map[string]string) *string {
 func cloneRoomState(value *room) *room {
 	clone := *value
 	clone.snapshot = cloneSnapshot(value.snapshot)
+	clone.reindexed = false
 	clone.tombstones = make(map[string]protocol.Line, len(value.tombstones))
 	for lineID, line := range value.tombstones {
 		clone.tombstones[lineID] = line

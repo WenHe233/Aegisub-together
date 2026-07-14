@@ -14,16 +14,17 @@ const (
 
 var rankMaximum = new(big.Int).Sub(new(big.Int).Exp(big.NewInt(62), big.NewInt(rankWidth), nil), big.NewInt(1))
 
-func canonicalizePositions(lines []protocol.Line) {
+func canonicalizePositions(lines []protocol.Line) bool {
 	previous := big.NewInt(-1)
 	for _, line := range lines {
 		value, ok := decodeRank(line.PosKey)
 		if !ok || value.Cmp(previous) <= 0 {
 			reindexLines(lines)
-			return
+			return true
 		}
 		previous = value
 	}
+	return false
 }
 
 func reindexLines(lines []protocol.Line) {
@@ -35,23 +36,36 @@ func reindexLines(lines []protocol.Line) {
 	}
 }
 
-func positionForInsert(lines []protocol.Line, index int) string {
-	canonicalizePositions(lines)
+func positionForInsert(lines []protocol.Line, index int) (string, bool) {
+	reindexed := false
 	left := big.NewInt(0)
 	right := new(big.Int).Set(rankMaximum)
 	if index > 0 {
-		left, _ = decodeRank(lines[index-1].PosKey)
+		var ok bool
+		left, ok = decodeRank(lines[index-1].PosKey)
+		if !ok {
+			reindexLines(lines)
+			position, _ := positionForInsert(lines, index)
+			return position, true
+		}
 	}
 	if index < len(lines) {
-		right, _ = decodeRank(lines[index].PosKey)
+		var ok bool
+		right, ok = decodeRank(lines[index].PosKey)
+		if !ok {
+			reindexLines(lines)
+			position, _ := positionForInsert(lines, index)
+			return position, true
+		}
 	}
 	if new(big.Int).Sub(new(big.Int).Set(right), left).Cmp(big.NewInt(1)) <= 0 {
 		reindexLines(lines)
-		return positionForInsert(lines, index)
+		position, _ := positionForInsert(lines, index)
+		return position, true
 	}
 	middle := new(big.Int).Add(left, right)
 	middle.Div(middle, big.NewInt(2))
-	return encodeRank(middle)
+	return encodeRank(middle), reindexed
 }
 
 func insertionIndex(lines []protocol.Line, leftID, rightID *string) int {

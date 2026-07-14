@@ -3,6 +3,7 @@ package collab
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -75,6 +76,7 @@ func dial(t *testing.T, url string) *websocket.Conn {
 	if err != nil {
 		t.Fatal(err)
 	}
+	connection.SetReadLimit(maxMessageSize)
 	t.Cleanup(func() { connection.CloseNow() })
 	return connection
 }
@@ -478,5 +480,37 @@ func TestSQLiteRestoresRoomsAndBatchesAfterRestart(t *testing.T) {
 	duplicateEnvelope, _, rejected := submitBatch(t, joiner, "persisted-batch", protocol.ModifyOperation{Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("again")}})
 	if rejected != nil || duplicateEnvelope.RoomRevision != 1 {
 		t.Fatal("persisted batch idempotency record was not restored")
+	}
+}
+
+func TestDenseBatchCarriesAtomicReindexMap(t *testing.T) {
+	_, url := testServer(t, "")
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	fields := sampleSnapshot().Lines[0].Fields
+	leftID := "9K3MT7Q2CD-1"
+	operations := make([]any, 200)
+	for index := range operations {
+		operationFields := fields
+		operationFields.Text = stringPointer(fmt.Sprintf("line %d", index))
+		operations[index] = protocol.InsertOperation{Op: "insert", LineID: fmt.Sprintf("client-%d", index), LeftID: &leftID, RightID: nil, Fields: operationFields}
+	}
+	_, applied, rejected := submitBatch(t, creator, "dense-batch", operations...)
+	if rejected != nil {
+		t.Fatalf("dense batch rejected: %#v", rejected)
+	}
+	if len(applied.Positions) != 201 {
+		t.Fatalf("reindex map has %d positions, expected 201", len(applied.Positions))
+	}
+	seen := make(map[string]struct{}, len(applied.Positions))
+	for _, position := range applied.Positions {
+		if len(position) > 64 {
+			t.Fatalf("position exceeds wire limit: %q", position)
+		}
+		if _, duplicate := seen[position]; duplicate {
+			t.Fatalf("duplicate reindexed position %q", position)
+		}
+		seen[position] = struct{}{}
 	}
 }
