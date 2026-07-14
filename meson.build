@@ -172,6 +172,7 @@ else
         'wxUSE_WEBVIEW': false,         # breaks build on linux
         'wxUSE_REGEX': 'builtin',
         'CMAKE_BUILD_TYPE': build_type,
+        'CMAKE_POLICY_VERSION_MINIMUM': '3.5',
         'wxUSE_IMAGE': true,
         'wxBUILD_MONOLITHIC': true      # otherwise breaks project generation w/ meson
     })
