@@ -11,6 +11,12 @@ Aegisub Together 是基于 arch1t3cht Aegisub 分支开发的在线协作字幕�
 
 协作服务端使用 Go 编写，通过 WebSocket 与客户端通信，并使用 SQLite 持久化房间、字幕快照、操作日志、墓碑和审计记录。首版同步 Dialogue、Styles、Script Info 以及协作所需的 Extradata；视频、字体、图片附件和本机项目状态仍由每位成员在本地管理。
 
+## 部署指引
+
+公网部署推荐使用仓库提供的 Docker Compose 或 systemd 配置，并由 Caddy 提供 TLS，通过 `wss://` 连接。仅在本机、隔离开发环境或可信局域网中，可以让客户端直接使用 `ws://` 连接服务端；WS 不加密，不应暴露到公网。
+
+域名、访问密码哈希、Compose、systemd、Caddy、备份与恢复步骤请参阅[协作服务端部署指南](docs/collaboration-deployment.md)。
+
 ## 协作文档
 
 - [协作架构与协议规格](docs/aegisub-collab-spec.md)
