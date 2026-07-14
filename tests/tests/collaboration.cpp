@@ -27,6 +27,9 @@ TEST(collaboration_id, allocator_uses_50_bit_crockford_prefix) {
 	EXPECT_EQ("0000000000", EncodeClientPrefix(0));
 	EXPECT_EQ("ZZZZZZZZZZ", EncodeClientPrefix((std::uint64_t{1} << 50) - 1));
 	EXPECT_THROW(EncodeClientPrefix(std::uint64_t{1} << 50), std::out_of_range);
+	EXPECT_TRUE(IsValidLineId("9K3MT7Q2CD-1"));
+	EXPECT_FALSE(IsValidLineId("9K3MT7Q2CD-01"));
+	EXPECT_FALSE(IsValidLineId("9K3MT7Q2CI-1"));
 	IdAllocator allocator("9K3MT7Q2CD", 128);
 	EXPECT_EQ("9K3MT7Q2CD-128", allocator.Mint());
 	EXPECT_EQ("9K3MT7Q2CD-129", allocator.Mint());

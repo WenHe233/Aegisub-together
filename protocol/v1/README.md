@@ -31,7 +31,11 @@ is applied atomically.
 
 ## Ordering and conflict rules
 
-- Dialogue identity is `line_id`; array indexes are never identities.
+- Dialogue identity is `line_id`; array indexes are never identities. Its
+  canonical form is a 10-character Crockford Base32 50-bit client prefix, a
+  hyphen, and a positive unsigned 64-bit decimal counter (for example,
+  `9K3MT7Q2CD-128`). Lowercase, ambiguous Base32 characters, leading zeroes,
+  and out-of-range counters are rejected.
 - `insert` and `move` name the client's known `left_id` and `right_id`. The
   server assigns the canonical `pos_key` and returns it in `batch_applied`.
 - `modify`, `delete`, and `move` carry the line version observed by the client.

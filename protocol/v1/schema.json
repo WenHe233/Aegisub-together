@@ -105,19 +105,20 @@
   ],
   "$defs": {
     "non_empty_string": {"type": "string", "minLength": 1},
-    "nullable_line_id": {"type": ["string", "null"], "maxLength": 64},
+    "line_id": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{10}-[1-9][0-9]*$", "maxLength": 31},
+    "nullable_line_id": {"anyOf": [{"$ref": "#/$defs/line_id"}, {"type": "null"}]},
     "empty_payload": {"type": "object", "maxProperties": 0},
     "line_reference": {
       "type": "object",
       "required": ["line_id"],
-      "properties": {"line_id": {"$ref": "#/$defs/non_empty_string"}},
+      "properties": {"line_id": {"$ref": "#/$defs/line_id"}},
       "additionalProperties": false
     },
     "lock_state": {
       "type": "object",
       "required": ["line_id", "requester_id", "granted", "holder_id", "holder_name", "expires_in_ms"],
       "properties": {
-        "line_id": {"type": "string"},
+        "line_id": {"$ref": "#/$defs/line_id"},
         "requester_id": {"type": "string"},
         "granted": {"type": "boolean"},
         "holder_id": {"type": ["string", "null"]},
@@ -138,7 +139,7 @@
             "properties": {
               "member_id": {"type": "string"},
               "nickname": {"type": "string"},
-              "line_id": {"type": ["string", "null"]},
+              "line_id": {"$ref": "#/$defs/nullable_line_id"},
               "last_seen": {"type": "string", "format": "date-time"}
             },
             "additionalProperties": false
@@ -186,7 +187,7 @@
       "type": "object",
       "required": ["line_id", "pos_key", "version", "fields"],
       "properties": {
-        "line_id": {"$ref": "#/$defs/non_empty_string"},
+        "line_id": {"$ref": "#/$defs/line_id"},
         "pos_key": {"type": "string", "minLength": 1, "maxLength": 64},
         "version": {"type": "integer", "minimum": 1},
         "fields": {"$ref": "#/$defs/line_fields"}
@@ -296,27 +297,27 @@
     },
     "modify_op": {
       "type": "object", "required": ["op", "line_id", "base_version", "fields"],
-      "properties": {"op": {"const": "modify"}, "line_id": {"type": "string"}, "base_version": {"type": "integer", "minimum": 1}, "fields": {"$ref": "#/$defs/line_fields"}},
+      "properties": {"op": {"const": "modify"}, "line_id": {"$ref": "#/$defs/line_id"}, "base_version": {"type": "integer", "minimum": 1}, "fields": {"$ref": "#/$defs/line_fields"}},
       "additionalProperties": false
     },
     "insert_op": {
       "type": "object", "required": ["op", "line_id", "left_id", "right_id", "fields"],
-      "properties": {"op": {"const": "insert"}, "line_id": {"type": "string"}, "left_id": {"$ref": "#/$defs/nullable_line_id"}, "right_id": {"$ref": "#/$defs/nullable_line_id"}, "fields": {"$ref": "#/$defs/line_fields"}},
+      "properties": {"op": {"const": "insert"}, "line_id": {"$ref": "#/$defs/line_id"}, "left_id": {"$ref": "#/$defs/nullable_line_id"}, "right_id": {"$ref": "#/$defs/nullable_line_id"}, "fields": {"$ref": "#/$defs/line_fields"}},
       "additionalProperties": false
     },
     "delete_op": {
       "type": "object", "required": ["op", "line_id", "base_version"],
-      "properties": {"op": {"const": "delete"}, "line_id": {"type": "string"}, "base_version": {"type": "integer", "minimum": 1}},
+      "properties": {"op": {"const": "delete"}, "line_id": {"$ref": "#/$defs/line_id"}, "base_version": {"type": "integer", "minimum": 1}},
       "additionalProperties": false
     },
     "move_op": {
       "type": "object", "required": ["op", "line_id", "left_id", "right_id", "base_version"],
-      "properties": {"op": {"const": "move"}, "line_id": {"type": "string"}, "left_id": {"$ref": "#/$defs/nullable_line_id"}, "right_id": {"$ref": "#/$defs/nullable_line_id"}, "base_version": {"type": "integer", "minimum": 1}},
+      "properties": {"op": {"const": "move"}, "line_id": {"$ref": "#/$defs/line_id"}, "left_id": {"$ref": "#/$defs/nullable_line_id"}, "right_id": {"$ref": "#/$defs/nullable_line_id"}, "base_version": {"type": "integer", "minimum": 1}},
       "additionalProperties": false
     },
     "restore_op": {
       "type": "object", "required": ["op", "line_id"],
-      "properties": {"op": {"const": "restore"}, "line_id": {"type": "string"}},
+      "properties": {"op": {"const": "restore"}, "line_id": {"$ref": "#/$defs/line_id"}},
       "additionalProperties": false
     },
     "replace_styles_op": {
@@ -352,14 +353,14 @@
     },
     "batch_rejected": {
       "type": "object", "required": ["batch_id", "code", "message"],
-      "properties": {"batch_id": {"type": "string"}, "code": {"type": "string"}, "message": {"type": "string"}, "line_id": {"type": "string"}, "operation_index": {"type": "integer", "minimum": 0}},
+      "properties": {"batch_id": {"type": "string"}, "code": {"type": "string"}, "message": {"type": "string"}, "line_id": {"$ref": "#/$defs/line_id"}, "operation_index": {"type": "integer", "minimum": 0}},
       "additionalProperties": false
     },
     "comment": {
       "type": "object",
       "required": ["comment_id", "line_id", "author_id", "author_name", "body", "base_line_version", "state", "created_at"],
       "properties": {
-        "comment_id": {"type": "string"}, "line_id": {"type": "string"},
+        "comment_id": {"type": "string"}, "line_id": {"$ref": "#/$defs/line_id"},
         "author_id": {"type": "string"}, "author_name": {"type": "string"},
         "body": {"type": "string", "maxLength": 16384},
         "suggested_text": {"type": ["string", "null"], "maxLength": 1048576},
@@ -372,7 +373,7 @@
     },
     "comment_create": {
       "type": "object", "required": ["line_id", "base_line_version", "body"],
-      "properties": {"line_id": {"type": "string"}, "base_line_version": {"type": "integer", "minimum": 1}, "body": {"type": "string", "minLength": 1, "maxLength": 16384}, "suggested_text": {"type": ["string", "null"], "maxLength": 1048576}},
+      "properties": {"line_id": {"$ref": "#/$defs/line_id"}, "base_line_version": {"type": "integer", "minimum": 1}, "body": {"type": "string", "minLength": 1, "maxLength": 16384}, "suggested_text": {"type": ["string", "null"], "maxLength": 1048576}},
       "additionalProperties": false
     },
     "comment_set_state": {

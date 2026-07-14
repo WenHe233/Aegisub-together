@@ -375,6 +375,39 @@ func TestInitialSnapshotRequiresCompleteLineFields(t *testing.T) {
 	}
 }
 
+func TestInitialSnapshotRejectsNonCanonicalLineID(t *testing.T) {
+	_, url := testServer(t, "")
+	connection := dial(t, url)
+	authenticate(t, connection, "")
+	snapshot := sampleSnapshot()
+	snapshot.Lines[0].LineID = "srv-legacy"
+	send(t, connection, "create_room", "invalid-line-id", protocol.CreateRoom{
+		RoomName: "episode-01", RoomPassword: "room password", Nickname: "translator", LockEnabled: true, Snapshot: snapshot,
+	})
+	envelope := receive(t, connection)
+	var protocolError protocol.Error
+	if err := json.Unmarshal(envelope.Payload, &protocolError); err != nil {
+		t.Fatal(err)
+	}
+	if protocolError.Code != "invalid_message" {
+		t.Fatalf("expected invalid_message, got %q", protocolError.Code)
+	}
+}
+
+func TestBatchRejectsNonCanonicalLineID(t *testing.T) {
+	_, url := testServer(t, "")
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	fields := sampleSnapshot().Lines[0].Fields
+	_, _, rejected := submitBatch(t, creator, "invalid-line-id", protocol.InsertOperation{
+		Op: "insert", LineID: "9K3MT7Q2CD-01", LeftID: stringPointer("9K3MT7Q2CD-1"), Fields: fields,
+	})
+	if rejected == nil || rejected.Code != "batch_conflict" {
+		t.Fatalf("expected batch_conflict, got %#v", rejected)
+	}
+}
+
 func TestAtomicBatchModifiesAndBroadcastsCanonicalLine(t *testing.T) {
 	_, url := testServer(t, "")
 	creator := dial(t, url)
@@ -438,7 +471,7 @@ func TestDuplicateIDIsRemappedWithinBatch(t *testing.T) {
 		t.Fatalf("batch was rejected: %#v", rejected)
 	}
 	newID := applied.IDRemap["9K3MT7Q2CD-1"]
-	if !strings.HasPrefix(newID, "srv-") || applied.Operations[1].Line == nil || applied.Operations[1].Line.LineID != newID || *applied.Operations[1].Line.Fields.Actor != "remapped" {
+	if !validLineID(newID) || newID == "9K3MT7Q2CD-1" || applied.Operations[1].Line == nil || applied.Operations[1].Line.LineID != newID || *applied.Operations[1].Line.Fields.Actor != "remapped" {
 		t.Fatalf("ID remap was not applied to later operations: %#v", applied)
 	}
 }
@@ -533,7 +566,7 @@ func TestDenseBatchCarriesAtomicReindexMap(t *testing.T) {
 	for index := range operations {
 		operationFields := fields
 		operationFields.Text = stringPointer(fmt.Sprintf("line %d", index))
-		operations[index] = protocol.InsertOperation{Op: "insert", LineID: fmt.Sprintf("client-%d", index), LeftID: &leftID, RightID: nil, Fields: operationFields}
+		operations[index] = protocol.InsertOperation{Op: "insert", LineID: fmt.Sprintf("0000000001-%d", index+1), LeftID: &leftID, RightID: nil, Fields: operationFields}
 	}
 	_, applied, rejected := submitBatch(t, creator, "dense-batch", operations...)
 	if rejected != nil {

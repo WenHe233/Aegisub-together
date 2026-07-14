@@ -204,7 +204,7 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 		}
 		if envelope.Type == "lock_request" || envelope.Type == "lock_release" {
 			var reference protocol.LineReference
-			if err := decodePayload(envelope.Payload, &reference); err != nil || reference.LineID == "" {
+			if err := decodePayload(envelope.Payload, &reference); err != nil || !validLineID(reference.LineID) {
 				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "lock request is invalid", false)
 				continue
 			}

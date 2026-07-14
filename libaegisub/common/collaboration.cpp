@@ -174,7 +174,7 @@ std::string EncodeClientPrefix(std::uint64_t value) {
 }
 
 bool IsValidLineId(std::string const& value) {
-	if (value.size() < 12 || value[10] != '-') return false;
+	if (value.size() < 12 || value[10] != '-' || value[11] == '0') return false;
 	for (std::size_t index = 0; index < 10; ++index)
 		if (std::find(std::begin(Base32), std::end(Base32) - 1, value[index]) == std::end(Base32) - 1) return false;
 	std::uint64_t counter = 0;

@@ -83,7 +83,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 	switch header.Op {
 	case "modify":
 		var operation protocol.ModifyOperation
-		if err := decodeStrict(raw, &operation); err != nil {
+		if err := decodeStrict(raw, &operation); err != nil || !validLineID(operation.LineID) {
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		operation.LineID = remapped(operation.LineID, remap)
@@ -104,17 +104,17 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 
 	case "insert":
 		var operation protocol.InsertOperation
-		if err := decodeStrict(raw, &operation); err != nil || !completeLineFields(operation.Fields) || operation.LineID == "" {
+		if err := decodeStrict(raw, &operation); err != nil || !completeLineFields(operation.Fields) || !validLineID(operation.LineID) || !validOptionalLineID(operation.LeftID) || !validOptionalLineID(operation.RightID) {
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		originalID := operation.LineID
 		operation.LineID = remapped(operation.LineID, remap)
 		if lineExists(value, operation.LineID) {
-			newID, err := secureToken(10)
+			newID, err := mintServerLineID(value)
 			if err != nil {
 				return protocol.AppliedOperation{}, err
 			}
-			operation.LineID = "srv-" + newID
+			operation.LineID = newID
 			remap[originalID] = operation.LineID
 		}
 		operation.LeftID = remappedPointer(operation.LeftID, remap)
@@ -128,7 +128,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 
 	case "delete":
 		var operation protocol.DeleteOperation
-		if err := decodeStrict(raw, &operation); err != nil {
+		if err := decodeStrict(raw, &operation); err != nil || !validLineID(operation.LineID) {
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		operation.LineID = remapped(operation.LineID, remap)
@@ -145,7 +145,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 
 	case "move":
 		var operation protocol.MoveOperation
-		if err := decodeStrict(raw, &operation); err != nil {
+		if err := decodeStrict(raw, &operation); err != nil || !validLineID(operation.LineID) || !validOptionalLineID(operation.LeftID) || !validOptionalLineID(operation.RightID) {
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		operation.LineID = remapped(operation.LineID, remap)
@@ -169,7 +169,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 
 	case "restore":
 		var operation protocol.RestoreOperation
-		if err := decodeStrict(raw, &operation); err != nil {
+		if err := decodeStrict(raw, &operation); err != nil || !validLineID(operation.LineID) {
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		operation.LineID = remapped(operation.LineID, remap)

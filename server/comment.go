@@ -17,7 +17,7 @@ type commentFailure struct {
 func (failure *commentFailure) Error() string { return failure.message }
 
 func (hub *hub) createComment(ctx context.Context, roomID, actorID string, input protocol.CommentCreate, now time.Time) (protocol.CommentChanged, int64, []*member, error) {
-	if input.LineID == "" || input.BaseLineVersion < 1 || !validCommentBody(input.Body) || !validSuggestedText(input.SuggestedText) {
+	if !validLineID(input.LineID) || input.BaseLineVersion < 1 || !validCommentBody(input.Body) || !validSuggestedText(input.SuggestedText) {
 		return protocol.CommentChanged{}, 0, nil, &commentFailure{code: "invalid_message", message: "comment is invalid"}
 	}
 	hub.mu.Lock()

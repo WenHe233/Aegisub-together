@@ -267,7 +267,7 @@ func validateRoomInput(name, password, nickname string, snapshot protocol.Snapsh
 	seen := make(map[string]struct{}, len(snapshot.Lines))
 	positions := make(map[string]struct{}, len(snapshot.Lines))
 	for _, line := range snapshot.Lines {
-		if line.LineID == "" || line.PosKey == "" || len(line.PosKey) > 64 || line.Version < 1 {
+		if !validLineID(line.LineID) || line.PosKey == "" || len(line.PosKey) > 64 || line.Version < 1 {
 			return errInvalidRoom
 		}
 		if _, exists := seen[line.LineID]; exists {
