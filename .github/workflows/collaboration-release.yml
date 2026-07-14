@@ -173,20 +173,31 @@ jobs:
 
   publish-release:
     name: Publish GitHub Release
-    if: >-
-      startsWith(github.ref, 'refs/tags/v') &&
-      vars.COLLABORATION_RELEASE_APPROVED == 'true'
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: release-bundle
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: collaboration-release-bundle
           path: dist
+      - name: Select release summary
+        id: release-summary
+        shell: bash
+        run: |
+          summary="docs/releases/${GITHUB_REF_NAME}.md"
+          if [[ ! -f "$summary" ]]; then
+            summary="${RUNNER_TEMP}/release-summary.md"
+            printf '%s\n' '此版本由 Aegisub Together 自动发布流程构建；详细变更见下方自动生成的发布说明。' > "$summary"
+          fi
+          echo "path=$summary" >> "$GITHUB_OUTPUT"
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+          body_path: ${{ steps.release-summary.outputs.path }}
           generate_release_notes: true
+          prerelease: ${{ startsWith(github.ref_name, 'v0.0.') }}
           fail_on_unmatched_files: true
