@@ -95,7 +95,15 @@ if (!(Test-Path SCXVid)) {
 	Set-Location $scxDir
 	$scxUrl = "https://github.com/dubhatervapoursynth/vapoursynth-scxvid/releases/download/v1/vapoursynth-scxvid-v1-win64.7z"
 	Invoke-WebRequest $scxUrl -OutFile vapoursynth-scxvid-v1-win64.7z -UseBasicParsing
-	$scxHash = (Get-FileHash -Algorithm SHA256 vapoursynth-scxvid-v1-win64.7z).Hash.ToLowerInvariant()
+	$sha256 = [System.Security.Cryptography.SHA256]::Create()
+	$archiveStream = [System.IO.File]::OpenRead((Resolve-Path vapoursynth-scxvid-v1-win64.7z))
+	try {
+		$scxHash = [System.BitConverter]::ToString($sha256.ComputeHash($archiveStream)).Replace("-", "").ToLowerInvariant()
+	}
+	finally {
+		$archiveStream.Dispose()
+		$sha256.Dispose()
+	}
 	if ($scxHash -ne "2772a49db4395a68f872eee571352081856f7a8e5760bea2b56fb5bb7cbaf5b1") {
 		throw "SCXVid archive hash mismatch: $scxHash"
 	}
