@@ -15,6 +15,15 @@ import (
 	"github.com/coder/websocket"
 )
 
+func rawOperation(t *testing.T, operation any) json.RawMessage {
+	t.Helper()
+	encoded, err := json.Marshal(operation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return encoded
+}
+
 func boolPointer(value bool) *bool       { return &value }
 func intPointer(value int) *int          { return &value }
 func int64Pointer(value int64) *int64    { return &value }
@@ -53,7 +62,10 @@ func testServer(t *testing.T, accessPassword string) (*httptest.Server, string) 
 		t.Fatal(err)
 	}
 	httpServer := httptest.NewServer(server)
-	t.Cleanup(httpServer.Close)
+	t.Cleanup(func() {
+		httpServer.Close()
+		server.Close()
+	})
 	return httpServer, "ws" + strings.TrimPrefix(httpServer.URL, "http") + "/v1/ws"
 }
 
@@ -107,6 +119,45 @@ func createRoom(t *testing.T, connection *websocket.Conn, name, nickname string)
 	send(t, connection, "create_room", "room-1", protocol.CreateRoom{
 		RoomName: name, RoomPassword: "room password", Nickname: nickname, LockEnabled: true, Snapshot: sampleSnapshot(),
 	})
+	envelope := receive(t, connection)
+	if envelope.Type != "room_joined" {
+		t.Fatalf("expected room_joined, got %s", envelope.Type)
+	}
+	var joined protocol.RoomJoined
+	if err := json.Unmarshal(envelope.Payload, &joined); err != nil {
+		t.Fatal(err)
+	}
+	return joined
+}
+
+func submitBatch(t *testing.T, connection *websocket.Conn, batchID string, operations ...any) (protocol.Envelope, protocol.BatchApplied, *protocol.BatchRejected) {
+	t.Helper()
+	raw := make([]json.RawMessage, len(operations))
+	for index, operation := range operations {
+		raw[index] = rawOperation(t, operation)
+	}
+	send(t, connection, "submit_batch", "submit-"+batchID, protocol.SubmitBatch{BatchID: batchID, Operations: raw})
+	envelope := receive(t, connection)
+	if envelope.Type == "batch_rejected" {
+		var rejected protocol.BatchRejected
+		if err := json.Unmarshal(envelope.Payload, &rejected); err != nil {
+			t.Fatal(err)
+		}
+		return envelope, protocol.BatchApplied{}, &rejected
+	}
+	if envelope.Type != "batch_applied" {
+		t.Fatalf("expected batch response, got %s", envelope.Type)
+	}
+	var applied protocol.BatchApplied
+	if err := json.Unmarshal(envelope.Payload, &applied); err != nil {
+		t.Fatal(err)
+	}
+	return envelope, applied, nil
+}
+
+func joinRoom(t *testing.T, connection *websocket.Conn, name, nickname string) protocol.RoomJoined {
+	t.Helper()
+	send(t, connection, "join_room", "join-"+nickname, protocol.JoinRoom{RoomName: name, RoomPassword: "room password", Nickname: nickname})
 	envelope := receive(t, connection)
 	if envelope.Type != "room_joined" {
 		t.Fatalf("expected room_joined, got %s", envelope.Type)
@@ -246,7 +297,7 @@ func TestSuccessfulAccessDoesNotClearRoomFailures(t *testing.T) {
 	}
 	server.roomLimiter.limit = 2
 	httpServer := httptest.NewServer(server)
-	defer httpServer.Close()
+	defer func() { httpServer.Close(); server.Close() }()
 	url := "ws" + strings.TrimPrefix(httpServer.URL, "http") + "/v1/ws"
 
 	creator := dial(t, url)
@@ -280,5 +331,152 @@ func TestInitialSnapshotRequiresCompleteLineFields(t *testing.T) {
 	}
 	if protocolError.Code != "invalid_message" {
 		t.Fatalf("expected invalid_message, got %q", protocolError.Code)
+	}
+}
+
+func TestAtomicBatchModifiesAndBroadcastsCanonicalLine(t *testing.T) {
+	_, url := testServer(t, "")
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	observer := dial(t, url)
+	authenticate(t, observer, "")
+	joinRoom(t, observer, "episode-01", "proofreader")
+
+	envelope, applied, rejected := submitBatch(t, creator, "batch-1", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("你好")},
+	})
+	if rejected != nil || envelope.RoomRevision != 1 || len(applied.Operations) != 1 {
+		t.Fatalf("unexpected apply result: %#v %#v", applied, rejected)
+	}
+	line := applied.Operations[0].Line
+	if line == nil || line.Version != 2 || line.Fields.Text == nil || *line.Fields.Text != "你好" || len(line.PosKey) != rankWidth {
+		t.Fatal("canonical line did not include normalized position and version")
+	}
+	observerEnvelope := receive(t, observer)
+	if observerEnvelope.Type != "batch_applied" || observerEnvelope.RoomRevision != 1 {
+		t.Fatalf("observer did not receive batch broadcast: %#v", observerEnvelope)
+	}
+}
+
+func TestRejectedBatchDoesNotApplyEarlierOperations(t *testing.T) {
+	_, url := testServer(t, "")
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+
+	_, _, rejected := submitBatch(t, creator, "batch-reject",
+		protocol.ModifyOperation{Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("must rollback")}},
+		protocol.ModifyOperation{Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 99, Fields: protocol.LineFields{Actor: stringPointer("stale")}},
+	)
+	if rejected == nil || rejected.Code != "line_version_conflict" || rejected.OperationIndex != 1 {
+		t.Fatalf("unexpected rejection: %#v", rejected)
+	}
+
+	observer := dial(t, url)
+	authenticate(t, observer, "")
+	joined := joinRoom(t, observer, "episode-01", "proofreader")
+	if joined.Snapshot.Lines[0].Version != 1 || *joined.Snapshot.Lines[0].Fields.Text != "Hello" {
+		t.Fatal("rejected batch partially changed authoritative state")
+	}
+}
+
+func TestDuplicateIDIsRemappedWithinBatch(t *testing.T) {
+	_, url := testServer(t, "")
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	fields := sampleSnapshot().Lines[0].Fields
+	fields.Text = stringPointer("inserted")
+
+	_, applied, rejected := submitBatch(t, creator, "batch-remap",
+		protocol.InsertOperation{Op: "insert", LineID: "9K3MT7Q2CD-1", LeftID: stringPointer("9K3MT7Q2CD-1"), RightID: nil, Fields: fields},
+		protocol.ModifyOperation{Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Actor: stringPointer("remapped")}},
+	)
+	if rejected != nil {
+		t.Fatalf("batch was rejected: %#v", rejected)
+	}
+	newID := applied.IDRemap["9K3MT7Q2CD-1"]
+	if !strings.HasPrefix(newID, "srv-") || applied.Operations[1].Line == nil || applied.Operations[1].Line.LineID != newID || *applied.Operations[1].Line.Fields.Actor != "remapped" {
+		t.Fatalf("ID remap was not applied to later operations: %#v", applied)
+	}
+}
+
+func TestDeleteAndRestorePreserveIdentity(t *testing.T) {
+	_, url := testServer(t, "")
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	_, _, rejected := submitBatch(t, creator, "batch-delete", protocol.DeleteOperation{Op: "delete", LineID: "9K3MT7Q2CD-1", BaseVersion: 1})
+	if rejected != nil {
+		t.Fatal(rejected)
+	}
+	_, restored, rejected := submitBatch(t, creator, "batch-restore", protocol.RestoreOperation{Op: "restore", LineID: "9K3MT7Q2CD-1"})
+	if rejected != nil || restored.Operations[0].Line == nil || restored.Operations[0].Line.LineID != "9K3MT7Q2CD-1" || restored.Operations[0].Line.Version != 2 {
+		t.Fatalf("restore did not preserve identity: %#v %#v", restored, rejected)
+	}
+}
+
+func TestSectionVersionsAreAtomic(t *testing.T) {
+	_, url := testServer(t, "")
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	_, applied, rejected := submitBatch(t, creator, "batch-sections",
+		protocol.ReplaceStylesOperation{Op: "replace_styles", BaseVersion: 1, Styles: []string{"Style: Default,Arial,50"}},
+		protocol.ReplaceScriptInfoOperation{Op: "replace_script_info", BaseVersion: 1, Entries: []protocol.ScriptInfoEntry{{Key: "ScriptType", Value: "v4.00+"}, {Key: "PlayResX", Value: "1920"}}},
+	)
+	if rejected != nil || applied.Operations[0].StylesVersion != 2 || applied.Operations[1].ScriptInfoVersion != 2 {
+		t.Fatalf("section versions were not advanced: %#v %#v", applied, rejected)
+	}
+}
+
+func TestBatchIDIsIdempotent(t *testing.T) {
+	_, url := testServer(t, "")
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	operation := protocol.ModifyOperation{Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("once")}}
+	firstEnvelope, _, firstRejected := submitBatch(t, creator, "same-batch", operation)
+	secondEnvelope, second, secondRejected := submitBatch(t, creator, "same-batch", operation)
+	if firstRejected != nil || secondRejected != nil || firstEnvelope.RoomRevision != 1 || secondEnvelope.RoomRevision != 1 || second.Operations[0].Line.Version != 2 {
+		t.Fatal("duplicate batch was applied more than once")
+	}
+}
+
+func TestSQLiteRestoresRoomsAndBatchesAfterRestart(t *testing.T) {
+	databasePath := t.TempDir() + "/collab.db"
+	params := auth.Params{Memory: 64, Iterations: 1, Parallelism: 1, SaltLength: 16, KeyLength: 32}
+	start := func() (*Server, *httptest.Server, string) {
+		server, err := New(Config{PasswordParams: params, AuthTimeout: time.Second, DatabasePath: databasePath})
+		if err != nil {
+			t.Fatal(err)
+		}
+		httpServer := httptest.NewServer(server)
+		return server, httpServer, "ws" + strings.TrimPrefix(httpServer.URL, "http") + "/v1/ws"
+	}
+
+	firstServer, firstHTTP, firstURL := start()
+	creator := dial(t, firstURL)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	submitBatch(t, creator, "persisted-batch", protocol.ModifyOperation{Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("persisted")}})
+	creator.CloseNow()
+	firstHTTP.Close()
+	if err := firstServer.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	secondServer, secondHTTP, secondURL := start()
+	defer func() { secondHTTP.Close(); secondServer.Close() }()
+	joiner := dial(t, secondURL)
+	authenticate(t, joiner, "")
+	joined := joinRoom(t, joiner, "episode-01", "proofreader")
+	if joined.Snapshot.Lines[0].Version != 2 || *joined.Snapshot.Lines[0].Fields.Text != "persisted" {
+		t.Fatal("room snapshot was not restored from SQLite")
+	}
+	duplicateEnvelope, _, rejected := submitBatch(t, joiner, "persisted-batch", protocol.ModifyOperation{Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("again")}})
+	if rejected != nil || duplicateEnvelope.RoomRevision != 1 {
+		t.Fatal("persisted batch idempotency record was not restored")
 	}
 }

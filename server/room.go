@@ -1,6 +1,7 @@
 package collab
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/WenHe233/Aegisub-together/server/internal/auth"
 	"github.com/WenHe233/Aegisub-together/server/internal/protocol"
+	"github.com/coder/websocket"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -22,6 +24,7 @@ type member struct {
 	id          string
 	nickname    string
 	resumeToken string
+	connection  *websocket.Conn
 }
 
 type room struct {
@@ -32,6 +35,7 @@ type room struct {
 	snapshot     protocol.Snapshot
 	revision     int64
 	members      map[string]*member
+	tombstones   map[string]protocol.Line
 }
 
 type hub struct {
@@ -39,14 +43,23 @@ type hub struct {
 	rooms          map[string]*room
 	passwordParams auth.Params
 	fakeHash       string
+	store          *sqliteStore
 }
 
-func newHub(params auth.Params) (*hub, error) {
+func newHub(params auth.Params, store *sqliteStore) (*hub, error) {
 	fakeHash, err := auth.Hash("fake room password", params)
 	if err != nil {
 		return nil, err
 	}
-	return &hub{rooms: make(map[string]*room), passwordParams: params, fakeHash: fakeHash}, nil
+	created := &hub{rooms: make(map[string]*room), passwordParams: params, fakeHash: fakeHash, store: store}
+	rooms, err := store.loadRooms(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	for _, value := range rooms {
+		created.rooms[value.name] = value
+	}
+	return created, nil
 }
 
 func (hub *hub) create(input protocol.CreateRoom) (*room, *member, error) {
@@ -80,9 +93,51 @@ func (hub *hub) create(input protocol.CreateRoom) (*room, *member, error) {
 		lockEnabled:  input.LockEnabled,
 		snapshot:     cloneSnapshot(input.Snapshot),
 		members:      map[string]*member{nickname: joinedMember},
+		tombstones:   make(map[string]protocol.Line),
+	}
+	canonicalizePositions(created.snapshot.Lines)
+	if err := hub.store.createRoom(context.Background(), created); err != nil {
+		return nil, nil, err
 	}
 	hub.rooms[name] = created
 	return created, joinedMember, nil
+}
+
+func (hub *hub) attach(value *room, joinedMember *member, connection *websocket.Conn) {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+	if existingRoom := hub.rooms[value.name]; existingRoom != nil {
+		if existingMember := existingRoom.members[joinedMember.nickname]; existingMember != nil && existingMember.id == joinedMember.id {
+			existingMember.connection = connection
+		}
+	}
+}
+
+func (hub *hub) joinedPayload(roomID, memberID string) (protocol.RoomJoined, int64, bool) {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+	value := hub.roomByID(roomID)
+	if value == nil {
+		return protocol.RoomJoined{}, 0, false
+	}
+	for _, joinedMember := range value.members {
+		if joinedMember.id == memberID {
+			return protocol.RoomJoined{
+				RoomID: value.id, MemberID: joinedMember.id, ResumeToken: joinedMember.resumeToken,
+				LockEnabled: value.lockEnabled, Snapshot: cloneSnapshot(value.snapshot),
+			}, value.revision, true
+		}
+	}
+	return protocol.RoomJoined{}, 0, false
+}
+
+func (hub *hub) currentRevision(roomID string) int64 {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+	if value := hub.roomByID(roomID); value != nil {
+		return value.revision
+	}
+	return 0
 }
 
 func (hub *hub) join(input protocol.JoinRoom) (*room, *member, error) {

@@ -93,6 +93,79 @@ type RoomJoined struct {
 	Snapshot    Snapshot `json:"snapshot"`
 }
 
+type SubmitBatch struct {
+	BatchID    string            `json:"batch_id"`
+	Operations []json.RawMessage `json:"operations"`
+}
+
+type AppliedOperation struct {
+	Operation         json.RawMessage `json:"operation"`
+	Line              *Line           `json:"line,omitempty"`
+	StylesVersion     int64           `json:"styles_version,omitempty"`
+	ScriptInfoVersion int64           `json:"script_info_version,omitempty"`
+}
+
+type BatchApplied struct {
+	BatchID    string             `json:"batch_id"`
+	ActorID    string             `json:"actor_id"`
+	Operations []AppliedOperation `json:"operations"`
+	IDRemap    map[string]string  `json:"id_remap"`
+}
+
+type BatchRejected struct {
+	BatchID        string `json:"batch_id"`
+	Code           string `json:"code"`
+	Message        string `json:"message"`
+	LineID         string `json:"line_id,omitempty"`
+	OperationIndex int    `json:"operation_index,omitempty"`
+}
+
+type ModifyOperation struct {
+	Op          string     `json:"op"`
+	LineID      string     `json:"line_id"`
+	BaseVersion int64      `json:"base_version"`
+	Fields      LineFields `json:"fields"`
+}
+
+type InsertOperation struct {
+	Op      string     `json:"op"`
+	LineID  string     `json:"line_id"`
+	LeftID  *string    `json:"left_id"`
+	RightID *string    `json:"right_id"`
+	Fields  LineFields `json:"fields"`
+}
+
+type DeleteOperation struct {
+	Op          string `json:"op"`
+	LineID      string `json:"line_id"`
+	BaseVersion int64  `json:"base_version"`
+}
+
+type MoveOperation struct {
+	Op          string  `json:"op"`
+	LineID      string  `json:"line_id"`
+	LeftID      *string `json:"left_id"`
+	RightID     *string `json:"right_id"`
+	BaseVersion int64   `json:"base_version"`
+}
+
+type RestoreOperation struct {
+	Op     string `json:"op"`
+	LineID string `json:"line_id"`
+}
+
+type ReplaceStylesOperation struct {
+	Op          string   `json:"op"`
+	BaseVersion int64    `json:"base_version"`
+	Styles      []string `json:"styles"`
+}
+
+type ReplaceScriptInfoOperation struct {
+	Op          string            `json:"op"`
+	BaseVersion int64             `json:"base_version"`
+	Entries     []ScriptInfoEntry `json:"entries"`
+}
+
 type Error struct {
 	Code         string `json:"code"`
 	Message      string `json:"message"`

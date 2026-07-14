@@ -22,6 +22,7 @@ type Config struct {
 	AccessPasswordHash string
 	PasswordParams     auth.Params
 	AuthTimeout        time.Duration
+	DatabasePath       string
 }
 
 type Server struct {
@@ -30,6 +31,7 @@ type Server struct {
 	accessLimiter *failureLimiter
 	roomLimiter   *failureLimiter
 	handler       http.Handler
+	store         *sqliteStore
 }
 
 func New(config Config) (*Server, error) {
@@ -39,16 +41,25 @@ func New(config Config) (*Server, error) {
 	if config.AuthTimeout == 0 {
 		config.AuthTimeout = 5 * time.Second
 	}
-	createdHub, err := newHub(config.PasswordParams)
+	store, err := openStore(config.DatabasePath)
 	if err != nil {
 		return nil, err
 	}
-	server := &Server{hub: createdHub, config: config, accessLimiter: newFailureLimiter(), roomLimiter: newFailureLimiter()}
+	createdHub, err := newHub(config.PasswordParams, store)
+	if err != nil {
+		store.close()
+		return nil, err
+	}
+	server := &Server{hub: createdHub, config: config, accessLimiter: newFailureLimiter(), roomLimiter: newFailureLimiter(), store: store}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", server.health)
 	mux.HandleFunc("GET /v1/ws", server.websocket)
 	server.handler = mux
 	return server, nil
+}
+
+func (server *Server) Close() error {
+	return server.store.close()
 }
 
 func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -110,15 +121,13 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 	}
 	server.roomLimiter.success(remoteIP)
 	defer server.hub.leave(joinedRoom.id, joinedMember.nickname, joinedMember.id)
+	server.hub.attach(joinedRoom, joinedMember, connection)
 
-	joined := protocol.RoomJoined{
-		RoomID:      joinedRoom.id,
-		MemberID:    joinedMember.id,
-		ResumeToken: joinedMember.resumeToken,
-		LockEnabled: joinedRoom.lockEnabled,
-		Snapshot:    cloneSnapshot(joinedRoom.snapshot),
+	joined, joinedRevision, ok := server.hub.joinedPayload(joinedRoom.id, joinedMember.id)
+	if !ok {
+		return
 	}
-	if err := writeEnvelope(request.Context(), connection, "room_joined", joinEnvelope.RequestID, joinedRoom.revision, joined); err != nil {
+	if err := writeEnvelope(request.Context(), connection, "room_joined", joinEnvelope.RequestID, joinedRevision, joined); err != nil {
 		return
 	}
 
@@ -128,12 +137,48 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 			return
 		}
 		if envelope.Type == "heartbeat" {
-			if err := writeEnvelope(request.Context(), connection, "heartbeat", envelope.RequestID, joinedRoom.revision, struct{}{}); err != nil {
+			if err := writeEnvelope(request.Context(), connection, "heartbeat", envelope.RequestID, server.hub.currentRevision(joinedRoom.id), struct{}{}); err != nil {
 				return
 			}
 			continue
 		}
-		_ = writeProtocolError(request.Context(), connection, envelope.RequestID, joinedRoom.revision, "invalid_message", "message is not valid in the current session", false)
+		if envelope.Type == "submit_batch" {
+			var batch protocol.SubmitBatch
+			if err := decodePayload(envelope.Payload, &batch); err != nil {
+				_ = writeBatchRejected(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), batch.BatchID, &batchFailure{code: "batch_conflict", message: "batch payload is invalid"})
+				continue
+			}
+			result, revision, recipients, duplicate, err := server.hub.applyBatch(context.Background(), joinedRoom.id, joinedMember.id, batch)
+			if err != nil {
+				var failure *batchFailure
+				if errors.As(err, &failure) {
+					_ = writeBatchRejected(request.Context(), connection, envelope.RequestID, revision, batch.BatchID, failure)
+				} else {
+					_ = writeProtocolError(request.Context(), connection, envelope.RequestID, revision, "internal_error", "batch could not be persisted", true)
+				}
+				continue
+			}
+			if duplicate {
+				_ = writeEnvelope(request.Context(), connection, "batch_applied", envelope.RequestID, revision, result)
+				continue
+			}
+			broadcastBatch(envelope.RequestID, revision, result, recipients)
+			continue
+		}
+		_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "message is not valid in the current session", false)
+	}
+}
+
+func writeBatchRejected(ctx context.Context, connection *websocket.Conn, requestID string, revision int64, batchID string, failure *batchFailure) error {
+	payload := protocol.BatchRejected{BatchID: batchID, Code: failure.code, Message: failure.message, LineID: failure.lineID, OperationIndex: failure.opIndex}
+	return writeEnvelope(ctx, connection, "batch_rejected", requestID, revision, payload)
+}
+
+func broadcastBatch(requestID string, revision int64, result protocol.BatchApplied, recipients []*member) {
+	for _, recipient := range recipients {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		_ = writeEnvelope(ctx, recipient.connection, "batch_applied", requestID, revision, result)
+		cancel()
 	}
 }
 
