@@ -77,6 +77,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Configure source mirrors
+        shell: pwsh
+        run: >-
+          git config --global
+          url."https://github.com/sekrit-twc/libp2p.git".insteadOf
+          "https://bitbucket.org/the-sekrit-twc/libp2p.git"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
