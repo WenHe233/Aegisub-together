@@ -45,6 +45,7 @@ if (Test-Path $gitVersionHeaderPath) {
 
 $gitRevision = $lastSvnRevision + ((git -C $repositoryRootPath log --pretty=oneline "$($lastSvnHash)..HEAD" 2>$null | Measure-Object).Count)
 $gitBranch = git -C $repositoryRootPath symbolic-ref --short HEAD 2>$null
+$gitBranch = [regex]::Replace($gitBranch, '[^A-Za-z0-9._-]', '-')
 $gitHash = git -C $repositoryRootPath rev-parse --short HEAD 2>$null
 $gitVersionString = $gitRevision, $gitBranch, $gitHash -join '-'
 $exactGitTag = git -C $repositoryRootPath describe --exact-match --tags 2>$null
