@@ -89,7 +89,7 @@ func (hub *hub) heartbeat(roomID, memberID string, now time.Time) bool {
 	return true
 }
 
-func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout time.Duration, maintenanceTimeouts maintenanceTimeouts) ([]transientEvent, []*websocket.Conn) {
+func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout, resumeTimeout time.Duration, maintenanceTimeouts maintenanceTimeouts) ([]transientEvent, []*websocket.Conn) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	var events []transientEvent
@@ -119,8 +119,15 @@ func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout time.Duratio
 				staleConnections = append(staleConnections, joinedMember.connection)
 				states = append(states, releaseMemberLocks(value, joinedMember.id, "")...)
 				maintenanceChanged = disconnectMaintenance(value, joinedMember.id, now, hub.store) || maintenanceChanged
+				joinedMember.connection = nil
+				joinedMember.disconnectedAt = now
 				delete(value.members, nickname)
 				presenceChanged = true
+			}
+		}
+		for token, session := range value.sessions {
+			if session.connection == nil && !session.disconnectedAt.IsZero() && now.Sub(session.disconnectedAt) >= resumeTimeout {
+				delete(value.sessions, token)
 			}
 		}
 		recipients := connectedMembers(value)
@@ -145,9 +152,12 @@ func (hub *hub) disconnect(roomID, memberID string, timeouts maintenanceTimeouts
 	if value == nil || joinedMember == nil {
 		return nil
 	}
+	now := time.Now()
 	delete(value.members, joinedMember.nickname)
+	joinedMember.connection = nil
+	joinedMember.disconnectedAt = now
 	states := releaseMemberLocks(value, memberID, "")
-	maintenanceChanged := disconnectMaintenance(value, memberID, time.Now(), hub.store)
+	maintenanceChanged := disconnectMaintenance(value, memberID, now, hub.store)
 	recipients := connectedMembers(value)
 	events := make([]transientEvent, 0, len(states)+2)
 	for _, state := range states {

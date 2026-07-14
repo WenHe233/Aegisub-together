@@ -13,7 +13,7 @@
         "lock_request", "lock_release", "lock_state", "presence", "heartbeat",
         "maintenance_request", "maintenance_release", "maintenance_state", "maintenance_cancel_request",
         "maintenance_cancel_force", "comment_create", "comment_set_state",
-        "comment_changed", "reindex", "error"
+        "comment_changed", "snapshot_state", "audit_request", "audit_page", "reindex", "error"
       ]
     },
     "request_id": {"type": "string", "minLength": 1, "maxLength": 64},
@@ -35,8 +35,24 @@
       "then": {"properties": {"payload": {"$ref": "#/$defs/join_room"}}}
     },
     {
-      "if": {"properties": {"type": {"enum": ["room_joined", "snapshot_request"]}}},
+      "if": {"properties": {"type": {"const": "room_joined"}}},
       "then": {"properties": {"payload": {"$ref": "#/$defs/snapshot_message"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "snapshot_request"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/snapshot_request"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "snapshot_state"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/snapshot_state"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "audit_request"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/audit_request"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "audit_page"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/audit_page"}}}
     },
     {
       "if": {"properties": {"type": {"const": "submit_batch"}}},
@@ -77,6 +93,10 @@
     {
       "if": {"properties": {"type": {"const": "comment_set_state"}}},
       "then": {"properties": {"payload": {"$ref": "#/$defs/comment_set_state"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "comment_changed"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/comment_changed"}}}
     },
     {
       "if": {"properties": {"type": {"const": "error"}}},
@@ -232,6 +252,40 @@
       },
       "additionalProperties": true
     },
+    "snapshot_request": {
+      "type": "object",
+      "required": ["after_revision"],
+      "properties": {"after_revision": {"type": "integer", "minimum": 0}},
+      "additionalProperties": false
+    },
+    "snapshot_state": {
+      "type": "object",
+      "required": ["revision", "snapshot"],
+      "properties": {"revision": {"type": "integer", "minimum": 0}, "snapshot": {"$ref": "#/$defs/snapshot"}},
+      "additionalProperties": false
+    },
+    "audit_request": {
+      "type": "object",
+      "required": ["after_id", "limit"],
+      "properties": {"after_id": {"type": "integer", "minimum": 0}, "limit": {"type": "integer", "minimum": 1, "maximum": 200}},
+      "additionalProperties": false
+    },
+    "audit_entry": {
+      "type": "object",
+      "required": ["id", "room_revision", "actor_id", "event_type", "details", "created_at"],
+      "properties": {
+        "id": {"type": "integer", "minimum": 1}, "room_revision": {"type": "integer", "minimum": 0},
+        "actor_id": {"type": "string"}, "event_type": {"type": "string"}, "details": {"type": "object"},
+        "created_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "audit_page": {
+      "type": "object",
+      "required": ["entries", "next_after_id"],
+      "properties": {"entries": {"type": "array", "items": {"$ref": "#/$defs/audit_entry"}}, "next_after_id": {"type": "integer", "minimum": 0}},
+      "additionalProperties": false
+    },
     "operation": {
       "oneOf": [
         {"$ref": "#/$defs/modify_op"}, {"$ref": "#/$defs/insert_op"},
@@ -308,7 +362,7 @@
         "comment_id": {"type": "string"}, "line_id": {"type": "string"},
         "author_id": {"type": "string"}, "author_name": {"type": "string"},
         "body": {"type": "string", "maxLength": 16384},
-        "suggested_text": {"type": ["string", "null"]},
+        "suggested_text": {"type": ["string", "null"], "maxLength": 1048576},
         "base_line_version": {"type": "integer", "minimum": 1},
         "state": {"enum": ["open", "accepted", "rejected", "resolved"]},
         "created_at": {"type": "string", "format": "date-time"},
@@ -318,12 +372,18 @@
     },
     "comment_create": {
       "type": "object", "required": ["line_id", "base_line_version", "body"],
-      "properties": {"line_id": {"type": "string"}, "base_line_version": {"type": "integer", "minimum": 1}, "body": {"type": "string", "minLength": 1, "maxLength": 16384}, "suggested_text": {"type": ["string", "null"]}},
+      "properties": {"line_id": {"type": "string"}, "base_line_version": {"type": "integer", "minimum": 1}, "body": {"type": "string", "minLength": 1, "maxLength": 16384}, "suggested_text": {"type": ["string", "null"], "maxLength": 1048576}},
       "additionalProperties": false
     },
     "comment_set_state": {
       "type": "object", "required": ["comment_id", "state"],
       "properties": {"comment_id": {"type": "string"}, "state": {"enum": ["accepted", "rejected", "resolved"]}},
+      "additionalProperties": false
+    },
+    "comment_changed": {
+      "type": "object",
+      "required": ["comment", "line", "actor_id"],
+      "properties": {"comment": {"$ref": "#/$defs/comment"}, "line": {"anyOf": [{"$ref": "#/$defs/line"}, {"type": "null"}]}, "actor_id": {"type": "string"}},
       "additionalProperties": false
     },
     "error": {

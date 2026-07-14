@@ -68,6 +68,7 @@ func (store *sqliteStore) initialize(ctx context.Context) error {
 		`CREATE TABLE IF NOT EXISTS audit_log (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			room_id TEXT,
+			room_revision INTEGER NOT NULL DEFAULT 0,
 			actor_id TEXT,
 			event_type TEXT NOT NULL,
 			details_json BLOB NOT NULL,
@@ -79,7 +80,40 @@ func (store *sqliteStore) initialize(ctx context.Context) error {
 			return fmt.Errorf("initialize SQLite database: %w", err)
 		}
 	}
+	if err := store.ensureAuditRevisionColumn(ctx); err != nil {
+		return err
+	}
 	return nil
+}
+
+func (store *sqliteStore) ensureAuditRevisionColumn(ctx context.Context) error {
+	rows, err := store.db.QueryContext(ctx, `PRAGMA table_info(audit_log)`)
+	if err != nil {
+		return err
+	}
+	found := false
+	for rows.Next() {
+		var index int
+		var name, columnType string
+		var notNull, primaryKey int
+		var defaultValue any
+		if err := rows.Scan(&index, &name, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+			rows.Close()
+			return err
+		}
+		found = found || name == "room_revision"
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	if !found {
+		_, err = store.db.ExecContext(ctx, `ALTER TABLE audit_log ADD COLUMN room_revision INTEGER NOT NULL DEFAULT 0`)
+	}
+	return err
 }
 
 func (store *sqliteStore) close() error {
@@ -111,7 +145,7 @@ func (store *sqliteStore) loadRooms(ctx context.Context) ([]*room, error) {
 	defer rows.Close()
 	var rooms []*room
 	for rows.Next() {
-		value := &room{members: make(map[string]*member), tombstones: make(map[string]protocol.Line), locks: make(map[string]lineLock)}
+		value := &room{members: make(map[string]*member), sessions: make(map[string]*member), tombstones: make(map[string]protocol.Line), locks: make(map[string]lineLock)}
 		var lockEnabled int
 		var snapshot []byte
 		if err := rows.Scan(&value.id, &value.name, &value.passwordHash, &lockEnabled, &value.revision, &snapshot); err != nil {
@@ -195,8 +229,8 @@ func (store *sqliteStore) saveBatch(ctx context.Context, value *room, result pro
 		return err
 	}
 	if _, err := tx.ExecContext(ctx,
-		`INSERT INTO audit_log (room_id, actor_id, event_type, details_json, created_at) VALUES (?, ?, 'batch_applied', ?, ?)`,
-		value.id, actorID, resultJSON, now,
+		`INSERT INTO audit_log (room_id, room_revision, actor_id, event_type, details_json, created_at) VALUES (?, ?, ?, 'batch_applied', ?, ?)`,
+		value.id, value.revision, actorID, resultJSON, now,
 	); err != nil {
 		return err
 	}
@@ -226,8 +260,62 @@ func (store *sqliteStore) audit(ctx context.Context, roomID, actorID, eventType 
 		return err
 	}
 	_, err = store.db.ExecContext(ctx,
-		`INSERT INTO audit_log (room_id, actor_id, event_type, details_json, created_at) VALUES (?, ?, ?, ?, ?)`,
-		roomID, actorID, eventType, encoded, time.Now().UTC().Format(time.RFC3339Nano),
+		`INSERT INTO audit_log (room_id, room_revision, actor_id, event_type, details_json, created_at)
+		 VALUES (?, COALESCE((SELECT revision FROM rooms WHERE id = ?), 0), ?, ?, ?, ?)`,
+		roomID, roomID, actorID, eventType, encoded, time.Now().UTC().Format(time.RFC3339Nano),
 	)
 	return err
+}
+
+func (store *sqliteStore) saveCommentChange(ctx context.Context, value *room, changed protocol.CommentChanged, actorID, eventType string) error {
+	snapshot, err := json.Marshal(value.snapshot)
+	if err != nil {
+		return err
+	}
+	details, err := json.Marshal(changed)
+	if err != nil {
+		return err
+	}
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	if _, err := tx.ExecContext(ctx, `UPDATE rooms SET revision = ?, snapshot_json = ?, updated_at = ? WHERE id = ?`, value.revision, snapshot, now, value.id); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx,
+		`INSERT INTO audit_log (room_id, room_revision, actor_id, event_type, details_json, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+		value.id, value.revision, actorID, eventType, details, now,
+	); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (store *sqliteStore) auditPage(ctx context.Context, roomID string, afterID int64, limit int) (protocol.AuditPage, error) {
+	rows, err := store.db.QueryContext(ctx,
+		`SELECT id, room_revision, COALESCE(actor_id, ''), event_type, details_json, created_at
+		 FROM audit_log WHERE room_id = ? AND id > ? ORDER BY id LIMIT ?`, roomID, afterID, limit)
+	if err != nil {
+		return protocol.AuditPage{}, err
+	}
+	defer rows.Close()
+	page := protocol.AuditPage{Entries: make([]protocol.AuditEntry, 0)}
+	for rows.Next() {
+		var entry protocol.AuditEntry
+		if err := rows.Scan(&entry.ID, &entry.RoomRevision, &entry.ActorID, &entry.EventType, &entry.Details, &entry.CreatedAt); err != nil {
+			return protocol.AuditPage{}, err
+		}
+		page.Entries = append(page.Entries, entry)
+		page.NextAfterID = entry.ID
+	}
+	if err := rows.Err(); err != nil {
+		return protocol.AuditPage{}, err
+	}
+	if len(page.Entries) == 0 {
+		page.NextAfterID = afterID
+	}
+	return page, nil
 }

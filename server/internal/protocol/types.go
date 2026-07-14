@@ -85,12 +85,58 @@ type Comment struct {
 	ResolvedBy      *string `json:"resolved_by,omitempty"`
 }
 
+type CommentCreate struct {
+	LineID          string  `json:"line_id"`
+	BaseLineVersion int64   `json:"base_line_version"`
+	Body            string  `json:"body"`
+	SuggestedText   *string `json:"suggested_text"`
+}
+
+type CommentSetState struct {
+	CommentID string `json:"comment_id"`
+	State     string `json:"state"`
+}
+
+type CommentChanged struct {
+	Comment Comment `json:"comment"`
+	Line    *Line   `json:"line"`
+	ActorID string  `json:"actor_id"`
+}
+
 type RoomJoined struct {
 	RoomID      string   `json:"room_id"`
 	MemberID    string   `json:"member_id"`
 	ResumeToken string   `json:"resume_token"`
 	LockEnabled bool     `json:"lock_enabled"`
 	Snapshot    Snapshot `json:"snapshot"`
+}
+
+type SnapshotRequest struct {
+	AfterRevision int64 `json:"after_revision"`
+}
+
+type SnapshotState struct {
+	Revision int64    `json:"revision"`
+	Snapshot Snapshot `json:"snapshot"`
+}
+
+type AuditRequest struct {
+	AfterID int64 `json:"after_id"`
+	Limit   int   `json:"limit"`
+}
+
+type AuditEntry struct {
+	ID           int64           `json:"id"`
+	RoomRevision int64           `json:"room_revision"`
+	ActorID      string          `json:"actor_id"`
+	EventType    string          `json:"event_type"`
+	Details      json.RawMessage `json:"details"`
+	CreatedAt    string          `json:"created_at"`
+}
+
+type AuditPage struct {
+	Entries     []AuditEntry `json:"entries"`
+	NextAfterID int64        `json:"next_after_id"`
 }
 
 type SubmitBatch struct {

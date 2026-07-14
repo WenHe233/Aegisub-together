@@ -1,0 +1,37 @@
+{
+  "protocol_version": 1,
+  "type": "comment_changed",
+  "request_id": "comment-2",
+  "room_revision": 9,
+  "payload": {
+    "comment": {
+      "comment_id": "comment-1",
+      "line_id": "9K3MT7Q2CD-1",
+      "author_id": "member-2",
+      "author_name": "proofreader",
+      "body": "Please tighten this line.",
+      "suggested_text": "Shorter subtitle",
+      "base_line_version": 3,
+      "state": "accepted",
+      "created_at": "2026-07-14T10:00:00Z",
+      "resolved_by": "member-1"
+    },
+    "line": {
+      "line_id": "9K3MT7Q2CD-1",
+      "pos_key": "V0000000000",
+      "version": 4,
+      "fields": {
+        "comment": false,
+        "layer": 0,
+        "start_ms": 0,
+        "end_ms": 5000,
+        "style": "Default",
+        "actor": "",
+        "effect": "",
+        "margins": [0, 0, 0],
+        "text": "Shorter subtitle"
+      }
+    },
+    "actor_id": "member-1"
+  }
+}

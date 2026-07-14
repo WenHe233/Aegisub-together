@@ -1,0 +1,17 @@
+{
+  "protocol_version": 1,
+  "type": "snapshot_state",
+  "request_id": "snapshot-1",
+  "room_revision": 0,
+  "payload": {
+    "revision": 0,
+    "snapshot": {
+      "lines": [],
+      "styles": ["Style: Default,Arial,48"],
+      "styles_version": 1,
+      "script_info": [{"key": "ScriptType", "value": "v4.00+"}],
+      "script_info_version": 1,
+      "comments": []
+    }
+  }
+}

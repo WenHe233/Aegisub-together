@@ -22,13 +22,14 @@ var (
 )
 
 type member struct {
-	id            string
-	nickname      string
-	resumeToken   string
-	connection    *websocket.Conn
-	activeLine    string
-	lastSeen      time.Time
-	lastHeartbeat time.Time
+	id             string
+	nickname       string
+	resumeToken    string
+	connection     *websocket.Conn
+	activeLine     string
+	lastSeen       time.Time
+	lastHeartbeat  time.Time
+	disconnectedAt time.Time
 }
 
 type lineLock struct {
@@ -55,6 +56,7 @@ type room struct {
 	snapshot     protocol.Snapshot
 	revision     int64
 	members      map[string]*member
+	sessions     map[string]*member
 	tombstones   map[string]protocol.Line
 	reindexed    bool
 	locks        map[string]lineLock
@@ -116,6 +118,7 @@ func (hub *hub) create(input protocol.CreateRoom) (*room, *member, error) {
 		lockEnabled:  input.LockEnabled,
 		snapshot:     cloneSnapshot(input.Snapshot),
 		members:      map[string]*member{nickname: joinedMember},
+		sessions:     map[string]*member{joinedMember.resumeToken: joinedMember},
 		tombstones:   make(map[string]protocol.Line),
 		locks:        make(map[string]lineLock),
 	}
@@ -133,6 +136,7 @@ func (hub *hub) attach(value *room, joinedMember *member, connection *websocket.
 	if existingRoom := hub.rooms[value.name]; existingRoom != nil {
 		if existingMember := existingRoom.members[joinedMember.nickname]; existingMember != nil && existingMember.id == joinedMember.id {
 			existingMember.connection = connection
+			existingMember.disconnectedAt = time.Time{}
 			existingMember.lastHeartbeat = time.Now()
 			existingMember.lastSeen = existingMember.lastHeartbeat
 		}
@@ -166,7 +170,7 @@ func (hub *hub) currentRevision(roomID string) int64 {
 	return 0
 }
 
-func (hub *hub) join(input protocol.JoinRoom) (*room, *member, error) {
+func (hub *hub) join(input protocol.JoinRoom, now time.Time, resumeTimeout time.Duration) (*room, *member, error) {
 	name := norm.NFC.String(input.RoomName)
 	nickname := norm.NFC.String(input.Nickname)
 	if !validName(name, 64) || !validName(nickname, 32) || len(input.RoomPassword) < 8 || len(input.RoomPassword) > 128 {
@@ -187,11 +191,28 @@ func (hub *hub) join(input protocol.JoinRoom) (*room, *member, error) {
 	if _, exists := joinedRoom.members[nickname]; exists {
 		return nil, nil, errNicknameInUse
 	}
+	if input.ResumeToken != "" {
+		if resumed := joinedRoom.sessions[input.ResumeToken]; resumed != nil {
+			if resumed.nickname == nickname && !resumed.disconnectedAt.IsZero() && now.Sub(resumed.disconnectedAt) < resumeTimeout {
+				resumed.connection = nil
+				resumed.activeLine = ""
+				resumed.disconnectedAt = time.Time{}
+				resumed.lastSeen = now
+				resumed.lastHeartbeat = resumed.lastSeen
+				joinedRoom.members[nickname] = resumed
+				return joinedRoom, resumed, nil
+			}
+			if !resumed.disconnectedAt.IsZero() && now.Sub(resumed.disconnectedAt) >= resumeTimeout {
+				delete(joinedRoom.sessions, input.ResumeToken)
+			}
+		}
+	}
 	joinedMember, err := newMember(nickname)
 	if err != nil {
 		return nil, nil, err
 	}
 	joinedRoom.members[nickname] = joinedMember
+	joinedRoom.sessions[joinedMember.resumeToken] = joinedMember
 	return joinedRoom, joinedMember, nil
 }
 
@@ -225,6 +246,9 @@ func newMember(nickname string) (*member, error) {
 
 func validateRoomInput(name, password, nickname string, snapshot protocol.Snapshot) error {
 	if !validName(name, 64) || !validName(nickname, 32) || len(password) < 8 || len(password) > 128 {
+		return errInvalidRoom
+	}
+	if len(snapshot.Comments) != 0 {
 		return errInvalidRoom
 	}
 	if snapshot.StylesVersion < 1 || snapshot.ScriptInfoVersion < 1 {
@@ -284,12 +308,12 @@ func secureToken(size int) (string, error) {
 
 func cloneSnapshot(snapshot protocol.Snapshot) protocol.Snapshot {
 	clone := snapshot
-	clone.Lines = append([]protocol.Line(nil), snapshot.Lines...)
+	clone.Lines = append(make([]protocol.Line, 0, len(snapshot.Lines)), snapshot.Lines...)
 	for index := range clone.Lines {
 		clone.Lines[index].Fields.Margins = append([]int(nil), snapshot.Lines[index].Fields.Margins...)
 	}
-	clone.Styles = append([]string(nil), snapshot.Styles...)
-	clone.ScriptInfo = append([]protocol.ScriptInfoEntry(nil), snapshot.ScriptInfo...)
-	clone.Comments = append([]protocol.Comment(nil), snapshot.Comments...)
+	clone.Styles = append(make([]string, 0, len(snapshot.Styles)), snapshot.Styles...)
+	clone.ScriptInfo = append(make([]protocol.ScriptInfoEntry, 0, len(snapshot.ScriptInfo)), snapshot.ScriptInfo...)
+	clone.Comments = append(make([]protocol.Comment, 0, len(snapshot.Comments)), snapshot.Comments...)
 	return clone
 }

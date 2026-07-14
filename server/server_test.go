@@ -892,3 +892,269 @@ func TestMemberJoiningDuringMaintenanceReceivesCurrentState(t *testing.T) {
 		t.Fatalf("joining member did not receive active maintenance: %#v %v", state, err)
 	}
 }
+
+func TestCommentCreationBypassesLockAndSurvivesLineDeletion(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{})
+	owner := dial(t, url)
+	authenticate(t, owner, "")
+	createRoom(t, owner, "episode-01", "translator")
+	reviewer := dial(t, url)
+	authenticate(t, reviewer, "")
+	joinRoom(t, reviewer, "episode-01", "proofreader")
+
+	send(t, owner, "lock_request", "lock-owner", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	receiveType(t, owner, "lock_state")
+	receiveType(t, owner, "presence")
+	receiveType(t, reviewer, "lock_state")
+	receiveType(t, reviewer, "presence")
+	send(t, reviewer, "comment_create", "comment-create", protocol.CommentCreate{
+		LineID: "9K3MT7Q2CD-1", BaseLineVersion: 1, Body: "Please shorten this.", SuggestedText: stringPointer("Shorter"),
+	})
+	createdEnvelope := receiveType(t, reviewer, "comment_changed")
+	receiveType(t, owner, "comment_changed")
+	var created protocol.CommentChanged
+	if err := json.Unmarshal(createdEnvelope.Payload, &created); err != nil {
+		t.Fatal(err)
+	}
+	if created.Comment.State != "open" || created.Comment.AuthorName != "proofreader" || created.Comment.BaseLineVersion != 1 {
+		t.Fatalf("comment was not created canonically: %#v", created)
+	}
+
+	_, _, rejected := submitBatch(t, owner, "delete-commented-line", protocol.DeleteOperation{Op: "delete", LineID: "9K3MT7Q2CD-1", BaseVersion: 1})
+	if rejected != nil {
+		t.Fatalf("line delete failed: %#v", rejected)
+	}
+	joiner := dial(t, url)
+	authenticate(t, joiner, "")
+	joined := joinRoom(t, joiner, "episode-01", "timer")
+	if len(joined.Snapshot.Lines) != 0 || len(joined.Snapshot.Comments) != 1 || joined.Snapshot.Comments[0].CommentID != created.Comment.CommentID {
+		t.Fatalf("comment did not remain attached to tombstoned line: %#v", joined.Snapshot)
+	}
+}
+
+func TestAcceptSuggestionRequiresLockAndAtomicallyUpdatesLine(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{})
+	owner := dial(t, url)
+	authenticate(t, owner, "")
+	createRoom(t, owner, "episode-01", "translator")
+	reviewer := dial(t, url)
+	authenticate(t, reviewer, "")
+	joinRoom(t, reviewer, "episode-01", "proofreader")
+	send(t, reviewer, "comment_create", "comment-create", protocol.CommentCreate{
+		LineID: "9K3MT7Q2CD-1", BaseLineVersion: 1, Body: "Use this wording.", SuggestedText: stringPointer("Accepted text"),
+	})
+	createdEnvelope := receiveType(t, reviewer, "comment_changed")
+	receiveType(t, owner, "comment_changed")
+	var created protocol.CommentChanged
+	json.Unmarshal(createdEnvelope.Payload, &created)
+
+	send(t, owner, "comment_set_state", "accept-without-lock", protocol.CommentSetState{CommentID: created.Comment.CommentID, State: "accepted"})
+	errorEnvelope := receiveType(t, owner, "error")
+	var protocolError protocol.Error
+	json.Unmarshal(errorEnvelope.Payload, &protocolError)
+	if protocolError.Code != "line_locked" {
+		t.Fatalf("accept without lock returned %#v", protocolError)
+	}
+	send(t, owner, "lock_request", "lock-for-accept", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	receiveType(t, owner, "lock_state")
+	receiveType(t, owner, "presence")
+	receiveType(t, reviewer, "lock_state")
+	receiveType(t, reviewer, "presence")
+	send(t, owner, "comment_set_state", "accept-with-lock", protocol.CommentSetState{CommentID: created.Comment.CommentID, State: "accepted"})
+	acceptedEnvelope := receiveType(t, owner, "comment_changed")
+	receiveType(t, reviewer, "comment_changed")
+	var accepted protocol.CommentChanged
+	if err := json.Unmarshal(acceptedEnvelope.Payload, &accepted); err != nil {
+		t.Fatal(err)
+	}
+	if accepted.Comment.State != "accepted" || accepted.Comment.ResolvedBy == nil || accepted.Line == nil || accepted.Line.Version != 2 || *accepted.Line.Fields.Text != "Accepted text" || acceptedEnvelope.RoomRevision != 2 {
+		t.Fatalf("suggestion was not accepted atomically: %#v", accepted)
+	}
+
+	send(t, owner, "snapshot_request", "snapshot-after-accept", protocol.SnapshotRequest{AfterRevision: 0})
+	snapshotEnvelope := receiveType(t, owner, "snapshot_state")
+	var snapshot protocol.SnapshotState
+	if err := json.Unmarshal(snapshotEnvelope.Payload, &snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Revision != 2 || snapshot.Snapshot.Lines[0].Version != 2 || snapshot.Snapshot.Comments[0].State != "accepted" {
+		t.Fatalf("snapshot did not capture atomic suggestion acceptance: %#v", snapshot)
+	}
+
+	send(t, owner, "audit_request", "audit-comments", protocol.AuditRequest{AfterID: 0, Limit: 200})
+	auditEnvelope := receiveType(t, owner, "audit_page")
+	var page protocol.AuditPage
+	if err := json.Unmarshal(auditEnvelope.Payload, &page); err != nil {
+		t.Fatal(err)
+	}
+	if len(page.Entries) != 2 || page.Entries[0].EventType != "comment_created" || page.Entries[0].RoomRevision != 1 || page.Entries[1].EventType != "comment_accepted" || page.Entries[1].RoomRevision != 2 {
+		t.Fatalf("comment audit trail is incomplete: %#v", page)
+	}
+}
+
+func TestStaleSuggestionCannotBeAccepted(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{})
+	owner := dial(t, url)
+	authenticate(t, owner, "")
+	createRoom(t, owner, "episode-01", "translator")
+	reviewer := dial(t, url)
+	authenticate(t, reviewer, "")
+	joinRoom(t, reviewer, "episode-01", "proofreader")
+	send(t, reviewer, "comment_create", "comment-create", protocol.CommentCreate{
+		LineID: "9K3MT7Q2CD-1", BaseLineVersion: 1, Body: "Old suggestion", SuggestedText: stringPointer("Stale text"),
+	})
+	createdEnvelope := receiveType(t, reviewer, "comment_changed")
+	receiveType(t, owner, "comment_changed")
+	var created protocol.CommentChanged
+	json.Unmarshal(createdEnvelope.Payload, &created)
+	send(t, owner, "lock_request", "lock-owner", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	receiveType(t, owner, "lock_state")
+	receiveType(t, owner, "presence")
+	receiveType(t, reviewer, "lock_state")
+	receiveType(t, reviewer, "presence")
+	_, _, rejected := submitBatch(t, owner, "change-before-accept", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("Newer edit")},
+	})
+	if rejected != nil {
+		t.Fatal(rejected)
+	}
+	send(t, owner, "comment_set_state", "accept-stale", protocol.CommentSetState{CommentID: created.Comment.CommentID, State: "accepted"})
+	errorEnvelope := receiveType(t, owner, "error")
+	var protocolError protocol.Error
+	json.Unmarshal(errorEnvelope.Payload, &protocolError)
+	if protocolError.Code != "comment_version_conflict" {
+		t.Fatalf("stale suggestion returned %#v", protocolError)
+	}
+}
+
+func TestResumeTokenRestoresMemberIdentity(t *testing.T) {
+	server, _, url := configuredTestServer(t, Config{})
+	first := dial(t, url)
+	authenticate(t, first, "")
+	joined := createRoom(t, first, "episode-01", "translator")
+	first.CloseNow()
+	deadline := time.Now().Add(time.Second)
+	for {
+		server.hub.mu.Lock()
+		room := server.hub.roomByID(joined.RoomID)
+		active := memberByID(room, joined.MemberID) != nil
+		server.hub.mu.Unlock()
+		if !active {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("member did not disconnect in time")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	resumed := dial(t, url)
+	authenticate(t, resumed, "")
+	send(t, resumed, "join_room", "resume-member", protocol.JoinRoom{
+		RoomName: "episode-01", RoomPassword: "room password", Nickname: "translator", ResumeToken: joined.ResumeToken,
+	})
+	envelope := receiveType(t, resumed, "room_joined")
+	var resumedJoined protocol.RoomJoined
+	if err := json.Unmarshal(envelope.Payload, &resumedJoined); err != nil {
+		t.Fatal(err)
+	}
+	if resumedJoined.MemberID != joined.MemberID || resumedJoined.ResumeToken != joined.ResumeToken {
+		t.Fatalf("resume token did not restore identity: before=%#v after=%#v", joined, resumedJoined)
+	}
+}
+
+func TestExpiredResumeTokenCreatesNewMemberIdentity(t *testing.T) {
+	server, _, url := configuredTestServer(t, Config{ResumeTimeout: 40 * time.Millisecond, SweepInterval: 5 * time.Millisecond})
+	first := dial(t, url)
+	authenticate(t, first, "")
+	joined := createRoom(t, first, "episode-01", "translator")
+	first.CloseNow()
+	deadline := time.Now().Add(time.Second)
+	for {
+		server.hub.mu.Lock()
+		active := memberByID(server.hub.roomByID(joined.RoomID), joined.MemberID) != nil
+		server.hub.mu.Unlock()
+		if !active {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("member did not disconnect in time")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	time.Sleep(50 * time.Millisecond)
+
+	connection := dial(t, url)
+	authenticate(t, connection, "")
+	send(t, connection, "join_room", "expired-resume", protocol.JoinRoom{
+		RoomName: "episode-01", RoomPassword: "room password", Nickname: "translator", ResumeToken: joined.ResumeToken,
+	})
+	envelope := receiveType(t, connection, "room_joined")
+	var replacement protocol.RoomJoined
+	if err := json.Unmarshal(envelope.Payload, &replacement); err != nil {
+		t.Fatal(err)
+	}
+	if replacement.MemberID == joined.MemberID || replacement.ResumeToken == joined.ResumeToken {
+		t.Fatalf("expired resume token restored stale identity: %#v", replacement)
+	}
+}
+
+func TestCommentChangesDoNotRenewMaintenanceIdleLease(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{
+		MaintenanceIdleTimeout: 70 * time.Millisecond, MaintenanceHardTimeout: time.Second,
+		HeartbeatTimeout: time.Second, SweepInterval: 5 * time.Millisecond,
+	})
+	holder := dial(t, url)
+	authenticate(t, holder, "")
+	createRoom(t, holder, "episode-01", "timer")
+	observer := dial(t, url)
+	authenticate(t, observer, "")
+	joinRoom(t, observer, "episode-01", "translator")
+	send(t, holder, "maintenance_request", "maintenance-start", struct{}{})
+	receiveType(t, holder, "maintenance_state")
+	receiveType(t, observer, "maintenance_state")
+	time.Sleep(40 * time.Millisecond)
+	send(t, holder, "comment_create", "maintenance-comment", protocol.CommentCreate{
+		LineID: "9K3MT7Q2CD-1", BaseLineVersion: 1, Body: "This is not a subtitle batch.",
+	})
+	receiveType(t, holder, "comment_changed")
+	receiveType(t, observer, "comment_changed")
+	expiredEnvelope := receiveType(t, observer, "maintenance_state")
+	var expired protocol.MaintenanceState
+	if err := json.Unmarshal(expiredEnvelope.Payload, &expired); err != nil || expired.Active {
+		t.Fatalf("comment incorrectly renewed maintenance lease: %#v %v", expired, err)
+	}
+}
+
+func TestCommentsPersistAcrossSQLiteRestart(t *testing.T) {
+	databasePath := t.TempDir() + "/comments.db"
+	params := auth.Params{Memory: 64, Iterations: 1, Parallelism: 1, SaltLength: 16, KeyLength: 32}
+	start := func() (*Server, *httptest.Server, string) {
+		server, err := New(Config{PasswordParams: params, AuthTimeout: time.Second, DatabasePath: databasePath})
+		if err != nil {
+			t.Fatal(err)
+		}
+		httpServer := httptest.NewServer(server)
+		return server, httpServer, "ws" + strings.TrimPrefix(httpServer.URL, "http") + "/v1/ws"
+	}
+	firstServer, firstHTTP, firstURL := start()
+	creator := dial(t, firstURL)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	send(t, creator, "comment_create", "persist-comment", protocol.CommentCreate{LineID: "9K3MT7Q2CD-1", BaseLineVersion: 1, Body: "Persist me"})
+	receiveType(t, creator, "comment_changed")
+	creator.CloseNow()
+	firstHTTP.Close()
+	if err := firstServer.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	secondServer, secondHTTP, secondURL := start()
+	defer func() { secondHTTP.Close(); secondServer.Close() }()
+	joiner := dial(t, secondURL)
+	authenticate(t, joiner, "")
+	joined := joinRoom(t, joiner, "episode-01", "proofreader")
+	if len(joined.Snapshot.Comments) != 1 || joined.Snapshot.Comments[0].Body != "Persist me" || joined.Snapshot.Comments[0].State != "open" {
+		t.Fatalf("comment did not survive restart: %#v", joined.Snapshot.Comments)
+	}
+}

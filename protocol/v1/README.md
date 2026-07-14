@@ -60,5 +60,22 @@ is applied atomically.
   broadcast an inactive `maintenance_state` without incrementing the room
   revision.
 
+## Comments and reconciliation
+
+- `comment_create` attaches a message and optional suggested subtitle text to
+  the exact observed line version. Creation is allowed while another member
+  holds the line lock. Comments remain in snapshots when their line is deleted.
+- Accepting a suggestion requires the current line lock and an unchanged base
+  line version. The text update, line-version increment, and comment state
+  change share one room revision and one SQLite transaction. Rejecting or
+  resolving an open comment does not require the line lock.
+- `snapshot_request` always returns a full authoritative `snapshot_state` for
+  three-way offline reconciliation. `audit_request` pages sanitized room audit
+  events by monotonically increasing ID. Neither request changes the room
+  revision.
+- A reconnect within five minutes may present the room-issued resume token to
+  recover the same member ID. Comments are read-only while offline and are not
+  queued for reconciliation.
+
 `schema.json` is the normative wire schema. `errors.json` is the stable error
 code registry. Files in `fixtures/` are canonical cross-language examples.

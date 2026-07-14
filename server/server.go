@@ -30,6 +30,7 @@ type Config struct {
 	MaintenanceIdleTimeout time.Duration
 	MaintenanceHardTimeout time.Duration
 	MaintenanceCancelGrace time.Duration
+	ResumeTimeout          time.Duration
 }
 
 type Server struct {
@@ -68,6 +69,9 @@ func New(config Config) (*Server, error) {
 	}
 	if config.MaintenanceCancelGrace == 0 {
 		config.MaintenanceCancelGrace = 30 * time.Second
+	}
+	if config.ResumeTimeout == 0 {
+		config.ResumeTimeout = 5 * time.Minute
 	}
 	store, err := openStore(config.DatabasePath)
 	if err != nil {
@@ -250,6 +254,67 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 			broadcastTransient(envelope.RequestID, revision, "maintenance_state", state, recipients)
 			continue
 		}
+		if envelope.Type == "snapshot_request" {
+			var input protocol.SnapshotRequest
+			if err := decodePayload(envelope.Payload, &input); err != nil || input.AfterRevision < 0 {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "snapshot request is invalid", false)
+				continue
+			}
+			state, ok := server.hub.snapshotState(joinedRoom.id)
+			if !ok {
+				return
+			}
+			if input.AfterRevision > state.Revision {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, state.Revision, "revision_gap", "client revision is ahead of the room", true)
+				continue
+			}
+			if err := writeEnvelope(request.Context(), connection, "snapshot_state", envelope.RequestID, state.Revision, state); err != nil {
+				return
+			}
+			continue
+		}
+		if envelope.Type == "audit_request" {
+			var input protocol.AuditRequest
+			if err := decodePayload(envelope.Payload, &input); err != nil || input.AfterID < 0 || input.Limit < 1 || input.Limit > 200 {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "audit request is invalid", false)
+				continue
+			}
+			page, err := server.store.auditPage(request.Context(), joinedRoom.id, input.AfterID, input.Limit)
+			if err != nil {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "internal_error", "audit page could not be loaded", true)
+				continue
+			}
+			if err := writeEnvelope(request.Context(), connection, "audit_page", envelope.RequestID, server.hub.currentRevision(joinedRoom.id), page); err != nil {
+				return
+			}
+			continue
+		}
+		if envelope.Type == "comment_create" || envelope.Type == "comment_set_state" {
+			var changed protocol.CommentChanged
+			var revision int64
+			var recipients []*member
+			if envelope.Type == "comment_create" {
+				var input protocol.CommentCreate
+				if err := decodePayload(envelope.Payload, &input); err != nil {
+					writeCommentError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), &commentFailure{code: "invalid_message", message: "comment payload is invalid"})
+					continue
+				}
+				changed, revision, recipients, err = server.hub.createComment(context.Background(), joinedRoom.id, joinedMember.id, input, time.Now())
+			} else {
+				var input protocol.CommentSetState
+				if err := decodePayload(envelope.Payload, &input); err != nil {
+					writeCommentError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), &commentFailure{code: "invalid_message", message: "comment state payload is invalid"})
+					continue
+				}
+				changed, revision, recipients, err = server.hub.setCommentState(context.Background(), joinedRoom.id, joinedMember.id, input, time.Now())
+			}
+			if err != nil {
+				writeCommentError(request.Context(), connection, envelope.RequestID, revision, err)
+				continue
+			}
+			broadcastTransient(envelope.RequestID, revision, "comment_changed", changed, recipients)
+			continue
+		}
 		if envelope.Type == "submit_batch" {
 			var batch protocol.SubmitBatch
 			if err := decodePayload(envelope.Payload, &batch); err != nil {
@@ -293,6 +358,16 @@ func writeMaintenanceError(ctx context.Context, connection *websocket.Conn, requ
 	_ = writeProtocolError(ctx, connection, requestID, revision, code, err.Error(), retryable)
 }
 
+func writeCommentError(ctx context.Context, connection *websocket.Conn, requestID string, revision int64, err error) {
+	code, message, retryable := "internal_error", "comment change could not be persisted", true
+	var failure *commentFailure
+	if errors.As(err, &failure) {
+		code, message = failure.code, failure.message
+		retryable = code != "invalid_message"
+	}
+	_ = writeProtocolError(ctx, connection, requestID, revision, code, message, retryable)
+}
+
 func (server *Server) memberDisconnected(roomID, memberID string) {
 	for _, event := range server.hub.disconnect(roomID, memberID, server.maintenanceTimeouts()) {
 		broadcastTransient("disconnect-"+memberID, server.hub.currentRevision(roomID), event.typeName, event.payload, event.recipients)
@@ -306,7 +381,7 @@ func (server *Server) sweepExpiredState() {
 	for {
 		select {
 		case now := <-ticker.C:
-			events, staleConnections := server.hub.expire(now, server.config.LockIdleTimeout, server.config.HeartbeatTimeout, server.maintenanceTimeouts())
+			events, staleConnections := server.hub.expire(now, server.config.LockIdleTimeout, server.config.HeartbeatTimeout, server.config.ResumeTimeout, server.maintenanceTimeouts())
 			for _, event := range events {
 				broadcastTransient("lease-expired", server.hub.currentRevision(event.roomID), event.typeName, event.payload, event.recipients)
 			}
@@ -361,7 +436,7 @@ func (server *Server) joinOrCreate(envelope protocol.Envelope) (*room, *member, 
 		if err := decodePayload(envelope.Payload, &input); err != nil {
 			return nil, nil, errRoomCredentials
 		}
-		return server.hub.join(input)
+		return server.hub.join(input, time.Now(), server.config.ResumeTimeout)
 	default:
 		return nil, nil, errInvalidRoom
 	}
