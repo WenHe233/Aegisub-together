@@ -37,6 +37,7 @@ aegisub_src = files(
     'charset_detect.cpp',
     'colorspace.cpp',
     'colour_button.cpp',
+    'collaboration_model.cpp',
     'command/app.cpp',
     'command/audio.cpp',
     'command/automation.cpp',

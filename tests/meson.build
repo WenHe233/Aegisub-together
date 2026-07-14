@@ -27,6 +27,7 @@ all_test_sources += [
     'tests/calltip_provider.cpp',
     'tests/character_count.cpp',
     'tests/color.cpp',
+    'tests/collaboration.cpp',
     'tests/dialogue_lexer.cpp',
     'tests/format.cpp',
     'tests/fs.cpp',

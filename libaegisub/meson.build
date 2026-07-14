@@ -16,6 +16,7 @@ libaegisub_src = [
     'common/charset_6937.cpp',
     'common/charset_conv.cpp',
     'common/charset.cpp',
+    'common/collaboration.cpp',
     'common/color.cpp',
     'common/file_mapping.cpp',
     'common/format.cpp',
