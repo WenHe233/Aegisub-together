@@ -58,12 +58,26 @@ struct ScriptInfoEntry {
 	bool operator==(ScriptInfoEntry const& other) const { return key == other.key && value == other.value; }
 };
 
+struct Comment {
+	std::string comment_id;
+	std::string line_id;
+	std::string author_id;
+	std::string author_name;
+	std::string body;
+	std::optional<std::string> suggested_text;
+	std::int64_t base_line_version = 1;
+	std::string state = "open";
+	std::string created_at;
+	std::optional<std::string> resolved_by;
+};
+
 struct Snapshot {
 	std::vector<Line> lines;
 	std::vector<std::string> styles;
 	std::int64_t styles_version = 1;
 	std::vector<ScriptInfoEntry> script_info;
 	std::int64_t script_info_version = 1;
+	std::vector<Comment> comments;
 };
 
 struct DocumentState {

@@ -65,6 +65,12 @@ struct MaintenanceStateMessage {
 	std::optional<std::string> cancel_force_at;
 };
 
+struct CommentChangedMessage {
+	Comment comment;
+	std::optional<Line> line;
+	std::string actor_id;
+};
+
 std::string EncodeAccessAuth(std::string const& password);
 std::string EncodeCreateRoom(CreateRoomRequest const& request);
 std::string EncodeJoinRoom(JoinRoomRequest const& request);
@@ -74,5 +80,9 @@ std::string EncodeLineReference(std::string const& line_id);
 LockStateMessage DecodeLockState(std::string const& payload_json);
 std::vector<PresenceMember> DecodePresence(std::string const& payload_json);
 MaintenanceStateMessage DecodeMaintenanceState(std::string const& payload_json);
+std::string EncodeCommentCreate(std::string const& line_id, std::int64_t base_line_version,
+	std::string const& body, std::optional<std::string> const& suggested_text);
+std::string EncodeCommentSetState(std::string const& comment_id, std::string const& state);
+CommentChangedMessage DecodeCommentChanged(std::string const& payload_json);
 
 } }

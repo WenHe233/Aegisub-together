@@ -54,6 +54,7 @@
 #include "main.h"
 #include "options.h"
 #include "project.h"
+#include "selection_controller.h"
 #include "subs_controller.h"
 #include "subs_edit_box.h"
 #include "utils.h"
@@ -80,6 +81,7 @@ enum {
 	ID_COLLABORATION_CREATE = 23001,
 	ID_COLLABORATION_JOIN,
 	ID_COLLABORATION_DISCONNECT,
+	ID_COLLABORATION_COMMENTS,
 	ID_COLLABORATION_MAINTENANCE_REQUEST,
 	ID_COLLABORATION_MAINTENANCE_RELEASE,
 	ID_COLLABORATION_MAINTENANCE_CANCEL,
@@ -153,6 +155,8 @@ FrameMain::FrameMain()
 	collaboration_menu->AppendSeparator();
 	collaboration_menu->Append(ID_COLLABORATION_DISCONNECT, _("&Disconnect"));
 	collaboration_menu->AppendSeparator();
+	collaboration_menu->Append(ID_COLLABORATION_COMMENTS, _("Line &Comments and Suggestions..."));
+	collaboration_menu->AppendSeparator();
 	collaboration_menu->Append(ID_COLLABORATION_MAINTENANCE_REQUEST, _("Enter &Maintenance Mode"));
 	collaboration_menu->Append(ID_COLLABORATION_MAINTENANCE_RELEASE, _("&Leave Maintenance Mode"));
 	collaboration_menu->Append(ID_COLLABORATION_MAINTENANCE_CANCEL, _("Request Maintenance &Cancellation"));
@@ -161,6 +165,7 @@ FrameMain::FrameMain()
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ShowCreateRoomDialog(); }, ID_COLLABORATION_CREATE);
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ShowJoinRoomDialog(); }, ID_COLLABORATION_JOIN);
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->Disconnect(); }, ID_COLLABORATION_DISCONNECT);
+	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ShowLineComments(); }, ID_COLLABORATION_COMMENTS);
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->RequestMaintenance(); }, ID_COLLABORATION_MAINTENANCE_REQUEST);
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ReleaseMaintenance(); }, ID_COLLABORATION_MAINTENANCE_RELEASE);
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->RequestMaintenanceCancel(); }, ID_COLLABORATION_MAINTENANCE_CANCEL);
@@ -168,6 +173,7 @@ FrameMain::FrameMain()
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(!context->collaboration->IsRunning()); }, ID_COLLABORATION_CREATE);
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(!context->collaboration->IsRunning()); }, ID_COLLABORATION_JOIN);
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->IsRunning()); }, ID_COLLABORATION_DISCONNECT);
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->IsRunning() && context->selectionController->GetActiveLine()); }, ID_COLLABORATION_COMMENTS);
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->IsJoined() && !context->collaboration->MaintenanceActive()); }, ID_COLLABORATION_MAINTENANCE_REQUEST);
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->MaintenanceOwned()); }, ID_COLLABORATION_MAINTENANCE_RELEASE);
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->MaintenanceActive() && !context->collaboration->MaintenanceOwned()); }, ID_COLLABORATION_MAINTENANCE_CANCEL);

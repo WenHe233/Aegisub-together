@@ -40,6 +40,8 @@ public:
 	bool CanCollaborativeRedo() const;
 	void CollaborativeUndo();
 	void CollaborativeRedo();
+	int LineCommentCount(AssDialogue const* line) const;
+	void ShowLineComments();
 };
 
 }

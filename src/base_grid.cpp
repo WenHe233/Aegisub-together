@@ -415,6 +415,13 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 				dc.SetBrush(lock_state == 1 ? wxColour(46, 160, 67) : wxColour(210, 60, 60));
 				dc.DrawCircle(4, y + lineHeight / 2, 3);
 			}
+			int comments = context->collaboration->LineCommentCount(curDiag);
+			if (comments) {
+				auto label = wxString::Format("%d", comments);
+				dc.SetTextForeground(wxColour(30, 100, 190));
+				auto extent = dc.GetTextExtent(label);
+				dc.DrawText(label, (std::max)(8, columns[0]->Width() - extent.GetWidth() - 3), y + 2);
+			}
 		}
 #endif
 

@@ -91,6 +91,7 @@ public:
 
 	PendingBatch QueueLocalSnapshot(std::string batch_id, Snapshot const& local_snapshot);
 	SyncApplyResult ApplyBatch(AppliedBatch const& batch, std::int64_t room_revision, std::string const& own_member_id);
+	SyncApplyResult ApplyCommentChange(Comment const& comment, std::optional<Line> const& line, std::int64_t room_revision);
 	std::vector<PendingBatch> RejectBatch(RejectedBatch const& rejection);
 };
 

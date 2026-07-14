@@ -155,16 +155,27 @@ TEST(collaboration_sync, protocol_codec_matches_batch_shapes) {
 }
 
 TEST(collaboration_sync, offline_journal_round_trips_baseline_local_and_pending_batches) {
+	auto base = baseline();
+	Comment comment;
+	comment.comment_id = "comment-1";
+	comment.line_id = "9K3MT7Q2CD-1";
+	comment.author_id = "member-2";
+	comment.author_name = "reviewer";
+	comment.body = "Keep this review while offline.";
+	comment.created_at = "2026-07-14T10:00:00Z";
+	base.comments.push_back(comment);
 	SyncState state;
-	state.Initialize(baseline(), 7);
-	auto local = baseline();
+	state.Initialize(base, 7);
+	auto local = base;
 	local.lines[0].fields.text = "offline";
 	auto batch = state.QueueLocalSnapshot("offline-1", local);
-	OfflineJournal journal{7, baseline(), local, {batch}};
+	OfflineJournal journal{7, base, local, {batch}};
 	auto decoded = DecodeOfflineJournal(EncodeOfflineJournal(journal));
 	EXPECT_EQ(7, decoded.base_revision);
 	EXPECT_EQ("one", decoded.baseline.lines[0].fields.text);
 	EXPECT_EQ("offline", decoded.local.lines[0].fields.text);
+	ASSERT_EQ(1u, decoded.local.comments.size());
+	EXPECT_EQ("comment-1", decoded.local.comments[0].comment_id);
 	ASSERT_EQ(1u, decoded.pending.size());
 	EXPECT_EQ("offline-1", decoded.pending[0].batch_id);
 	ASSERT_EQ(1u, decoded.pending[0].operations.size());
@@ -184,4 +195,28 @@ TEST(collaboration_sync, offline_baseline_marks_server_deletions_as_restorable) 
 	auto batch = state.QueueLocalSnapshot("restore-offline", target);
 	ASSERT_FALSE(batch.operations.empty());
 	EXPECT_EQ(OperationKind::Restore, batch.operations[0].kind);
+}
+
+TEST(collaboration_sync, comment_change_updates_comment_and_accepted_line_atomically) {
+	SyncState state;
+	state.Initialize(baseline(), 4);
+	Comment comment;
+	comment.comment_id = "comment-1";
+	comment.line_id = "9K3MT7Q2CD-1";
+	comment.author_id = "member-2";
+	comment.author_name = "reviewer";
+	comment.body = "Please shorten this.";
+	comment.suggested_text = "Short text";
+	comment.base_line_version = 1;
+	comment.state = "accepted";
+	comment.created_at = "2026-07-14T10:00:00Z";
+	auto line = baseline().lines[0];
+	line.version = 2;
+	line.fields.text = "Short text";
+	auto result = state.ApplyCommentChange(comment, line, 5);
+	EXPECT_EQ(SyncApplyStatus::applied, result.status);
+	EXPECT_TRUE(result.document_changed);
+	ASSERT_EQ(1u, state.Confirmed().snapshot.comments.size());
+	EXPECT_EQ("accepted", state.Confirmed().snapshot.comments[0].state);
+	EXPECT_EQ("Short text", state.Projected().snapshot.lines[0].fields.text);
 }

@@ -67,3 +67,15 @@ TEST(collaboration_room, decodes_maintenance_ownership_and_cancel_window) {
 	EXPECT_EQ("member-2", *state.cancel_requested_by);
 	EXPECT_TRUE(state.cancel_force_at);
 }
+
+TEST(collaboration_room, encodes_comment_requests_and_decodes_canonical_change) {
+	auto create = EncodeCommentCreate("9K3MT7Q2CD-1", 3, "Please shorten this.", std::string("Short text"));
+	EXPECT_NE(std::string::npos, create.find("Short text"));
+	auto state = EncodeCommentSetState("comment-1", "accepted");
+	EXPECT_NE(std::string::npos, state.find("accepted"));
+	auto changed = DecodeCommentChanged(R"({"comment":{"comment_id":"comment-1","line_id":"9K3MT7Q2CD-1","author_id":"member-2","author_name":"reviewer","body":"Please shorten this.","suggested_text":"Short text","base_line_version":3,"state":"accepted","created_at":"2026-07-14T10:00:00Z","resolved_by":"member-1"},"line":{"line_id":"9K3MT7Q2CD-1","pos_key":"KfKfKfKfKfKfKfKf","version":4,"fields":{"comment":false,"layer":0,"start_ms":0,"end_ms":5000,"style":"Default","actor":"","effect":"","margins":[0,0,0],"text":"Short text"}},"actor_id":"member-1"})");
+	EXPECT_EQ("comment-1", changed.comment.comment_id);
+	EXPECT_EQ("accepted", changed.comment.state);
+	ASSERT_TRUE(changed.line);
+	EXPECT_EQ("Short text", changed.line->fields.text);
+}

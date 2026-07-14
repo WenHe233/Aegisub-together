@@ -27,6 +27,7 @@
 #include <wx/button.h>
 #include <wx/checkbox.h>
 #include <wx/dialog.h>
+#include <wx/listbox.h>
 #include <wx/msgdlg.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
@@ -60,6 +61,119 @@ struct ConnectionInput {
 	std::string nickname;
 	bool remember_passwords = false;
 	bool lock_enabled = true;
+};
+
+enum class CommentAction { none, create, accept, reject, resolve };
+
+struct CommentDialogResult {
+	CommentAction action = CommentAction::none;
+	std::string comment_id;
+	std::string body;
+	std::optional<std::string> suggested_text;
+};
+
+class CommentsDialog final : public wxDialog {
+	std::vector<Comment> comments;
+	wxListBox* list;
+	wxTextCtrl* detail;
+	wxTextCtrl* body;
+	wxCheckBox* suggest;
+	wxTextCtrl* suggestion;
+	wxButton* accept;
+	wxButton* reject;
+	wxButton* resolve;
+	bool writable;
+	bool can_accept;
+	CommentDialogResult result;
+
+	void update_selection(wxCommandEvent&) {
+		auto selected = list->GetSelection();
+		bool open = selected != wxNOT_FOUND && comments[static_cast<std::size_t>(selected)].state == "open";
+		accept->Enable(writable && can_accept && open && comments[static_cast<std::size_t>(selected)].suggested_text.has_value());
+		reject->Enable(writable && open);
+		resolve->Enable(writable && open);
+		if (selected == wxNOT_FOUND) { detail->Clear(); return; }
+		auto const& comment = comments[static_cast<std::size_t>(selected)];
+		wxString text = fmt_tl("Author: %s\nState: %s\nCreated: %s\nBased on line version: %d\n\n%s",
+			comment.author_name, comment.state, comment.created_at, comment.base_line_version, comment.body);
+		if (comment.suggested_text) text += fmt_tl("\n\nSuggested text:\n%s", *comment.suggested_text);
+		detail->SetValue(text);
+	}
+
+	void choose(CommentAction action) {
+		auto selected = list->GetSelection();
+		if (selected == wxNOT_FOUND) return;
+		result.action = action;
+		result.comment_id = comments[static_cast<std::size_t>(selected)].comment_id;
+		EndModal(wxID_OK);
+	}
+
+public:
+	CommentsDialog(wxWindow* parent, std::vector<Comment> comments, std::string const& current_text, bool writable, bool can_accept)
+	: wxDialog(parent, wxID_ANY, _("Line comments and suggestions"), wxDefaultPosition, wxSize(680, 620), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+	, comments(std::move(comments))
+	, list(new wxListBox(this, wxID_ANY))
+	, detail(new wxTextCtrl(this, wxID_ANY, {}, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY))
+	, body(new wxTextCtrl(this, wxID_ANY, {}, wxDefaultPosition, wxSize(-1, 80), wxTE_MULTILINE))
+	, suggest(new wxCheckBox(this, wxID_ANY, _("Include a suggested subtitle text")))
+	, suggestion(new wxTextCtrl(this, wxID_ANY, to_wx(current_text), wxDefaultPosition, wxSize(-1, 80), wxTE_MULTILINE))
+	, accept(new wxButton(this, wxID_ANY, _("Accept suggestion")))
+	, reject(new wxButton(this, wxID_ANY, _("Reject")))
+	, resolve(new wxButton(this, wxID_ANY, _("Resolve")))
+	, writable(writable)
+	, can_accept(can_accept)
+	{
+		for (auto const& comment : this->comments) {
+			auto preview = to_wx(comment.body);
+			if (preview.length() > 70) preview = preview.Left(67) + "...";
+			list->Append(fmt_tl("[%s] %s: %s", comment.state, comment.author_name, preview));
+		}
+		auto root = new wxBoxSizer(wxVERTICAL);
+		root->Add(new wxStaticText(this, wxID_ANY, _("Comments on this line:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
+		root->Add(list, 1, wxEXPAND | wxALL, 10);
+		root->Add(detail, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+		auto state_buttons = new wxBoxSizer(wxHORIZONTAL);
+		state_buttons->Add(accept, 0, wxRIGHT, 6);
+		state_buttons->Add(reject, 0, wxRIGHT, 6);
+		state_buttons->Add(resolve, 0);
+		root->Add(state_buttons, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+		root->Add(new wxStaticText(this, wxID_ANY, _("New comment:")), 0, wxLEFT | wxRIGHT, 10);
+		root->Add(body, 0, wxEXPAND | wxALL, 10);
+		root->Add(suggest, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+		root->Add(suggestion, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+		auto bottom = new wxBoxSizer(wxHORIZONTAL);
+		auto add = new wxButton(this, wxID_ADD, _("Add comment"));
+		bottom->Add(add, 0, wxRIGHT, 8);
+		bottom->AddStretchSpacer();
+		bottom->Add(new wxButton(this, wxID_CANCEL, _("Close")), 0);
+		root->Add(bottom, 0, wxEXPAND | wxALL, 10);
+		SetSizer(root);
+		body->Enable(writable);
+		suggest->Enable(writable);
+		suggestion->Enable(writable);
+		add->Enable(writable);
+		accept->Enable(false);
+		reject->Enable(false);
+		resolve->Enable(false);
+		list->Bind(wxEVT_LISTBOX, &CommentsDialog::update_selection, this);
+		add->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+			if (body->GetValue().empty()) { wxMessageBox(_("A comment message is required."), _("Cannot add comment"), wxOK | wxICON_WARNING, this); return; }
+			result.action = CommentAction::create;
+			result.body = from_wx(body->GetValue());
+			if (suggest->GetValue()) result.suggested_text = from_wx(suggestion->GetValue());
+			EndModal(wxID_OK);
+		});
+		accept->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { choose(CommentAction::accept); });
+		reject->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { choose(CommentAction::reject); });
+		resolve->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { choose(CommentAction::resolve); });
+		if (!this->comments.empty()) {
+			list->SetSelection(0);
+			wxCommandEvent event;
+			update_selection(event);
+		}
+	}
+
+	CommentDialogResult const& Result() const { return result; }
 };
 
 class ConnectDialog final : public wxDialog {
@@ -317,6 +431,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		for (auto const& line : offline_journal.local.lines) versions[line.id] = line.version;
 		offline_journal.local = ass::CaptureSnapshot(*context->ass, versions,
 			offline_journal.baseline.styles_version, offline_journal.baseline.script_info_version);
+		offline_journal.local.comments = offline_journal.baseline.comments;
 		persist_offline_journal();
 	}
 
@@ -429,6 +544,24 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	void handle_presence(WireEnvelope const& envelope) {
 		presence = DecodePresence(envelope.payload_json);
+		if (context->subsGrid) context->subsGrid->Refresh(false);
+	}
+
+	void handle_comment_change(WireEnvelope const& envelope) {
+		auto changed = DecodeCommentChanged(envelope.payload_json);
+		auto result = sync.ApplyCommentChange(changed.comment, changed.line, envelope.room_revision);
+		revision = sync.Revision();
+		if (result.status == SyncApplyStatus::revision_gap) {
+			context->frame->StatusTimeout(_("Collaboration comment revision gap detected; refreshing room snapshot..."));
+			request_snapshot();
+			return;
+		}
+		if (result.status == SyncApplyStatus::pending_conflict) {
+			context->frame->StatusTimeout(_("An accepted suggestion conflicts with a pending local change; refreshing room snapshot..."));
+			request_snapshot();
+			return;
+		}
+		if (result.document_changed) apply_projected_snapshot();
 		if (context->subsGrid) context->subsGrid->Refresh(false);
 	}
 
@@ -683,7 +816,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	}
 
 	void handle_message(WireEnvelope const& envelope) {
-		if (mutation_depth && (envelope.type == "batch_applied" || envelope.type == "batch_rejected" || envelope.type == "snapshot_state")) {
+		if (mutation_depth && (envelope.type == "batch_applied" || envelope.type == "batch_rejected" || envelope.type == "snapshot_state" || envelope.type == "comment_changed")) {
 			deferred_persistent_messages.push_back(envelope);
 			return;
 		}
@@ -696,6 +829,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			else if (envelope.type == "lock_state" && phase == Phase::joined) handle_lock_state(envelope);
 			else if (envelope.type == "presence" && phase == Phase::joined) handle_presence(envelope);
 			else if (envelope.type == "maintenance_state" && phase == Phase::joined) handle_maintenance_state(envelope);
+			else if (envelope.type == "comment_changed" && phase == Phase::joined) handle_comment_change(envelope);
 			else if (envelope.type == "error") {
 				auto error = DecodeProtocolError(envelope.payload_json);
 				auto message = error.message.empty() ? error.code : error.message;
@@ -872,6 +1006,36 @@ public:
 	void force_maintenance_cancel() { if (phase == Phase::joined) send("maintenance_cancel_force", "{}"); }
 	bool maintenance_active() const { return phase == Phase::joined && maintenance.active; }
 	bool maintenance_owned() const { return maintenance_active() && maintenance.holder_id && *maintenance.holder_id == room.member_id; }
+	int line_comment_count(AssDialogue const* line) const {
+		if (!line || (!sync.IsInitialized() && !offline_session)) return 0;
+		auto id = ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey);
+		auto const& comments = sync.IsInitialized() ? sync.Confirmed().snapshot.comments : offline_journal.baseline.comments;
+		return static_cast<int>(std::count_if(comments.begin(), comments.end(), [&](Comment const& comment) { return comment.line_id == id; }));
+	}
+	void show_line_comments() {
+		auto* active = context->selectionController->GetActiveLine();
+		if (!active || (!sync.IsInitialized() && !offline_session)) return;
+		auto id = ass::GetMetadataValue(*context->ass, active->ExtradataIds.get(), IdExtradataKey);
+		auto const& snapshot = sync.IsInitialized() ? sync.Confirmed().snapshot : offline_journal.baseline;
+		auto line = std::find_if(snapshot.lines.begin(), snapshot.lines.end(), [&](Line const& item) { return item.id == id; });
+		std::vector<Comment> comments;
+		for (auto const& comment : snapshot.comments) if (comment.line_id == id) comments.push_back(comment);
+		bool writable = phase == Phase::joined && line != snapshot.lines.end() && !reconciliation_target;
+		bool can_accept = writable && (!room.lock_enabled || (lock_holders.count(id) && lock_holders.at(id) == room.member_id));
+		CommentsDialog dialog(context->parent, std::move(comments), line == snapshot.lines.end() ? std::string{} : line->fields.text, writable, can_accept);
+		if (dialog.ShowModal() != wxID_OK || !writable) return;
+		auto const& result = dialog.Result();
+		if (result.action == CommentAction::create) {
+			send("comment_create", EncodeCommentCreate(id, line->version, result.body, result.suggested_text));
+			return;
+		}
+		if (result.comment_id.empty()) return;
+		std::string state;
+		if (result.action == CommentAction::accept) state = "accepted";
+		else if (result.action == CommentAction::reject) state = "rejected";
+		else if (result.action == CommentAction::resolve) state = "resolved";
+		if (!state.empty()) send("comment_set_state", EncodeCommentSetState(result.comment_id, state));
+	}
 	bool can_collaborative_undo() const { return phase == Phase::joined && !history_action && sync.Pending().empty() && !undo_history.empty(); }
 	bool can_collaborative_redo() const { return phase == Phase::joined && !history_action && sync.Pending().empty() && !redo_history.empty(); }
 	void apply_history(bool undo) {
@@ -962,5 +1126,7 @@ bool CollaborationController::CanCollaborativeUndo() const { return impl->can_co
 bool CollaborationController::CanCollaborativeRedo() const { return impl->can_collaborative_redo(); }
 void CollaborationController::CollaborativeUndo() { impl->apply_history(true); }
 void CollaborationController::CollaborativeRedo() { impl->apply_history(false); }
+int CollaborationController::LineCommentCount(AssDialogue const* line) const { return impl->line_comment_count(line); }
+void CollaborationController::ShowLineComments() { impl->show_line_comments(); }
 
 } }

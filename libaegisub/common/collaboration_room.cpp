@@ -29,6 +29,52 @@ json::UnknownElement const& required(json::Object const& object, char const* nam
 	return value->second;
 }
 
+std::optional<std::string> optional_nullable_string(json::Object const& object, char const* name) {
+	auto value = object.find(name);
+	if (value == object.end()) return std::nullopt;
+	try {
+		static_cast<void>(static_cast<json::Null const&>(value->second));
+		return std::nullopt;
+	}
+	catch (json::Exception const&) {
+		return static_cast<json::String const&>(value->second);
+	}
+}
+
+json::Object encode_comment(Comment const& comment) {
+	json::Object object;
+	object["comment_id"] = comment.comment_id;
+	object["line_id"] = comment.line_id;
+	object["author_id"] = comment.author_id;
+	object["author_name"] = comment.author_name;
+	object["body"] = comment.body;
+	if (comment.suggested_text) object["suggested_text"] = *comment.suggested_text;
+	object["base_line_version"] = comment.base_line_version;
+	object["state"] = comment.state;
+	object["created_at"] = comment.created_at;
+	if (comment.resolved_by) object["resolved_by"] = *comment.resolved_by;
+	return object;
+}
+
+Comment decode_comment(json::UnknownElement const& value) {
+	auto const& object = static_cast<json::Object const&>(value);
+	Comment comment;
+	comment.comment_id = static_cast<json::String const&>(required(object, "comment_id"));
+	comment.line_id = static_cast<json::String const&>(required(object, "line_id"));
+	comment.author_id = static_cast<json::String const&>(required(object, "author_id"));
+	comment.author_name = static_cast<json::String const&>(required(object, "author_name"));
+	comment.body = static_cast<json::String const&>(required(object, "body"));
+	comment.suggested_text = optional_nullable_string(object, "suggested_text");
+	comment.base_line_version = static_cast<json::Integer const&>(required(object, "base_line_version"));
+	comment.state = static_cast<json::String const&>(required(object, "state"));
+	comment.created_at = static_cast<json::String const&>(required(object, "created_at"));
+	comment.resolved_by = optional_nullable_string(object, "resolved_by");
+	if (comment.comment_id.empty() || !IsValidLineId(comment.line_id) || comment.author_id.empty() || comment.body.empty() ||
+		comment.base_line_version < 1 || (comment.state != "open" && comment.state != "accepted" && comment.state != "rejected" && comment.state != "resolved"))
+		throw std::invalid_argument("invalid collaboration comment");
+	return comment;
+}
+
 json::Object encode_fields(LineFields const& fields) {
 	json::Object object;
 	object["comment"] = fields.comment;
@@ -70,7 +116,9 @@ json::Object encode_snapshot(Snapshot const& snapshot) {
 	}
 	object["script_info"] = std::move(script_info);
 	object["script_info_version"] = snapshot.script_info_version;
-	object["comments"] = json::Array{};
+	json::Array comments;
+	for (auto const& comment : snapshot.comments) comments.emplace_back(encode_comment(comment));
+	object["comments"] = std::move(comments);
 	return object;
 }
 
@@ -116,7 +164,8 @@ Snapshot decode_snapshot(json::UnknownElement const& value) {
 		});
 	}
 	snapshot.script_info_version = static_cast<json::Integer const&>(required(object, "script_info_version"));
-	static_cast<void>(static_cast<json::Array const&>(required(object, "comments")));
+	for (auto const& comment : static_cast<json::Array const&>(required(object, "comments")))
+		snapshot.comments.push_back(decode_comment(comment));
 	return snapshot;
 }
 
@@ -125,17 +174,6 @@ std::string encode_object(json::Object object) {
 	return write(root);
 }
 
-std::optional<std::string> optional_nullable_string(json::Object const& object, char const* name) {
-	auto value = object.find(name);
-	if (value == object.end()) return std::nullopt;
-	try {
-		static_cast<void>(static_cast<json::Null const&>(value->second));
-		return std::nullopt;
-	}
-	catch (json::Exception const&) {
-		return static_cast<json::String const&>(value->second);
-	}
-}
 }
 
 std::string EncodeAccessAuth(std::string const& password) {
@@ -240,6 +278,51 @@ MaintenanceStateMessage DecodeMaintenanceState(std::string const& payload_json) 
 	state.cancel_force_at = optional_nullable_string(object, "cancel_force_at");
 	if (state.active && (!state.holder_id || !state.holder_name)) throw std::invalid_argument("active maintenance state has no holder");
 	return state;
+}
+
+std::string EncodeCommentCreate(std::string const& line_id, std::int64_t base_line_version,
+	std::string const& body, std::optional<std::string> const& suggested_text) {
+	if (!IsValidLineId(line_id) || base_line_version < 1 || body.empty()) throw std::invalid_argument("invalid collaboration comment");
+	json::Object object;
+	object["line_id"] = line_id;
+	object["base_line_version"] = base_line_version;
+	object["body"] = body;
+	if (suggested_text) object["suggested_text"] = *suggested_text;
+	else object["suggested_text"] = json::Null{};
+	return encode_object(std::move(object));
+}
+
+std::string EncodeCommentSetState(std::string const& comment_id, std::string const& state) {
+	if (comment_id.empty() || (state != "accepted" && state != "rejected" && state != "resolved"))
+		throw std::invalid_argument("invalid collaboration comment state");
+	json::Object object;
+	object["comment_id"] = comment_id;
+	object["state"] = state;
+	return encode_object(std::move(object));
+}
+
+CommentChangedMessage DecodeCommentChanged(std::string const& payload_json) {
+	auto root = parse(payload_json);
+	auto const& object = static_cast<json::Object const&>(root);
+	CommentChangedMessage message;
+	message.comment = decode_comment(required(object, "comment"));
+	message.actor_id = static_cast<json::String const&>(required(object, "actor_id"));
+	auto const& encoded_line = required(object, "line");
+	try { static_cast<void>(static_cast<json::Null const&>(encoded_line)); }
+	catch (json::Exception const&) {
+		auto const& line_object = static_cast<json::Object const&>(encoded_line);
+		Line line;
+		line.id = static_cast<json::String const&>(required(line_object, "line_id"));
+		line.position = static_cast<json::String const&>(required(line_object, "pos_key"));
+		line.version = static_cast<json::Integer const&>(required(line_object, "version"));
+		line.fields = decode_fields(required(line_object, "fields"));
+		if (!IsValidLineId(line.id) || !IsValidPosition(line.position) || line.version < 1)
+			throw std::invalid_argument("invalid collaboration comment line");
+		message.line = std::move(line);
+	}
+	if (message.actor_id.empty() || (message.line && message.line->id != message.comment.line_id))
+		throw std::invalid_argument("invalid collaboration comment change");
+	return message;
 }
 
 } }

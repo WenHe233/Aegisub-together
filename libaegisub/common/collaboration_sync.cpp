@@ -264,6 +264,40 @@ json::Object encode_line(Line const& line) {
 	return object;
 }
 
+json::Object encode_comment(Comment const& comment) {
+	json::Object object;
+	object["comment_id"] = comment.comment_id;
+	object["line_id"] = comment.line_id;
+	object["author_id"] = comment.author_id;
+	object["author_name"] = comment.author_name;
+	object["body"] = comment.body;
+	if (comment.suggested_text) object["suggested_text"] = *comment.suggested_text;
+	object["base_line_version"] = comment.base_line_version;
+	object["state"] = comment.state;
+	object["created_at"] = comment.created_at;
+	if (comment.resolved_by) object["resolved_by"] = *comment.resolved_by;
+	return object;
+}
+
+Comment decode_comment(json::UnknownElement const& value) {
+	auto const& object = static_cast<json::Object const&>(value);
+	Comment comment;
+	comment.comment_id = static_cast<json::String const&>(required(object, "comment_id"));
+	comment.line_id = static_cast<json::String const&>(required(object, "line_id"));
+	comment.author_id = static_cast<json::String const&>(required(object, "author_id"));
+	comment.author_name = static_cast<json::String const&>(required(object, "author_name"));
+	comment.body = static_cast<json::String const&>(required(object, "body"));
+	if (auto item = optional(object, "suggested_text"); item && !is_null(*item)) comment.suggested_text = static_cast<json::String const&>(*item);
+	comment.base_line_version = static_cast<json::Integer const&>(required(object, "base_line_version"));
+	comment.state = static_cast<json::String const&>(required(object, "state"));
+	comment.created_at = static_cast<json::String const&>(required(object, "created_at"));
+	if (auto item = optional(object, "resolved_by"); item && !is_null(*item)) comment.resolved_by = static_cast<json::String const&>(*item);
+	if (comment.comment_id.empty() || !IsValidLineId(comment.line_id) || comment.author_id.empty() || comment.body.empty() ||
+		comment.base_line_version < 1 || (comment.state != "open" && comment.state != "accepted" && comment.state != "rejected" && comment.state != "resolved"))
+		throw std::invalid_argument("invalid collaboration comment");
+	return comment;
+}
+
 json::Object encode_snapshot(Snapshot const& snapshot) {
 	json::Object object;
 	json::Array lines;
@@ -282,6 +316,9 @@ json::Object encode_snapshot(Snapshot const& snapshot) {
 	}
 	object["script_info"] = std::move(script_info);
 	object["script_info_version"] = snapshot.script_info_version;
+	json::Array comments;
+	for (auto const& comment : snapshot.comments) comments.emplace_back(encode_comment(comment));
+	object["comments"] = std::move(comments);
 	return object;
 }
 
@@ -300,6 +337,8 @@ Snapshot decode_snapshot(json::UnknownElement const& value) {
 		});
 	}
 	snapshot.script_info_version = static_cast<json::Integer const&>(required(object, "script_info_version"));
+	for (auto const& comment : static_cast<json::Array const&>(required(object, "comments")))
+		snapshot.comments.push_back(decode_comment(comment));
 	return snapshot;
 }
 
@@ -318,6 +357,11 @@ bool validate_snapshot(Snapshot const& snapshot) {
 			(!previous.empty() && line.position <= previous) || line.version < 1 || !IsValidLineFields(line.fields)) return false;
 		previous = line.position;
 	}
+	std::unordered_set<std::string> comment_ids;
+	for (auto const& comment : snapshot.comments)
+		if (comment.comment_id.empty() || !comment_ids.insert(comment.comment_id).second || !IsValidLineId(comment.line_id) ||
+			comment.author_id.empty() || comment.body.empty() || comment.base_line_version < 1 ||
+			(comment.state != "open" && comment.state != "accepted" && comment.state != "rejected" && comment.state != "resolved")) return false;
 	return true;
 }
 
@@ -584,6 +628,27 @@ SyncApplyResult SyncState::ApplyBatch(AppliedBatch const& batch, std::int64_t ro
 	bool rebuilt = rebuild_projected();
 	bool visible_change = rebuilt && (!own || !batch.id_remap.empty() || !batch.positions.empty());
 	return {rebuilt ? SyncApplyStatus::applied : SyncApplyStatus::pending_conflict, visible_change, own};
+}
+
+SyncApplyResult SyncState::ApplyCommentChange(Comment const& comment, std::optional<Line> const& line, std::int64_t room_revision) {
+	if (!initialized) throw std::logic_error("collaboration synchronization is not initialized");
+	if (room_revision <= revision) return {SyncApplyStatus::duplicate, false, false};
+	if (room_revision != revision + 1) return {SyncApplyStatus::revision_gap, false, false};
+	DocumentState updated = confirmed;
+	auto existing = std::find_if(updated.snapshot.comments.begin(), updated.snapshot.comments.end(),
+		[&](Comment const& item) { return item.comment_id == comment.comment_id; });
+	if (existing == updated.snapshot.comments.end()) updated.snapshot.comments.push_back(comment);
+	else *existing = comment;
+	if (line) {
+		auto index = find_line(updated.snapshot.lines, line->id);
+		if (index == updated.snapshot.lines.size() || !IsValidLineId(line->id) || !IsValidPosition(line->position) || line->version < 1)
+			throw std::invalid_argument("comment change references an invalid canonical line");
+		updated.snapshot.lines[index] = *line;
+	}
+	confirmed = std::move(updated);
+	revision = room_revision;
+	bool rebuilt = rebuild_projected();
+	return {rebuilt ? SyncApplyStatus::applied : SyncApplyStatus::pending_conflict, rebuilt && !!line, false};
 }
 
 std::vector<PendingBatch> SyncState::RejectBatch(RejectedBatch const& rejection) {
