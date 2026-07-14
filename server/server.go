@@ -486,8 +486,9 @@ func readEnvelope(ctx context.Context, connection *websocket.Conn) (protocol.Env
 	if err != nil {
 		return protocol.Envelope{}, err
 	}
-	if messageType != websocket.MessageText {
-		return protocol.Envelope{}, errors.New("expected text JSON envelope")
+	data, err = decodeWebSocketFrame(messageType, data)
+	if err != nil {
+		return protocol.Envelope{}, err
 	}
 	var envelope protocol.Envelope
 	if err := decodeStrict(data, &envelope); err != nil {
@@ -525,7 +526,11 @@ func writeEnvelope(ctx context.Context, connection *websocket.Conn, messageType,
 	if err != nil {
 		return err
 	}
-	return connection.Write(ctx, websocket.MessageText, data)
+	frameType, frame, err := encodeWebSocketFrame(data)
+	if err != nil {
+		return err
+	}
+	return connection.Write(ctx, frameType, frame)
 }
 
 func writeProtocolError(ctx context.Context, connection *websocket.Conn, requestID string, revision int64, code, message string, retryable bool) error {

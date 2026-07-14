@@ -88,25 +88,36 @@ func send(t *testing.T, connection *websocket.Conn, messageType, requestID strin
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := connection.Write(context.Background(), websocket.MessageText, data); err != nil {
+	frameType, frame, err := encodeWebSocketFrame(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := connection.Write(context.Background(), frameType, frame); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func receive(t *testing.T, connection *websocket.Conn) protocol.Envelope {
 	t.Helper()
+	envelope, _ := receiveFrame(t, connection)
+	return envelope
+}
+
+func receiveFrame(t *testing.T, connection *websocket.Conn) (protocol.Envelope, websocket.MessageType) {
+	t.Helper()
 	messageType, data, err := connection.Read(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if messageType != websocket.MessageText {
-		t.Fatalf("unexpected message type %v", messageType)
+	data, err = decodeWebSocketFrame(messageType, data)
+	if err != nil {
+		t.Fatal(err)
 	}
 	var envelope protocol.Envelope
 	if err := json.Unmarshal(data, &envelope); err != nil {
 		t.Fatal(err)
 	}
-	return envelope
+	return envelope, messageType
 }
 
 func receiveType(t *testing.T, connection *websocket.Conn, expected string) protocol.Envelope {
@@ -118,7 +129,8 @@ func receiveType(t *testing.T, connection *websocket.Conn, expected string) prot
 		if err != nil {
 			t.Fatalf("waiting for %s: %v", expected, err)
 		}
-		if messageType != websocket.MessageText {
+		data, err = decodeWebSocketFrame(messageType, data)
+		if err != nil {
 			continue
 		}
 		var envelope protocol.Envelope
