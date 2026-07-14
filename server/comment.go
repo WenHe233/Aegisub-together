@@ -51,6 +51,7 @@ func (hub *hub) createComment(ctx context.Context, roomID, actorID string, input
 	}
 	value.snapshot = working.snapshot
 	value.revision = working.revision
+	value.updatedAt = now
 	return changed, value.revision, connectedMembers(value), nil
 }
 
@@ -103,6 +104,7 @@ func (hub *hub) setCommentState(ctx context.Context, roomID, actorID string, inp
 	}
 	value.snapshot = working.snapshot
 	value.revision = working.revision
+	value.updatedAt = now
 	if input.State == "accepted" {
 		if lock, held := value.locks[comment.LineID]; held && lock.memberID == actorID {
 			lock.lastActivity = now

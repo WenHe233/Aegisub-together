@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -61,6 +62,9 @@ type room struct {
 	reindexed    bool
 	locks        map[string]lineLock
 	maintenance  *maintenanceLease
+	archived     bool
+	archiveBlob  []byte
+	updatedAt    time.Time
 }
 
 type hub struct {
@@ -121,6 +125,7 @@ func (hub *hub) create(input protocol.CreateRoom) (*room, *member, error) {
 		sessions:     map[string]*member{joinedMember.resumeToken: joinedMember},
 		tombstones:   make(map[string]protocol.Line),
 		locks:        make(map[string]lineLock),
+		updatedAt:    time.Now(),
 	}
 	canonicalizePositions(created.snapshot.Lines)
 	if err := hub.store.createRoom(context.Background(), created); err != nil {
@@ -187,6 +192,11 @@ func (hub *hub) join(input protocol.JoinRoom, now time.Time, resumeTimeout time.
 	}
 	if !auth.Verify(input.RoomPassword, hash) || joinedRoom == nil {
 		return nil, nil, errRoomCredentials
+	}
+	if joinedRoom.archived {
+		if err := hub.store.unarchiveRoom(context.Background(), joinedRoom, "automatic"); err != nil {
+			return nil, nil, fmt.Errorf("restore archived room: %w", err)
+		}
 	}
 	if _, exists := joinedRoom.members[nickname]; exists {
 		return nil, nil, errNicknameInUse

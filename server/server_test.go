@@ -2,6 +2,7 @@ package collab
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1156,5 +1157,203 @@ func TestCommentsPersistAcrossSQLiteRestart(t *testing.T) {
 	joined := joinRoom(t, joiner, "episode-01", "proofreader")
 	if len(joined.Snapshot.Comments) != 1 || joined.Snapshot.Comments[0].Body != "Persist me" || joined.Snapshot.Comments[0].State != "open" {
 		t.Fatalf("comment did not survive restart: %#v", joined.Snapshot.Comments)
+	}
+}
+
+func TestColdArchiveRestoresSnapshotTombstonesAndCredentials(t *testing.T) {
+	databasePath := t.TempDir() + "/archive.db"
+	params := auth.Params{Memory: 64, Iterations: 1, Parallelism: 1, SaltLength: 16, KeyLength: 32}
+	start := func() (*Server, *httptest.Server, string) {
+		server, err := New(Config{PasswordParams: params, AuthTimeout: time.Second, DatabasePath: databasePath})
+		if err != nil {
+			t.Fatal(err)
+		}
+		httpServer := httptest.NewServer(server)
+		return server, httpServer, "ws" + strings.TrimPrefix(httpServer.URL, "http") + "/v1/ws"
+	}
+	firstServer, firstHTTP, firstURL := start()
+	creator := dial(t, firstURL)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	_, _, rejected := submitBatch(t, creator, "archive-modify", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("Archived text")},
+	})
+	if rejected != nil {
+		t.Fatal(rejected)
+	}
+	send(t, creator, "comment_create", "archive-comment", protocol.CommentCreate{LineID: "9K3MT7Q2CD-1", BaseLineVersion: 2, Body: "Archived comment"})
+	receiveType(t, creator, "comment_changed")
+	_, _, rejected = submitBatch(t, creator, "archive-delete", protocol.DeleteOperation{Op: "delete", LineID: "9K3MT7Q2CD-1", BaseVersion: 2})
+	if rejected != nil {
+		t.Fatal(rejected)
+	}
+	creator.CloseNow()
+	firstHTTP.Close()
+	if err := firstServer.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := SetRoomArchived(context.Background(), databasePath, "episode-01", true); err != nil {
+		t.Fatal(err)
+	}
+	stats, err := RoomStats(context.Background(), databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stats) != 1 || !stats[0].Archived || stats[0].Comments != 1 || stats[0].BatchRecords != 0 || stats[0].ArchiveBytes == 0 {
+		t.Fatalf("cold archive stats are wrong: %#v", stats)
+	}
+
+	secondServer, secondHTTP, secondURL := start()
+	defer func() { secondHTTP.Close(); secondServer.Close() }()
+	wrong := dial(t, secondURL)
+	authenticate(t, wrong, "")
+	send(t, wrong, "join_room", "wrong-archive-password", protocol.JoinRoom{RoomName: "episode-01", RoomPassword: "wrong password", Nickname: "attacker"})
+	if envelope := receiveType(t, wrong, "error"); envelope.Type != "error" {
+		t.Fatal("wrong password unexpectedly restored archive")
+	}
+	secondServer.hub.mu.Lock()
+	stillArchived := secondServer.hub.rooms["episode-01"].archived
+	secondServer.hub.mu.Unlock()
+	if !stillArchived {
+		t.Fatal("wrong credentials restored the archived room")
+	}
+
+	joiner := dial(t, secondURL)
+	authenticate(t, joiner, "")
+	joined := joinRoom(t, joiner, "episode-01", "proofreader")
+	if len(joined.Snapshot.Lines) != 0 || len(joined.Snapshot.Comments) != 1 || joined.Snapshot.Comments[0].Body != "Archived comment" {
+		t.Fatalf("archive snapshot was not restored: %#v", joined.Snapshot)
+	}
+	_, restored, rejected := submitBatch(t, joiner, "restore-from-archive", protocol.RestoreOperation{Op: "restore", LineID: "9K3MT7Q2CD-1"})
+	if rejected != nil || restored.Operations[0].Line == nil || *restored.Operations[0].Line.Fields.Text != "Archived text" {
+		t.Fatalf("archived tombstone was not restored: %#v %#v", restored, rejected)
+	}
+}
+
+func TestSQLiteOnlineBackupIsRecoverable(t *testing.T) {
+	directory := t.TempDir()
+	databasePath := directory + "/source.db"
+	backupPath := directory + "/backup.db"
+	params := auth.Params{Memory: 64, Iterations: 1, Parallelism: 1, SaltLength: 16, KeyLength: 32}
+	server, httpServer, url := configuredTestServer(t, Config{PasswordParams: params, DatabasePath: databasePath})
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	createRoom(t, creator, "episode-01", "translator")
+	_, _, rejected := submitBatch(t, creator, "backup-batch", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("Backed up")},
+	})
+	if rejected != nil {
+		t.Fatal(rejected)
+	}
+	if err := BackupDatabase(context.Background(), databasePath, backupPath); err != nil {
+		t.Fatal(err)
+	}
+	creator.CloseNow()
+	httpServer.Close()
+	if err := server.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := BackupDatabase(context.Background(), databasePath, backupPath); err == nil {
+		t.Fatal("backup overwrote an existing destination")
+	}
+
+	restoredServer, err := New(Config{PasswordParams: params, DatabasePath: backupPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+	restoredHTTP := httptest.NewServer(restoredServer)
+	defer func() { restoredHTTP.Close(); restoredServer.Close() }()
+	connection := dial(t, "ws"+strings.TrimPrefix(restoredHTTP.URL, "http")+"/v1/ws")
+	authenticate(t, connection, "")
+	joined := joinRoom(t, connection, "episode-01", "proofreader")
+	if *joined.Snapshot.Lines[0].Fields.Text != "Backed up" || joined.Snapshot.Lines[0].Version != 2 {
+		t.Fatalf("backup did not restore authoritative state: %#v", joined.Snapshot)
+	}
+}
+
+func TestAutomaticArchiveSkipsActiveRoomAndRestoresOnJoin(t *testing.T) {
+	server, _, url := configuredTestServer(t, Config{
+		ArchiveAfter: 50 * time.Millisecond, ArchiveSweepInterval: 5 * time.Millisecond,
+		HeartbeatTimeout: time.Second,
+	})
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	joined := createRoom(t, creator, "episode-01", "translator")
+	time.Sleep(70 * time.Millisecond)
+	server.hub.mu.Lock()
+	archivedWhileActive := server.hub.roomByID(joined.RoomID).archived
+	server.hub.mu.Unlock()
+	if archivedWhileActive {
+		t.Fatal("active room was automatically archived")
+	}
+	creator.CloseNow()
+
+	deadline := time.Now().Add(time.Second)
+	for {
+		server.hub.mu.Lock()
+		archived := server.hub.roomByID(joined.RoomID).archived
+		server.hub.mu.Unlock()
+		if archived {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("inactive room was not automatically archived")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	connection := dial(t, url)
+	authenticate(t, connection, "")
+	restored := joinRoom(t, connection, "episode-01", "proofreader")
+	if len(restored.Snapshot.Lines) != 1 || *restored.Snapshot.Lines[0].Fields.Text != "Hello" {
+		t.Fatalf("automatic archive did not restore on join: %#v", restored.Snapshot)
+	}
+}
+
+func TestStoreMigratesPreArchiveSchema(t *testing.T) {
+	databasePath := t.TempDir() + "/legacy.db"
+	database, err := sql.Open("sqlite", databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	statements := []string{
+		`CREATE TABLE rooms (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, lock_enabled INTEGER NOT NULL, revision INTEGER NOT NULL, snapshot_json BLOB NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
+		`CREATE TABLE audit_log (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id TEXT, actor_id TEXT, event_type TEXT NOT NULL, details_json BLOB NOT NULL, created_at TEXT NOT NULL)`,
+	}
+	for _, statement := range statements {
+		if _, err := database.Exec(statement); err != nil {
+			database.Close()
+			t.Fatal(err)
+		}
+	}
+	if err := database.Close(); err != nil {
+		t.Fatal(err)
+	}
+	store, err := openStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.close()
+	for _, check := range []struct{ table, column string }{{"rooms", "archived_at"}, {"rooms", "archive_blob"}, {"audit_log", "room_revision"}} {
+		rows, err := store.db.Query(`PRAGMA table_info(` + check.table + `)`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for rows.Next() {
+			var index int
+			var name, columnType string
+			var notNull, primaryKey int
+			var defaultValue any
+			if err := rows.Scan(&index, &name, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+				rows.Close()
+				t.Fatal(err)
+			}
+			found = found || name == check.column
+		}
+		rows.Close()
+		if !found {
+			t.Fatalf("migration did not add %s.%s", check.table, check.column)
+		}
 	}
 }

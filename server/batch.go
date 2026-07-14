@@ -66,6 +66,7 @@ func (hub *hub) applyBatch(ctx context.Context, roomID, actorID string, input pr
 	value.snapshot = working.snapshot
 	value.tombstones = working.tombstones
 	value.revision = working.revision
+	value.updatedAt = time.Now()
 	if value.maintenance != nil && value.maintenance.holderID == actorID {
 		value.maintenance.lastActivity = time.Now()
 	}

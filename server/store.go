@@ -46,7 +46,9 @@ func (store *sqliteStore) initialize(ctx context.Context) error {
 			revision INTEGER NOT NULL,
 			snapshot_json BLOB NOT NULL,
 			created_at TEXT NOT NULL,
-			updated_at TEXT NOT NULL
+			updated_at TEXT NOT NULL,
+			archived_at TEXT,
+			archive_blob BLOB
 		)`,
 		`CREATE TABLE IF NOT EXISTS tombstones (
 			room_id TEXT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
@@ -82,6 +84,43 @@ func (store *sqliteStore) initialize(ctx context.Context) error {
 	}
 	if err := store.ensureAuditRevisionColumn(ctx); err != nil {
 		return err
+	}
+	if err := store.ensureRoomArchiveColumns(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (store *sqliteStore) ensureRoomArchiveColumns(ctx context.Context) error {
+	rows, err := store.db.QueryContext(ctx, `PRAGMA table_info(rooms)`)
+	if err != nil {
+		return err
+	}
+	columns := make(map[string]bool)
+	for rows.Next() {
+		var index int
+		var name, columnType string
+		var notNull, primaryKey int
+		var defaultValue any
+		if err := rows.Scan(&index, &name, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+			rows.Close()
+			return err
+		}
+		columns[name] = true
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	for name, definition := range map[string]string{"archived_at": "TEXT", "archive_blob": "BLOB"} {
+		if !columns[name] {
+			if _, err := store.db.ExecContext(ctx, `ALTER TABLE rooms ADD COLUMN `+name+` `+definition); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -138,7 +177,7 @@ func (store *sqliteStore) createRoom(ctx context.Context, value *room) error {
 }
 
 func (store *sqliteStore) loadRooms(ctx context.Context) ([]*room, error) {
-	rows, err := store.db.QueryContext(ctx, `SELECT id, name, password_hash, lock_enabled, revision, snapshot_json FROM rooms ORDER BY name`)
+	rows, err := store.db.QueryContext(ctx, `SELECT id, name, password_hash, lock_enabled, revision, snapshot_json, updated_at, archived_at, archive_blob FROM rooms ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("load rooms: %w", err)
 	}
@@ -148,10 +187,18 @@ func (store *sqliteStore) loadRooms(ctx context.Context) ([]*room, error) {
 		value := &room{members: make(map[string]*member), sessions: make(map[string]*member), tombstones: make(map[string]protocol.Line), locks: make(map[string]lineLock)}
 		var lockEnabled int
 		var snapshot []byte
-		if err := rows.Scan(&value.id, &value.name, &value.passwordHash, &lockEnabled, &value.revision, &snapshot); err != nil {
+		var updatedAt string
+		var archivedAt sql.NullString
+		if err := rows.Scan(&value.id, &value.name, &value.passwordHash, &lockEnabled, &value.revision, &snapshot, &updatedAt, &archivedAt, &value.archiveBlob); err != nil {
 			return nil, err
 		}
 		value.lockEnabled = lockEnabled != 0
+		value.updatedAt, _ = time.Parse(time.RFC3339Nano, updatedAt)
+		value.archived = archivedAt.Valid
+		if value.archived {
+			rooms = append(rooms, value)
+			continue
+		}
 		if err := json.Unmarshal(snapshot, &value.snapshot); err != nil {
 			return nil, fmt.Errorf("decode room %s snapshot: %w", value.name, err)
 		}

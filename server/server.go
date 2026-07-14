@@ -31,6 +31,8 @@ type Config struct {
 	MaintenanceHardTimeout time.Duration
 	MaintenanceCancelGrace time.Duration
 	ResumeTimeout          time.Duration
+	ArchiveAfter           time.Duration
+	ArchiveSweepInterval   time.Duration
 }
 
 type Server struct {
@@ -73,6 +75,9 @@ func New(config Config) (*Server, error) {
 	if config.ResumeTimeout == 0 {
 		config.ResumeTimeout = 5 * time.Minute
 	}
+	if config.ArchiveSweepInterval == 0 {
+		config.ArchiveSweepInterval = time.Hour
+	}
 	store, err := openStore(config.DatabasePath)
 	if err != nil {
 		return nil, err
@@ -89,6 +94,10 @@ func New(config Config) (*Server, error) {
 	server.handler = mux
 	server.workers.Add(1)
 	go server.sweepExpiredState()
+	if config.ArchiveAfter > 0 {
+		server.workers.Add(1)
+		go server.sweepArchives()
+	}
 	return server, nil
 }
 
@@ -388,6 +397,20 @@ func (server *Server) sweepExpiredState() {
 			for _, connection := range staleConnections {
 				_ = connection.Close(websocket.StatusGoingAway, "heartbeat timeout")
 			}
+		case <-server.stop:
+			return
+		}
+	}
+}
+
+func (server *Server) sweepArchives() {
+	defer server.workers.Done()
+	ticker := time.NewTicker(server.config.ArchiveSweepInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case now := <-ticker.C:
+			_ = server.hub.archiveInactive(context.Background(), now, server.config.ArchiveAfter)
 		case <-server.stop:
 			return
 		}
