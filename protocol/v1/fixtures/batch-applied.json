@@ -1,0 +1,22 @@
+{
+  "protocol_version": 1,
+  "type": "batch_applied",
+  "request_id": "req-3",
+  "room_revision": 8,
+  "payload": {
+    "batch_id": "9K3MT7Q2CD-b4",
+    "actor_id": "member-1",
+    "operations": [
+      {
+        "operation": {"op": "modify", "line_id": "9K3MT7Q2CD-1", "base_version": 3, "fields": {"text": "你好"}},
+        "line": {
+          "line_id": "9K3MT7Q2CD-1",
+          "pos_key": "V",
+          "version": 4,
+          "fields": {"comment": false, "layer": 0, "start_ms": 0, "end_ms": 5000, "style": "Default", "actor": "", "effect": "", "margins": [0, 0, 0], "text": "你好"}
+        }
+      }
+    ],
+    "id_remap": {}
+  }
+}

@@ -35,6 +35,9 @@ is applied atomically.
 - `insert` and `move` name the client's known `left_id` and `right_id`. The
   server assigns the canonical `pos_key` and returns it in `batch_applied`.
 - `modify`, `delete`, and `move` carry the line version observed by the client.
+- Each entry in `batch_applied.operations` contains the normalized input
+  `operation` and, when a line remains live, its complete canonical `line`.
+  Section replacements return their new section version in the same entry.
 - Styles and Script Info are whole-section values with independent versions.
 - A failed validation rejects the complete batch with `batch_rejected`.
 - The origin client advances its confirmed shadow only from `batch_applied`,
