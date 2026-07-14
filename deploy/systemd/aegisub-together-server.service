@@ -1,0 +1,44 @@
+[Unit]
+Description=Aegisub Together collaboration server
+Documentation=https://github.com/WenHe233/Aegisub-together
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=aegisub-collab
+Group=aegisub-collab
+EnvironmentFile=/etc/aegisub-together/server.env
+StateDirectory=aegisub-together
+StateDirectoryMode=0700
+ExecStart=/usr/local/bin/aegisub-together-server serve -listen 127.0.0.1:8080 -database /var/lib/aegisub-together/collab.db -archive-days $ARCHIVE_DAYS
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=15s
+UMask=0077
+LimitNOFILE=16384
+
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/aegisub-together
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+
+[Install]
+WantedBy=multi-user.target

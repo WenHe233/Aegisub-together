@@ -1,5 +1,8 @@
 # Aegisub Together server
 
+Production Compose/Caddy and systemd examples are in the
+[collaboration deployment guide](../docs/collaboration-deployment.md).
+
 Build the server with Go 1.26.5:
 
 ```text
