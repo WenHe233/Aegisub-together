@@ -211,6 +211,11 @@ FrameMain::FrameMain()
 }
 
 FrameMain::~FrameMain () {
+#ifdef WITH_COLLABORATION
+	// The collaboration controller restores editor and banner state while it
+	// shuts down, so it must be destroyed before its child windows.
+	context->collaboration.reset();
+#endif
 	context->project->CloseAudio();
 	context->project->CloseVideo();
 
