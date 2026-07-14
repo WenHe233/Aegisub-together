@@ -595,6 +595,12 @@ void SubsEditBox::SetControlsState(bool state) {
 	}
 }
 
+void SubsEditBox::SetCollaborationEditable(bool editable) {
+	Enable(editable);
+	edit_ctrl->SetReadOnly(!editable);
+	secondary_editor->SetEditable(editable);
+}
+
 void SubsEditBox::OnSplit(wxCommandEvent&) {
 	bool show_original = split_box->IsChecked();
 	DoOnSplit(show_original);

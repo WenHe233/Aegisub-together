@@ -141,7 +141,7 @@ class CommandManager {
 		cmd::Command *c = cmd::get(item.first);
 		int flags = c->Type();
 		if (flags & cmd::COMMAND_VALIDATE) {
-			item.second->Enable(c->Validate(context));
+			item.second->Enable(cmd::validate(*c, context));
 			flags = c->Type();
 		}
 		if (flags & cmd::COMMAND_DYNAMIC_NAME)

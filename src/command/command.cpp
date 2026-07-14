@@ -16,6 +16,10 @@
 
 #include "../compat.h"
 #include "../format.h"
+#ifdef WITH_COLLABORATION
+#include "../collaboration_controller.h"
+#include "../include/aegisub/context.h"
+#endif
 
 #include <libaegisub/log.h>
 
@@ -57,9 +61,17 @@ namespace cmd {
 		return find_command(name)->second.get();
 	}
 
+	bool validate(Command& command, agi::Context *context) {
+		if (!command.Validate(context)) return false;
+#ifdef WITH_COLLABORATION
+		if (context && context->collaboration && !context->collaboration->CanRunCommand(command.name())) return false;
+#endif
+		return true;
+	}
+
 	void call(std::string const& name, agi::Context*c) {
 		Command &cmd = *find_command(name)->second;
-		if (cmd.Validate(c))
+		if (validate(cmd, c))
 			cmd(c);
 	}
 

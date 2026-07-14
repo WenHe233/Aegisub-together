@@ -4,6 +4,7 @@
 
 #include "ass_file.h"
 #include "ass_dialogue.h"
+#include "base_grid.h"
 #include "collaboration_model.h"
 #include "collaboration_transport.h"
 #include "command/command.h"
@@ -13,6 +14,7 @@
 #include "include/aegisub/context.h"
 #include "options.h"
 #include "selection_controller.h"
+#include "subs_edit_box.h"
 #include "subs_controller.h"
 
 #include <libaegisub/collaboration_room.h>
@@ -189,11 +191,24 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	bool load_snapshot_on_join = false;
 	bool applying_snapshot = false;
 	std::string active_line_id;
+	std::unordered_map<std::string, std::string> lock_holders;
+	std::vector<PresenceMember> presence;
 	std::vector<PendingBatch> rejected_batches;
 	std::deque<WireEnvelope> deferred_persistent_messages;
 	unsigned mutation_depth = 0;
 	agi::signal::Connection commit_connection;
 	agi::signal::Connection active_line_connection;
+	agi::signal::Connection selection_connection;
+
+	void update_editability() {
+		if (!context->subsEditBox) return;
+		bool editable = phase == Phase::idle || (phase == Phase::joined && !room.lock_enabled);
+		if (!editable && phase == Phase::joined && context->selectionController->GetSelectedSet().size() == 1 && !active_line_id.empty()) {
+			auto holder = lock_holders.find(active_line_id);
+			editable = holder != lock_holders.end() && holder->second == room.member_id;
+		}
+		context->subsEditBox->SetCollaborationEditable(editable);
+	}
 
 	std::string request_id(char const* prefix) {
 		return std::string(prefix) + "-" + std::to_string(next_request++);
@@ -302,11 +317,45 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	}
 
 	void on_active_line_changed(AssDialogue* line) {
-		active_line_id = line ? ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey) : std::string{};
+		auto previous = active_line_id;
+		auto next = line ? ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey) : std::string{};
+		if (previous == next) return;
+		active_line_id = std::move(next);
+		update_editability();
+		if (phase != Phase::joined) return;
+		if (!previous.empty()) send("lock_release", EncodeLineReference(previous));
+		if (!active_line_id.empty()) send("lock_request", EncodeLineReference(active_line_id));
+	}
+
+	void on_selection_changed() { update_editability(); }
+
+	void handle_lock_state(WireEnvelope const& envelope) {
+		auto state = DecodeLockState(envelope.payload_json);
+		if (state.holder_id) lock_holders[state.line_id] = *state.holder_id;
+		else lock_holders.erase(state.line_id);
+		update_editability();
+		if (context->subsGrid) context->subsGrid->Refresh(false);
+		if (state.line_id == active_line_id && state.holder_id && *state.holder_id != room.member_id && state.holder_name)
+			context->frame->StatusTimeout(fmt_tl("Line is read-only: locked by %s", *state.holder_name));
+		if (room.lock_enabled && state.line_id == active_line_id && !state.holder_id && phase == Phase::joined)
+			send("lock_request", EncodeLineReference(active_line_id));
+	}
+
+	void handle_presence(WireEnvelope const& envelope) {
+		presence = DecodePresence(envelope.payload_json);
+		if (context->subsGrid) context->subsGrid->Refresh(false);
 	}
 
 	void handle_applied_batch(WireEnvelope const& envelope) {
 		auto batch = DecodeAppliedBatch(envelope.payload_json);
+		if (batch.actor_id == room.member_id && room.lock_enabled) {
+			for (auto const& operation : batch.operations) {
+				if (operation.operation.kind == OperationKind::Insert || operation.operation.kind == OperationKind::Restore)
+					lock_holders[operation.operation.line_id] = room.member_id;
+				else if (operation.operation.kind == OperationKind::Delete)
+					lock_holders.erase(operation.operation.line_id);
+			}
+		}
 		auto result = sync.ApplyBatch(batch, envelope.room_revision, room.member_id);
 		revision = sync.Revision();
 		if (result.status == SyncApplyStatus::revision_gap) {
@@ -320,6 +369,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			return;
 		}
 		if (result.document_changed) apply_projected_snapshot(batch.id_remap);
+		update_editability();
 	}
 
 	void handle_rejected_batch(WireEnvelope const& envelope) {
@@ -375,6 +425,11 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		input.mode = RoomMode::join;
 		load_snapshot_on_join = false;
 		phase = Phase::joined;
+		if (auto* active = context->selectionController->GetActiveLine()) {
+			active_line_id = ass::GetMetadataValue(*context->ass, active->ExtradataIds.get(), IdExtradataKey);
+		}
+		update_editability();
+		if (!active_line_id.empty()) send("lock_request", EncodeLineReference(active_line_id));
 		last_heartbeat = std::chrono::steady_clock::now();
 		persist_credentials();
 		context->frame->StatusTimeout(fmt_tl("Connected to collaboration room %s as %s", input.room_name, input.nickname));
@@ -396,6 +451,8 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			else if (envelope.type == "batch_applied" && phase == Phase::joined) handle_applied_batch(envelope);
 			else if (envelope.type == "batch_rejected" && phase == Phase::joined) handle_rejected_batch(envelope);
 			else if (envelope.type == "snapshot_state" && phase == Phase::joined) handle_snapshot_state(envelope);
+			else if (envelope.type == "lock_state" && phase == Phase::joined) handle_lock_state(envelope);
+			else if (envelope.type == "presence" && phase == Phase::joined) handle_presence(envelope);
 			else if (envelope.type == "error") {
 				auto error = DecodeProtocolError(envelope.payload_json);
 				fail_protocol(error.message.empty() ? error.code : error.message);
@@ -415,6 +472,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			else if (event->state == TransportState::connecting) {
 				if (phase == Phase::joined) load_snapshot_on_join = true;
 				phase = Phase::connecting;
+				update_editability();
 			}
 			else if (event->state == TransportState::retry_wait) context->frame->StatusTimeout(_("Collaboration connection lost; retrying..."));
 		}
@@ -464,6 +522,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		room = RoomJoined{};
 		revision = 0;
 		phase = Phase::connecting;
+		update_editability();
 		transport.Start({input.server_url});
 		timer.Start(50);
 		context->frame->StatusTimeout(_("Connecting to collaboration server..."));
@@ -476,6 +535,7 @@ public:
 	, allocator(load_allocator())
 	, commit_connection(context->ass->AddCommitListener(&Impl::on_local_commit, this))
 	, active_line_connection(context->selectionController->AddActiveLineListener(&Impl::on_active_line_changed, this))
+	, selection_connection(context->selectionController->AddSelectionListener(&Impl::on_selection_changed, this))
 	{
 		Bind(wxEVT_TIMER, &Impl::on_timer, this);
 	}
@@ -493,6 +553,39 @@ public:
 			handle_message(message);
 		}
 	}
+	bool can_run_command(std::string const& name) const {
+		if (phase != Phase::joined || !room.lock_enabled) return true;
+		auto starts = [&](char const* prefix) { return name.compare(0, std::char_traits<char>::length(prefix), prefix) == 0; };
+		if (name == "edit/line/copy" || name == "grid/line/next" || name == "grid/line/prev" ||
+			name == "time/next" || name == "time/prev" || starts("grid/fold/") || starts("grid/tag")) return true;
+		if (name == "edit/undo" || name == "edit/redo" || name == "edit/find_replace" ||
+			starts("automation/") || name == "time/shift" || name == "time/continuous/start" ||
+			name == "time/continuous/end" || name == "tool/resampleres" || name == "tool/time/postprocess" ||
+			name == "tool/time/kanji") return false;
+		bool mutation = starts("edit/") || starts("time/") || starts("visual/") || starts("subtitle/insert/") ||
+			starts("grid/move/") || starts("grid/sort/") || name == "grid/swap" || name == "grid/line/next/create" ||
+			name == "tool/styling_assistant/commit" || name == "tool/translation_assistant/commit" ||
+			name == "tool/translation_assistant/insert_original";
+		if (!mutation) return true;
+		auto const& selection = context->selectionController->GetSelectedSet();
+		if (selection.size() != 1) return false;
+		auto* line = *selection.begin();
+		auto id = ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey);
+		auto holder = lock_holders.find(id);
+		return holder != lock_holders.end() && holder->second == room.member_id;
+	}
+	int line_lock_state(AssDialogue const* line) const {
+		if (phase != Phase::joined || !line) return 0;
+		auto id = ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey);
+		if (room.lock_enabled) {
+			auto holder = lock_holders.find(id);
+			if (holder == lock_holders.end()) return 0;
+			return holder->second == room.member_id ? 1 : 2;
+		}
+		for (auto const& member : presence)
+			if (member.line_id && *member.line_id == id) return member.member_id == room.member_id ? 1 : 2;
+		return 0;
+	}
 
 	void disconnect() {
 		timer.Stop();
@@ -504,11 +597,14 @@ public:
 		room = RoomJoined{};
 		sync = SyncState{};
 		rejected_batches.clear();
+		lock_holders.clear();
+		presence.clear();
 		deferred_persistent_messages.clear();
 		mutation_depth = 0;
 		active_line_id.clear();
 		phase = Phase::idle;
 		revision = 0;
+		update_editability();
 	}
 
 	bool running() const { return phase != Phase::idle; }
@@ -524,5 +620,7 @@ bool CollaborationController::IsRunning() const { return impl->running(); }
 bool CollaborationController::IsJoined() const { return impl->joined(); }
 void CollaborationController::BeginMutationGuard() { impl->begin_mutation(); }
 void CollaborationController::EndMutationGuard() { impl->end_mutation(); }
+bool CollaborationController::CanRunCommand(std::string const& command_name) const { return impl->can_run_command(command_name); }
+int CollaborationController::LineLockState(AssDialogue const* line) const { return impl->line_lock_state(line); }
 
 } }

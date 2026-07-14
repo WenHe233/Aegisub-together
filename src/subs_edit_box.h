@@ -203,6 +203,9 @@ class SubsEditBox final : public wxPanel {
 	wxTextCtrl *secondary_editor;
 
 public:
+	/// Make mutation controls read-only while a collaboration lock is unavailable.
+	void SetCollaborationEditable(bool editable);
+
 	/// @brief Constructor
 	/// @param parent Parent window
 	SubsEditBox(wxWindow *parent, agi::Context *context);

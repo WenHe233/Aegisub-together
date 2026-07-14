@@ -5,6 +5,8 @@
 #include <libaegisub/collaboration.h>
 
 #include <string>
+#include <optional>
+#include <vector>
 
 namespace agi { namespace collab {
 
@@ -37,10 +39,28 @@ struct ProtocolError {
 	bool retryable = false;
 };
 
+struct LockStateMessage {
+	std::string line_id;
+	std::string requester_id;
+	bool granted = false;
+	std::optional<std::string> holder_id;
+	std::optional<std::string> holder_name;
+	std::int64_t expires_in_ms = 0;
+};
+
+struct PresenceMember {
+	std::string member_id;
+	std::string nickname;
+	std::optional<std::string> line_id;
+};
+
 std::string EncodeAccessAuth(std::string const& password);
 std::string EncodeCreateRoom(CreateRoomRequest const& request);
 std::string EncodeJoinRoom(JoinRoomRequest const& request);
 RoomJoined DecodeRoomJoined(std::string const& payload_json);
 ProtocolError DecodeProtocolError(std::string const& payload_json);
+std::string EncodeLineReference(std::string const& line_id);
+LockStateMessage DecodeLockState(std::string const& payload_json);
+std::vector<PresenceMember> DecodePresence(std::string const& payload_json);
 
 } }

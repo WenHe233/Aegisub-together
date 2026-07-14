@@ -62,7 +62,7 @@ ToggleBitmap::ToggleBitmap(wxWindow *parent, agi::Context *context, const char *
 }
 
 void ToggleBitmap::OnMouseEvent(wxMouseEvent &) {
-	if (command.Validate(context))
+	if (cmd::validate(command, context))
 		command(context);
 	Refresh(false);
 }

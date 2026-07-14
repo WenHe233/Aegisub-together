@@ -164,6 +164,9 @@ DEFINE_EXCEPTION(CommandNotFound, CommandError);
 	/// @param Command object.
 	Command* get(std::string const& name);
 
+	/// Apply both the command's normal validation and collaboration mutation gates.
+	bool validate(Command& command, agi::Context *context);
+
 	/// Get a list of registered command names
 	std::vector<std::string> get_registered_commands();
 

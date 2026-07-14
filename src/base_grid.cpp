@@ -37,6 +37,9 @@
 #include "ass_file.h"
 #include "audio_box.h"
 #include "compat.h"
+#ifdef WITH_COLLABORATION
+#include "collaboration_controller.h"
+#endif
 #include "fold_controller.h"
 #include "grid_column.h"
 #include "options.h"
@@ -403,6 +406,17 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 				columns[j]->Paint(dc, x, y, curDiag, context);
 			x += columns[j]->Width();
 		}
+
+#ifdef WITH_COLLABORATION
+		if (context->collaboration) {
+			int lock_state = context->collaboration->LineLockState(curDiag);
+			if (lock_state) {
+				dc.SetPen(*wxTRANSPARENT_PEN);
+				dc.SetBrush(lock_state == 1 ? wxColour(46, 160, 67) : wxColour(210, 60, 60));
+				dc.DrawCircle(4, y + lineHeight / 2, 3);
+			}
+		}
+#endif
 
 		// Draw grid
 		dc.SetPen(grid_pen);

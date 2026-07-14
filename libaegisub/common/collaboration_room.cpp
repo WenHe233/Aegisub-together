@@ -124,6 +124,18 @@ std::string encode_object(json::Object object) {
 	json::UnknownElement root(std::move(object));
 	return write(root);
 }
+
+std::optional<std::string> optional_nullable_string(json::Object const& object, char const* name) {
+	auto value = object.find(name);
+	if (value == object.end()) return std::nullopt;
+	try {
+		static_cast<void>(static_cast<json::Null const&>(value->second));
+		return std::nullopt;
+	}
+	catch (json::Exception const&) {
+		return static_cast<json::String const&>(value->second);
+	}
+}
 }
 
 std::string EncodeAccessAuth(std::string const& password) {
@@ -173,6 +185,45 @@ ProtocolError DecodeProtocolError(std::string const& payload_json) {
 	error.message = static_cast<json::String const&>(required(object, "message"));
 	error.retryable = static_cast<json::Boolean const&>(required(object, "retryable"));
 	return error;
+}
+
+std::string EncodeLineReference(std::string const& line_id) {
+	if (!IsValidLineId(line_id)) throw std::invalid_argument("invalid collaboration line reference");
+	json::Object object;
+	object["line_id"] = line_id;
+	return encode_object(std::move(object));
+}
+
+LockStateMessage DecodeLockState(std::string const& payload_json) {
+	auto root = parse(payload_json);
+	auto const& object = static_cast<json::Object const&>(root);
+	LockStateMessage state;
+	state.line_id = static_cast<json::String const&>(required(object, "line_id"));
+	state.requester_id = static_cast<json::String const&>(required(object, "requester_id"));
+	state.granted = static_cast<json::Boolean const&>(required(object, "granted"));
+	state.holder_id = optional_nullable_string(object, "holder_id");
+	state.holder_name = optional_nullable_string(object, "holder_name");
+	state.expires_in_ms = static_cast<json::Integer const&>(required(object, "expires_in_ms"));
+	if (!IsValidLineId(state.line_id) || state.requester_id.empty() || state.expires_in_ms < 0)
+		throw std::invalid_argument("invalid collaboration lock state");
+	return state;
+}
+
+std::vector<PresenceMember> DecodePresence(std::string const& payload_json) {
+	auto root = parse(payload_json);
+	auto const& object = static_cast<json::Object const&>(root);
+	std::vector<PresenceMember> members;
+	for (auto const& item : static_cast<json::Array const&>(required(object, "members"))) {
+		auto const& encoded = static_cast<json::Object const&>(item);
+		PresenceMember member;
+		member.member_id = static_cast<json::String const&>(required(encoded, "member_id"));
+		member.nickname = static_cast<json::String const&>(required(encoded, "nickname"));
+		member.line_id = optional_nullable_string(encoded, "line_id");
+		if (member.member_id.empty() || member.nickname.empty() || (member.line_id && !IsValidLineId(*member.line_id)))
+			throw std::invalid_argument("invalid collaboration presence member");
+		members.push_back(std::move(member));
+	}
+	return members;
 }
 
 } }

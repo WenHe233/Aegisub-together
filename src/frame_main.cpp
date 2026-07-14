@@ -221,7 +221,7 @@ void FrameMain::InitContents() {
 	context->audioBox = audioBox = new AudioBox(Panel, context.get());
 
 	StartupLog("Create subtitle editing box");
-	auto EditBox = new SubsEditBox(Panel, context.get());
+	auto EditBox = context->subsEditBox = new SubsEditBox(Panel, context.get());
 
 	StartupLog("Arrange main sizers");
 	ToolsSizer = new wxBoxSizer(wxVERTICAL);

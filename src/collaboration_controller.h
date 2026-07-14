@@ -3,6 +3,9 @@
 #pragma once
 
 #include <memory>
+#include <string>
+
+class AssDialogue;
 
 namespace agi {
 struct Context;
@@ -24,6 +27,9 @@ public:
 	bool IsJoined() const;
 	void BeginMutationGuard();
 	void EndMutationGuard();
+	bool CanRunCommand(std::string const& command_name) const;
+	/// 0 = none, 1 = owned by this client, 2 = held/present remotely.
+	int LineLockState(AssDialogue const* line) const;
 };
 
 }

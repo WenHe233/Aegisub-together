@@ -28,6 +28,7 @@ class SearchReplaceEngine;
 class InitialLineState;
 class SelectionController;
 class FoldController;
+class SubsEditBox;
 class SubsController;
 class BaseGrid;
 class TextSelectionController;
@@ -68,6 +69,7 @@ struct Context {
 
 	// Views (i.e. things that should eventually not be here at all)
 	AudioBox *audioBox = nullptr;
+	SubsEditBox *subsEditBox = nullptr;
 	AudioKaraoke *karaoke = nullptr;
 	BaseGrid *subsGrid = nullptr;
 	std::unique_ptr<DialogManager> dialog;

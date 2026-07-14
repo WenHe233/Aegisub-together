@@ -46,3 +46,16 @@ TEST(collaboration_room, decodes_server_room_snapshot_and_ignores_future_fields)
 TEST(collaboration_room, rejects_incomplete_snapshot) {
 	EXPECT_THROW(DecodeRoomJoined(R"({"room_id":"room-1"})"), std::exception);
 }
+
+TEST(collaboration_room, encodes_line_references_and_decodes_lock_presence) {
+	auto reference = EncodeLineReference("9K3MT7Q2CD-1");
+	EXPECT_NE(std::string::npos, reference.find("9K3MT7Q2CD-1"));
+	auto lock = DecodeLockState(R"({"line_id":"9K3MT7Q2CD-1","requester_id":"member-2","granted":false,"holder_id":"member-1","holder_name":"translator","expires_in_ms":59000})");
+	ASSERT_TRUE(lock.holder_id);
+	EXPECT_EQ("member-1", *lock.holder_id);
+	EXPECT_EQ("translator", *lock.holder_name);
+	auto presence = DecodePresence(R"({"members":[{"member_id":"member-1","nickname":"translator","line_id":"9K3MT7Q2CD-1","last_seen":"2026-07-14T00:00:00Z"},{"member_id":"member-2","nickname":"proofreader","line_id":null,"last_seen":"2026-07-14T00:00:00Z"}]})");
+	ASSERT_EQ(2u, presence.size());
+	EXPECT_EQ("9K3MT7Q2CD-1", *presence[0].line_id);
+	EXPECT_FALSE(presence[1].line_id);
+}
