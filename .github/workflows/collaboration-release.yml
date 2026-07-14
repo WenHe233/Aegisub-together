@@ -85,7 +85,7 @@ jobs:
         shell: pwsh
         run: |
           choco install ninja innosetup --no-progress
-          python -m pip install --upgrade pip setuptools meson
+          python -m pip install --upgrade pip setuptools meson==1.11.2
 
           $moonscriptUrl = "https://github.com/leafo/moonscript/releases/download/win32-v0.5.0/moonscript-187bac54ee5a7450013e9c38e005a0e671b76f45.zip"
           New-Item -ItemType Directory -Path moonscript | Out-Null
