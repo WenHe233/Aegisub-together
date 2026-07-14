@@ -1,3 +1,25 @@
+<p align="center">
+  <img src="docs/assets/aegisub-together-logo.png" alt="Aegisub Together 标志" width="640">
+</p>
+
+# Aegisub Together
+
+Aegisub Together 是基于 arch1t3cht Aegisub 分支开发的在线协作字幕编辑版本。它保留原有 Aegisub 的单机编辑体验，并为 Windows 客户端增加自托管房间、实时字幕同步、行锁、成员在线状态、维护模式、协作撤销/重做、离线编辑对账以及行批注与修改建议。
+
+协作服务端使用 Go 编写，通过 WebSocket 与客户端通信，并使用 SQLite 持久化房间、字幕快照、操作日志、墓碑和审计记录。首版同步 Dialogue、Styles、Script Info 以及协作所需的 Extradata；视频、字体、图片附件和本机项目状态仍由每位成员在本地管理。
+
+> 当前项目处于 `v0.1.0` 发布前的开发与验收阶段。协作客户端首版仅承诺 Windows；未启用协作功能时，Aegisub 继续保持原有单机行为。
+
+## 协作文档
+
+- [协作架构与协议规格](aegisub-collab-spec.md)
+- [实施计划](docs/aegisub-collab-implementation-plan.md)
+- [服务端部署指南](docs/collaboration-deployment.md)
+
+---
+
+# 原 arch1t3cht 分支 README
+
 ## arch1t3cht's Aegisub "fork"
 Download release builds [here](https://github.com/arch1t3cht/Aegisub/releases), or the latest CI builds [here](https://github.com/arch1t3cht/Aegisub/actions?query=branch%3Afeature+event%3Apush).
 
