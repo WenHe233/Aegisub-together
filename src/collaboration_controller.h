@@ -36,6 +36,10 @@ public:
 	void ForceMaintenanceCancel();
 	bool MaintenanceActive() const;
 	bool MaintenanceOwned() const;
+	bool CanCollaborativeUndo() const;
+	bool CanCollaborativeRedo() const;
+	void CollaborativeUndo();
+	void CollaborativeRedo();
 };
 
 }

@@ -194,6 +194,11 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	std::unordered_map<std::string, std::string> lock_holders;
 	std::vector<PresenceMember> presence;
 	MaintenanceStateMessage maintenance;
+	struct HistoryEntry { Snapshot undo_target; Snapshot redo_target; Snapshot expected; };
+	struct HistoryAction { std::string batch_id; bool undo = true; };
+	std::vector<HistoryEntry> undo_history;
+	std::vector<HistoryEntry> redo_history;
+	std::optional<HistoryAction> history_action;
 	std::vector<PendingBatch> rejected_batches;
 	std::deque<WireEnvelope> deferred_persistent_messages;
 	unsigned mutation_depth = 0;
@@ -368,6 +373,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	void handle_applied_batch(WireEnvelope const& envelope) {
 		auto batch = DecodeAppliedBatch(envelope.payload_json);
+		auto before = sync.Confirmed().snapshot;
 		if (batch.actor_id == room.member_id && room.lock_enabled) {
 			for (auto const& operation : batch.operations) {
 				if (operation.operation.kind == OperationKind::Insert || operation.operation.kind == OperationKind::Restore)
@@ -377,6 +383,29 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			}
 		}
 		auto result = sync.ApplyBatch(batch, envelope.room_revision, room.member_id);
+		if (result.own_batch_confirmed) {
+			auto after = sync.Confirmed().snapshot;
+			if (history_action && history_action->batch_id == batch.batch_id) {
+				if (history_action->undo && !undo_history.empty()) {
+					auto entry = std::move(undo_history.back());
+					undo_history.pop_back();
+					entry.expected = after;
+					redo_history.push_back(std::move(entry));
+				}
+				else if (!history_action->undo && !redo_history.empty()) {
+					auto entry = std::move(redo_history.back());
+					redo_history.pop_back();
+					entry.expected = after;
+					undo_history.push_back(std::move(entry));
+				}
+				history_action.reset();
+			}
+			else {
+				undo_history.push_back({std::move(before), after, after});
+				if (undo_history.size() > 100) undo_history.erase(undo_history.begin());
+				redo_history.clear();
+			}
+		}
 		revision = sync.Revision();
 		if (result.status == SyncApplyStatus::revision_gap) {
 			context->frame->StatusTimeout(_("Collaboration revision gap detected; refreshing room snapshot..."));
@@ -403,6 +432,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 				_("Collaboration recovery failed"), wxOK | wxICON_ERROR, context->parent);
 		}
 		auto removed = sync.RejectBatch(rejection);
+		if (history_action && history_action->batch_id == rejection.batch_id) history_action.reset();
 		rejected_batches.insert(rejected_batches.end(), removed.begin(), removed.end());
 		revision = (std::max)(revision, envelope.room_revision);
 		context->frame->StatusTimeout(to_wx("Collaboration batch rejected: " + rejection.message));
@@ -591,7 +621,9 @@ public:
 		auto starts = [&](char const* prefix) { return name.compare(0, std::char_traits<char>::length(prefix), prefix) == 0; };
 		if (name == "edit/line/copy" || name == "grid/line/next" || name == "grid/line/prev" ||
 			name == "time/next" || name == "time/prev" || starts("grid/fold/") || starts("grid/tag")) return true;
-		if (name == "edit/undo" || name == "edit/redo" || name == "edit/find_replace" ||
+		if (name == "edit/undo") return can_collaborative_undo();
+		if (name == "edit/redo") return can_collaborative_redo();
+		if (name == "edit/find_replace" ||
 			starts("automation/") || name == "time/shift" || name == "time/continuous/start" ||
 			name == "time/continuous/end" || name == "tool/resampleres" || name == "tool/time/postprocess" ||
 			name == "tool/time/kanji") return false;
@@ -625,6 +657,40 @@ public:
 	void force_maintenance_cancel() { if (phase == Phase::joined) send("maintenance_cancel_force", "{}"); }
 	bool maintenance_active() const { return phase == Phase::joined && maintenance.active; }
 	bool maintenance_owned() const { return maintenance_active() && maintenance.holder_id && *maintenance.holder_id == room.member_id; }
+	bool can_collaborative_undo() const { return phase == Phase::joined && !history_action && sync.Pending().empty() && !undo_history.empty(); }
+	bool can_collaborative_redo() const { return phase == Phase::joined && !history_action && sync.Pending().empty() && !redo_history.empty(); }
+	void apply_history(bool undo) {
+		auto& source = undo ? undo_history : redo_history;
+		if (source.empty() || history_action || !sync.Pending().empty()) return;
+		auto const& entry = source.back();
+		auto const& target = undo ? entry.undo_target : entry.redo_target;
+		std::string error;
+		auto operations = BuildSelectiveTransition(sync.Confirmed(), entry.expected, target, &error);
+		if (operations.empty()) {
+			context->frame->StatusTimeout(to_wx("Collaborative undo/redo refused: " + (error.empty() ? std::string("nothing can be changed safely") : error)));
+			return;
+		}
+		if (!maintenance_owned() && room.lock_enabled) {
+			for (auto const& operation : operations) {
+				if (operation.kind == OperationKind::Restore || operation.kind == OperationKind::Insert ||
+					operation.kind == OperationKind::ReplaceStyles || operation.kind == OperationKind::ReplaceScriptInfo) continue;
+				auto holder = lock_holders.find(operation.line_id);
+				if (holder == lock_holders.end() || holder->second != room.member_id) {
+					context->frame->StatusTimeout(_("Collaborative undo/redo refused because a target line is not locked by you."));
+					return;
+				}
+			}
+		}
+		DocumentState target_state = sync.Confirmed();
+		if (!ApplyOperations(target_state, operations, &error)) {
+			context->frame->StatusTimeout(to_wx("Collaborative undo/redo refused: " + error));
+			return;
+		}
+		auto batch = sync.QueueLocalSnapshot(mint_batch_id(), target_state.snapshot);
+		history_action = HistoryAction{batch.batch_id, undo};
+		send("submit_batch", EncodeSubmitBatch(batch));
+		apply_projected_snapshot();
+	}
 
 	void disconnect() {
 		timer.Stop();
@@ -639,6 +705,9 @@ public:
 		lock_holders.clear();
 		presence.clear();
 		maintenance = MaintenanceStateMessage{};
+		undo_history.clear();
+		redo_history.clear();
+		history_action.reset();
 		deferred_persistent_messages.clear();
 		mutation_depth = 0;
 		active_line_id.clear();
@@ -669,5 +738,9 @@ void CollaborationController::RequestMaintenanceCancel() { impl->request_mainten
 void CollaborationController::ForceMaintenanceCancel() { impl->force_maintenance_cancel(); }
 bool CollaborationController::MaintenanceActive() const { return impl->maintenance_active(); }
 bool CollaborationController::MaintenanceOwned() const { return impl->maintenance_owned(); }
+bool CollaborationController::CanCollaborativeUndo() const { return impl->can_collaborative_undo(); }
+bool CollaborationController::CanCollaborativeRedo() const { return impl->can_collaborative_redo(); }
+void CollaborationController::CollaborativeUndo() { impl->apply_history(true); }
+void CollaborationController::CollaborativeRedo() { impl->apply_history(false); }
 
 } }

@@ -440,4 +440,71 @@ std::vector<Operation> DiffSnapshots(DocumentState const& confirmed, Snapshot co
 	return operations;
 }
 
+std::vector<Operation> BuildSelectiveTransition(DocumentState const& current, Snapshot const& expected,
+	Snapshot const& desired, std::string* error) {
+	auto locate = [](std::vector<Line> const& lines, std::string const& id) -> Line const* {
+		for (auto const& line : lines) if (line.id == id) return &line;
+		return nullptr;
+	};
+	std::unordered_set<std::string> ids;
+	std::unordered_set<std::string> expected_ids;
+	std::unordered_set<std::string> desired_ids;
+	for (auto const& line : expected.lines) { ids.insert(line.id); expected_ids.insert(line.id); }
+	for (auto const& line : desired.lines) { ids.insert(line.id); desired_ids.insert(line.id); }
+	auto adjacency = [&](std::vector<Line> const& lines, std::unordered_set<std::string> const& other_ids) {
+		std::vector<std::string> common;
+		for (auto const& line : lines) if (other_ids.count(line.id)) common.push_back(line.id);
+		std::unordered_map<std::string, std::pair<std::string, std::string>> result;
+		for (std::size_t index = 0; index < common.size(); ++index)
+			result[common[index]] = {index ? common[index - 1] : std::string{}, index + 1 < common.size() ? common[index + 1] : std::string{}};
+		return result;
+	};
+	auto expected_adjacency = adjacency(expected.lines, desired_ids);
+	auto desired_adjacency = adjacency(desired.lines, expected_ids);
+	std::unordered_set<std::string> changed;
+	for (auto const& id : ids) {
+		auto before = locate(expected.lines, id);
+		auto after = locate(desired.lines, id);
+		bool reordered = before && after && expected_adjacency[id] != desired_adjacency[id];
+		if (!before || !after || before->fields != after->fields || reordered) changed.insert(id);
+	}
+	for (auto const& id : changed) {
+		auto expected_line = locate(expected.lines, id);
+		auto current_line = locate(current.snapshot.lines, id);
+		if (!!expected_line != !!current_line || (expected_line && current_line->version != expected_line->version)) {
+			set_error(error, "line changed after the collaborative batch was confirmed");
+			return {};
+		}
+	}
+	if (expected.styles != desired.styles && current.snapshot.styles_version != expected.styles_version) {
+		set_error(error, "styles changed after the collaborative batch was confirmed");
+		return {};
+	}
+	if (expected.script_info != desired.script_info && current.snapshot.script_info_version != expected.script_info_version) {
+		set_error(error, "script info changed after the collaborative batch was confirmed");
+		return {};
+	}
+	Snapshot target = current.snapshot;
+	for (auto const& id : changed) {
+		auto target_index = find_line(target.lines, id);
+		auto desired_line = locate(desired.lines, id);
+		if (!desired_line) {
+			if (target_index < target.lines.size()) target.lines.erase(target.lines.begin() + target_index);
+		}
+		else if (target_index < target.lines.size()) {
+			target.lines[target_index].fields = desired_line->fields;
+			target.lines[target_index].position = desired_line->position;
+		}
+		else target.lines.push_back(*desired_line);
+	}
+	std::sort(target.lines.begin(), target.lines.end(), [](Line const& left, Line const& right) { return left.position < right.position; });
+	if (expected.styles != desired.styles) target.styles = desired.styles;
+	if (expected.script_info != desired.script_info) target.script_info = desired.script_info;
+	try { return DiffSnapshots(current, target); }
+	catch (std::exception const& exception) {
+		set_error(error, exception.what());
+		return {};
+	}
+}
+
 } }

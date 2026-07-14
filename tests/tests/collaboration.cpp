@@ -175,6 +175,39 @@ TEST(collaboration_apply, rejects_entire_operation_batch_atomically) {
 	EXPECT_EQ(1, state.snapshot.lines[0].version);
 }
 
+TEST(collaboration_undo, selective_transition_preserves_unrelated_remote_changes) {
+	DocumentState current;
+	current.snapshot.styles = {"Style: Default,Arial,48"};
+	current.snapshot.lines = {make_line("9K3MT7Q2CD-1", "local after"), make_line("9K3MT7Q2CD-2", "remote after")};
+	ReindexPositions(current.snapshot.lines);
+	current.snapshot.lines[0].version = 2;
+	current.snapshot.lines[1].version = 4;
+	Snapshot expected = current.snapshot;
+	Snapshot desired = expected;
+	desired.lines[0].fields.text = "local before";
+	std::string error;
+	auto operations = BuildSelectiveTransition(current, expected, desired, &error);
+	ASSERT_EQ(1u, operations.size()) << error;
+	ASSERT_TRUE(ApplyOperations(current, operations));
+	EXPECT_EQ("local before", current.snapshot.lines[0].fields.text);
+	EXPECT_EQ("remote after", current.snapshot.lines[1].fields.text);
+}
+
+TEST(collaboration_undo, selective_transition_rejects_changed_target_version) {
+	DocumentState current;
+	current.snapshot.styles = {"Style: Default,Arial,48"};
+	current.snapshot.lines = {make_line("9K3MT7Q2CD-1", "someone else changed it")};
+	ReindexPositions(current.snapshot.lines);
+	current.snapshot.lines[0].version = 3;
+	Snapshot expected = current.snapshot;
+	expected.lines[0].version = 2;
+	Snapshot desired = expected;
+	desired.lines[0].fields.text = "before";
+	std::string error;
+	EXPECT_TRUE(BuildSelectiveTransition(current, expected, desired, &error).empty());
+	EXPECT_FALSE(error.empty());
+}
+
 TEST(collaboration_order, ten_thousand_dense_insertions_remain_strictly_ordered) {
 	DocumentState state;
 	state.snapshot.lines = {make_line("9K3MT7Q2CD-1", "left"), make_line("9K3MT7Q2CD-2", "right")};

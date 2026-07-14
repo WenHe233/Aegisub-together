@@ -123,6 +123,10 @@ struct SanitizeResult {
 SanitizeResult SanitizeMetadata(std::vector<MetadataLine>& lines, IdAllocator& allocator, SanitizeContext const& context);
 
 std::vector<Operation> DiffSnapshots(DocumentState const& confirmed, Snapshot const& projected);
+/// Build a selective transition for collaborative undo/redo. Only entities which differ
+/// between expected and desired are changed; unrelated current remote changes are retained.
+std::vector<Operation> BuildSelectiveTransition(DocumentState const& current, Snapshot const& expected,
+	Snapshot const& desired, std::string* error = nullptr);
 bool ApplyOperation(DocumentState& state, Operation const& operation, std::string* error = nullptr);
 bool ApplyOperations(DocumentState& state, std::vector<Operation> const& operations, std::string* error = nullptr);
 

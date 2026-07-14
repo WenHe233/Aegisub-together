@@ -36,6 +36,9 @@
 #include "../ass_karaoke.h"
 #include "../ass_style.h"
 #include "../compat.h"
+#ifdef WITH_COLLABORATION
+#include "../collaboration_controller.h"
+#endif
 #include "../dialog_search_replace.h"
 #include "../dialogs.h"
 #include "../format.h"
@@ -1159,21 +1162,33 @@ struct edit_redo final : public Command {
 	CMD_TYPE(COMMAND_VALIDATE | COMMAND_DYNAMIC_NAME)
 
 	wxString StrMenu(const agi::Context *c) const override {
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined()) return c->collaboration->CanCollaborativeRedo() ? _("&Redo collaborative change") : _("Nothing to redo");
+#endif
 		return c->subsController->IsRedoStackEmpty() ?
 			_("Nothing to &redo") :
 			fmt_tl("&Redo %s", c->subsController->GetRedoDescription());
 	}
 	wxString StrDisplay(const agi::Context *c) const override {
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined()) return c->collaboration->CanCollaborativeRedo() ? _("Redo collaborative change") : _("Nothing to redo");
+#endif
 		return c->subsController->IsRedoStackEmpty() ?
 			_("Nothing to redo") :
 			fmt_tl("Redo %s", c->subsController->GetRedoDescription());
 	}
 
 	bool Validate(const agi::Context *c) override {
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined()) return c->collaboration->CanCollaborativeRedo();
+#endif
 		return !c->subsController->IsRedoStackEmpty();
 	}
 
 	void operator()(agi::Context *c) override {
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined()) { c->collaboration->CollaborativeRedo(); return; }
+#endif
 		c->subsController->Redo();
 	}
 };
@@ -1185,21 +1200,33 @@ struct edit_undo final : public Command {
 	CMD_TYPE(COMMAND_VALIDATE | COMMAND_DYNAMIC_NAME)
 
 	wxString StrMenu(const agi::Context *c) const override {
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined()) return c->collaboration->CanCollaborativeUndo() ? _("&Undo collaborative change") : _("Nothing to undo");
+#endif
 		return c->subsController->IsUndoStackEmpty() ?
 			_("Nothing to &undo") :
 			fmt_tl("&Undo %s", c->subsController->GetUndoDescription());
 	}
 	wxString StrDisplay(const agi::Context *c) const override {
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined()) return c->collaboration->CanCollaborativeUndo() ? _("Undo collaborative change") : _("Nothing to undo");
+#endif
 		return c->subsController->IsUndoStackEmpty() ?
 			_("Nothing to undo") :
 			fmt_tl("Undo %s", c->subsController->GetUndoDescription());
 	}
 
 	bool Validate(const agi::Context *c) override {
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined()) return c->collaboration->CanCollaborativeUndo();
+#endif
 		return !c->subsController->IsUndoStackEmpty();
 	}
 
 	void operator()(agi::Context *c) override {
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined()) { c->collaboration->CollaborativeUndo(); return; }
+#endif
 		c->subsController->Undo();
 	}
 };
