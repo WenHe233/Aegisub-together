@@ -11,8 +11,6 @@ Aegisub Together 是基于 arch1t3cht Aegisub 分支开发的在线协作字幕�
 
 协作服务端使用 Go 编写，通过 WebSocket 与客户端通信，并使用 SQLite 持久化房间、字幕快照、操作日志、墓碑和审计记录。首版同步 Dialogue、Styles、Script Info 以及协作所需的 Extradata；视频、字体、图片附件和本机项目状态仍由每位成员在本地管理。
 
-> 当前项目处于 `v0.1.0` 发布前的开发与验收阶段。协作客户端首版仅承诺 Windows；未启用协作功能时，Aegisub 继续保持原有单机行为。
-
 ## 协作文档
 
 - [协作架构与协议规格](docs/aegisub-collab-spec.md)
