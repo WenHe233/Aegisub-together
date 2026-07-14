@@ -33,6 +33,9 @@
 ///
 
 #include "auto4_lua.h"
+#ifdef WITH_COLLABORATION
+#include "collaboration_controller.h"
+#endif
 
 #include "ass_dialogue.h"
 #include "ass_file.h"
@@ -962,6 +965,15 @@ namespace {
 
 	void LuaCommand::operator()(agi::Context *c)
 	{
+#ifdef WITH_COLLABORATION
+		struct MutationGuard {
+			agi::collab::CollaborationController* controller;
+			explicit MutationGuard(agi::collab::CollaborationController* controller) : controller(controller) {
+				if (controller) controller->BeginMutationGuard();
+			}
+			~MutationGuard() { if (controller) controller->EndMutationGuard(); }
+		} mutation_guard(c->collaboration.get());
+#endif
 		c->textSelectionController->DropStagedChanges();
 		LuaStackcheck stackcheck(L);
 		set_context(L, c);

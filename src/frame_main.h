@@ -35,6 +35,7 @@ class AegisubApp;
 class AsyncVideoProvider;
 class AudioBox;
 class VideoBox;
+class wxInfoBarBase;
 namespace agi { class AudioProvider; }
 namespace agi { struct Context; class OptionValue; }
 
@@ -72,6 +73,9 @@ class FrameMain : public wxFrame {
 
 	AudioBox *audioBox;      ///< The audio area
 	VideoBox *videoBox;      ///< The video area
+#ifdef WITH_COLLABORATION
+	wxInfoBarBase *collaborationBanner = nullptr;
+#endif
 
 	wxSizer *MainSizer;  ///< Arranges things from top to bottom in the window
 	wxSizer *TopSizer;   ///< Arranges video box and tool box from left to right
@@ -85,6 +89,9 @@ public:
 	/// @param text New status bar text
 	/// @param ms Time in milliseconds that the message should be visible
 	void StatusTimeout(wxString text,int ms=10000);
+#ifdef WITH_COLLABORATION
+	void SetCollaborationBanner(wxString const& text);
+#endif
 
 	/// @brief Set the video and audio display visibility
 	/// @param video -1: leave unchanged; 0: hide; 1: show

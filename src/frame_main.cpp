@@ -67,6 +67,7 @@
 #include <libaegisub/make_unique.h>
 
 #include <wx/dnd.h>
+#include <wx/infobar.h>
 #include <wx/msgdlg.h>
 #include <wx/menu.h>
 #include <wx/sizer.h>
@@ -79,6 +80,10 @@ enum {
 	ID_COLLABORATION_CREATE = 23001,
 	ID_COLLABORATION_JOIN,
 	ID_COLLABORATION_DISCONNECT,
+	ID_COLLABORATION_MAINTENANCE_REQUEST,
+	ID_COLLABORATION_MAINTENANCE_RELEASE,
+	ID_COLLABORATION_MAINTENANCE_CANCEL,
+	ID_COLLABORATION_MAINTENANCE_FORCE_CANCEL,
 #endif
 };
 
@@ -147,13 +152,26 @@ FrameMain::FrameMain()
 	collaboration_menu->Append(ID_COLLABORATION_JOIN, _("&Join Room..."));
 	collaboration_menu->AppendSeparator();
 	collaboration_menu->Append(ID_COLLABORATION_DISCONNECT, _("&Disconnect"));
+	collaboration_menu->AppendSeparator();
+	collaboration_menu->Append(ID_COLLABORATION_MAINTENANCE_REQUEST, _("Enter &Maintenance Mode"));
+	collaboration_menu->Append(ID_COLLABORATION_MAINTENANCE_RELEASE, _("&Leave Maintenance Mode"));
+	collaboration_menu->Append(ID_COLLABORATION_MAINTENANCE_CANCEL, _("Request Maintenance &Cancellation"));
+	collaboration_menu->Append(ID_COLLABORATION_MAINTENANCE_FORCE_CANCEL, _("&Force Maintenance Cancellation"));
 	GetMenuBar()->Insert(GetMenuBar()->GetMenuCount() - 1, collaboration_menu, _("&Collaboration"));
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ShowCreateRoomDialog(); }, ID_COLLABORATION_CREATE);
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ShowJoinRoomDialog(); }, ID_COLLABORATION_JOIN);
 	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->Disconnect(); }, ID_COLLABORATION_DISCONNECT);
+	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->RequestMaintenance(); }, ID_COLLABORATION_MAINTENANCE_REQUEST);
+	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ReleaseMaintenance(); }, ID_COLLABORATION_MAINTENANCE_RELEASE);
+	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->RequestMaintenanceCancel(); }, ID_COLLABORATION_MAINTENANCE_CANCEL);
+	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ForceMaintenanceCancel(); }, ID_COLLABORATION_MAINTENANCE_FORCE_CANCEL);
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(!context->collaboration->IsRunning()); }, ID_COLLABORATION_CREATE);
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(!context->collaboration->IsRunning()); }, ID_COLLABORATION_JOIN);
 	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->IsRunning()); }, ID_COLLABORATION_DISCONNECT);
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->IsJoined() && !context->collaboration->MaintenanceActive()); }, ID_COLLABORATION_MAINTENANCE_REQUEST);
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->MaintenanceOwned()); }, ID_COLLABORATION_MAINTENANCE_RELEASE);
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->MaintenanceActive() && !context->collaboration->MaintenanceOwned()); }, ID_COLLABORATION_MAINTENANCE_CANCEL);
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->MaintenanceActive() && !context->collaboration->MaintenanceOwned()); }, ID_COLLABORATION_MAINTENANCE_FORCE_CANCEL);
 #endif
 
 	StartupLog("Create status bar");
@@ -231,6 +249,10 @@ void FrameMain::InitContents() {
 	TopSizer->Add(videoBox, 0, wxEXPAND, 0);
 	TopSizer->Add(ToolsSizer, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 5);
 	MainSizer = new wxBoxSizer(wxVERTICAL);
+#ifdef WITH_COLLABORATION
+	collaborationBanner = new wxInfoBar(Panel);
+	MainSizer->Add(collaborationBanner, 0, wxEXPAND);
+#endif
 	MainSizer->Add(new wxStaticLine(Panel),0,wxEXPAND | wxALL,0);
 	MainSizer->Add(TopSizer,0,wxEXPAND | wxALL,0);
 	MainSizer->Add(context->subsGrid,1,wxEXPAND | wxALL,0);
@@ -325,6 +347,15 @@ void FrameMain::StatusTimeout(wxString text,int ms) {
 	StatusClear.SetOwner(this, ID_APP_TIMER_STATUSCLEAR);
 	StatusClear.Start(ms,true);
 }
+
+#ifdef WITH_COLLABORATION
+void FrameMain::SetCollaborationBanner(wxString const& text) {
+	if (!collaborationBanner) return;
+	if (text.empty()) collaborationBanner->Dismiss();
+	else collaborationBanner->ShowMessage(text, wxICON_WARNING);
+	Layout();
+}
+#endif
 
 BEGIN_EVENT_TABLE(FrameMain, wxFrame)
 	EVT_TIMER(ID_APP_TIMER_STATUSCLEAR, FrameMain::OnStatusClear)

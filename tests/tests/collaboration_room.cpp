@@ -59,3 +59,11 @@ TEST(collaboration_room, encodes_line_references_and_decodes_lock_presence) {
 	EXPECT_EQ("9K3MT7Q2CD-1", *presence[0].line_id);
 	EXPECT_FALSE(presence[1].line_id);
 }
+
+TEST(collaboration_room, decodes_maintenance_ownership_and_cancel_window) {
+	auto state = DecodeMaintenanceState(R"({"active":true,"holder_id":"member-1","holder_name":"translator","started_at":"2026-07-14T00:00:00Z","idle_expires_at":"2026-07-14T00:10:00Z","hard_expires_at":"2026-07-14T01:00:00Z","cancel_requested_by":"member-2","cancel_requested_name":"proofreader","cancel_force_at":"2026-07-14T00:00:30Z"})");
+	EXPECT_TRUE(state.active);
+	EXPECT_EQ("member-1", *state.holder_id);
+	EXPECT_EQ("member-2", *state.cancel_requested_by);
+	EXPECT_TRUE(state.cancel_force_at);
+}

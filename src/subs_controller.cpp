@@ -307,6 +307,18 @@ void SubsController::AdoptCollaborationSnapshot() {
 	context->ass->Commit(_("joined collaboration room"), AssFile::COMMIT_NEW);
 }
 
+agi::fs::path SubsController::SaveCollaborationRecovery() {
+	auto directory = context->path->Decode(OPT_GET("Path/Auto/Save")->GetString());
+	if (directory.empty()) directory = filename.parent_path();
+	if (directory.empty()) throw agi::EnvironmentError("no recovery directory is configured");
+	auto name = filename.filename();
+	if (name.empty()) name = "Untitled";
+	agi::fs::CreateDirectory(directory);
+	auto path = directory / agi::format("%s.%s.COLLAB-RECOVERY.ass", name.string(), agi::util::strftime("%Y-%m-%d-%H-%M-%S"));
+	SubtitleFormat::GetWriter(path)->WriteFile(context->ass.get(), path, 0);
+	return path;
+}
+
 void SubsController::SetFileName(agi::fs::path const& path) {
 	filename = path;
 	context->path->SetToken("?script", path.parent_path());

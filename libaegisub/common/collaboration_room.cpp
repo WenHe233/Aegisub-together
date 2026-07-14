@@ -226,4 +226,20 @@ std::vector<PresenceMember> DecodePresence(std::string const& payload_json) {
 	return members;
 }
 
+MaintenanceStateMessage DecodeMaintenanceState(std::string const& payload_json) {
+	auto root = parse(payload_json);
+	auto const& object = static_cast<json::Object const&>(root);
+	MaintenanceStateMessage state;
+	state.active = static_cast<json::Boolean const&>(required(object, "active"));
+	state.holder_id = optional_nullable_string(object, "holder_id");
+	state.holder_name = optional_nullable_string(object, "holder_name");
+	state.idle_expires_at = optional_nullable_string(object, "idle_expires_at");
+	state.hard_expires_at = optional_nullable_string(object, "hard_expires_at");
+	state.cancel_requested_by = optional_nullable_string(object, "cancel_requested_by");
+	state.cancel_requested_name = optional_nullable_string(object, "cancel_requested_name");
+	state.cancel_force_at = optional_nullable_string(object, "cancel_force_at");
+	if (state.active && (!state.holder_id || !state.holder_name)) throw std::invalid_argument("active maintenance state has no holder");
+	return state;
+}
+
 } }

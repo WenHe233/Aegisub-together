@@ -193,6 +193,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	std::string active_line_id;
 	std::unordered_map<std::string, std::string> lock_holders;
 	std::vector<PresenceMember> presence;
+	MaintenanceStateMessage maintenance;
 	std::vector<PendingBatch> rejected_batches;
 	std::deque<WireEnvelope> deferred_persistent_messages;
 	unsigned mutation_depth = 0;
@@ -202,8 +203,9 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	void update_editability() {
 		if (!context->subsEditBox) return;
-		bool editable = phase == Phase::idle || (phase == Phase::joined && !room.lock_enabled);
-		if (!editable && phase == Phase::joined && context->selectionController->GetSelectedSet().size() == 1 && !active_line_id.empty()) {
+		bool owns_maintenance = phase == Phase::joined && maintenance.active && maintenance.holder_id && *maintenance.holder_id == room.member_id;
+		bool editable = phase == Phase::idle || owns_maintenance || (phase == Phase::joined && !maintenance.active && !room.lock_enabled);
+		if (!editable && phase == Phase::joined && !maintenance.active && context->selectionController->GetSelectedSet().size() == 1 && !active_line_id.empty()) {
 			auto holder = lock_holders.find(active_line_id);
 			editable = holder != lock_holders.end() && holder->second == room.member_id;
 		}
@@ -346,6 +348,24 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		if (context->subsGrid) context->subsGrid->Refresh(false);
 	}
 
+	void handle_maintenance_state(WireEnvelope const& envelope) {
+		maintenance = DecodeMaintenanceState(envelope.payload_json);
+		lock_holders.clear();
+		update_editability();
+		if (!maintenance.active) {
+			context->frame->SetCollaborationBanner({});
+			if (!active_line_id.empty()) send("lock_request", EncodeLineReference(active_line_id));
+			return;
+		}
+		bool owned = maintenance.holder_id && *maintenance.holder_id == room.member_id;
+		wxString message = owned
+			? _("Collaboration maintenance mode is active. Other members are frozen.")
+			: fmt_tl("Room is frozen for maintenance by %s.", maintenance.holder_name ? *maintenance.holder_name : std::string("another member"));
+		if (owned && maintenance.cancel_requested_name)
+			message += fmt_tl(" %s requested cancellation.", *maintenance.cancel_requested_name);
+		context->frame->SetCollaborationBanner(message);
+	}
+
 	void handle_applied_batch(WireEnvelope const& envelope) {
 		auto batch = DecodeAppliedBatch(envelope.payload_json);
 		if (batch.actor_id == room.member_id && room.lock_enabled) {
@@ -374,6 +394,14 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	void handle_rejected_batch(WireEnvelope const& envelope) {
 		auto rejection = DecodeRejectedBatch(envelope.payload_json);
+		try {
+			auto recovery = context->subsController->SaveCollaborationRecovery();
+			context->frame->StatusTimeout(to_wx("Rejected collaboration changes saved to " + recovery.string()));
+		}
+		catch (std::exception const& error) {
+			wxMessageBox(to_wx(std::string("Could not save rejected collaboration changes: ") + error.what()),
+				_("Collaboration recovery failed"), wxOK | wxICON_ERROR, context->parent);
+		}
 		auto removed = sync.RejectBatch(rejection);
 		rejected_batches.insert(rejected_batches.end(), removed.begin(), removed.end());
 		revision = (std::max)(revision, envelope.room_revision);
@@ -453,9 +481,12 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			else if (envelope.type == "snapshot_state" && phase == Phase::joined) handle_snapshot_state(envelope);
 			else if (envelope.type == "lock_state" && phase == Phase::joined) handle_lock_state(envelope);
 			else if (envelope.type == "presence" && phase == Phase::joined) handle_presence(envelope);
+			else if (envelope.type == "maintenance_state" && phase == Phase::joined) handle_maintenance_state(envelope);
 			else if (envelope.type == "error") {
 				auto error = DecodeProtocolError(envelope.payload_json);
-				fail_protocol(error.message.empty() ? error.code : error.message);
+				auto message = error.message.empty() ? error.code : error.message;
+				if (phase == Phase::joined) context->frame->StatusTimeout(to_wx("Collaboration request failed: " + message));
+				else fail_protocol(message);
 			}
 			else revision = (std::max)(revision, envelope.room_revision);
 		}
@@ -554,7 +585,9 @@ public:
 		}
 	}
 	bool can_run_command(std::string const& name) const {
-		if (phase != Phase::joined || !room.lock_enabled) return true;
+		if (phase != Phase::joined) return true;
+		if (maintenance.active) return maintenance.holder_id && *maintenance.holder_id == room.member_id;
+		if (!room.lock_enabled) return true;
 		auto starts = [&](char const* prefix) { return name.compare(0, std::char_traits<char>::length(prefix), prefix) == 0; };
 		if (name == "edit/line/copy" || name == "grid/line/next" || name == "grid/line/prev" ||
 			name == "time/next" || name == "time/prev" || starts("grid/fold/") || starts("grid/tag")) return true;
@@ -586,6 +619,12 @@ public:
 			if (member.line_id && *member.line_id == id) return member.member_id == room.member_id ? 1 : 2;
 		return 0;
 	}
+	void request_maintenance() { if (phase == Phase::joined) send("maintenance_request", "{}"); }
+	void release_maintenance() { if (phase == Phase::joined) send("maintenance_release", "{}"); }
+	void request_maintenance_cancel() { if (phase == Phase::joined) send("maintenance_cancel_request", "{}"); }
+	void force_maintenance_cancel() { if (phase == Phase::joined) send("maintenance_cancel_force", "{}"); }
+	bool maintenance_active() const { return phase == Phase::joined && maintenance.active; }
+	bool maintenance_owned() const { return maintenance_active() && maintenance.holder_id && *maintenance.holder_id == room.member_id; }
 
 	void disconnect() {
 		timer.Stop();
@@ -599,12 +638,14 @@ public:
 		rejected_batches.clear();
 		lock_holders.clear();
 		presence.clear();
+		maintenance = MaintenanceStateMessage{};
 		deferred_persistent_messages.clear();
 		mutation_depth = 0;
 		active_line_id.clear();
 		phase = Phase::idle;
 		revision = 0;
 		update_editability();
+		context->frame->SetCollaborationBanner({});
 	}
 
 	bool running() const { return phase != Phase::idle; }
@@ -622,5 +663,11 @@ void CollaborationController::BeginMutationGuard() { impl->begin_mutation(); }
 void CollaborationController::EndMutationGuard() { impl->end_mutation(); }
 bool CollaborationController::CanRunCommand(std::string const& command_name) const { return impl->can_run_command(command_name); }
 int CollaborationController::LineLockState(AssDialogue const* line) const { return impl->line_lock_state(line); }
+void CollaborationController::RequestMaintenance() { impl->request_maintenance(); }
+void CollaborationController::ReleaseMaintenance() { impl->release_maintenance(); }
+void CollaborationController::RequestMaintenanceCancel() { impl->request_maintenance_cancel(); }
+void CollaborationController::ForceMaintenanceCancel() { impl->force_maintenance_cancel(); }
+bool CollaborationController::MaintenanceActive() const { return impl->maintenance_active(); }
+bool CollaborationController::MaintenanceOwned() const { return impl->maintenance_owned(); }
 
 } }

@@ -118,6 +118,8 @@ public:
 	/// Reset local undo state after loading an authoritative room snapshot.
 	/// The current filename is retained and the document is marked modified.
 	void AdoptCollaborationSnapshot();
+	/// Save the current in-memory subtitle result before collaboration rollback.
+	agi::fs::path SaveCollaborationRecovery();
 
 	/// The file is about to be saved
 	/// This signal is intended for adding metadata which is awkward or

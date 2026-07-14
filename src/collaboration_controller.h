@@ -30,6 +30,12 @@ public:
 	bool CanRunCommand(std::string const& command_name) const;
 	/// 0 = none, 1 = owned by this client, 2 = held/present remotely.
 	int LineLockState(AssDialogue const* line) const;
+	void RequestMaintenance();
+	void ReleaseMaintenance();
+	void RequestMaintenanceCancel();
+	void ForceMaintenanceCancel();
+	bool MaintenanceActive() const;
+	bool MaintenanceOwned() const;
 };
 
 }

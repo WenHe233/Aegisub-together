@@ -54,6 +54,17 @@ struct PresenceMember {
 	std::optional<std::string> line_id;
 };
 
+struct MaintenanceStateMessage {
+	bool active = false;
+	std::optional<std::string> holder_id;
+	std::optional<std::string> holder_name;
+	std::optional<std::string> idle_expires_at;
+	std::optional<std::string> hard_expires_at;
+	std::optional<std::string> cancel_requested_by;
+	std::optional<std::string> cancel_requested_name;
+	std::optional<std::string> cancel_force_at;
+};
+
 std::string EncodeAccessAuth(std::string const& password);
 std::string EncodeCreateRoom(CreateRoomRequest const& request);
 std::string EncodeJoinRoom(JoinRoomRequest const& request);
@@ -62,5 +73,6 @@ ProtocolError DecodeProtocolError(std::string const& payload_json);
 std::string EncodeLineReference(std::string const& line_id);
 LockStateMessage DecodeLockState(std::string const& payload_json);
 std::vector<PresenceMember> DecodePresence(std::string const& payload_json);
+MaintenanceStateMessage DecodeMaintenanceState(std::string const& payload_json);
 
 } }
