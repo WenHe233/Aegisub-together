@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/WenHe233/Aegisub-together/server/internal/protocol"
 )
@@ -35,6 +36,9 @@ func (hub *hub) applyBatch(ctx context.Context, roomID, actorID string, input pr
 	} else if found {
 		return existing, revision, nil, true, nil
 	}
+	if value.maintenance != nil && value.maintenance.holderID != actorID {
+		return protocol.BatchApplied{}, value.revision, nil, false, &batchFailure{code: "maintenance_active", message: "room is frozen for maintenance"}
+	}
 
 	working := cloneRoomState(value)
 	working.revision++
@@ -62,6 +66,9 @@ func (hub *hub) applyBatch(ctx context.Context, roomID, actorID string, input pr
 	value.snapshot = working.snapshot
 	value.tombstones = working.tombstones
 	value.revision = working.revision
+	if value.maintenance != nil && value.maintenance.holderID == actorID {
+		value.maintenance.lastActivity = time.Now()
+	}
 	return result, value.revision, connectedMembers(value), false, nil
 }
 

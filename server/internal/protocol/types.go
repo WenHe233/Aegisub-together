@@ -145,6 +145,18 @@ type Presence struct {
 	Members []PresenceMember `json:"members"`
 }
 
+type MaintenanceState struct {
+	Active              bool    `json:"active"`
+	HolderID            *string `json:"holder_id"`
+	HolderName          *string `json:"holder_name"`
+	StartedAt           *string `json:"started_at"`
+	IdleExpiresAt       *string `json:"idle_expires_at"`
+	HardExpiresAt       *string `json:"hard_expires_at"`
+	CancelRequestedBy   *string `json:"cancel_requested_by"`
+	CancelRequestedName *string `json:"cancel_requested_name"`
+	CancelForceAt       *string `json:"cancel_force_at"`
+}
+
 type ModifyOperation struct {
 	Op          string     `json:"op"`
 	LineID      string     `json:"line_id"`

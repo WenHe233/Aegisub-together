@@ -684,3 +684,211 @@ func TestLockDisabledKeepsPresenceWithoutHardLock(t *testing.T) {
 		t.Fatalf("presence blocked edit in lock-disabled room: %#v", rejected)
 	}
 }
+
+func TestMaintenanceClearsLocksFreezesOthersAndReleases(t *testing.T) {
+	server, _, url := configuredTestServer(t, Config{})
+	owner := dial(t, url)
+	authenticate(t, owner, "")
+	ownerJoined := createRoom(t, owner, "episode-01", "translator")
+	holder := dial(t, url)
+	authenticate(t, holder, "")
+	holderJoined := joinRoom(t, holder, "episode-01", "timer")
+
+	send(t, owner, "lock_request", "lock-owner", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	receiveType(t, owner, "lock_state")
+	receiveType(t, owner, "presence")
+	receiveType(t, holder, "lock_state")
+	receiveType(t, holder, "presence")
+
+	send(t, holder, "maintenance_request", "maintenance-start", struct{}{})
+	unlockedEnvelope := receiveType(t, owner, "lock_state")
+	ownerMaintenance := receiveType(t, owner, "maintenance_state")
+	receiveType(t, holder, "lock_state")
+	holderMaintenance := receiveType(t, holder, "maintenance_state")
+	var unlocked protocol.LockState
+	var state protocol.MaintenanceState
+	if err := json.Unmarshal(unlockedEnvelope.Payload, &unlocked); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(holderMaintenance.Payload, &state); err != nil {
+		t.Fatal(err)
+	}
+	if unlocked.Granted || unlocked.LineID != "9K3MT7Q2CD-1" || !state.Active || state.HolderID == nil || *state.HolderID != holderJoined.MemberID {
+		t.Fatalf("maintenance did not clear locks and identify holder: %#v %#v", unlocked, state)
+	}
+	var ownerState protocol.MaintenanceState
+	if err := json.Unmarshal(ownerMaintenance.Payload, &ownerState); err != nil || ownerState.HolderName == nil || *ownerState.HolderName != "timer" {
+		t.Fatalf("owner did not receive maintenance state: %#v %v", ownerState, err)
+	}
+
+	_, _, rejected := submitBatch(t, owner, "frozen-batch", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("blocked")},
+	})
+	if rejected == nil || rejected.Code != "maintenance_active" {
+		t.Fatalf("non-holder batch was not frozen: %#v", rejected)
+	}
+	send(t, holder, "maintenance_release", "maintenance-release", struct{}{})
+	releasedEnvelope := receiveType(t, owner, "maintenance_state")
+	receiveType(t, holder, "maintenance_state")
+	if err := json.Unmarshal(releasedEnvelope.Payload, &state); err != nil || state.Active {
+		t.Fatalf("maintenance did not release: %#v %v", state, err)
+	}
+	_, _, rejected = submitBatch(t, owner, "after-maintenance", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("allowed")},
+	})
+	if rejected != nil {
+		t.Fatalf("edit remained frozen after maintenance release: %#v", rejected)
+	}
+
+	var grants, releases int
+	if err := server.store.db.QueryRow(`SELECT COUNT(*) FROM audit_log WHERE room_id = ? AND event_type = 'maintenance_granted'`, ownerJoined.RoomID).Scan(&grants); err != nil {
+		t.Fatal(err)
+	}
+	if err := server.store.db.QueryRow(`SELECT COUNT(*) FROM audit_log WHERE room_id = ? AND event_type = 'maintenance_released'`, ownerJoined.RoomID).Scan(&releases); err != nil {
+		t.Fatal(err)
+	}
+	if grants != 1 || releases != 1 {
+		t.Fatalf("maintenance audit events missing: grants=%d releases=%d", grants, releases)
+	}
+}
+
+func TestMaintenanceCancelRequiresRequestAndGracePeriod(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{MaintenanceCancelGrace: 50 * time.Millisecond})
+	holder := dial(t, url)
+	authenticate(t, holder, "")
+	createRoom(t, holder, "episode-01", "timer")
+	requester := dial(t, url)
+	authenticate(t, requester, "")
+	joinRoom(t, requester, "episode-01", "translator")
+
+	send(t, holder, "maintenance_request", "maintenance-start", struct{}{})
+	receiveType(t, holder, "maintenance_state")
+	receiveType(t, requester, "maintenance_state")
+	send(t, requester, "maintenance_cancel_request", "cancel-request", struct{}{})
+	receiveType(t, holder, "maintenance_state")
+	cancelStateEnvelope := receiveType(t, requester, "maintenance_state")
+	var cancelState protocol.MaintenanceState
+	if err := json.Unmarshal(cancelStateEnvelope.Payload, &cancelState); err != nil {
+		t.Fatal(err)
+	}
+	if cancelState.CancelRequestedName == nil || *cancelState.CancelRequestedName != "translator" || cancelState.CancelForceAt == nil {
+		t.Fatalf("cancel request was not published: %#v", cancelState)
+	}
+
+	send(t, requester, "maintenance_cancel_force", "cancel-too-soon", struct{}{})
+	errorEnvelope := receiveType(t, requester, "error")
+	var protocolError protocol.Error
+	if err := json.Unmarshal(errorEnvelope.Payload, &protocolError); err != nil {
+		t.Fatal(err)
+	}
+	if protocolError.Code != "maintenance_cancel_pending" || !protocolError.Retryable {
+		t.Fatalf("early force cancel returned wrong error: %#v", protocolError)
+	}
+	time.Sleep(60 * time.Millisecond)
+	send(t, requester, "maintenance_cancel_force", "cancel-force", struct{}{})
+	forcedEnvelope := receiveType(t, requester, "maintenance_state")
+	receiveType(t, holder, "maintenance_state")
+	var forced protocol.MaintenanceState
+	if err := json.Unmarshal(forcedEnvelope.Payload, &forced); err != nil || forced.Active {
+		t.Fatalf("force cancellation did not end maintenance: %#v %v", forced, err)
+	}
+}
+
+func TestMaintenanceIdleTimeoutIgnoresHeartbeat(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{
+		MaintenanceIdleTimeout: 60 * time.Millisecond, MaintenanceHardTimeout: time.Second,
+		HeartbeatTimeout: time.Second, SweepInterval: 5 * time.Millisecond,
+	})
+	holder := dial(t, url)
+	authenticate(t, holder, "")
+	createRoom(t, holder, "episode-01", "timer")
+	observer := dial(t, url)
+	authenticate(t, observer, "")
+	joinRoom(t, observer, "episode-01", "translator")
+	send(t, holder, "maintenance_request", "maintenance-start", struct{}{})
+	receiveType(t, holder, "maintenance_state")
+	receiveType(t, observer, "maintenance_state")
+
+	time.Sleep(30 * time.Millisecond)
+	send(t, holder, "heartbeat", "maintenance-heartbeat", struct{}{})
+	receiveType(t, holder, "heartbeat")
+	expiredEnvelope := receiveType(t, observer, "maintenance_state")
+	var expired protocol.MaintenanceState
+	if err := json.Unmarshal(expiredEnvelope.Payload, &expired); err != nil || expired.Active {
+		t.Fatalf("heartbeat incorrectly renewed maintenance: %#v %v", expired, err)
+	}
+}
+
+func TestMaintenanceSuccessfulBatchRenewsIdleButNotHardLimit(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{
+		MaintenanceIdleTimeout: 70 * time.Millisecond, MaintenanceHardTimeout: 110 * time.Millisecond,
+		HeartbeatTimeout: time.Second, SweepInterval: 5 * time.Millisecond,
+	})
+	holder := dial(t, url)
+	authenticate(t, holder, "")
+	createRoom(t, holder, "episode-01", "timer")
+	observer := dial(t, url)
+	authenticate(t, observer, "")
+	joinRoom(t, observer, "episode-01", "translator")
+	send(t, holder, "maintenance_request", "maintenance-start", struct{}{})
+	receiveType(t, holder, "maintenance_state")
+	receiveType(t, observer, "maintenance_state")
+
+	time.Sleep(50 * time.Millisecond)
+	_, _, rejected := submitBatch(t, holder, "maintenance-batch", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("renewed")},
+	})
+	if rejected != nil {
+		t.Fatalf("holder batch was rejected: %#v", rejected)
+	}
+	receiveType(t, holder, "maintenance_state")
+	receiveType(t, observer, "batch_applied")
+	activeEnvelope := receiveType(t, observer, "maintenance_state")
+	var active protocol.MaintenanceState
+	if err := json.Unmarshal(activeEnvelope.Payload, &active); err != nil || !active.Active {
+		t.Fatalf("successful batch did not publish renewed lease: %#v %v", active, err)
+	}
+	expiredEnvelope := receiveType(t, observer, "maintenance_state")
+	var expired protocol.MaintenanceState
+	if err := json.Unmarshal(expiredEnvelope.Payload, &expired); err != nil || expired.Active {
+		t.Fatalf("hard limit was renewed by batch activity: %#v %v", expired, err)
+	}
+}
+
+func TestMaintenanceHolderDisconnectReleasesImmediately(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{HeartbeatTimeout: time.Second})
+	holder := dial(t, url)
+	authenticate(t, holder, "")
+	createRoom(t, holder, "episode-01", "timer")
+	observer := dial(t, url)
+	authenticate(t, observer, "")
+	joinRoom(t, observer, "episode-01", "translator")
+	send(t, holder, "maintenance_request", "maintenance-start", struct{}{})
+	receiveType(t, holder, "maintenance_state")
+	receiveType(t, observer, "maintenance_state")
+	holder.CloseNow()
+
+	releasedEnvelope := receiveType(t, observer, "maintenance_state")
+	var released protocol.MaintenanceState
+	if err := json.Unmarshal(releasedEnvelope.Payload, &released); err != nil || released.Active {
+		t.Fatalf("holder disconnect did not release maintenance: %#v %v", released, err)
+	}
+}
+
+func TestMemberJoiningDuringMaintenanceReceivesCurrentState(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{})
+	holder := dial(t, url)
+	authenticate(t, holder, "")
+	holderJoined := createRoom(t, holder, "episode-01", "timer")
+	send(t, holder, "maintenance_request", "maintenance-start", struct{}{})
+	receiveType(t, holder, "maintenance_state")
+
+	joiner := dial(t, url)
+	authenticate(t, joiner, "")
+	joinRoom(t, joiner, "episode-01", "translator")
+	stateEnvelope := receiveType(t, joiner, "maintenance_state")
+	var state protocol.MaintenanceState
+	if err := json.Unmarshal(stateEnvelope.Payload, &state); err != nil || !state.Active || state.HolderID == nil || *state.HolderID != holderJoined.MemberID {
+		t.Fatalf("joining member did not receive active maintenance: %#v %v", state, err)
+	}
+}

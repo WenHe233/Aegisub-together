@@ -1,6 +1,7 @@
 package collab
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"time"
@@ -23,6 +24,9 @@ func (hub *hub) requestLock(roomID, memberID, lineID string, now time.Time, idle
 	joinedMember := memberByID(value, memberID)
 	if value == nil || joinedMember == nil || liveLine(value.snapshot.Lines, lineID) == nil {
 		return nil, protocol.Presence{}, nil, errors.New("line or member does not exist")
+	}
+	if value.maintenance != nil && value.maintenance.holderID != memberID {
+		return nil, protocol.Presence{}, nil, errMaintenanceActive
 	}
 	joinedMember.activeLine = lineID
 	joinedMember.lastSeen = now
@@ -85,7 +89,7 @@ func (hub *hub) heartbeat(roomID, memberID string, now time.Time) bool {
 	return true
 }
 
-func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout time.Duration) ([]transientEvent, []*websocket.Conn) {
+func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout time.Duration, maintenanceTimeouts maintenanceTimeouts) ([]transientEvent, []*websocket.Conn) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	var events []transientEvent
@@ -93,6 +97,17 @@ func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout time.Duratio
 	for _, value := range hub.rooms {
 		var states []protocol.LockState
 		presenceChanged := false
+		maintenanceChanged := false
+		if lease := value.maintenance; lease != nil && (now.Sub(lease.lastActivity) >= maintenanceTimeouts.idle || now.Sub(lease.startedAt) >= maintenanceTimeouts.hard) {
+			eventType := "maintenance_idle_expired"
+			if now.Sub(lease.startedAt) >= maintenanceTimeouts.hard {
+				eventType = "maintenance_hard_expired"
+			}
+			if hub.store.audit(context.Background(), value.id, lease.holderID, eventType, maintenanceAuditDetails(lease, now)) == nil {
+				value.maintenance = nil
+				maintenanceChanged = true
+			}
+		}
 		for lineID, existing := range value.locks {
 			if now.Sub(existing.lastActivity) >= idleTimeout {
 				delete(value.locks, lineID)
@@ -103,6 +118,7 @@ func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout time.Duratio
 			if joinedMember.connection != nil && now.Sub(joinedMember.lastHeartbeat) >= heartbeatTimeout {
 				staleConnections = append(staleConnections, joinedMember.connection)
 				states = append(states, releaseMemberLocks(value, joinedMember.id, "")...)
+				maintenanceChanged = disconnectMaintenance(value, joinedMember.id, now, hub.store) || maintenanceChanged
 				delete(value.members, nickname)
 				presenceChanged = true
 			}
@@ -114,11 +130,14 @@ func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout time.Duratio
 		if presenceChanged {
 			events = append(events, transientEvent{roomID: value.id, typeName: "presence", payload: presenceSnapshot(value), recipients: recipients})
 		}
+		if maintenanceChanged {
+			events = append(events, transientEvent{roomID: value.id, typeName: "maintenance_state", payload: maintenanceState(value, maintenanceTimeouts), recipients: recipients})
+		}
 	}
 	return events, staleConnections
 }
 
-func (hub *hub) disconnect(roomID, memberID string) []transientEvent {
+func (hub *hub) disconnect(roomID, memberID string, timeouts maintenanceTimeouts) []transientEvent {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	value := hub.roomByID(roomID)
@@ -128,12 +147,16 @@ func (hub *hub) disconnect(roomID, memberID string) []transientEvent {
 	}
 	delete(value.members, joinedMember.nickname)
 	states := releaseMemberLocks(value, memberID, "")
+	maintenanceChanged := disconnectMaintenance(value, memberID, time.Now(), hub.store)
 	recipients := connectedMembers(value)
-	events := make([]transientEvent, 0, len(states)+1)
+	events := make([]transientEvent, 0, len(states)+2)
 	for _, state := range states {
 		events = append(events, transientEvent{roomID: roomID, typeName: "lock_state", payload: state, recipients: recipients})
 	}
 	events = append(events, transientEvent{roomID: roomID, typeName: "presence", payload: presenceSnapshot(value), recipients: recipients})
+	if maintenanceChanged {
+		events = append(events, transientEvent{roomID: roomID, typeName: "maintenance_state", payload: maintenanceState(value, timeouts), recipients: recipients})
+	}
 	return events
 }
 

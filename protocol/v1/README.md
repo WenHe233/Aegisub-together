@@ -46,5 +46,19 @@ is applied atomically.
 - The origin client advances its confirmed shadow only from `batch_applied`,
   never when it sends `submit_batch`.
 
+## Maintenance arbitration
+
+- `maintenance_request` grants the first requester an exclusive room-wide
+  write lease and releases all line locks. Other members remain connected but
+  their batches and lock requests are rejected with `maintenance_active`.
+- The holder sends `maintenance_release` to finish normally. A non-holder may
+  send `maintenance_cancel_request`, then `maintenance_cancel_force` after the
+  server-advertised 30-second grace period.
+- Only a successfully persisted holder batch renews the 10-minute idle lease.
+  Heartbeats do not renew it, and the 60-minute hard limit never moves.
+- Holder disconnect, idle expiry, hard expiry, release, and forced cancellation
+  broadcast an inactive `maintenance_state` without incrementing the room
+  revision.
+
 `schema.json` is the normative wire schema. `errors.json` is the stable error
 code registry. Files in `fixtures/` are canonical cross-language examples.

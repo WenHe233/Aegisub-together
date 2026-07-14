@@ -16,6 +16,7 @@
     {"code": "section_version_conflict", "retryable": true},
     {"code": "maintenance_active", "retryable": true},
     {"code": "maintenance_not_held", "retryable": false},
+    {"code": "maintenance_cancel_pending", "retryable": true},
     {"code": "comment_version_conflict", "retryable": true},
     {"code": "internal_error", "retryable": true}
   ]

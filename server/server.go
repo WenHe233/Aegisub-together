@@ -20,13 +20,16 @@ import (
 const maxMessageSize = 64 << 20
 
 type Config struct {
-	AccessPasswordHash string
-	PasswordParams     auth.Params
-	AuthTimeout        time.Duration
-	DatabasePath       string
-	LockIdleTimeout    time.Duration
-	HeartbeatTimeout   time.Duration
-	SweepInterval      time.Duration
+	AccessPasswordHash     string
+	PasswordParams         auth.Params
+	AuthTimeout            time.Duration
+	DatabasePath           string
+	LockIdleTimeout        time.Duration
+	HeartbeatTimeout       time.Duration
+	SweepInterval          time.Duration
+	MaintenanceIdleTimeout time.Duration
+	MaintenanceHardTimeout time.Duration
+	MaintenanceCancelGrace time.Duration
 }
 
 type Server struct {
@@ -56,6 +59,15 @@ func New(config Config) (*Server, error) {
 	}
 	if config.SweepInterval == 0 {
 		config.SweepInterval = time.Second
+	}
+	if config.MaintenanceIdleTimeout == 0 {
+		config.MaintenanceIdleTimeout = 10 * time.Minute
+	}
+	if config.MaintenanceHardTimeout == 0 {
+		config.MaintenanceHardTimeout = 60 * time.Minute
+	}
+	if config.MaintenanceCancelGrace == 0 {
+		config.MaintenanceCancelGrace = 30 * time.Second
 	}
 	store, err := openStore(config.DatabasePath)
 	if err != nil {
@@ -157,6 +169,11 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 	if err := writeEnvelope(request.Context(), connection, "room_joined", joinEnvelope.RequestID, joinedRevision, joined); err != nil {
 		return
 	}
+	if state, active := server.hub.currentMaintenance(joinedRoom.id, server.maintenanceTimeouts()); active {
+		if err := writeEnvelope(request.Context(), connection, "maintenance_state", joinEnvelope.RequestID, joinedRevision, state); err != nil {
+			return
+		}
+	}
 
 	for {
 		envelope, err := readEnvelope(request.Context(), connection)
@@ -187,7 +204,11 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 				states, presence, recipients, err = server.hub.releaseLock(joinedRoom.id, joinedMember.id, reference.LineID, time.Now())
 			}
 			if err != nil {
-				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", err.Error(), false)
+				if errors.Is(err, errMaintenanceActive) {
+					_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "maintenance_active", err.Error(), true)
+				} else {
+					_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", err.Error(), false)
+				}
 				continue
 			}
 			revision := server.hub.currentRevision(joinedRoom.id)
@@ -195,6 +216,38 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 				broadcastTransient(envelope.RequestID, revision, "lock_state", state, recipients)
 			}
 			broadcastTransient(envelope.RequestID, revision, "presence", presence, recipients)
+			continue
+		}
+		if envelope.Type == "maintenance_request" || envelope.Type == "maintenance_release" || envelope.Type == "maintenance_cancel_request" || envelope.Type == "maintenance_cancel_force" {
+			var empty struct{}
+			if err := decodePayload(envelope.Payload, &empty); err != nil {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "maintenance request is invalid", false)
+				continue
+			}
+			now := time.Now()
+			timeouts := server.maintenanceTimeouts()
+			var state protocol.MaintenanceState
+			var states []protocol.LockState
+			var recipients []*member
+			switch envelope.Type {
+			case "maintenance_request":
+				state, states, recipients, err = server.hub.requestMaintenance(joinedRoom.id, joinedMember.id, now, timeouts)
+			case "maintenance_release":
+				state, recipients, err = server.hub.releaseMaintenance(joinedRoom.id, joinedMember.id, now, timeouts)
+			case "maintenance_cancel_request":
+				state, recipients, err = server.hub.requestMaintenanceCancel(joinedRoom.id, joinedMember.id, now, timeouts)
+			case "maintenance_cancel_force":
+				state, recipients, err = server.hub.forceMaintenanceCancel(joinedRoom.id, joinedMember.id, now, timeouts)
+			}
+			if err != nil {
+				writeMaintenanceError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), err)
+				continue
+			}
+			revision := server.hub.currentRevision(joinedRoom.id)
+			for _, lockState := range states {
+				broadcastTransient(envelope.RequestID, revision, "lock_state", lockState, recipients)
+			}
+			broadcastTransient(envelope.RequestID, revision, "maintenance_state", state, recipients)
 			continue
 		}
 		if envelope.Type == "submit_batch" {
@@ -218,14 +271,30 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 				continue
 			}
 			broadcastBatch(envelope.RequestID, revision, result, recipients)
+			if state, active := server.hub.currentMaintenance(joinedRoom.id, server.maintenanceTimeouts()); active {
+				broadcastTransient(envelope.RequestID, revision, "maintenance_state", state, recipients)
+			}
 			continue
 		}
 		_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "message is not valid in the current session", false)
 	}
 }
 
+func writeMaintenanceError(ctx context.Context, connection *websocket.Conn, requestID string, revision int64, err error) {
+	code, retryable := "internal_error", true
+	switch {
+	case errors.Is(err, errMaintenanceActive):
+		code = "maintenance_active"
+	case errors.Is(err, errMaintenanceNotHeld):
+		code, retryable = "maintenance_not_held", false
+	case errors.Is(err, errMaintenanceCancelTooSoon):
+		code = "maintenance_cancel_pending"
+	}
+	_ = writeProtocolError(ctx, connection, requestID, revision, code, err.Error(), retryable)
+}
+
 func (server *Server) memberDisconnected(roomID, memberID string) {
-	for _, event := range server.hub.disconnect(roomID, memberID) {
+	for _, event := range server.hub.disconnect(roomID, memberID, server.maintenanceTimeouts()) {
 		broadcastTransient("disconnect-"+memberID, server.hub.currentRevision(roomID), event.typeName, event.payload, event.recipients)
 	}
 }
@@ -237,7 +306,7 @@ func (server *Server) sweepExpiredState() {
 	for {
 		select {
 		case now := <-ticker.C:
-			events, staleConnections := server.hub.expire(now, server.config.LockIdleTimeout, server.config.HeartbeatTimeout)
+			events, staleConnections := server.hub.expire(now, server.config.LockIdleTimeout, server.config.HeartbeatTimeout, server.maintenanceTimeouts())
 			for _, event := range events {
 				broadcastTransient("lease-expired", server.hub.currentRevision(event.roomID), event.typeName, event.payload, event.recipients)
 			}

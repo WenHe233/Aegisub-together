@@ -37,6 +37,16 @@ type lineLock struct {
 	lastActivity time.Time
 }
 
+type maintenanceLease struct {
+	holderID            string
+	holderName          string
+	startedAt           time.Time
+	lastActivity        time.Time
+	cancelRequestedBy   string
+	cancelRequestedName string
+	cancelRequestedAt   time.Time
+}
+
 type room struct {
 	id           string
 	name         string
@@ -48,6 +58,7 @@ type room struct {
 	tombstones   map[string]protocol.Line
 	reindexed    bool
 	locks        map[string]lineLock
+	maintenance  *maintenanceLease
 }
 
 type hub struct {

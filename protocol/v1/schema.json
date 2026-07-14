@@ -11,7 +11,7 @@
         "access_auth", "access_ok", "create_room", "join_room", "room_joined",
         "submit_batch", "batch_applied", "batch_rejected", "snapshot_request",
         "lock_request", "lock_release", "lock_state", "presence", "heartbeat",
-        "maintenance_request", "maintenance_state", "maintenance_cancel_request",
+        "maintenance_request", "maintenance_release", "maintenance_state", "maintenance_cancel_request",
         "maintenance_cancel_force", "comment_create", "comment_set_state",
         "comment_changed", "reindex", "error"
       ]
@@ -63,6 +63,14 @@
       "then": {"properties": {"payload": {"$ref": "#/$defs/presence"}}}
     },
     {
+      "if": {"properties": {"type": {"const": "maintenance_state"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/maintenance_state"}}}
+    },
+    {
+      "if": {"properties": {"type": {"enum": ["maintenance_request", "maintenance_release", "maintenance_cancel_request", "maintenance_cancel_force"]}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/empty_payload"}}}
+    },
+    {
       "if": {"properties": {"type": {"const": "comment_create"}}},
       "then": {"properties": {"payload": {"$ref": "#/$defs/comment_create"}}}
     },
@@ -78,6 +86,7 @@
   "$defs": {
     "non_empty_string": {"type": "string", "minLength": 1},
     "nullable_line_id": {"type": ["string", "null"], "maxLength": 64},
+    "empty_payload": {"type": "object", "maxProperties": 0},
     "line_reference": {
       "type": "object",
       "required": ["line_id"],
@@ -115,6 +124,22 @@
             "additionalProperties": false
           }
         }
+      },
+      "additionalProperties": false
+    },
+    "maintenance_state": {
+      "type": "object",
+      "required": ["active", "holder_id", "holder_name", "started_at", "idle_expires_at", "hard_expires_at", "cancel_requested_by", "cancel_requested_name", "cancel_force_at"],
+      "properties": {
+        "active": {"type": "boolean"},
+        "holder_id": {"type": ["string", "null"]},
+        "holder_name": {"type": ["string", "null"]},
+        "started_at": {"type": ["string", "null"], "format": "date-time"},
+        "idle_expires_at": {"type": ["string", "null"], "format": "date-time"},
+        "hard_expires_at": {"type": ["string", "null"], "format": "date-time"},
+        "cancel_requested_by": {"type": ["string", "null"]},
+        "cancel_requested_name": {"type": ["string", "null"]},
+        "cancel_force_at": {"type": ["string", "null"], "format": "date-time"}
       },
       "additionalProperties": false
     },

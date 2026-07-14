@@ -1,0 +1,17 @@
+{
+  "protocol_version": 1,
+  "type": "maintenance_state",
+  "request_id": "maintenance-1",
+  "room_revision": 8,
+  "payload": {
+    "active": true,
+    "holder_id": "member-1",
+    "holder_name": "timer",
+    "started_at": "2026-07-14T10:00:00Z",
+    "idle_expires_at": "2026-07-14T10:10:00Z",
+    "hard_expires_at": "2026-07-14T11:00:00Z",
+    "cancel_requested_by": "member-2",
+    "cancel_requested_name": "translator",
+    "cancel_force_at": "2026-07-14T10:00:30Z"
+  }
+}

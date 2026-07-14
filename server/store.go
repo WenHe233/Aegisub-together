@@ -219,3 +219,15 @@ func (store *sqliteStore) findBatch(ctx context.Context, roomID, batchID string)
 	}
 	return result, revision, true, nil
 }
+
+func (store *sqliteStore) audit(ctx context.Context, roomID, actorID, eventType string, details any) error {
+	encoded, err := json.Marshal(details)
+	if err != nil {
+		return err
+	}
+	_, err = store.db.ExecContext(ctx,
+		`INSERT INTO audit_log (room_id, actor_id, event_type, details_json, created_at) VALUES (?, ?, ?, ?, ?)`,
+		roomID, actorID, eventType, encoded, time.Now().UTC().Format(time.RFC3339Nano),
+	)
+	return err
+}
