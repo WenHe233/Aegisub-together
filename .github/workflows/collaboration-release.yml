@@ -1,0 +1,192 @@
+name: Collaboration release packages
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+
+concurrency:
+  group: collaboration-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify protocol and server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.5
+          cache-dependency-path: server/go.sum
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Validate protocol fixtures
+        run: |
+          python -m pip install jsonschema
+          python protocol/v1/validate_fixtures.py
+      - name: Test server
+        working-directory: server
+        run: go test -count=1 ./...
+
+  server-binaries:
+    name: Linux server (${{ matrix.arch }})
+    needs: verify
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.5
+          cache-dependency-path: server/go.sum
+      - name: Build static Linux server
+        working-directory: server
+        env:
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          output="aegisub-together-server-${RELEASE_VERSION}-linux-${GOARCH}"
+          go build -trimpath -ldflags="-s -w" -o "$output" ./cmd/aegisub-together-server
+          chmod 0755 "$output"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-linux-${{ matrix.arch }}
+          path: server/aegisub-together-server-*-linux-${{ matrix.arch }}
+          if-no-files-found: error
+
+  windows-portable:
+    name: Windows portable client
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install build tools
+        shell: pwsh
+        run: |
+          choco install ninja innosetup --no-progress
+          python -m pip install --upgrade pip setuptools meson
+
+          $moonscriptUrl = "https://github.com/leafo/moonscript/releases/download/win32-v0.5.0/moonscript-187bac54ee5a7450013e9c38e005a0e671b76f45.zip"
+          New-Item -ItemType Directory -Path moonscript | Out-Null
+          Invoke-WebRequest -Uri $moonscriptUrl -OutFile moonscript/moonscript.zip
+          7z e moonscript/moonscript.zip -omoonScript
+          (Resolve-Path moonscript).Path | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          $gettextUrl = "https://github.com/mlocati/gettext-iconv-windows/releases/download/v0.21-v1.16/gettext0.21-iconv1.16-static-64.zip"
+          Invoke-WebRequest -Uri $gettextUrl -OutFile gettext.zip
+          Expand-Archive gettext.zip -DestinationPath gettext
+          (Resolve-Path gettext/bin).Path | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Configure collaboration client
+        shell: pwsh
+        run: >-
+          meson setup build
+          -Dbuildtype=release
+          -Dcollaboration=enabled
+          -Ddefault_library=static
+          --force-fallback-for=zlib,harfbuzz,freetype2,fribidi,libpng
+          -Dfreetype2:harfbuzz=disabled
+          -Dharfbuzz:freetype=disabled
+          -Dharfbuzz:cairo=disabled
+          -Dharfbuzz:glib=disabled
+          -Dharfbuzz:gobject=disabled
+          -Dharfbuzz:tests=disabled
+          -Dharfbuzz:docs=disabled
+          -Dharfbuzz:icu=disabled
+          -Dfribidi:tests=false
+          -Dfribidi:docs=false
+          -Dlibass:fontconfig=disabled
+          -Dffmpeg:libdav1d=enabled
+          -Davisynth=enabled
+          -Dbestsource=enabled
+          -Dvapoursynth=enabled
+      - name: Build and test collaboration client
+        shell: pwsh
+        run: |
+          meson compile -C build
+          & build/tests/gtest-main.exe --gtest_filter='collaboration_*.*' --gtest_color=no
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Package portable client
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          meson compile -C build win-installer
+          meson compile -C build win-portable
+          $archive = Get-Item -LiteralPath build/aegisub-portable-64.zip
+          if ($archive.Length -lt 10MB) { throw "portable archive is unexpectedly small" }
+          $listing = 7z l $archive.FullName | Out-String
+          if ($listing -notmatch 'aegisub\.exe') { throw "portable archive does not contain aegisub.exe" }
+          Move-Item -LiteralPath build/aegisub-portable-64.zip -Destination "Aegisub-Together-$env:RELEASE_VERSION-windows-x64-portable.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: client-windows-x64-portable
+          path: Aegisub-Together-*-windows-x64-portable.zip
+          if-no-files-found: error
+
+  release-bundle:
+    name: Checksums and SBOM
+    needs: [server-binaries, windows-portable]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "*"
+          path: dist
+          merge-multiple: true
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: dist
+          format: spdx-json
+          output-file: dist/aegisub-together-${{ env.RELEASE_VERSION }}.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Generate checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: collaboration-release-bundle
+          path: dist/*
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') &&
+      vars.COLLABORATION_RELEASE_APPROVED == 'true'
+    needs: release-bundle
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: collaboration-release-bundle
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
