@@ -183,6 +183,10 @@ elif host_machine.system() == 'windows'
         # 'libass_gdi_fontselect.cpp',
     )
 
+    if collaboration_enabled
+        aegisub_src += files('collaboration_transport_win.cpp')
+    endif
+
     if cc.has_header('wingdi.h')
         deps += cc.find_library('gdi32', required: true)
     else

@@ -17,6 +17,9 @@ all_test_deps += [
 all_test_dep_libs += [
     libaegisub
 ]
+if collaboration_enabled
+    all_test_deps += collaboration_deps
+endif
 all_test_sources += [
     'support/main.cpp',
     'support/util.cpp',
@@ -28,6 +31,7 @@ all_test_sources += [
     'tests/character_count.cpp',
     'tests/color.cpp',
     'tests/collaboration.cpp',
+    'tests/collaboration_protocol.cpp',
     'tests/dialogue_lexer.cpp',
     'tests/format.cpp',
     'tests/fs.cpp',
@@ -52,6 +56,13 @@ all_test_sources += [
     'tests/vfr.cpp',
     'tests/word_split.cpp'
 ]
+
+if collaboration_enabled
+    all_test_sources += [
+        '../src/collaboration_transport_win.cpp',
+        'tests/collaboration_transport.cpp',
+    ]
+endif
 
 test_inc = include_directories('support')
 

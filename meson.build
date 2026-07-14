@@ -71,6 +71,17 @@ conf.set('WITH_UPDATE_CHECKER', get_option('enable_update_checker'))
 
 deps = []
 deps_inc = []
+collaboration_deps = []
+
+collaboration_enabled = false
+if host_machine.system() == 'windows'
+    collaboration_enabled = not get_option('collaboration').disabled()
+elif get_option('collaboration').enabled()
+    error('Online collaboration is supported only on Windows in v1')
+endif
+if collaboration_enabled
+    conf.set('WITH_COLLABORATION', 1)
+endif
 
 if host_machine.system() == 'darwin'
     add_languages('objc', 'objcpp')
@@ -84,6 +95,13 @@ endif
 
 cxx = meson.get_compiler('cpp')
 cc = meson.get_compiler('c')
+if collaboration_enabled
+    collaboration_deps += [
+        cc.find_library('winhttp', required: true),
+        cc.find_library('advapi32', required: true),
+    ]
+    deps += collaboration_deps
+endif
 deps += cc.find_library('m', required: false)
 deps += cc.find_library('dl', required: false)
 
