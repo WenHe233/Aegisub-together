@@ -38,6 +38,9 @@ is applied atomically.
 - Each entry in `batch_applied.operations` contains the normalized input
   `operation` and, when a line remains live, its complete canonical `line`.
   Section replacements return their new section version in the same entry.
+- If allocating a position required a room-wide reindex, `batch_applied`
+  includes `positions`, a complete line-ID-to-position-key map for the final
+  post-batch document. Recipients apply operations and this map atomically.
 - Styles and Script Info are whole-section values with independent versions.
 - A failed validation rejects the complete batch with `batch_rejected`.
 - The origin client advances its confirmed shadow only from `batch_applied`,

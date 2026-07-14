@@ -215,7 +215,7 @@
     },
     "batch_applied": {
       "type": "object", "required": ["batch_id", "actor_id", "operations", "id_remap"],
-      "properties": {"batch_id": {"type": "string"}, "actor_id": {"type": "string"}, "operations": {"type": "array", "items": {"$ref": "#/$defs/applied_operation"}}, "id_remap": {"type": "object", "additionalProperties": {"type": "string"}}},
+      "properties": {"batch_id": {"type": "string"}, "actor_id": {"type": "string"}, "operations": {"type": "array", "items": {"$ref": "#/$defs/applied_operation"}}, "id_remap": {"type": "object", "additionalProperties": {"type": "string"}}, "positions": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1, "maxLength": 64}}},
       "additionalProperties": false
     },
     "applied_operation": {
