@@ -99,6 +99,14 @@
 		"Trace Level" : 3
 	},
 
+	"Collaboration" : {
+		"Client Prefix" : "",
+		"Next ID" : "1",
+		"Nickname" : "",
+		"Room" : "",
+		"Server" : ""
+	},
+
 
 	"Colour" : {
 		"Audio Display" : {

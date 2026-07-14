@@ -38,6 +38,9 @@ namespace Automation4 { class ScriptManager; }
 
 namespace agi {
 class Path;
+#ifdef WITH_COLLABORATION
+namespace collab { class CollaborationController; }
+#endif
 
 struct Context {
 	// Note: order here matters quite a bit, as things need to be set up and
@@ -54,6 +57,9 @@ struct Context {
 	std::unique_ptr<InitialLineState> initialLineState;
 	std::unique_ptr<SearchReplaceEngine> search;
 	std::unique_ptr<Path> path;
+#ifdef WITH_COLLABORATION
+	std::unique_ptr<collab::CollaborationController> collaboration;
+#endif
 
 	// Things that should probably be in some sort of UI-context-model
 	wxWindow *parent = nullptr;

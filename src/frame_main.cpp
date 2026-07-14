@@ -44,6 +44,9 @@
 #include "audio_box.h"
 #include "base_grid.h"
 #include "compat.h"
+#ifdef WITH_COLLABORATION
+#include "collaboration_controller.h"
+#endif
 #include "command/command.h"
 #include "dialog_detached_video.h"
 #include "dialog_manager.h"
@@ -65,12 +68,18 @@
 
 #include <wx/dnd.h>
 #include <wx/msgdlg.h>
+#include <wx/menu.h>
 #include <wx/sizer.h>
 #include <wx/statline.h>
 #include <wx/sysopt.h>
 
 enum {
-	ID_APP_TIMER_STATUSCLEAR = 12002
+	ID_APP_TIMER_STATUSCLEAR = 12002,
+#ifdef WITH_COLLABORATION
+	ID_COLLABORATION_CREATE = 23001,
+	ID_COLLABORATION_JOIN,
+	ID_COLLABORATION_DISCONNECT,
+#endif
 };
 
 #ifdef WITH_STARTUPLOG
@@ -118,6 +127,9 @@ FrameMain::FrameMain()
 	StartupLog("Initializing context frames");
 	context->parent = this;
 	context->frame = this;
+#ifdef WITH_COLLABORATION
+	context->collaboration = agi::make_unique<agi::collab::CollaborationController>(context.get());
+#endif
 
 	StartupLog("Apply saved Maximized state");
 	if (OPT_GET("App/Maximized")->GetBool()) Maximize(true);
@@ -129,6 +141,20 @@ FrameMain::FrameMain()
 
 	StartupLog("Initialize menu bar");
 	menu::GetMenuBar("main", this, (wxID_HIGHEST + 1) + 10000, context.get());
+#ifdef WITH_COLLABORATION
+	auto collaboration_menu = new wxMenu;
+	collaboration_menu->Append(ID_COLLABORATION_CREATE, _("&Create Room..."));
+	collaboration_menu->Append(ID_COLLABORATION_JOIN, _("&Join Room..."));
+	collaboration_menu->AppendSeparator();
+	collaboration_menu->Append(ID_COLLABORATION_DISCONNECT, _("&Disconnect"));
+	GetMenuBar()->Insert(GetMenuBar()->GetMenuCount() - 1, collaboration_menu, _("&Collaboration"));
+	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ShowCreateRoomDialog(); }, ID_COLLABORATION_CREATE);
+	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->ShowJoinRoomDialog(); }, ID_COLLABORATION_JOIN);
+	Bind(wxEVT_MENU, [this](wxCommandEvent&) { context->collaboration->Disconnect(); }, ID_COLLABORATION_DISCONNECT);
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(!context->collaboration->IsRunning()); }, ID_COLLABORATION_CREATE);
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(!context->collaboration->IsRunning()); }, ID_COLLABORATION_JOIN);
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent& event) { event.Enable(context->collaboration->IsRunning()); }, ID_COLLABORATION_DISCONNECT);
+#endif
 
 	StartupLog("Create status bar");
 	CreateStatusBar(2);

@@ -29,6 +29,9 @@
 #include "subs_controller.h"
 #include "text_selection_controller.h"
 #include "video_controller.h"
+#ifdef WITH_COLLABORATION
+#include "collaboration_controller.h"
+#endif
 
 #include <libaegisub/make_unique.h>
 #include <libaegisub/path.h>

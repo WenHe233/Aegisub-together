@@ -300,6 +300,13 @@ bool SubsController::CanSave() const {
 	}
 }
 
+void SubsController::AdoptCollaborationSnapshot() {
+	undo_stack.clear();
+	redo_stack.clear();
+	autosaved_commit_id = saved_commit_id = commit_id;
+	context->ass->Commit(_("joined collaboration room"), AssFile::COMMIT_NEW);
+}
+
 void SubsController::SetFileName(agi::fs::path const& path) {
 	filename = path;
 	context->path->SetToken("?script", path.parent_path());

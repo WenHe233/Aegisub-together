@@ -184,7 +184,10 @@ elif host_machine.system() == 'windows'
     )
 
     if collaboration_enabled
-        aegisub_src += files('collaboration_transport_win.cpp')
+        aegisub_src += files(
+            'collaboration_controller.cpp',
+            'collaboration_transport_win.cpp',
+        )
     endif
 
     if cc.has_header('wingdi.h')

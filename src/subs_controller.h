@@ -115,6 +115,10 @@ public:
 	/// Can the file be saved in its current format?
 	bool CanSave() const;
 
+	/// Reset local undo state after loading an authoritative room snapshot.
+	/// The current filename is retained and the document is marked modified.
+	void AdoptCollaborationSnapshot();
+
 	/// The file is about to be saved
 	/// This signal is intended for adding metadata which is awkward or
 	/// expensive to always keep up to date
