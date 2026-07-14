@@ -167,7 +167,11 @@ jobs:
         if: startsWith(matrix.config.os, 'ubuntu-')
         run: |
           sudo apt-get update
-          sudo apt-get install ninja-build build-essential libx11-dev libwxgtk3.0-gtk3-dev libfreetype6-dev pkg-config libfontconfig1-dev libass-dev libasound2-dev libffms2-dev intltool libboost-all-dev libhunspell-dev libuchardet-dev libpulse-dev libopenal-dev libxxhash-dev nasm
+          wx_package=libwxgtk3.2-dev
+          if ! apt-cache show "$wx_package" >/dev/null 2>&1; then
+            wx_package=libwxgtk3.0-gtk3-dev
+          fi
+          sudo apt-get install ninja-build build-essential libx11-dev "$wx_package" libfreetype6-dev pkg-config libfontconfig1-dev libass-dev libasound2-dev libffms2-dev intltool libboost-all-dev libhunspell-dev libuchardet-dev libpulse-dev libopenal-dev libxxhash-dev nasm
 
       - name: Configure
         run: |

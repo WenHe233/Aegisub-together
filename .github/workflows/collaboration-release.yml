@@ -131,6 +131,7 @@ jobs:
         shell: pwsh
         run: |
           meson compile -C build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & build/tests/gtest-main.exe --gtest_filter='collaboration_*.*' --gtest_color=no
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Package portable client
