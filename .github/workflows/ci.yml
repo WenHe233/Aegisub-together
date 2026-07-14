@@ -157,9 +157,12 @@ jobs:
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
           # Skip brew update for now, see https://github.com/actions/setup-python/issues/577
           # brew update
-          brew install luarocks ninja
-          sudo luarocks install luafilesystem 1.8.0
-          sudo luarocks install moonscript --dev
+          brew install lua@5.4 luarocks ninja
+          lua_prefix="$(brew --prefix lua@5.4)"
+          echo "$lua_prefix/bin" >> "$GITHUB_PATH"
+          export PATH="$lua_prefix/bin:$PATH"
+          sudo luarocks --lua-version=5.4 --lua-dir="$lua_prefix" install luafilesystem 1.8.0-1
+          sudo luarocks --lua-version=5.4 --lua-dir="$lua_prefix" install moonscript 0.5.0-1
           brew install libass zlib ffms2 fftw hunspell
           brew install pulseaudio  # NO OpenAL in github CI
 
