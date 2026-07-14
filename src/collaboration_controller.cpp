@@ -16,6 +16,8 @@
 #include "subs_controller.h"
 
 #include <libaegisub/collaboration_room.h>
+#include <libaegisub/collaboration_sync.h>
+#include <libaegisub/signal.h>
 
 #include <wx/button.h>
 #include <wx/checkbox.h>
@@ -29,10 +31,13 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <deque>
 #include <random>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace agi { namespace collab {
 namespace {
@@ -157,6 +162,13 @@ std::string read_credential(std::string const& target) {
 		return {};
 	}
 }
+
+class FlagGuard final {
+	bool& flag;
+public:
+	explicit FlagGuard(bool& flag) : flag(flag) { flag = true; }
+	~FlagGuard() { flag = false; }
+};
 }
 
 class CollaborationController::Impl final : public wxEvtHandler {
@@ -169,11 +181,19 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	ConnectionInput input;
 	Snapshot create_snapshot;
 	RoomJoined room;
+	SyncState sync;
 	Phase phase = Phase::idle;
 	std::int64_t revision = 0;
 	std::uint64_t next_request = 1;
 	std::chrono::steady_clock::time_point last_heartbeat;
 	bool load_snapshot_on_join = false;
+	bool applying_snapshot = false;
+	std::string active_line_id;
+	std::vector<PendingBatch> rejected_batches;
+	std::deque<WireEnvelope> deferred_persistent_messages;
+	unsigned mutation_depth = 0;
+	agi::signal::Connection commit_connection;
+	agi::signal::Connection active_line_connection;
 
 	std::string request_id(char const* prefix) {
 		return std::string(prefix) + "-" + std::to_string(next_request++);
@@ -223,6 +243,103 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		}
 	}
 
+	std::string mint_batch_id() {
+		auto id = allocator->Mint() + "-batch";
+		OPT_SET("Collaboration/Next ID")->SetString(std::to_string(allocator->NextCounter()));
+		return id;
+	}
+
+	void request_snapshot() {
+		if (sync.IsInitialized()) send("snapshot_request", EncodeSnapshotRequest(sync.Revision()));
+	}
+
+	void apply_projected_snapshot(std::unordered_map<std::string, std::string> const& remap = {}) {
+		std::string active = active_line_id;
+		if (auto replacement = remap.find(active); replacement != remap.end()) active = replacement->second;
+		std::unordered_set<std::string> selected;
+		for (auto const* line : context->selectionController->GetSelectedSet()) {
+			auto id = ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey);
+			if (auto replacement = remap.find(id); replacement != remap.end()) id = replacement->second;
+			if (!id.empty()) selected.insert(std::move(id));
+		}
+
+		FlagGuard applying(applying_snapshot);
+		ass::LoadSnapshot(*context->ass, sync.Projected().snapshot);
+		context->ass->Commit(_("apply collaboration update"), AssFile::COMMIT_NEW);
+
+		Selection selection;
+		AssDialogue* active_line = nullptr;
+		for (auto& line : context->ass->Events) {
+			auto id = ass::GetMetadataValue(*context->ass, line.ExtradataIds.get(), IdExtradataKey);
+			if (selected.count(id)) selection.insert(&line);
+			if (id == active) active_line = &line;
+		}
+		if (!active_line && !selection.empty()) active_line = *selection.begin();
+		if (!active_line && !context->ass->Events.empty()) active_line = &context->ass->Events.front();
+		if (selection.empty() && active_line) selection.insert(active_line);
+		context->selectionController->SetSelectionAndActive(std::move(selection), active_line);
+	}
+
+	void on_local_commit(int, AssDialogue const*) {
+		if (phase != Phase::joined || applying_snapshot || !sync.IsInitialized()) return;
+		try {
+			SanitizeContext sanitize;
+			for (auto const& line : sync.Projected().snapshot.lines) sanitize.known_live_ids.insert(line.id);
+			for (auto const& tombstone : sync.Projected().tombstones) sanitize.tombstoned_ids.insert(tombstone.first);
+			auto cleaned = ass::SanitizeFileMetadata(*context->ass, *allocator, sanitize);
+			if (cleaned.changed()) OPT_SET("Collaboration/Next ID")->SetString(std::to_string(allocator->NextCounter()));
+			std::unordered_map<std::string, std::int64_t> versions;
+			for (auto const& line : sync.Projected().snapshot.lines) versions.emplace(line.id, line.version);
+			auto local = ass::CaptureSnapshot(*context->ass, versions,
+				sync.Projected().snapshot.styles_version, sync.Projected().snapshot.script_info_version);
+			auto batch = sync.QueueLocalSnapshot(mint_batch_id(), local);
+			if (!batch.operations.empty()) send("submit_batch", EncodeSubmitBatch(batch));
+		}
+		catch (std::exception const& error) {
+			context->frame->StatusTimeout(to_wx(std::string("Collaboration change could not be queued: ") + error.what()));
+			request_snapshot();
+		}
+	}
+
+	void on_active_line_changed(AssDialogue* line) {
+		active_line_id = line ? ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey) : std::string{};
+	}
+
+	void handle_applied_batch(WireEnvelope const& envelope) {
+		auto batch = DecodeAppliedBatch(envelope.payload_json);
+		auto result = sync.ApplyBatch(batch, envelope.room_revision, room.member_id);
+		revision = sync.Revision();
+		if (result.status == SyncApplyStatus::revision_gap) {
+			context->frame->StatusTimeout(_("Collaboration revision gap detected; refreshing room snapshot..."));
+			request_snapshot();
+			return;
+		}
+		if (result.status == SyncApplyStatus::pending_conflict) {
+			context->frame->StatusTimeout(_("A pending collaboration change conflicts with a remote update."));
+			request_snapshot();
+			return;
+		}
+		if (result.document_changed) apply_projected_snapshot(batch.id_remap);
+	}
+
+	void handle_rejected_batch(WireEnvelope const& envelope) {
+		auto rejection = DecodeRejectedBatch(envelope.payload_json);
+		auto removed = sync.RejectBatch(rejection);
+		rejected_batches.insert(rejected_batches.end(), removed.begin(), removed.end());
+		revision = (std::max)(revision, envelope.room_revision);
+		context->frame->StatusTimeout(to_wx("Collaboration batch rejected: " + rejection.message));
+		request_snapshot();
+	}
+
+	void handle_snapshot_state(WireEnvelope const& envelope) {
+		std::int64_t snapshot_revision = 0;
+		auto snapshot = DecodeSnapshotState(envelope.payload_json, snapshot_revision);
+		if (!sync.ResetConfirmed(std::move(snapshot), snapshot_revision, true))
+			throw std::runtime_error("pending collaboration changes cannot be replayed over the refreshed snapshot");
+		revision = sync.Revision();
+		apply_projected_snapshot();
+	}
+
 	void forget_credentials(ConnectionInput const& selected) {
 		try {
 			DeleteCredential(CredentialTarget(selected.server_url, "", "access-password"));
@@ -235,12 +352,23 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	void apply_joined_room(WireEnvelope const& envelope) {
 		auto joined = DecodeRoomJoined(envelope.payload_json);
+		bool reconnecting = sync.IsInitialized();
+		if (reconnecting) {
+			if (!sync.ResetConfirmed(joined.snapshot, envelope.room_revision, true))
+				throw std::runtime_error("pending collaboration changes cannot be replayed after reconnecting");
+		}
+		else sync.Initialize(joined.snapshot, envelope.room_revision);
+		revision = sync.Revision();
 		if (load_snapshot_on_join) {
-			ass::LoadSnapshot(*context->ass, joined.snapshot);
-			context->subsController->AdoptCollaborationSnapshot();
-			if (!context->ass->Events.empty()) {
-				auto* first = &context->ass->Events.front();
-				context->selectionController->SetSelectionAndActive({first}, first);
+			if (reconnecting) apply_projected_snapshot();
+			else {
+				FlagGuard applying(applying_snapshot);
+				ass::LoadSnapshot(*context->ass, joined.snapshot);
+				context->subsController->AdoptCollaborationSnapshot();
+				if (!context->ass->Events.empty()) {
+					auto* first = &context->ass->Events.front();
+					context->selectionController->SetSelectionAndActive({first}, first);
+				}
 			}
 		}
 		room = std::move(joined);
@@ -258,14 +386,21 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	}
 
 	void handle_message(WireEnvelope const& envelope) {
-		revision = (std::max)(revision, envelope.room_revision);
+		if (mutation_depth && (envelope.type == "batch_applied" || envelope.type == "batch_rejected" || envelope.type == "snapshot_state")) {
+			deferred_persistent_messages.push_back(envelope);
+			return;
+		}
 		try {
 			if (envelope.type == "access_ok" && phase == Phase::waiting_access) send_room_request();
 			else if (envelope.type == "room_joined" && phase == Phase::waiting_room) apply_joined_room(envelope);
+			else if (envelope.type == "batch_applied" && phase == Phase::joined) handle_applied_batch(envelope);
+			else if (envelope.type == "batch_rejected" && phase == Phase::joined) handle_rejected_batch(envelope);
+			else if (envelope.type == "snapshot_state" && phase == Phase::joined) handle_snapshot_state(envelope);
 			else if (envelope.type == "error") {
 				auto error = DecodeProtocolError(envelope.payload_json);
 				fail_protocol(error.message.empty() ? error.code : error.message);
 			}
+			else revision = (std::max)(revision, envelope.room_revision);
 		}
 		catch (std::exception const& error) {
 			fail_protocol(error.what());
@@ -339,6 +474,8 @@ public:
 	: context(context)
 	, timer(this)
 	, allocator(load_allocator())
+	, commit_connection(context->ass->AddCommitListener(&Impl::on_local_commit, this))
+	, active_line_connection(context->selectionController->AddActiveLineListener(&Impl::on_active_line_changed, this))
 	{
 		Bind(wxEVT_TIMER, &Impl::on_timer, this);
 	}
@@ -347,6 +484,15 @@ public:
 
 	void create() { show_dialog(RoomMode::create); }
 	void join() { show_dialog(RoomMode::join); }
+	void begin_mutation() { ++mutation_depth; }
+	void end_mutation() {
+		if (!mutation_depth || --mutation_depth) return;
+		while (!deferred_persistent_messages.empty() && phase == Phase::joined) {
+			auto message = std::move(deferred_persistent_messages.front());
+			deferred_persistent_messages.pop_front();
+			handle_message(message);
+		}
+	}
 
 	void disconnect() {
 		timer.Stop();
@@ -356,6 +502,11 @@ public:
 		input = ConnectionInput{};
 		create_snapshot = Snapshot{};
 		room = RoomJoined{};
+		sync = SyncState{};
+		rejected_batches.clear();
+		deferred_persistent_messages.clear();
+		mutation_depth = 0;
+		active_line_id.clear();
 		phase = Phase::idle;
 		revision = 0;
 	}
@@ -371,5 +522,7 @@ void CollaborationController::ShowJoinRoomDialog() { impl->join(); }
 void CollaborationController::Disconnect() { impl->disconnect(); }
 bool CollaborationController::IsRunning() const { return impl->running(); }
 bool CollaborationController::IsJoined() const { return impl->joined(); }
+void CollaborationController::BeginMutationGuard() { impl->begin_mutation(); }
+void CollaborationController::EndMutationGuard() { impl->end_mutation(); }
 
 } }

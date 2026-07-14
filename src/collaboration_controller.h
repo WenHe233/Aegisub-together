@@ -22,6 +22,8 @@ public:
 	void Disconnect();
 	bool IsRunning() const;
 	bool IsJoined() const;
+	void BeginMutationGuard();
+	void EndMutationGuard();
 };
 
 }

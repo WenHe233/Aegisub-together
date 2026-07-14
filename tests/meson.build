@@ -33,6 +33,7 @@ all_test_sources += [
     'tests/collaboration.cpp',
     'tests/collaboration_protocol.cpp',
     'tests/collaboration_room.cpp',
+    'tests/collaboration_sync.cpp',
     'tests/dialogue_lexer.cpp',
     'tests/format.cpp',
     'tests/fs.cpp',
