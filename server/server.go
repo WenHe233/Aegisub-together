@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/WenHe233/Aegisub-together/server/internal/auth"
@@ -23,6 +24,9 @@ type Config struct {
 	PasswordParams     auth.Params
 	AuthTimeout        time.Duration
 	DatabasePath       string
+	LockIdleTimeout    time.Duration
+	HeartbeatTimeout   time.Duration
+	SweepInterval      time.Duration
 }
 
 type Server struct {
@@ -32,6 +36,9 @@ type Server struct {
 	roomLimiter   *failureLimiter
 	handler       http.Handler
 	store         *sqliteStore
+	stop          chan struct{}
+	closeOnce     sync.Once
+	workers       sync.WaitGroup
 }
 
 func New(config Config) (*Server, error) {
@@ -40,6 +47,15 @@ func New(config Config) (*Server, error) {
 	}
 	if config.AuthTimeout == 0 {
 		config.AuthTimeout = 5 * time.Second
+	}
+	if config.LockIdleTimeout == 0 {
+		config.LockIdleTimeout = 60 * time.Second
+	}
+	if config.HeartbeatTimeout == 0 {
+		config.HeartbeatTimeout = 30 * time.Second
+	}
+	if config.SweepInterval == 0 {
+		config.SweepInterval = time.Second
 	}
 	store, err := openStore(config.DatabasePath)
 	if err != nil {
@@ -50,16 +66,27 @@ func New(config Config) (*Server, error) {
 		store.close()
 		return nil, err
 	}
-	server := &Server{hub: createdHub, config: config, accessLimiter: newFailureLimiter(), roomLimiter: newFailureLimiter(), store: store}
+	server := &Server{hub: createdHub, config: config, accessLimiter: newFailureLimiter(), roomLimiter: newFailureLimiter(), store: store, stop: make(chan struct{})}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", server.health)
 	mux.HandleFunc("GET /v1/ws", server.websocket)
 	server.handler = mux
+	server.workers.Add(1)
+	go server.sweepExpiredState()
 	return server, nil
 }
 
 func (server *Server) Close() error {
-	return server.store.close()
+	var closeError error
+	server.closeOnce.Do(func() {
+		close(server.stop)
+		for _, connection := range server.hub.connections() {
+			connection.CloseNow()
+		}
+		server.workers.Wait()
+		closeError = server.store.close()
+	})
+	return closeError
 }
 
 func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -120,7 +147,7 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 	server.roomLimiter.success(remoteIP)
-	defer server.hub.leave(joinedRoom.id, joinedMember.nickname, joinedMember.id)
+	defer server.memberDisconnected(joinedRoom.id, joinedMember.id)
 	server.hub.attach(joinedRoom, joinedMember, connection)
 
 	joined, joinedRevision, ok := server.hub.joinedPayload(joinedRoom.id, joinedMember.id)
@@ -137,9 +164,37 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 			return
 		}
 		if envelope.Type == "heartbeat" {
+			if !server.hub.heartbeat(joinedRoom.id, joinedMember.id, time.Now()) {
+				return
+			}
 			if err := writeEnvelope(request.Context(), connection, "heartbeat", envelope.RequestID, server.hub.currentRevision(joinedRoom.id), struct{}{}); err != nil {
 				return
 			}
+			continue
+		}
+		if envelope.Type == "lock_request" || envelope.Type == "lock_release" {
+			var reference protocol.LineReference
+			if err := decodePayload(envelope.Payload, &reference); err != nil || reference.LineID == "" {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "lock request is invalid", false)
+				continue
+			}
+			var states []protocol.LockState
+			var presence protocol.Presence
+			var recipients []*member
+			if envelope.Type == "lock_request" {
+				states, presence, recipients, err = server.hub.requestLock(joinedRoom.id, joinedMember.id, reference.LineID, time.Now(), server.config.LockIdleTimeout)
+			} else {
+				states, presence, recipients, err = server.hub.releaseLock(joinedRoom.id, joinedMember.id, reference.LineID, time.Now())
+			}
+			if err != nil {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", err.Error(), false)
+				continue
+			}
+			revision := server.hub.currentRevision(joinedRoom.id)
+			for _, state := range states {
+				broadcastTransient(envelope.RequestID, revision, "lock_state", state, recipients)
+			}
+			broadcastTransient(envelope.RequestID, revision, "presence", presence, recipients)
 			continue
 		}
 		if envelope.Type == "submit_batch" {
@@ -166,6 +221,40 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 			continue
 		}
 		_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "message is not valid in the current session", false)
+	}
+}
+
+func (server *Server) memberDisconnected(roomID, memberID string) {
+	for _, event := range server.hub.disconnect(roomID, memberID) {
+		broadcastTransient("disconnect-"+memberID, server.hub.currentRevision(roomID), event.typeName, event.payload, event.recipients)
+	}
+}
+
+func (server *Server) sweepExpiredState() {
+	defer server.workers.Done()
+	ticker := time.NewTicker(server.config.SweepInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case now := <-ticker.C:
+			events, staleConnections := server.hub.expire(now, server.config.LockIdleTimeout, server.config.HeartbeatTimeout)
+			for _, event := range events {
+				broadcastTransient("lease-expired", server.hub.currentRevision(event.roomID), event.typeName, event.payload, event.recipients)
+			}
+			for _, connection := range staleConnections {
+				_ = connection.Close(websocket.StatusGoingAway, "heartbeat timeout")
+			}
+		case <-server.stop:
+			return
+		}
+	}
+}
+
+func broadcastTransient(requestID string, revision int64, typeName string, payload any, recipients []*member) {
+	for _, recipient := range recipients {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		_ = writeEnvelope(ctx, recipient.connection, typeName, requestID, revision, payload)
+		cancel()
 	}
 }
 

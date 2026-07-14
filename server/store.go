@@ -111,7 +111,7 @@ func (store *sqliteStore) loadRooms(ctx context.Context) ([]*room, error) {
 	defer rows.Close()
 	var rooms []*room
 	for rows.Next() {
-		value := &room{members: make(map[string]*member), tombstones: make(map[string]protocol.Line)}
+		value := &room{members: make(map[string]*member), tombstones: make(map[string]protocol.Line), locks: make(map[string]lineLock)}
 		var lockEnabled int
 		var snapshot []byte
 		if err := rows.Scan(&value.id, &value.name, &value.passwordHash, &lockEnabled, &value.revision, &snapshot); err != nil {

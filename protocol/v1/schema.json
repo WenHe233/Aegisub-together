@@ -55,6 +55,14 @@
       "then": {"properties": {"payload": {"$ref": "#/$defs/line_reference"}}}
     },
     {
+      "if": {"properties": {"type": {"const": "lock_state"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/lock_state"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "presence"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/presence"}}}
+    },
+    {
       "if": {"properties": {"type": {"const": "comment_create"}}},
       "then": {"properties": {"payload": {"$ref": "#/$defs/comment_create"}}}
     },
@@ -74,6 +82,40 @@
       "type": "object",
       "required": ["line_id"],
       "properties": {"line_id": {"$ref": "#/$defs/non_empty_string"}},
+      "additionalProperties": false
+    },
+    "lock_state": {
+      "type": "object",
+      "required": ["line_id", "requester_id", "granted", "holder_id", "holder_name", "expires_in_ms"],
+      "properties": {
+        "line_id": {"type": "string"},
+        "requester_id": {"type": "string"},
+        "granted": {"type": "boolean"},
+        "holder_id": {"type": ["string", "null"]},
+        "holder_name": {"type": ["string", "null"]},
+        "expires_in_ms": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "presence": {
+      "type": "object",
+      "required": ["members"],
+      "properties": {
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["member_id", "nickname", "line_id", "last_seen"],
+            "properties": {
+              "member_id": {"type": "string"},
+              "nickname": {"type": "string"},
+              "line_id": {"type": ["string", "null"]},
+              "last_seen": {"type": "string", "format": "date-time"}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
       "additionalProperties": false
     },
     "line_fields": {

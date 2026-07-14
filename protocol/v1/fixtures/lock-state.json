@@ -1,0 +1,14 @@
+{
+  "protocol_version": 1,
+  "type": "lock_state",
+  "request_id": "lock-1",
+  "room_revision": 8,
+  "payload": {
+    "line_id": "9K3MT7Q2CD-1",
+    "requester_id": "member-2",
+    "granted": false,
+    "holder_id": "member-1",
+    "holder_name": "translator",
+    "expires_in_ms": 42000
+  }
+}

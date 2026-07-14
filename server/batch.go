@@ -40,7 +40,7 @@ func (hub *hub) applyBatch(ctx context.Context, roomID, actorID string, input pr
 	working.revision++
 	result := protocol.BatchApplied{BatchID: input.BatchID, ActorID: actorID, IDRemap: make(map[string]string)}
 	for index, raw := range input.Operations {
-		applied, err := applyOperation(working, raw, result.IDRemap)
+		applied, err := applyOperation(working, actorID, raw, result.IDRemap)
 		if err != nil {
 			var failure *batchFailure
 			if errors.As(err, &failure) {
@@ -65,7 +65,7 @@ func (hub *hub) applyBatch(ctx context.Context, roomID, actorID string, input pr
 	return result, value.revision, connectedMembers(value), false, nil
 }
 
-func applyOperation(value *room, raw json.RawMessage, remap map[string]string) (protocol.AppliedOperation, error) {
+func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[string]string) (protocol.AppliedOperation, error) {
 	var header struct {
 		Op string `json:"op"`
 	}
@@ -79,6 +79,9 @@ func applyOperation(value *room, raw json.RawMessage, remap map[string]string) (
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		operation.LineID = remapped(operation.LineID, remap)
+		if existing, locked := lockedByOther(value, operation.LineID, actorID); locked {
+			return protocol.AppliedOperation{}, lockFailure(operation.LineID, existing)
+		}
 		line, index := findLine(value.snapshot.Lines, operation.LineID)
 		if line == nil || line.Version != operation.BaseVersion || !hasFields(operation.Fields) {
 			return protocol.AppliedOperation{}, versionFailure(operation.LineID)
@@ -121,6 +124,9 @@ func applyOperation(value *room, raw json.RawMessage, remap map[string]string) (
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		operation.LineID = remapped(operation.LineID, remap)
+		if existing, locked := lockedByOther(value, operation.LineID, actorID); locked {
+			return protocol.AppliedOperation{}, lockFailure(operation.LineID, existing)
+		}
 		line, index := findLine(value.snapshot.Lines, operation.LineID)
 		if line == nil || line.Version != operation.BaseVersion {
 			return protocol.AppliedOperation{}, versionFailure(operation.LineID)
@@ -137,6 +143,9 @@ func applyOperation(value *room, raw json.RawMessage, remap map[string]string) (
 		operation.LineID = remapped(operation.LineID, remap)
 		operation.LeftID = remappedPointer(operation.LeftID, remap)
 		operation.RightID = remappedPointer(operation.RightID, remap)
+		if existing, locked := lockedByOther(value, operation.LineID, actorID); locked {
+			return protocol.AppliedOperation{}, lockFailure(operation.LineID, existing)
+		}
 		line, index := findLine(value.snapshot.Lines, operation.LineID)
 		if line == nil || line.Version != operation.BaseVersion {
 			return protocol.AppliedOperation{}, versionFailure(operation.LineID)
@@ -223,6 +232,10 @@ func versionFailure(lineID string) error {
 
 func invalidLine(lineID string) error {
 	return &batchFailure{code: "batch_conflict", message: "line fields are invalid", lineID: lineID}
+}
+
+func lockFailure(lineID string, existing lineLock) error {
+	return &batchFailure{code: "line_locked", message: fmt.Sprintf("line is locked by %s", existing.nickname), lineID: lineID}
 }
 
 func mergeFields(target *protocol.LineFields, update protocol.LineFields) {

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/WenHe233/Aegisub-together/server/internal/auth"
 	"github.com/WenHe233/Aegisub-together/server/internal/protocol"
@@ -21,10 +22,19 @@ var (
 )
 
 type member struct {
-	id          string
-	nickname    string
-	resumeToken string
-	connection  *websocket.Conn
+	id            string
+	nickname      string
+	resumeToken   string
+	connection    *websocket.Conn
+	activeLine    string
+	lastSeen      time.Time
+	lastHeartbeat time.Time
+}
+
+type lineLock struct {
+	memberID     string
+	nickname     string
+	lastActivity time.Time
 }
 
 type room struct {
@@ -37,6 +47,7 @@ type room struct {
 	members      map[string]*member
 	tombstones   map[string]protocol.Line
 	reindexed    bool
+	locks        map[string]lineLock
 }
 
 type hub struct {
@@ -95,6 +106,7 @@ func (hub *hub) create(input protocol.CreateRoom) (*room, *member, error) {
 		snapshot:     cloneSnapshot(input.Snapshot),
 		members:      map[string]*member{nickname: joinedMember},
 		tombstones:   make(map[string]protocol.Line),
+		locks:        make(map[string]lineLock),
 	}
 	canonicalizePositions(created.snapshot.Lines)
 	if err := hub.store.createRoom(context.Background(), created); err != nil {
@@ -110,6 +122,8 @@ func (hub *hub) attach(value *room, joinedMember *member, connection *websocket.
 	if existingRoom := hub.rooms[value.name]; existingRoom != nil {
 		if existingMember := existingRoom.members[joinedMember.nickname]; existingMember != nil && existingMember.id == joinedMember.id {
 			existingMember.connection = connection
+			existingMember.lastHeartbeat = time.Now()
+			existingMember.lastSeen = existingMember.lastHeartbeat
 		}
 	}
 }
@@ -194,7 +208,8 @@ func newMember(nickname string) (*member, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &member{id: memberID, nickname: nickname, resumeToken: resumeToken}, nil
+	now := time.Now()
+	return &member{id: memberID, nickname: nickname, resumeToken: resumeToken, lastSeen: now, lastHeartbeat: now}, nil
 }
 
 func validateRoomInput(name, password, nickname string, snapshot protocol.Snapshot) error {

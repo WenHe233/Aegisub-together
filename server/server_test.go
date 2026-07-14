@@ -108,6 +108,44 @@ func receive(t *testing.T, connection *websocket.Conn) protocol.Envelope {
 	return envelope
 }
 
+func receiveType(t *testing.T, connection *websocket.Conn, expected string) protocol.Envelope {
+	t.Helper()
+	for attempts := 0; attempts < 12; attempts++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		messageType, data, err := connection.Read(ctx)
+		cancel()
+		if err != nil {
+			t.Fatalf("waiting for %s: %v", expected, err)
+		}
+		if messageType != websocket.MessageText {
+			continue
+		}
+		var envelope protocol.Envelope
+		if err := json.Unmarshal(data, &envelope); err != nil {
+			t.Fatal(err)
+		}
+		if envelope.Type == expected {
+			return envelope
+		}
+	}
+	t.Fatalf("did not receive message type %s", expected)
+	return protocol.Envelope{}
+}
+
+func configuredTestServer(t *testing.T, config Config) (*Server, *httptest.Server, string) {
+	t.Helper()
+	if config.PasswordParams == (auth.Params{}) {
+		config.PasswordParams = auth.Params{Memory: 64, Iterations: 1, Parallelism: 1, SaltLength: 16, KeyLength: 32}
+	}
+	server, err := New(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	httpServer := httptest.NewServer(server)
+	t.Cleanup(func() { httpServer.Close(); server.Close() })
+	return server, httpServer, "ws" + strings.TrimPrefix(httpServer.URL, "http") + "/v1/ws"
+}
+
 func authenticate(t *testing.T, connection *websocket.Conn, password string) {
 	t.Helper()
 	send(t, connection, "access_auth", "auth-1", protocol.AccessAuth{Password: password})
@@ -512,5 +550,137 @@ func TestDenseBatchCarriesAtomicReindexMap(t *testing.T) {
 			t.Fatalf("duplicate reindexed position %q", position)
 		}
 		seen[position] = struct{}{}
+	}
+}
+
+func TestLineLockDeniesOtherMemberAndRejectsBatch(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{})
+	owner := dial(t, url)
+	authenticate(t, owner, "")
+	ownerJoined := createRoom(t, owner, "episode-01", "translator")
+	other := dial(t, url)
+	authenticate(t, other, "")
+	otherJoined := joinRoom(t, other, "episode-01", "proofreader")
+
+	send(t, owner, "lock_request", "lock-owner", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	ownerStateEnvelope := receiveType(t, owner, "lock_state")
+	receiveType(t, owner, "presence")
+	receiveType(t, other, "lock_state")
+	receiveType(t, other, "presence")
+	var ownerState protocol.LockState
+	json.Unmarshal(ownerStateEnvelope.Payload, &ownerState)
+	if !ownerState.Granted || ownerState.HolderID == nil || *ownerState.HolderID != ownerJoined.MemberID {
+		t.Fatalf("owner did not acquire lock: %#v", ownerState)
+	}
+
+	send(t, other, "lock_request", "lock-other", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	deniedEnvelope := receiveType(t, other, "lock_state")
+	receiveType(t, other, "presence")
+	// Drain the same broadcast from the owner before later assertions.
+	receiveType(t, owner, "lock_state")
+	receiveType(t, owner, "presence")
+	var denied protocol.LockState
+	json.Unmarshal(deniedEnvelope.Payload, &denied)
+	if denied.Granted || denied.HolderID == nil || *denied.HolderID != ownerJoined.MemberID || denied.RequesterID != otherJoined.MemberID {
+		t.Fatalf("other member was not denied with holder details: %#v", denied)
+	}
+
+	_, _, rejected := submitBatch(t, other, "locked-batch", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("must not apply")},
+	})
+	if rejected == nil || rejected.Code != "line_locked" || rejected.LineID != "9K3MT7Q2CD-1" {
+		t.Fatalf("locked batch was not rejected: %#v", rejected)
+	}
+}
+
+func TestFocusChangeReleasesPreviousLock(t *testing.T) {
+	snapshot := sampleSnapshot()
+	second := snapshot.Lines[0]
+	second.LineID = "9K3MT7Q2CD-2"
+	second.PosKey = "z"
+	snapshot.Lines = append(snapshot.Lines, second)
+	_, _, url := configuredTestServer(t, Config{})
+	owner := dial(t, url)
+	authenticate(t, owner, "")
+	send(t, owner, "create_room", "room-two-lines", protocol.CreateRoom{RoomName: "episode-01", RoomPassword: "room password", Nickname: "translator", LockEnabled: true, Snapshot: snapshot})
+	receive(t, owner)
+	other := dial(t, url)
+	authenticate(t, other, "")
+	joinRoom(t, other, "episode-01", "proofreader")
+
+	send(t, owner, "lock_request", "lock-first", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	receiveType(t, owner, "presence")
+	receiveType(t, other, "presence")
+	send(t, owner, "lock_request", "lock-second", protocol.LineReference{LineID: "9K3MT7Q2CD-2"})
+	receiveType(t, owner, "presence")
+	receiveType(t, other, "presence")
+
+	send(t, other, "lock_request", "lock-released", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	grantedEnvelope := receiveType(t, other, "lock_state")
+	var granted protocol.LockState
+	json.Unmarshal(grantedEnvelope.Payload, &granted)
+	if !granted.Granted {
+		t.Fatalf("previous focus lock was not released: %#v", granted)
+	}
+}
+
+func TestLockExpiresDespiteConnectionHeartbeat(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{LockIdleTimeout: 60 * time.Millisecond, HeartbeatTimeout: time.Second, SweepInterval: 5 * time.Millisecond})
+	owner := dial(t, url)
+	authenticate(t, owner, "")
+	createRoom(t, owner, "episode-01", "translator")
+	observer := dial(t, url)
+	authenticate(t, observer, "")
+	joinRoom(t, observer, "episode-01", "proofreader")
+	send(t, owner, "lock_request", "lock-owner", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	receiveType(t, owner, "presence")
+	receiveType(t, observer, "presence")
+
+	time.Sleep(30 * time.Millisecond)
+	send(t, owner, "heartbeat", "heartbeat-owner", struct{}{})
+	receiveType(t, owner, "heartbeat")
+	expiredEnvelope := receiveType(t, observer, "lock_state")
+	var expired protocol.LockState
+	json.Unmarshal(expiredEnvelope.Payload, &expired)
+	if expired.Granted || expired.HolderID != nil || expired.LineID != "9K3MT7Q2CD-1" {
+		t.Fatalf("idle lock did not expire independently of heartbeat: %#v", expired)
+	}
+}
+
+func TestHeartbeatTimeoutDisconnectsMember(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{LockIdleTimeout: time.Second, HeartbeatTimeout: 50 * time.Millisecond, SweepInterval: 5 * time.Millisecond})
+	connection := dial(t, url)
+	authenticate(t, connection, "")
+	createRoom(t, connection, "episode-01", "translator")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	_, _, err := connection.Read(ctx)
+	if websocket.CloseStatus(err) != websocket.StatusGoingAway {
+		t.Fatalf("expected heartbeat timeout close, got %v", err)
+	}
+}
+
+func TestLockDisabledKeepsPresenceWithoutHardLock(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{})
+	first := dial(t, url)
+	authenticate(t, first, "")
+	send(t, first, "create_room", "room-unlocked", protocol.CreateRoom{RoomName: "episode-01", RoomPassword: "room password", Nickname: "translator", LockEnabled: false, Snapshot: sampleSnapshot()})
+	receive(t, first)
+	second := dial(t, url)
+	authenticate(t, second, "")
+	joinRoom(t, second, "episode-01", "proofreader")
+	send(t, first, "lock_request", "presence-first", protocol.LineReference{LineID: "9K3MT7Q2CD-1"})
+	stateEnvelope := receiveType(t, second, "lock_state")
+	receiveType(t, second, "presence")
+	var state protocol.LockState
+	json.Unmarshal(stateEnvelope.Payload, &state)
+	if !state.Granted || state.HolderID != nil {
+		t.Fatalf("lock-disabled room created a hard holder: %#v", state)
+	}
+	_, _, rejected := submitBatch(t, second, "unlocked-batch", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("allowed")},
+	})
+	if rejected != nil {
+		t.Fatalf("presence blocked edit in lock-disabled room: %#v", rejected)
 	}
 }

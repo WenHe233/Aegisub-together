@@ -121,6 +121,30 @@ type BatchRejected struct {
 	OperationIndex int    `json:"operation_index,omitempty"`
 }
 
+type LineReference struct {
+	LineID string `json:"line_id"`
+}
+
+type LockState struct {
+	LineID      string  `json:"line_id"`
+	RequesterID string  `json:"requester_id"`
+	Granted     bool    `json:"granted"`
+	HolderID    *string `json:"holder_id"`
+	HolderName  *string `json:"holder_name"`
+	ExpiresInMS int64   `json:"expires_in_ms"`
+}
+
+type PresenceMember struct {
+	MemberID string  `json:"member_id"`
+	Nickname string  `json:"nickname"`
+	LineID   *string `json:"line_id"`
+	LastSeen string  `json:"last_seen"`
+}
+
+type Presence struct {
+	Members []PresenceMember `json:"members"`
+}
+
 type ModifyOperation struct {
 	Op          string     `json:"op"`
 	LineID      string     `json:"line_id"`
