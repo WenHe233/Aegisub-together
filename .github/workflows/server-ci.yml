@@ -1,0 +1,114 @@
+name: Collaboration server CI
+
+on:
+  push:
+    paths:
+      - "server/**"
+      - "protocol/**"
+      - ".github/workflows/server-ci.yml"
+    tags:
+      - "v*.*.*"
+  pull_request:
+    paths:
+      - "server/**"
+      - "protocol/**"
+      - ".github/workflows/server-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Go tests and SQLite recovery
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.5
+          cache-dependency-path: server/go.sum
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Validate protocol fixtures
+        working-directory: .
+        run: |
+          python -m pip install jsonschema
+          python protocol/v1/validate_fixtures.py
+      - name: Verify modules
+        run: go mod verify
+      - name: Test
+        run: go test -count=1 ./...
+      - name: Race test
+        run: go test -race -count=1 ./...
+      - name: Exercise SQLite restart, archive, and backup recovery
+        run: >-
+          go test -count=1
+          -run 'Test(SQLiteRestoresRoomsAndBatchesAfterRestart|CommentsPersistAcrossSQLiteRestart|ColdArchiveRestoresSnapshotTombstonesAndCredentials|SQLiteOnlineBackupIsRecoverable|AutomaticArchiveSkipsActiveRoomAndRestoresOnJoin|StoreMigratesPreArchiveSchema)$'
+          .
+
+  image-check:
+    name: Build server image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: server
+          file: server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          cache-from: type=gha,scope=server-image-check
+          cache-to: type=gha,mode=max,scope=server-image-check
+
+  publish-image:
+    name: Publish server image
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref_name == github.event.repository.default_branch || startsWith(github.ref, 'refs/tags/v'))
+    needs: [test, image-check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set lowercase image name
+        shell: bash
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/aegisub-together-server" >> "$GITHUB_ENV"
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=edge,enable=${{ github.ref_name == github.event.repository.default_branch }}
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: server
+          file: server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=server-image-publish
+          cache-to: type=gha,mode=max,scope=server-image-publish
