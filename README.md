@@ -4,6 +4,9 @@
 
 # Aegisub Together
 
+> [!WARNING]
+> 这是一个完全由 AI 制作、以探索和娱乐为目的的玩具项目，可能存在各种各样的 Bug，也不保证后续会持续跟随上游更新或长期维护。不过，我们仍然欢迎提交 Pull Request 和 Issue。
+
 Aegisub Together 是基于 arch1t3cht Aegisub 分支开发的在线协作字幕编辑版本。它保留原有 Aegisub 的单机编辑体验，并为 Windows 客户端增加自托管房间、实时字幕同步、行锁、成员在线状态、维护模式、协作撤销/重做、离线编辑对账以及行批注与修改建议。
 
 协作服务端使用 Go 编写，通过 WebSocket 与客户端通信，并使用 SQLite 持久化房间、字幕快照、操作日志、墓碑和审计记录。首版同步 Dialogue、Styles、Script Info 以及协作所需的 Extradata；视频、字体、图片附件和本机项目状态仍由每位成员在本地管理。
