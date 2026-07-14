@@ -53,6 +53,7 @@ func runServe(ctx context.Context, args []string, stdout, stderr io.Writer) erro
 	database := flags.String("database", envOr("AEGISUB_COLLAB_DATABASE", "collab.db"), "SQLite database path")
 	accessHash := flags.String("access-password-hash", os.Getenv("AEGISUB_COLLAB_ACCESS_PASSWORD_HASH"), "Argon2id access-password hash")
 	archiveDays := flags.Int("archive-days", 0, "archive inactive rooms after this many days; 0 disables")
+	trustedProxyCIDRs := flags.String("trusted-proxy-cidrs", os.Getenv("AEGISUB_COLLAB_TRUSTED_PROXY_CIDRS"), "comma-separated proxy CIDRs allowed to supply X-Forwarded-For")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -61,6 +62,7 @@ func runServe(ctx context.Context, args []string, stdout, stderr io.Writer) erro
 	}
 	server, err := collab.New(collab.Config{
 		AccessPasswordHash: *accessHash, DatabasePath: *database, ArchiveAfter: time.Duration(*archiveDays) * 24 * time.Hour,
+		TrustedProxyCIDRs: splitNonEmpty(*trustedProxyCIDRs),
 	})
 	if err != nil {
 		return err
@@ -81,6 +83,16 @@ func runServe(ctx context.Context, args []string, stdout, stderr io.Writer) erro
 		}
 		return err
 	}
+}
+
+func splitNonEmpty(value string) []string {
+	var result []string
+	for _, item := range strings.Split(value, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 func runHashPassword(args []string, stdin io.Reader, stdout, stderr io.Writer) error {

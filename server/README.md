@@ -21,7 +21,10 @@ aegisub-together-server rooms unarchive -database collab.db room-name
 
 `hash-password` reads standard input so the plaintext secret does not appear in
 the process list. `serve` also accepts `AEGISUB_COLLAB_LISTEN`,
-`AEGISUB_COLLAB_DATABASE`, and `AEGISUB_COLLAB_ACCESS_PASSWORD_HASH`.
+`AEGISUB_COLLAB_DATABASE`, `AEGISUB_COLLAB_ACCESS_PASSWORD_HASH`, and
+`AEGISUB_COLLAB_TRUSTED_PROXY_CIDRS`. The latter is a comma-separated allowlist;
+forwarded client addresses are ignored unless the direct peer belongs to one
+of those networks.
 
 `archive-days` defaults to `0`, which disables automatic archival. A cold
 archive compresses the authoritative snapshot, comments, and tombstones and

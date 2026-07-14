@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,21 +34,31 @@ type Config struct {
 	ResumeTimeout          time.Duration
 	ArchiveAfter           time.Duration
 	ArchiveSweepInterval   time.Duration
+	TrustedProxyCIDRs      []string
 }
 
 type Server struct {
-	hub           *hub
-	config        Config
-	accessLimiter *failureLimiter
-	roomLimiter   *failureLimiter
-	handler       http.Handler
-	store         *sqliteStore
-	stop          chan struct{}
-	closeOnce     sync.Once
-	workers       sync.WaitGroup
+	hub            *hub
+	config         Config
+	accessLimiter  *failureLimiter
+	roomLimiter    *failureLimiter
+	handler        http.Handler
+	store          *sqliteStore
+	stop           chan struct{}
+	closeOnce      sync.Once
+	workers        sync.WaitGroup
+	trustedProxies []*net.IPNet
 }
 
 func New(config Config) (*Server, error) {
+	trustedProxies := make([]*net.IPNet, 0, len(config.TrustedProxyCIDRs))
+	for _, value := range config.TrustedProxyCIDRs {
+		_, network, err := net.ParseCIDR(strings.TrimSpace(value))
+		if err != nil {
+			return nil, fmt.Errorf("invalid trusted proxy CIDR %q: %w", value, err)
+		}
+		trustedProxies = append(trustedProxies, network)
+	}
 	if config.PasswordParams == (auth.Params{}) {
 		config.PasswordParams = auth.DefaultParams()
 	}
@@ -87,7 +98,7 @@ func New(config Config) (*Server, error) {
 		store.close()
 		return nil, err
 	}
-	server := &Server{hub: createdHub, config: config, accessLimiter: newFailureLimiter(), roomLimiter: newFailureLimiter(), store: store, stop: make(chan struct{})}
+	server := &Server{hub: createdHub, config: config, accessLimiter: newFailureLimiter(), roomLimiter: newFailureLimiter(), store: store, stop: make(chan struct{}), trustedProxies: trustedProxies}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", server.health)
 	mux.HandleFunc("GET /v1/ws", server.websocket)
@@ -125,7 +136,7 @@ func (server *Server) health(writer http.ResponseWriter, _ *http.Request) {
 }
 
 func (server *Server) websocket(writer http.ResponseWriter, request *http.Request) {
-	remoteIP := clientIP(request)
+	remoteIP := clientIP(request, server.trustedProxies)
 	connection, err := websocket.Accept(writer, request, &websocket.AcceptOptions{CompressionMode: websocket.CompressionDisabled})
 	if err != nil {
 		return
@@ -537,10 +548,33 @@ func writeProtocolError(ctx context.Context, connection *websocket.Conn, request
 	return writeEnvelope(ctx, connection, "error", requestID, revision, protocol.Error{Code: code, Message: message, Retryable: retryable})
 }
 
-func clientIP(request *http.Request) string {
+func clientIP(request *http.Request, trustedProxies []*net.IPNet) string {
 	host, _, err := net.SplitHostPort(request.RemoteAddr)
 	if err != nil {
-		return request.RemoteAddr
+		host = request.RemoteAddr
 	}
-	return host
+	direct := net.ParseIP(strings.TrimSpace(host))
+	if direct == nil || !ipInNetworks(direct, trustedProxies) {
+		return host
+	}
+	forwarded := strings.Split(request.Header.Get("X-Forwarded-For"), ",")
+	for index := len(forwarded) - 1; index >= 0; index-- {
+		candidate := net.ParseIP(strings.TrimSpace(forwarded[index]))
+		if candidate == nil {
+			return direct.String()
+		}
+		if !ipInNetworks(candidate, trustedProxies) {
+			return candidate.String()
+		}
+	}
+	return direct.String()
+}
+
+func ipInNetworks(address net.IP, networks []*net.IPNet) bool {
+	for _, network := range networks {
+		if network.Contains(address) {
+			return true
+		}
+	}
+	return false
 }
