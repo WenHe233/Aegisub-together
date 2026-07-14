@@ -16,7 +16,7 @@
 
 // main app icon should always be first
 // (windows explorer uses the first icon resource by default)
-wxicon ICON "../bitmaps/windows/icon.ico"
+wxicon ICON "../bitmaps/windows/aegisub_together.ico"
 eyedropper_cursor CURSOR "../bitmaps/windows/eyedropper.cur"
 
 // We supply the manifest ourselves

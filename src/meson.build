@@ -203,7 +203,7 @@ elif host_machine.system() == 'windows'
 
     res_inc = include_directories('bitmaps/windows')
     res_dep_files = files(
-        'bitmaps/windows/icon.ico',
+        'bitmaps/windows/aegisub_together.ico',
         'bitmaps/windows/eyedropper.cur',
     )
     windows = import('windows')

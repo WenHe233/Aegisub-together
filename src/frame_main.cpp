@@ -188,7 +188,7 @@ FrameMain::FrameMain()
 	SetIcon(wxICON(wxicon));
 #else
 	wxIcon icon;
-	icon.CopyFromBitmap(GETIMAGE(wxicon));
+	icon.CopyFromBitmap(GETIMAGE(aegisub_together));
 	SetIcon(icon);
 #endif
 
