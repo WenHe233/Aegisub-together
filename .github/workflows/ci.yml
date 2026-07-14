@@ -101,7 +101,7 @@ jobs:
               -Dvapoursynth=enabled
           - {
             name: macOS Release,
-            os: macos-13,
+            os: macos-15-intel,
             buildtype: release,
             args: -Ddefault_library=static -Dbuild_osx_bundle=true -Dlocal_boost=true -Dvapoursynth=enabled --force-fallback-for=ffms2
           }
