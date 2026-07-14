@@ -9,6 +9,28 @@ param (
 
 $ErrorActionPreference = "Stop"
 
+function Assert-Sha256 {
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]$Path,
+		[Parameter(Mandatory = $true)]
+		[string]$ExpectedHash
+	)
+
+	$sha256 = [System.Security.Cryptography.SHA256]::Create()
+	$archiveStream = [System.IO.File]::OpenRead((Resolve-Path $Path))
+	try {
+		$actualHash = [System.BitConverter]::ToString($sha256.ComputeHash($archiveStream)).Replace("-", "").ToLowerInvariant()
+	}
+	finally {
+		$archiveStream.Dispose()
+		$sha256.Dispose()
+	}
+	if ($actualHash -ne $ExpectedHash) {
+		throw "Archive hash mismatch for ${Path}: $actualHash"
+	}
+}
+
 $InstallerDir = Join-Path $SourceRoot "packages\win_installer" | Resolve-Path
 $DepsDir = Join-Path $BuildRoot "installer-deps"
 if (!(Test-Path $DepsDir)) {
@@ -45,9 +67,9 @@ if (!(Test-Path luajson)) {
 
 # Avisynth
 if (!(Test-Path AviSynthPlus64)) {
-	$avsReleases = Invoke-WebRequest "https://api.github.com/repos/AviSynth/AviSynthPlus/releases/latest" -Headers $GitHeaders -UseBasicParsing | ConvertFrom-Json
-	$avsUrl = $avsReleases.assets[0].browser_download_url
+	$avsUrl = "https://github.com/AviSynth/AviSynthPlus/releases/download/v3.7.3/AviSynthPlus_3.7.3_20230715-filesonly.7z"
 	Invoke-WebRequest $avsUrl -OutFile AviSynthPlus.7z -UseBasicParsing
+	Assert-Sha256 AviSynthPlus.7z "0b2589626a70faf0d803e96b269f9713f30b24568a34f95a26243795a4ef77f3"
 	7z x AviSynthPlus.7z
 	Rename-Item (Get-ChildItem -Filter "AviSynthPlus_*" -Directory) AviSynthPlus64
 	Remove-Item AviSynthPlus.7z
@@ -95,18 +117,7 @@ if (!(Test-Path SCXVid)) {
 	Set-Location $scxDir
 	$scxUrl = "https://github.com/dubhatervapoursynth/vapoursynth-scxvid/releases/download/v1/vapoursynth-scxvid-v1-win64.7z"
 	Invoke-WebRequest $scxUrl -OutFile vapoursynth-scxvid-v1-win64.7z -UseBasicParsing
-	$sha256 = [System.Security.Cryptography.SHA256]::Create()
-	$archiveStream = [System.IO.File]::OpenRead((Resolve-Path vapoursynth-scxvid-v1-win64.7z))
-	try {
-		$scxHash = [System.BitConverter]::ToString($sha256.ComputeHash($archiveStream)).Replace("-", "").ToLowerInvariant()
-	}
-	finally {
-		$archiveStream.Dispose()
-		$sha256.Dispose()
-	}
-	if ($scxHash -ne "2772a49db4395a68f872eee571352081856f7a8e5760bea2b56fb5bb7cbaf5b1") {
-		throw "SCXVid archive hash mismatch: $scxHash"
-	}
+	Assert-Sha256 vapoursynth-scxvid-v1-win64.7z "2772a49db4395a68f872eee571352081856f7a8e5760bea2b56fb5bb7cbaf5b1"
 	7z x vapoursynth-scxvid-v1-win64.7z
 	Remove-Item vapoursynth-scxvid-v1-win64.7z
 	Set-Location $DepsDir
