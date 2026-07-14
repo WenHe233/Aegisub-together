@@ -29,7 +29,7 @@
 - 房名 NFC 规范化、大小写敏感、1–64 字符；昵称 1–32 字符且房内唯一；房间密码 8–128 字节。
 - 密码使用 Argon2id（16-byte salt、64 MiB、3 iterations、parallelism 2）。每 IP 五分钟内 10 次失败后封禁 15 分钟。
 - SQLite 使用 WAL；每房间由单 goroutine 串行定序，批次在单事务中持久化。每 500 批或 5 分钟生成快照。
-- Windows 客户端使用 WinHTTP WebSocket/TLS；网络线程只收发，字幕与 UI 只在主线程修改。
+- Windows 客户端使用 WinHTTP WebSocket，同时支持 `wss://` 和 `ws://`；WSS 使用系统 TLS/证书库，WS 只允许用于可信网络并在首次连接时警告。网络线程只收发，字幕与 UI 只在主线程修改。
 - 密码默认只驻留内存；“记住密码”使用 Windows Credential Manager。
 
 ## 3. 功能实施与提交边界
@@ -59,7 +59,7 @@
 11. `feat(client): add stable collaboration metadata`
     - 实现 ID/位置 extradata、清洗、快照、diff 和 op 应用。
 12. `feat(client): add windows collaboration transport`
-    - 实现 WinHTTP WSS、协议编码、线程队列、重连、Credential Manager 和 Meson 选项。
+    - 实现 WinHTTP WS/WSS、协议编码、线程队列、重连、Credential Manager 和 Meson 选项。
 13. `feat(client): add room connection workflow`
     - 增加建房、入房、昵称和密码 UI，以及安全的本地文档切换。
 14. `feat(client): synchronize confirmed and pending document state`
@@ -87,9 +87,9 @@
 - C++ 单元测试覆盖 ID 清洗、核心 ASS diff、双 shadow、拒绝恢复、逆 op undo、顺序、节版本和离线三方比较。
 - Go 与 C++ 必须通过同一套黄金消息夹具；未知字段可忽略，未知必需消息类型安全拒绝。
 - 双客户端实测覆盖粘贴、Duplicate、切分、删除后撤销、TPP、模板机、批次拒绝、维护冻结、焦点锁、逐字输入、样式同步、挂机释放、恢复副本、服务重启、离线冲突、批注和锁关闭冲突。
-- 安全验收包含 TLS 校验、密码不落普通配置或日志、统一鉴权错误、Caddy 后真实 IP 限流、日志脱敏和数据库备份恢复。
+- 安全验收包含 WSS TLS 校验、WS 首次风险提示、密码不落普通配置或日志、统一鉴权错误、Caddy 后真实 IP 限流、日志脱敏和数据库备份恢复。
 - 性能门槛：一万行快照、同位置连续插入一万次、单行 commit 不等待 ack、三客户端持续编辑 30 分钟无丢批或 shadow 漂移。
-- M1–M3 全部完成并通过真实双人工作流后统一发布 `v0.1.0`，不提前发布 M2 alpha。
+- M1–M3 全部完成并通过真实双人工作流后发布首个稳定版本 `v0.1.0`；此前的 `v0.0.x` 作为 Pre-release 测试版本发布。
 
 ## 5. 固定假设与范围外事项
 
