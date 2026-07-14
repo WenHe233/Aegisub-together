@@ -371,7 +371,10 @@ func connectedMembers(value *room) []*member {
 	members := make([]*member, 0, len(value.members))
 	for _, joined := range value.members {
 		if joined.connection != nil {
-			members = append(members, joined)
+			// Broadcast after releasing the hub mutex. Keep a value snapshot so a
+			// concurrent disconnect cannot nil the connection under the writer.
+			snapshot := *joined
+			members = append(members, &snapshot)
 		}
 	}
 	return members
