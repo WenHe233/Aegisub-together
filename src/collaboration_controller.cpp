@@ -21,11 +21,14 @@
 #include <libaegisub/collaboration_sync.h>
 #include <libaegisub/fs.h>
 #include <libaegisub/io.h>
+#include <libaegisub/log.h>
 #include <libaegisub/path.h>
 #include <libaegisub/signal.h>
 
 #include <wx/button.h>
 #include <wx/checkbox.h>
+#include <wx/clipbrd.h>
+#include <wx/dataobj.h>
 #include <wx/dialog.h>
 #include <wx/listbox.h>
 #include <wx/msgdlg.h>
@@ -70,6 +73,38 @@ struct CommentDialogResult {
 	std::string comment_id;
 	std::string body;
 	std::optional<std::string> suggested_text;
+};
+
+class TransportFailureDialog final : public wxDialog {
+	wxTextCtrl* diagnostics;
+
+public:
+	TransportFailureDialog(wxWindow* parent, std::string const& detail, bool create_may_have_completed)
+	: wxDialog(parent, wxID_ANY, _("Collaboration connection failed"), wxDefaultPosition, wxDefaultSize,
+		wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
+		auto* root = new wxBoxSizer(wxVERTICAL);
+		auto message = create_may_have_completed
+			? _("The connection failed before Aegisub received the room confirmation. The room may already have been created; try joining the same room instead of creating it again.")
+			: _("The connection failed before Aegisub joined the room.");
+		root->Add(new wxStaticText(this, wxID_ANY, message), wxSizerFlags().Expand().Border(wxALL, 10));
+		diagnostics = new wxTextCtrl(this, wxID_ANY, to_wx(detail), wxDefaultPosition, wxSize(620, 180),
+			wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
+		root->Add(diagnostics, wxSizerFlags(1).Expand().Border(wxLEFT | wxRIGHT, 10));
+		auto* buttons = new wxStdDialogButtonSizer;
+		auto* copy = new wxButton(this, wxID_COPY, _("Copy diagnostics"));
+		buttons->AddButton(copy);
+		buttons->AddButton(new wxButton(this, wxID_OK));
+		buttons->Realize();
+		root->Add(buttons, wxSizerFlags().Expand().Border(wxALL, 10));
+		SetSizerAndFit(root);
+		SetMinSize(wxSize(560, 300));
+		copy->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+			if (wxTheClipboard->Open()) {
+				wxTheClipboard->SetData(new wxTextDataObject(diagnostics->GetValue()));
+				wxTheClipboard->Close();
+			}
+		});
+	}
 };
 
 class CommentsDialog final : public wxDialog {
@@ -330,6 +365,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	std::vector<PendingBatch> rejected_batches;
 	std::deque<WireEnvelope> deferred_persistent_messages;
 	unsigned mutation_depth = 0;
+	bool transport_failure_reported = false;
 	agi::signal::Connection commit_connection;
 	agi::signal::Connection active_line_connection;
 	agi::signal::Connection selection_connection;
@@ -849,7 +885,16 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	void on_timer(wxTimerEvent&) {
 		while (auto event = transport.PollEvent()) {
 			if (event->type == TransportEventType::message) handle_message(event->message);
-			else if (event->type == TransportEventType::error) context->frame->StatusTimeout(to_wx(event->detail));
+			else if (event->type == TransportEventType::error) {
+				auto detail = event->detail.empty() ? FormatTransportFailure(event->failure) : event->detail;
+				LOG_E("collaboration/transport") << detail;
+				if (phase != Phase::joined && !transport_failure_reported) {
+					transport_failure_reported = true;
+					TransportFailureDialog dialog(context->parent, detail, input.mode == RoomMode::create && phase == Phase::waiting_room);
+					dialog.ShowModal();
+				}
+				else context->frame->StatusTimeout(to_wx(detail));
+			}
 			else if (event->state == TransportState::connected) send_access_auth();
 			else if (event->state == TransportState::connecting) {
 				if (phase == Phase::joined) load_snapshot_on_join = true;
@@ -943,6 +988,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		load_snapshot_on_join = mode == RoomMode::join && !offline_session;
 		room = RoomJoined{};
 		revision = 0;
+		transport_failure_reported = false;
 		phase = Phase::connecting;
 		update_editability();
 		transport.Start({input.server_url});
@@ -1106,6 +1152,7 @@ public:
 		history_action.reset();
 		deferred_persistent_messages.clear();
 		mutation_depth = 0;
+		transport_failure_reported = false;
 		active_line_id.clear();
 		phase = Phase::idle;
 		revision = 0;

@@ -11,8 +11,10 @@
 #include <condition_variable>
 #include <cwctype>
 #include <deque>
+#include <exception>
 #include <limits>
 #include <mutex>
+#include <sstream>
 #include <stdexcept>
 #include <thread>
 #include <utility>
@@ -44,8 +46,34 @@ std::string narrow(std::wstring const& value) {
 	return output;
 }
 
-std::runtime_error winhttp_error(char const* operation, DWORD code = GetLastError()) {
-	return std::runtime_error(std::string(operation) + " failed with Windows error " + std::to_string(code));
+std::string windows_error_message(DWORD code) {
+	wchar_t* buffer = nullptr;
+	auto size = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		nullptr, code, 0, reinterpret_cast<wchar_t*>(&buffer), 0, nullptr);
+	if (!size || !buffer) return "unknown Windows error";
+	std::wstring message(buffer, size);
+	LocalFree(buffer);
+	while (!message.empty() && (message.back() == L'\r' || message.back() == L'\n' || message.back() == L' ' || message.back() == L'.'))
+		message.pop_back();
+	try { return narrow(message); }
+	catch (...) { return "Windows error text is not valid UTF-8"; }
+}
+
+class TransportException final : public std::runtime_error {
+public:
+	TransportEvent::Failure failure;
+
+	TransportException(std::string stage, std::string operation, DWORD code)
+	: std::runtime_error(operation + " failed") {
+		failure.stage = std::move(stage);
+		failure.operation = std::move(operation);
+		failure.native_error = code;
+		failure.native_message = windows_error_message(code);
+	}
+};
+
+TransportException winhttp_error(char const* operation, DWORD code = GetLastError(), char const* stage = "transport") {
+	return TransportException(stage, operation, code);
 }
 
 class InternetHandle {
@@ -81,32 +109,41 @@ WebSocketConnection connect_websocket(std::string const& server_url) {
 
 	WebSocketConnection output;
 	output.session = InternetHandle(WinHttpOpen(UserAgent, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
-	if (!output.session.get()) throw winhttp_error("WinHttpOpen");
+	if (!output.session.get()) throw winhttp_error("WinHttpOpen", GetLastError(), "session");
 	if (!WinHttpSetTimeouts(output.session.get(), 5000, 10000, 10000, 30000))
-		throw winhttp_error("WinHttpSetTimeouts");
+		throw winhttp_error("WinHttpSetTimeouts", GetLastError(), "session");
 	output.connection = InternetHandle(WinHttpConnect(output.session.get(), host.c_str(), parsed.port, 0));
-	if (!output.connection.get()) throw winhttp_error("WinHttpConnect");
+	if (!output.connection.get()) throw winhttp_error("WinHttpConnect", GetLastError(), "connect");
 	InternetHandle request(WinHttpOpenRequest(output.connection.get(), L"GET", path.c_str(), nullptr,
 		WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, parsed.secure ? WINHTTP_FLAG_SECURE : 0));
-	if (!request.get()) throw winhttp_error("WinHttpOpenRequest");
+	if (!request.get()) throw winhttp_error("WinHttpOpenRequest", GetLastError(), "upgrade");
 	if (!WinHttpSetOption(request.get(), WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, nullptr, 0))
-		throw winhttp_error("WinHttpSetOption(WEB_SOCKET)");
+		throw winhttp_error("WinHttpSetOption(WEB_SOCKET)", GetLastError(), "upgrade");
 	if (!WinHttpSendRequest(request.get(), WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
-		throw winhttp_error("WinHttpSendRequest");
-	if (!WinHttpReceiveResponse(request.get(), nullptr)) throw winhttp_error("WinHttpReceiveResponse");
+		throw winhttp_error("WinHttpSendRequest", GetLastError(), "upgrade");
+	if (!WinHttpReceiveResponse(request.get(), nullptr)) throw winhttp_error("WinHttpReceiveResponse", GetLastError(), "upgrade");
 	DWORD status = 0;
 	DWORD status_size = sizeof(status);
 	if (!WinHttpQueryHeaders(request.get(), WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
 		WINHTTP_HEADER_NAME_BY_INDEX, &status, &status_size, WINHTTP_NO_HEADER_INDEX))
-		throw winhttp_error("WinHttpQueryHeaders");
+		throw winhttp_error("WinHttpQueryHeaders", GetLastError(), "upgrade");
 	if (status != 101) throw std::runtime_error("collaboration WebSocket upgrade was rejected with HTTP status " + std::to_string(status));
 	output.socket = InternetHandle(WinHttpWebSocketCompleteUpgrade(request.get(), 0));
-	if (!output.socket.get()) throw winhttp_error("WinHttpWebSocketCompleteUpgrade");
+	if (!output.socket.get()) throw winhttp_error("WinHttpWebSocketCompleteUpgrade", GetLastError(), "upgrade");
 	return output;
 }
 
 void close_websocket(HINTERNET socket) {
 	if (socket) WinHttpWebSocketClose(socket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+}
+
+TransportEvent::Failure failure_from_exception(std::exception const& error, std::string stage, std::string operation) {
+	if (auto const* transport = dynamic_cast<TransportException const*>(&error)) return transport->failure;
+	TransportEvent::Failure failure;
+	failure.stage = std::move(stage);
+	failure.operation = std::move(operation);
+	failure.native_message = error.what();
+	return failure;
 }
 
 std::wstring credential_name(std::string const& target) {
@@ -115,6 +152,21 @@ std::wstring credential_name(std::string const& target) {
 	if (name.size() > CRED_MAX_GENERIC_TARGET_NAME_LENGTH) throw std::length_error("credential target is too large");
 	return name;
 }
+}
+
+std::string FormatTransportFailure(TransportEvent::Failure const& failure) {
+	std::ostringstream output;
+	output << "Collaboration transport failure";
+	if (!failure.stage.empty()) output << "\nStage: " << failure.stage;
+	if (!failure.operation.empty()) output << "\nOperation: " << failure.operation;
+	if (failure.native_error) {
+		output << "\nWindows error: " << failure.native_error;
+		if (!failure.native_message.empty()) output << " (" << failure.native_message << ")";
+	}
+	else if (!failure.native_message.empty()) output << "\nMessage: " << failure.native_message;
+	if (failure.close_status) output << "\nWebSocket close status: " << failure.close_status;
+	if (!failure.close_reason.empty()) output << "\nWebSocket close reason: " << failure.close_reason;
+	return output.str();
 }
 
 CollaborationServerUrl ParseCollaborationServerUrl(std::string const& server_url) {
@@ -187,7 +239,7 @@ class CollaborationTransport::Impl {
 	bool stopping = false;
 	bool running = false;
 	bool receiver_done = false;
-	std::string receiver_error;
+	std::optional<TransportEvent::Failure> receiver_error;
 	TransportConfig config;
 
 	void push(TransportEvent event) {
@@ -216,11 +268,16 @@ class CollaborationTransport::Impl {
 		push(std::move(event));
 	}
 
-	void push_error(std::string detail) {
+	void push_error(TransportEvent::Failure failure) {
 		TransportEvent event;
 		event.type = TransportEventType::error;
-		event.detail = std::move(detail);
+		event.failure = std::move(failure);
+		event.detail = FormatTransportFailure(event.failure);
 		push(std::move(event));
+	}
+
+	void push_error(std::exception const& error, std::string stage, std::string operation) {
+		push_error(failure_from_exception(error, std::move(stage), std::move(operation)));
 	}
 
 	void receive_loop(HINTERNET socket) {
@@ -233,8 +290,25 @@ class CollaborationTransport::Impl {
 				DWORD received = 0;
 				WINHTTP_WEB_SOCKET_BUFFER_TYPE type{};
 				auto result = WinHttpWebSocketReceive(socket, buffer.data(), static_cast<DWORD>(buffer.size()), &received, &type);
-				if (result != ERROR_SUCCESS) throw winhttp_error("WinHttpWebSocketReceive", result);
-				if (type == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE) break;
+				if (result != ERROR_SUCCESS) throw winhttp_error("WinHttpWebSocketReceive", result, "receive");
+				if (type == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE) {
+					USHORT status = 0;
+					DWORD reason_size = 0;
+					std::vector<std::uint8_t> reason(123);
+					auto close_result = WinHttpWebSocketQueryCloseStatus(socket, &status, reason.data(),
+						static_cast<DWORD>(reason.size()), &reason_size);
+					if (close_result != ERROR_SUCCESS) throw winhttp_error("WinHttpWebSocketQueryCloseStatus", close_result, "close");
+					TransportEvent::Failure failure;
+					failure.stage = "close";
+					failure.operation = "server closed WebSocket";
+					failure.close_status = status;
+					failure.close_reason.assign(reason.begin(), reason.begin() + (std::min)(reason_size, static_cast<DWORD>(reason.size())));
+					{
+						std::lock_guard<std::mutex> lock(mutex);
+						receiver_error = std::move(failure);
+					}
+					break;
+				}
 				bool part_binary = type == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE || type == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE;
 				bool final = type == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE || type == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
 				if (fragmented && binary != part_binary) throw std::invalid_argument("WebSocket message changed type between fragments");
@@ -254,7 +328,7 @@ class CollaborationTransport::Impl {
 		}
 		catch (std::exception const& error) {
 			std::lock_guard<std::mutex> lock(mutex);
-			receiver_error = error.what();
+			receiver_error = failure_from_exception(error, "receive", "receive WebSocket message");
 		}
 		{
 			std::lock_guard<std::mutex> lock(mutex);
@@ -282,7 +356,7 @@ class CollaborationTransport::Impl {
 				{
 					std::lock_guard<std::mutex> lock(mutex);
 					receiver_done = false;
-					receiver_error.clear();
+					receiver_error.reset();
 				}
 				push_state(TransportState::connected);
 				std::thread receiver([this, socket = connection.socket.get()] { receive_loop(socket); });
@@ -304,13 +378,13 @@ class CollaborationTransport::Impl {
 							frame = EncodeFrame(envelope);
 						}
 						catch (std::exception const& error) {
-							push_error(error.what());
+							push_error(error, "encode", "encode protocol message");
 							continue;
 						}
 						auto type = frame.binary ? WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE : WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
 						auto result = WinHttpWebSocketSend(connection.socket.get(), type, frame.data.data(), static_cast<DWORD>(frame.data.size()));
 						if (result != ERROR_SUCCESS) {
-							push_error(winhttp_error("WinHttpWebSocketSend", result).what());
+							push_error(winhttp_error("WinHttpWebSocketSend", result, "send"), "send", "WinHttpWebSocketSend");
 							connection_failed = true;
 							break;
 						}
@@ -320,8 +394,8 @@ class CollaborationTransport::Impl {
 				receiver.join();
 				{
 					std::lock_guard<std::mutex> lock(mutex);
-					if (!receiver_error.empty()) {
-						push_error_unlocked(receiver_error);
+					if (receiver_error) {
+						push_error_unlocked(*receiver_error);
 						connection_failed = true;
 					}
 					if (stopping) break;
@@ -329,7 +403,7 @@ class CollaborationTransport::Impl {
 				push_state(TransportState::retry_wait, connection_failed ? "connection lost" : "server closed connection");
 			}
 			catch (std::exception const& error) {
-				push_error(error.what());
+				push_error(error, "connect", "open WebSocket connection");
 				{
 					std::lock_guard<std::mutex> lock(mutex);
 					if (stopping) break;
@@ -344,10 +418,11 @@ class CollaborationTransport::Impl {
 		running = false;
 	}
 
-	void push_error_unlocked(std::string const& detail) {
+	void push_error_unlocked(TransportEvent::Failure const& failure) {
 		TransportEvent event;
 		event.type = TransportEventType::error;
-		event.detail = detail;
+		event.failure = failure;
+		event.detail = FormatTransportFailure(event.failure);
 		events.emplace_back(std::move(event));
 	}
 

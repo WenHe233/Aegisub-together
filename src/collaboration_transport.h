@@ -31,6 +31,14 @@ struct TransportEvent {
 	TransportState state = TransportState::stopped;
 	WireEnvelope message;
 	std::string detail;
+	struct Failure {
+		std::string stage;
+		std::string operation;
+		std::uint32_t native_error = 0;
+		std::string native_message;
+		std::uint16_t close_status = 0;
+		std::string close_reason;
+	} failure;
 };
 
 struct TransportConfig {
@@ -64,6 +72,7 @@ public:
 };
 
 std::chrono::milliseconds ReconnectDelay(unsigned attempt, std::chrono::milliseconds initial, std::chrono::milliseconds maximum);
+std::string FormatTransportFailure(TransportEvent::Failure const& failure);
 
 CollaborationServerUrl ParseCollaborationServerUrl(std::string const& server_url);
 bool RequiresInsecureServerConfirmation(std::string const& server_url, std::vector<std::string> const& confirmed_servers);

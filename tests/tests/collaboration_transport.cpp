@@ -16,6 +16,22 @@ TEST(collaboration_transport, reconnect_delay_is_bounded_exponential) {
 	EXPECT_THROW(ReconnectDelay(0, 0ms, 30s), std::invalid_argument);
 }
 
+TEST(collaboration_transport, formats_structured_failures_without_connection_secrets) {
+	TransportEvent::Failure failure;
+	failure.stage = "receive";
+	failure.operation = "WinHttpWebSocketReceive";
+	failure.native_error = 12030;
+	failure.native_message = "The connection was terminated abnormally";
+	failure.close_status = 1001;
+	failure.close_reason = "heartbeat timeout";
+	auto formatted = FormatTransportFailure(failure);
+	EXPECT_NE(std::string::npos, formatted.find("Stage: receive"));
+	EXPECT_NE(std::string::npos, formatted.find("Windows error: 12030"));
+	EXPECT_NE(std::string::npos, formatted.find("WebSocket close status: 1001"));
+	EXPECT_EQ(std::string::npos, formatted.find("password"));
+	EXPECT_EQ(std::string::npos, formatted.find("?token="));
+}
+
 TEST(collaboration_transport, credential_targets_do_not_have_delimiter_collisions) {
 	auto first = CredentialTarget("wss://example.test/a:b", "c", "room-password");
 	auto second = CredentialTarget("wss://example.test/a", "b:c", "room-password");
