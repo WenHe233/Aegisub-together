@@ -149,8 +149,16 @@ TEST(collaboration_transport, DISABLED_live_websocket_smoke) {
 		ASSERT_TRUE(send(joiner, "heartbeat", "{}", "smoke-join-heartbeat-" + std::to_string(index)));
 		ASSERT_TRUE(wait_for(joiner, "heartbeat"));
 	}
+	auto leave = [](std::string request_id) {
+		WireEnvelope envelope;
+		envelope.type = "leave_room";
+		envelope.request_id = std::move(request_id);
+		envelope.payload_json = "{}";
+		return envelope;
+	};
 	auto stop_started = std::chrono::steady_clock::now();
-	joiner.Stop();
-	creator.Stop();
+	joiner.Stop(leave("smoke-join-leave"));
+	ASSERT_TRUE(wait_for(creator, "presence"));
+	creator.Stop(leave("smoke-create-leave"));
 	EXPECT_LT(std::chrono::steady_clock::now() - stop_started, 2s);
 }
