@@ -7,6 +7,7 @@
 #include <winhttp.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <condition_variable>
 #include <cwctype>
@@ -74,67 +75,6 @@ public:
 
 TransportException winhttp_error(char const* operation, DWORD code = GetLastError(), char const* stage = "transport") {
 	return TransportException(stage, operation, code);
-}
-
-class InternetHandle {
-	HINTERNET value = nullptr;
-public:
-	InternetHandle() = default;
-	explicit InternetHandle(HINTERNET value) : value(value) { }
-	~InternetHandle() { if (value) WinHttpCloseHandle(value); }
-	InternetHandle(InternetHandle const&) = delete;
-	InternetHandle& operator=(InternetHandle const&) = delete;
-	InternetHandle(InternetHandle&& other) noexcept : value(other.value) { other.value = nullptr; }
-	InternetHandle& operator=(InternetHandle&& other) noexcept {
-		if (this != &other) {
-			if (value) WinHttpCloseHandle(value);
-			value = other.value;
-			other.value = nullptr;
-		}
-		return *this;
-	}
-	HINTERNET get() const { return value; }
-};
-
-struct WebSocketConnection {
-	InternetHandle session;
-	InternetHandle connection;
-	InternetHandle socket;
-};
-
-WebSocketConnection connect_websocket(std::string const& server_url) {
-	auto parsed = ParseCollaborationServerUrl(server_url);
-	auto host = widen(parsed.host);
-	auto path = widen(parsed.path);
-
-	WebSocketConnection output;
-	output.session = InternetHandle(WinHttpOpen(UserAgent, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
-	if (!output.session.get()) throw winhttp_error("WinHttpOpen", GetLastError(), "session");
-	if (!WinHttpSetTimeouts(output.session.get(), 5000, 10000, 10000, 30000))
-		throw winhttp_error("WinHttpSetTimeouts", GetLastError(), "session");
-	output.connection = InternetHandle(WinHttpConnect(output.session.get(), host.c_str(), parsed.port, 0));
-	if (!output.connection.get()) throw winhttp_error("WinHttpConnect", GetLastError(), "connect");
-	InternetHandle request(WinHttpOpenRequest(output.connection.get(), L"GET", path.c_str(), nullptr,
-		WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, parsed.secure ? WINHTTP_FLAG_SECURE : 0));
-	if (!request.get()) throw winhttp_error("WinHttpOpenRequest", GetLastError(), "upgrade");
-	if (!WinHttpSetOption(request.get(), WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, nullptr, 0))
-		throw winhttp_error("WinHttpSetOption(WEB_SOCKET)", GetLastError(), "upgrade");
-	if (!WinHttpSendRequest(request.get(), WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
-		throw winhttp_error("WinHttpSendRequest", GetLastError(), "upgrade");
-	if (!WinHttpReceiveResponse(request.get(), nullptr)) throw winhttp_error("WinHttpReceiveResponse", GetLastError(), "upgrade");
-	DWORD status = 0;
-	DWORD status_size = sizeof(status);
-	if (!WinHttpQueryHeaders(request.get(), WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-		WINHTTP_HEADER_NAME_BY_INDEX, &status, &status_size, WINHTTP_NO_HEADER_INDEX))
-		throw winhttp_error("WinHttpQueryHeaders", GetLastError(), "upgrade");
-	if (status != 101) throw std::runtime_error("collaboration WebSocket upgrade was rejected with HTTP status " + std::to_string(status));
-	output.socket = InternetHandle(WinHttpWebSocketCompleteUpgrade(request.get(), 0));
-	if (!output.socket.get()) throw winhttp_error("WinHttpWebSocketCompleteUpgrade", GetLastError(), "upgrade");
-	return output;
-}
-
-void close_websocket(HINTERNET socket) {
-	if (socket) WinHttpWebSocketClose(socket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
 }
 
 TransportEvent::Failure failure_from_exception(std::exception const& error, std::string stage, std::string operation) {
@@ -231,6 +171,8 @@ void RememberInsecureServerConfirmation(std::string const& server_url, std::vect
 }
 
 class CollaborationTransport::Impl {
+	struct Generation;
+
 	std::mutex mutex;
 	std::condition_variable wake;
 	std::deque<WireEnvelope> outgoing;
@@ -238,9 +180,9 @@ class CollaborationTransport::Impl {
 	std::thread worker;
 	bool stopping = false;
 	bool running = false;
-	bool receiver_done = false;
-	std::optional<TransportEvent::Failure> receiver_error;
 	TransportConfig config;
+	std::atomic<std::uint64_t> active_generation{0};
+	std::uint64_t next_generation = 1;
 
 	void push(TransportEvent event) {
 		{
@@ -249,15 +191,21 @@ class CollaborationTransport::Impl {
 				events.clear();
 				TransportEvent overflow;
 				overflow.type = TransportEventType::error;
-				overflow.detail = "collaboration event queue overflow";
+				overflow.failure.stage = "queue";
+				overflow.failure.operation = "queue transport event";
+				overflow.failure.native_message = "collaboration event queue overflow";
+				overflow.detail = FormatTransportFailure(overflow.failure);
 				events.emplace_back(std::move(overflow));
 				stopping = true;
 			}
-			else {
-				events.emplace_back(std::move(event));
-			}
+			else events.emplace_back(std::move(event));
 		}
 		wake.notify_all();
+	}
+
+	void push_generation(std::uint64_t generation, TransportEvent event) {
+		if (active_generation.load(std::memory_order_acquire) != generation) return;
+		push(std::move(event));
 	}
 
 	void push_state(TransportState state, std::string detail = {}) {
@@ -276,65 +224,488 @@ class CollaborationTransport::Impl {
 		push(std::move(event));
 	}
 
-	void push_error(std::exception const& error, std::string stage, std::string operation) {
-		push_error(failure_from_exception(error, std::move(stage), std::move(operation)));
-	}
+	struct Generation {
+		Impl* owner;
+		std::uint64_t id;
+		std::mutex mutex;
+		std::condition_variable changed;
+		HINTERNET session = nullptr;
+		HINTERNET connection = nullptr;
+		HINTERNET request = nullptr;
+		HINTERNET socket = nullptr;
+		bool request_closing = false;
+		bool request_has_context = false;
+		bool socket_closing = false;
+		bool handshake_complete = false;
+		bool opened = false;
+		bool ended = false;
+		bool receive_inflight = false;
+		bool send_inflight = false;
+		bool shutdown_inflight = false;
+		bool shutdown_sent = false;
+		bool close_inflight = false;
+		bool stop_requested = false;
+		bool peer_closed = false;
+		std::optional<TransportEvent::Failure> failure;
+		std::vector<std::uint8_t> receive_buffer = std::vector<std::uint8_t>(16 * 1024);
+		std::vector<std::uint8_t> message;
+		bool message_binary = false;
+		bool fragmented = false;
+		WireFrame sending;
 
-	void receive_loop(HINTERNET socket) {
-		try {
-			std::vector<std::uint8_t> message;
-			bool binary = false;
-			bool fragmented = false;
-			std::vector<std::uint8_t> buffer(16 * 1024);
-			for (;;) {
-				DWORD received = 0;
-				WINHTTP_WEB_SOCKET_BUFFER_TYPE type{};
-				auto result = WinHttpWebSocketReceive(socket, buffer.data(), static_cast<DWORD>(buffer.size()), &received, &type);
-				if (result != ERROR_SUCCESS) throw winhttp_error("WinHttpWebSocketReceive", result, "receive");
-				if (type == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE) {
-					USHORT status = 0;
-					DWORD reason_size = 0;
-					std::vector<std::uint8_t> reason(123);
-					auto close_result = WinHttpWebSocketQueryCloseStatus(socket, &status, reason.data(),
-						static_cast<DWORD>(reason.size()), &reason_size);
-					if (close_result != ERROR_SUCCESS) throw winhttp_error("WinHttpWebSocketQueryCloseStatus", close_result, "close");
-					TransportEvent::Failure failure;
-					failure.stage = "close";
-					failure.operation = "server closed WebSocket";
-					failure.close_status = status;
-					failure.close_reason.assign(reason.begin(), reason.begin() + (std::min)(reason_size, static_cast<DWORD>(reason.size())));
-					{
-						std::lock_guard<std::mutex> lock(mutex);
-						receiver_error = std::move(failure);
-					}
-					break;
+		explicit Generation(Impl* owner, std::uint64_t id) : owner(owner), id(id) { }
+
+		static char const* websocket_operation(WINHTTP_WEB_SOCKET_OPERATION operation) {
+			switch (operation) {
+				case WINHTTP_WEB_SOCKET_SEND_OPERATION: return "WinHttpWebSocketSend";
+				case WINHTTP_WEB_SOCKET_RECEIVE_OPERATION: return "WinHttpWebSocketReceive";
+				case WINHTTP_WEB_SOCKET_CLOSE_OPERATION: return "WinHttpWebSocketClose";
+				case WINHTTP_WEB_SOCKET_SHUTDOWN_OPERATION: return "WinHttpWebSocketShutdown";
+			}
+			return "WinHTTP WebSocket operation";
+		}
+
+		void notify() {
+			changed.notify_all();
+			owner->wake.notify_all();
+		}
+
+		void set_failure(TransportEvent::Failure input) {
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				if (!failure) failure = std::move(input);
+			}
+			notify();
+		}
+
+		void set_windows_failure(char const* stage, char const* operation, DWORD code) {
+			set_failure(winhttp_error(operation, code, stage).failure);
+		}
+
+		static void CALLBACK callback(HINTERNET handle, DWORD_PTR context, DWORD status, void* information, DWORD information_size) {
+			if (!context) return;
+			auto* self = reinterpret_cast<Generation*>(context);
+			self->on_callback(handle, status, information, information_size);
+		}
+
+		void on_callback(HINTERNET handle, DWORD status, void* information, DWORD information_size) {
+			if (status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE) {
+				if (!WinHttpReceiveResponse(handle, nullptr) && GetLastError() != ERROR_IO_PENDING)
+					set_windows_failure("upgrade", "WinHttpReceiveResponse", GetLastError());
+				return;
+			}
+			if (status == WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE) {
+				on_headers_available(handle);
+				return;
+			}
+			if (status == WINHTTP_CALLBACK_STATUS_READ_COMPLETE) {
+				if (information_size == sizeof(WINHTTP_WEB_SOCKET_STATUS))
+					on_read_complete(*static_cast<WINHTTP_WEB_SOCKET_STATUS*>(information));
+				else set_windows_failure("receive", "WinHttpWebSocketReceive callback", ERROR_INVALID_DATA);
+				return;
+			}
+			if (status == WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE) {
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					send_inflight = false;
+					sending = WireFrame{};
 				}
-				bool part_binary = type == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE || type == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE;
-				bool final = type == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE || type == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
-				if (fragmented && binary != part_binary) throw std::invalid_argument("WebSocket message changed type between fragments");
-				if (!fragmented) binary = part_binary;
-				if (received > MaximumEnvelopeSize - message.size()) throw std::length_error("collaboration WebSocket frame exceeds 64 MiB");
-				message.insert(message.end(), buffer.begin(), buffer.begin() + received);
-				fragmented = !final;
-				if (!final) continue;
-				TransportEvent event;
-				event.type = TransportEventType::message;
-				event.state = TransportState::connected;
-				event.message = DecodeFrame(binary, message);
-				push(std::move(event));
-				message.clear();
-				fragmented = false;
+				notify();
+				maybe_finish_close();
+				return;
+			}
+			if (status == WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE) {
+				bool finish_stop = false;
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					shutdown_inflight = false;
+					finish_stop = stop_requested && !peer_closed;
+				}
+				notify();
+				if (finish_stop) close_socket_handle();
+				else maybe_finish_close();
+				return;
+			}
+			if (status == WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE) {
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					close_inflight = false;
+				}
+				close_socket_handle();
+				return;
+			}
+			if (status == WINHTTP_CALLBACK_STATUS_REQUEST_ERROR) {
+				on_request_error(handle, information, information_size);
+				return;
+			}
+			if (status == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING) {
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					if (handle == request) {
+						request = nullptr;
+						request_closing = false;
+						request_has_context = false;
+					}
+					if (handle == socket) {
+						socket = nullptr;
+						socket_closing = false;
+						receive_inflight = false;
+						send_inflight = false;
+						shutdown_inflight = false;
+						close_inflight = false;
+						ended = true;
+					}
+				}
+				notify();
 			}
 		}
-		catch (std::exception const& error) {
-			std::lock_guard<std::mutex> lock(mutex);
-			receiver_error = failure_from_exception(error, "receive", "receive WebSocket message");
+
+		void on_headers_available(HINTERNET handle) {
+			DWORD status = 0;
+			DWORD status_size = sizeof(status);
+			if (!WinHttpQueryHeaders(handle, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+				WINHTTP_HEADER_NAME_BY_INDEX, &status, &status_size, WINHTTP_NO_HEADER_INDEX)) {
+				set_windows_failure("upgrade", "WinHttpQueryHeaders", GetLastError());
+				return;
+			}
+			if (status != 101) {
+				TransportEvent::Failure rejected;
+				rejected.stage = "upgrade";
+				rejected.operation = "WebSocket HTTP upgrade";
+				rejected.native_message = "server returned HTTP status " + std::to_string(status);
+				set_failure(std::move(rejected));
+				return;
+			}
+			auto upgraded = WinHttpWebSocketCompleteUpgrade(handle, reinterpret_cast<DWORD_PTR>(this));
+			if (!upgraded) {
+				set_windows_failure("upgrade", "WinHttpWebSocketCompleteUpgrade", GetLastError());
+				return;
+			}
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				socket = upgraded;
+				opened = true;
+				handshake_complete = true;
+			}
+			close_request_handle();
+			notify();
 		}
-		{
-			std::lock_guard<std::mutex> lock(mutex);
-			receiver_done = true;
+
+		void on_request_error(HINTERNET handle, void* information, DWORD information_size) {
+			DWORD code = ERROR_WINHTTP_INTERNAL_ERROR;
+			std::string stage = "upgrade";
+			std::string operation = "asynchronous WinHTTP request";
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				if (handle == socket && information_size >= sizeof(WINHTTP_WEB_SOCKET_ASYNC_RESULT)) {
+					auto const& result = *static_cast<WINHTTP_WEB_SOCKET_ASYNC_RESULT*>(information);
+					code = result.AsyncResult.dwError;
+					operation = websocket_operation(result.Operation);
+					stage = result.Operation == WINHTTP_WEB_SOCKET_RECEIVE_OPERATION ? "receive" :
+						result.Operation == WINHTTP_WEB_SOCKET_SEND_OPERATION ? "send" : "close";
+					if (result.Operation == WINHTTP_WEB_SOCKET_RECEIVE_OPERATION) receive_inflight = false;
+					else if (result.Operation == WINHTTP_WEB_SOCKET_SEND_OPERATION) send_inflight = false;
+					else if (result.Operation == WINHTTP_WEB_SOCKET_SHUTDOWN_OPERATION) shutdown_inflight = false;
+					else if (result.Operation == WINHTTP_WEB_SOCKET_CLOSE_OPERATION) close_inflight = false;
+				}
+				else if (information_size >= sizeof(WINHTTP_ASYNC_RESULT)) {
+					auto const& result = *static_cast<WINHTTP_ASYNC_RESULT*>(information);
+					code = result.dwError;
+				}
+			}
+			bool expected_cancellation = false;
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				expected_cancellation = stop_requested &&
+					(code == ERROR_WINHTTP_OPERATION_CANCELLED || code == ERROR_OPERATION_ABORTED);
+			}
+			if (!expected_cancellation) set_windows_failure(stage.c_str(), operation.c_str(), code);
+			if (handle == socket) close_socket_handle();
+			else close_request_handle();
 		}
-		wake.notify_all();
+
+		void on_read_complete(WINHTTP_WEB_SOCKET_STATUS const& status) {
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				receive_inflight = false;
+			}
+			if (status.eBufferType == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE) {
+				TransportEvent::Failure closed;
+				closed.stage = "close";
+				closed.operation = "server closed WebSocket";
+				USHORT code = 0;
+				DWORD reason_size = 0;
+				std::vector<std::uint8_t> reason(WINHTTP_WEB_SOCKET_MAX_CLOSE_REASON_LENGTH);
+				auto query = WinHttpWebSocketQueryCloseStatus(socket, &code, reason.data(), static_cast<DWORD>(reason.size()), &reason_size);
+				if (query == ERROR_SUCCESS) {
+					closed.close_status = code;
+					closed.close_reason.assign(reason.begin(), reason.begin() + (std::min)(reason_size, static_cast<DWORD>(reason.size())));
+				}
+				else {
+					closed.native_error = query;
+					closed.native_message = windows_error_message(query);
+				}
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					peer_closed = true;
+					if (!stop_requested && !failure) failure = closed;
+				}
+				notify();
+				maybe_finish_close();
+				return;
+			}
+
+			try {
+				bool part_binary = status.eBufferType == WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE ||
+					status.eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE;
+				bool final = status.eBufferType == WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE ||
+					status.eBufferType == WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
+				if (fragmented && message_binary != part_binary) throw std::invalid_argument("WebSocket message changed type between fragments");
+				if (!fragmented) message_binary = part_binary;
+				if (status.dwBytesTransferred > MaximumEnvelopeSize - message.size())
+					throw std::length_error("collaboration WebSocket frame exceeds 64 MiB");
+				message.insert(message.end(), receive_buffer.begin(), receive_buffer.begin() + status.dwBytesTransferred);
+				fragmented = !final;
+				if (final) {
+					TransportEvent event;
+					event.type = TransportEventType::message;
+					event.state = TransportState::connected;
+					event.message = DecodeFrame(message_binary, message);
+					owner->push_generation(id, std::move(event));
+					message.clear();
+					fragmented = false;
+				}
+			}
+			catch (std::exception const& error) {
+				set_failure(failure_from_exception(error, "decode", "decode WebSocket message"));
+				close_socket_handle();
+				return;
+			}
+			start_receive();
+		}
+
+		bool start(std::string const& server_url) {
+			try {
+				auto parsed = ParseCollaborationServerUrl(server_url);
+				auto host = widen(parsed.host);
+				auto path = widen(parsed.path);
+				session = WinHttpOpen(UserAgent, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
+					WINHTTP_NO_PROXY_BYPASS, WINHTTP_FLAG_ASYNC);
+				if (!session) throw winhttp_error("WinHttpOpen", GetLastError(), "session");
+				auto previous = WinHttpSetStatusCallback(session, callback, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0);
+				if (previous == WINHTTP_INVALID_STATUS_CALLBACK) throw winhttp_error("WinHttpSetStatusCallback", GetLastError(), "session");
+				if (!WinHttpSetTimeouts(session, 5000, 10000, 10000, 30000))
+					throw winhttp_error("WinHttpSetTimeouts", GetLastError(), "session");
+				connection = WinHttpConnect(session, host.c_str(), parsed.port, 0);
+				if (!connection) throw winhttp_error("WinHttpConnect", GetLastError(), "connect");
+				request = WinHttpOpenRequest(connection, L"GET", path.c_str(), nullptr, WINHTTP_NO_REFERER,
+					WINHTTP_DEFAULT_ACCEPT_TYPES, parsed.secure ? WINHTTP_FLAG_SECURE : 0);
+				if (!request) throw winhttp_error("WinHttpOpenRequest", GetLastError(), "upgrade");
+				DWORD_PTR callback_context = reinterpret_cast<DWORD_PTR>(this);
+				if (!WinHttpSetOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &callback_context, sizeof(callback_context)))
+					throw winhttp_error("WinHttpSetOption(CONTEXT_VALUE)", GetLastError(), "upgrade");
+				request_has_context = true;
+				if (!WinHttpSetOption(request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, nullptr, 0))
+					throw winhttp_error("WinHttpSetOption(WEB_SOCKET)", GetLastError(), "upgrade");
+				if (!WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0,
+					reinterpret_cast<DWORD_PTR>(this)) && GetLastError() != ERROR_IO_PENDING)
+					throw winhttp_error("WinHttpSendRequest", GetLastError(), "upgrade");
+				return true;
+			}
+			catch (std::exception const& error) {
+				set_failure(failure_from_exception(error, "connect", "open WebSocket connection"));
+				close_request_handle();
+				return false;
+			}
+		}
+
+		void start_receive() {
+			HINTERNET current = nullptr;
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				if (!opened || ended || receive_inflight || peer_closed || failure) return;
+				receive_inflight = true;
+				current = socket;
+			}
+			DWORD ignored_bytes = 0;
+			WINHTTP_WEB_SOCKET_BUFFER_TYPE ignored_type{};
+			auto result = WinHttpWebSocketReceive(current, receive_buffer.data(), static_cast<DWORD>(receive_buffer.size()),
+				&ignored_bytes, &ignored_type);
+			if (result != ERROR_SUCCESS) {
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					receive_inflight = false;
+				}
+				set_windows_failure("receive", "WinHttpWebSocketReceive", result);
+				close_socket_handle();
+			}
+		}
+
+		bool can_send() {
+			std::lock_guard<std::mutex> lock(mutex);
+			return opened && !ended && !send_inflight && !shutdown_inflight && !close_inflight && !stop_requested && !failure;
+		}
+
+		void send(WireFrame frame) {
+			HINTERNET current = nullptr;
+			WINHTTP_WEB_SOCKET_BUFFER_TYPE type{};
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				if (!opened || ended || send_inflight || stop_requested || failure) return;
+				sending = std::move(frame);
+				send_inflight = true;
+				current = socket;
+				type = sending.binary ? WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE : WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
+			}
+			auto result = WinHttpWebSocketSend(current, type, sending.data.data(), static_cast<DWORD>(sending.data.size()));
+			if (result != ERROR_SUCCESS) {
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					send_inflight = false;
+				}
+				set_windows_failure("send", "WinHttpWebSocketSend", result);
+				close_socket_handle();
+			}
+		}
+
+		void request_stop() {
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				stop_requested = true;
+			}
+			maybe_finish_close();
+			close_request_handle();
+		}
+
+		void maybe_finish_close() {
+			HINTERNET current = nullptr;
+			bool shutdown = false;
+			bool close = false;
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				if (!socket || socket_closing || ended) return;
+				if (peer_closed && !receive_inflight && !send_inflight && !shutdown_inflight && !close_inflight) {
+					close_inflight = true;
+					close = true;
+					current = socket;
+				}
+				else if (!failure && stop_requested && !shutdown_sent && !send_inflight && !shutdown_inflight && !close_inflight) {
+					shutdown_inflight = true;
+					shutdown_sent = true;
+					shutdown = true;
+					current = socket;
+				}
+			}
+			if (shutdown) {
+				auto result = WinHttpWebSocketShutdown(current, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+				if (result != ERROR_SUCCESS) {
+					{
+						std::lock_guard<std::mutex> lock(mutex);
+						shutdown_inflight = false;
+					}
+					set_windows_failure("close", "WinHttpWebSocketShutdown", result);
+					close_socket_handle();
+				}
+			}
+			else if (close) {
+				auto result = WinHttpWebSocketClose(current, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr, 0);
+				if (result != ERROR_SUCCESS) {
+					{
+						std::lock_guard<std::mutex> lock(mutex);
+						close_inflight = false;
+					}
+					set_windows_failure("close", "WinHttpWebSocketClose", result);
+					close_socket_handle();
+				}
+			}
+		}
+
+		void close_request_handle() {
+			HINTERNET current = nullptr;
+			bool wait_for_callback = false;
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				if (!request || request_closing) return;
+				current = request;
+				wait_for_callback = request_has_context;
+				request_closing = wait_for_callback;
+				if (!wait_for_callback) request = nullptr;
+			}
+			if (!WinHttpCloseHandle(current)) {
+				auto error = GetLastError();
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					request = nullptr;
+					request_closing = false;
+					request_has_context = false;
+				}
+				set_windows_failure("close", "WinHttpCloseHandle(request)", error);
+			}
+		}
+
+		void close_socket_handle() {
+			HINTERNET current = nullptr;
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				if (!socket || socket_closing) return;
+				socket_closing = true;
+				current = socket;
+			}
+			if (!WinHttpCloseHandle(current)) {
+				auto error = GetLastError();
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					socket = nullptr;
+					socket_closing = false;
+					ended = true;
+				}
+				set_windows_failure("close", "WinHttpCloseHandle(WebSocket)", error);
+			}
+		}
+
+		bool wait_open_or_end() {
+			std::unique_lock<std::mutex> lock(mutex);
+			while (!opened && !failure && !ended && !owner->is_stopping())
+				changed.wait_for(lock, std::chrono::milliseconds(50));
+			return opened && !failure;
+		}
+
+		bool is_ended() {
+			std::lock_guard<std::mutex> lock(mutex);
+			return ended;
+		}
+
+		std::optional<TransportEvent::Failure> get_failure() {
+			std::lock_guard<std::mutex> lock(mutex);
+			return failure;
+		}
+
+		void force_cancel() {
+			close_socket_handle();
+			close_request_handle();
+		}
+
+		void cleanup() {
+			force_cancel();
+			{
+				std::unique_lock<std::mutex> lock(mutex);
+				changed.wait(lock, [&] { return !request_closing && !socket_closing; });
+			}
+			if (connection) {
+				WinHttpCloseHandle(connection);
+				connection = nullptr;
+			}
+			if (session) {
+				WinHttpSetStatusCallback(session, nullptr, 0, 0);
+				WinHttpCloseHandle(session);
+				session = nullptr;
+			}
+		}
+	};
+
+	bool is_stopping() {
+		std::lock_guard<std::mutex> lock(mutex);
+		return stopping;
 	}
 
 	bool wait_retry(std::chrono::milliseconds delay) {
@@ -345,85 +716,60 @@ class CollaborationTransport::Impl {
 	void run() {
 		unsigned attempt = 0;
 		for (;;) {
-			{
-				std::lock_guard<std::mutex> lock(mutex);
-				if (stopping) break;
-			}
+			if (is_stopping()) break;
 			push_state(TransportState::connecting);
-			try {
-				auto connection = connect_websocket(config.server_url);
+			auto generation_id = next_generation++;
+			active_generation.store(generation_id, std::memory_order_release);
+			Generation generation(this, generation_id);
+			generation.start(config.server_url);
+			bool opened = generation.wait_open_or_end();
+			if (is_stopping()) generation.request_stop();
+			if (opened && !is_stopping()) {
 				attempt = 0;
-				{
-					std::lock_guard<std::mutex> lock(mutex);
-					receiver_done = false;
-					receiver_error.reset();
-				}
 				push_state(TransportState::connected);
-				std::thread receiver([this, socket = connection.socket.get()] { receive_loop(socket); });
-				bool connection_failed = false;
-				for (;;) {
+				generation.start_receive();
+			}
+
+			auto stop_deadline = std::chrono::steady_clock::time_point::max();
+			while (opened && !generation.is_ended()) {
+				if (is_stopping()) {
+					generation.request_stop();
+					if (stop_deadline == std::chrono::steady_clock::time_point::max())
+						stop_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+					if (std::chrono::steady_clock::now() >= stop_deadline) generation.force_cancel();
+				}
+				else if (generation.can_send()) {
 					WireEnvelope envelope;
 					bool have_message = false;
 					{
-						std::unique_lock<std::mutex> lock(mutex);
-						wake.wait(lock, [&] { return stopping || receiver_done || !outgoing.empty(); });
-						if (stopping || receiver_done) break;
-						envelope = std::move(outgoing.front());
-						outgoing.pop_front();
-						have_message = true;
+						std::lock_guard<std::mutex> lock(mutex);
+						if (!outgoing.empty()) {
+							envelope = std::move(outgoing.front());
+							outgoing.pop_front();
+							have_message = true;
+						}
 					}
 					if (have_message) {
-						WireFrame frame;
-						try {
-							frame = EncodeFrame(envelope);
-						}
-						catch (std::exception const& error) {
-							push_error(error, "encode", "encode protocol message");
-							continue;
-						}
-						auto type = frame.binary ? WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE : WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
-						auto result = WinHttpWebSocketSend(connection.socket.get(), type, frame.data.data(), static_cast<DWORD>(frame.data.size()));
-						if (result != ERROR_SUCCESS) {
-							push_error(winhttp_error("WinHttpWebSocketSend", result, "send"), "send", "WinHttpWebSocketSend");
-							connection_failed = true;
-							break;
-						}
+						try { generation.send(EncodeFrame(envelope)); }
+						catch (std::exception const& error) { push_error(failure_from_exception(error, "encode", "encode protocol message")); }
 					}
 				}
-				close_websocket(connection.socket.get());
-				receiver.join();
-				{
-					std::lock_guard<std::mutex> lock(mutex);
-					if (receiver_error) {
-						push_error_unlocked(*receiver_error);
-						connection_failed = true;
-					}
-					if (stopping) break;
-				}
-				push_state(TransportState::retry_wait, connection_failed ? "connection lost" : "server closed connection");
+				std::unique_lock<std::mutex> lock(mutex);
+				wake.wait_for(lock, std::chrono::milliseconds(50));
 			}
-			catch (std::exception const& error) {
-				push_error(error, "connect", "open WebSocket connection");
-				{
-					std::lock_guard<std::mutex> lock(mutex);
-					if (stopping) break;
-				}
-				push_state(TransportState::retry_wait, "connection failed");
-			}
+
+			generation.cleanup();
+			active_generation.store(0, std::memory_order_release);
+			if (auto failure = generation.get_failure()) push_error(std::move(*failure));
+			if (is_stopping()) break;
+			push_state(TransportState::retry_wait, opened ? "connection lost" : "connection failed");
 			auto delay = ReconnectDelay(attempt++, config.reconnect_initial, config.reconnect_max);
 			if (!wait_retry(delay)) break;
 		}
+		active_generation.store(0, std::memory_order_release);
 		push_state(TransportState::stopped);
 		std::lock_guard<std::mutex> lock(mutex);
 		running = false;
-	}
-
-	void push_error_unlocked(TransportEvent::Failure const& failure) {
-		TransportEvent event;
-		event.type = TransportEventType::error;
-		event.failure = failure;
-		event.detail = FormatTransportFailure(event.failure);
-		events.emplace_back(std::move(event));
 	}
 
 public:
@@ -435,6 +781,8 @@ public:
 		std::lock_guard<std::mutex> lock(mutex);
 		if (running) throw std::logic_error("collaboration transport is already running");
 		config = std::move(input);
+		outgoing.clear();
+		events.clear();
 		stopping = false;
 		running = true;
 		worker = std::thread([this] { run(); });
