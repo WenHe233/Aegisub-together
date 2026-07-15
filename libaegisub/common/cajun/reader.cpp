@@ -10,6 +10,7 @@ Author: Terry Caton
 
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <cassert>
+#include <cstdint>
 
 /*
 
@@ -200,6 +201,37 @@ void Reader::MatchExpectedString(std::string const& sExpected, InputStream& inpu
 
 void Reader::MatchString(std::string& string, InputStream& inputStream) {
 	MatchExpectedString("\"", inputStream);
+	auto read_hex_quad = [&]() -> std::uint32_t {
+		std::uint32_t value = 0;
+		for (int index = 0; index < 4; ++index) {
+			if (inputStream.EOS()) throw ScanException("Incomplete Unicode escape sequence", inputStream.GetLocation());
+			auto digit = inputStream.Get();
+			value <<= 4;
+			if (digit >= '0' && digit <= '9') value |= static_cast<std::uint32_t>(digit - '0');
+			else if (digit >= 'a' && digit <= 'f') value |= static_cast<std::uint32_t>(digit - 'a' + 10);
+			else if (digit >= 'A' && digit <= 'F') value |= static_cast<std::uint32_t>(digit - 'A' + 10);
+			else throw ScanException("Invalid hexadecimal digit in Unicode escape sequence", inputStream.GetLocation());
+		}
+		return value;
+	};
+	auto append_utf8 = [&](std::uint32_t codepoint) {
+		if (codepoint <= 0x7f) string.push_back(static_cast<char>(codepoint));
+		else if (codepoint <= 0x7ff) {
+			string.push_back(static_cast<char>(0xc0 | (codepoint >> 6)));
+			string.push_back(static_cast<char>(0x80 | (codepoint & 0x3f)));
+		}
+		else if (codepoint <= 0xffff) {
+			string.push_back(static_cast<char>(0xe0 | (codepoint >> 12)));
+			string.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f)));
+			string.push_back(static_cast<char>(0x80 | (codepoint & 0x3f)));
+		}
+		else {
+			string.push_back(static_cast<char>(0xf0 | (codepoint >> 18)));
+			string.push_back(static_cast<char>(0x80 | ((codepoint >> 12) & 0x3f)));
+			string.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f)));
+			string.push_back(static_cast<char>(0x80 | (codepoint & 0x3f)));
+		}
+	};
 
 	while (!inputStream.EOS() && inputStream.Peek() != '"') {
 		char c = inputStream.Get();
@@ -216,7 +248,21 @@ void Reader::MatchString(std::string& string, InputStream& inputStream) {
 				case 'n':  string.push_back('\n'); break;
 				case 'r':  string.push_back('\r'); break;
 				case 't':  string.push_back('\t'); break;
-				case 'u':  // TODO: what do we do with this?
+				case 'u': {
+					auto codepoint = read_hex_quad();
+					if (codepoint >= 0xd800 && codepoint <= 0xdbff) {
+						if (inputStream.EOS() || inputStream.Get() != '\\' || inputStream.EOS() || inputStream.Get() != 'u')
+							throw ScanException("High surrogate is not followed by a low surrogate", inputStream.GetLocation());
+						auto low = read_hex_quad();
+						if (low < 0xdc00 || low > 0xdfff)
+							throw ScanException("Invalid low surrogate in Unicode escape sequence", inputStream.GetLocation());
+						codepoint = 0x10000 + ((codepoint - 0xd800) << 10) + (low - 0xdc00);
+					}
+					else if (codepoint >= 0xdc00 && codepoint <= 0xdfff)
+						throw ScanException("Unexpected low surrogate in Unicode escape sequence", inputStream.GetLocation());
+					append_utf8(codepoint);
+					break;
+				}
 				default:
 					throw ScanException(std::string("Unrecognized escape sequence found in string: \\") + c, inputStream.GetLocation());
 			}

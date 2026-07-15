@@ -36,6 +36,14 @@ TEST(collaboration_protocol, compresses_large_envelopes_and_round_trips_utf8) {
 	EXPECT_NE(std::string::npos, output.payload_json.find("你好"));
 }
 
+TEST(collaboration_protocol, decodes_json_unicode_escapes_from_go) {
+	auto prefix = std::string(R"({"protocol_version":1,"type":"heartbeat","request_id":"unicode","room_revision":0,"payload":{"text":")");
+	auto envelope = DecodeEnvelope(prefix + "\\u003c\\u4f60\\u597d \\ud83d\\ude00" + R"("}})");
+	EXPECT_NE(std::string::npos, envelope.payload_json.find("<你好 😀"));
+	EXPECT_THROW(DecodeEnvelope(prefix + "\\ud83dX" + R"("}})"),
+		json::Reader::ScanException);
+}
+
 TEST(collaboration_protocol, rejects_incompatible_or_malformed_frames) {
 	EXPECT_THROW(DecodeEnvelope(R"({"protocol_version":2,"type":"heartbeat","request_id":"r","room_revision":0,"payload":{}})"), std::invalid_argument);
 	EXPECT_THROW(DecodeEnvelope(R"({"protocol_version":1,"type":"future_required_message","request_id":"r","room_revision":0,"payload":{}})"), std::invalid_argument);
