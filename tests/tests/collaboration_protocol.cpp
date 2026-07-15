@@ -24,6 +24,13 @@ TEST(collaboration_protocol, encodes_and_decodes_text_envelopes) {
 	EXPECT_TRUE(static_cast<json::Boolean>(static_cast<json::Object const&>(payload).at("future_field")));
 }
 
+TEST(collaboration_protocol, recognizes_graceful_room_leave) {
+	WireEnvelope leave{1, "leave_room", "leave-1", 42, "{}"};
+	auto decoded = DecodeEnvelope(EncodeEnvelope(leave));
+	EXPECT_EQ("leave_room", decoded.type);
+	EXPECT_EQ("{}", decoded.payload_json);
+}
+
 TEST(collaboration_protocol, compresses_large_envelopes_and_round_trips_utf8) {
 	auto text = std::string(40 * 1024, 'x') + "你好";
 	WireEnvelope input{1, "snapshot_state", "request-2", 9, "{\"text\":\"" + text + "\"}"};

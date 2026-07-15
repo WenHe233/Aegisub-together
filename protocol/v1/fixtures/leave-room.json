@@ -1,0 +1,7 @@
+{
+  "protocol_version": 1,
+  "type": "leave_room",
+  "request_id": "leave-1",
+  "room_revision": 42,
+  "payload": {}
+}

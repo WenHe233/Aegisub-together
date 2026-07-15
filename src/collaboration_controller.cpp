@@ -1160,7 +1160,15 @@ public:
 
 	void disconnect() {
 		timer.Stop();
-		transport.Stop();
+		if (phase == Phase::joined) {
+			WireEnvelope leave;
+			leave.type = "leave_room";
+			leave.request_id = request_id("leave");
+			leave.room_revision = revision;
+			leave.payload_json = "{}";
+			transport.Stop(std::move(leave));
+		}
+		else transport.Stop();
 		input.access_password.assign(input.access_password.size(), '\0');
 		input.room_password.assign(input.room_password.size(), '\0');
 		input = ConnectionInput{};

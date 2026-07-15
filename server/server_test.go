@@ -323,6 +323,37 @@ func TestNicknameIsUniqueWithinRoom(t *testing.T) {
 	}
 }
 
+func TestGracefulLeaveImmediatelyReleasesNicknameAndResumeSession(t *testing.T) {
+	server, _, url := configuredTestServer(t, Config{})
+	creator := dial(t, url)
+	authenticate(t, creator, "")
+	joined := createRoom(t, creator, "episode-01", "translator")
+
+	send(t, creator, "leave_room", "leave-translator", struct{}{})
+	deadline := time.Now().Add(time.Second)
+	for {
+		server.hub.mu.Lock()
+		room := server.hub.roomByID(joined.RoomID)
+		active := memberByID(room, joined.MemberID) != nil
+		_, resumable := room.sessions[joined.ResumeToken]
+		server.hub.mu.Unlock()
+		if !active && !resumable {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("graceful leave did not release nickname and resume session")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	replacement := dial(t, url)
+	authenticate(t, replacement, "")
+	rejoined := joinRoom(t, replacement, "episode-01", "translator")
+	if rejoined.MemberID == joined.MemberID || rejoined.ResumeToken == joined.ResumeToken {
+		t.Fatalf("graceful leave reused forgotten identity: before=%#v after=%#v", joined, rejoined)
+	}
+}
+
 func TestRoomNamesAreNFCNormalized(t *testing.T) {
 	_, url := testServer(t, "")
 	creator := dial(t, url)

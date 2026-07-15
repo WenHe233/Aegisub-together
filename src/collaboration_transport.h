@@ -73,6 +73,7 @@ public:
 
 	void Start(TransportConfig config);
 	void Stop();
+	void Stop(WireEnvelope final_message);
 	bool Send(WireEnvelope envelope);
 	std::optional<TransportEvent> PollEvent();
 };

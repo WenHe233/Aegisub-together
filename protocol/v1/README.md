@@ -18,6 +18,7 @@ WebSocket 可以通过 `wss://` 或 `ws://` 连接，帧格式和应用协议完
 2. 服务端返回 `access_ok` 后，客户端发送 `create_room` 或 `join_room`。
 3. 建房或入房成功后返回 `room_joined`，其中包含权威快照和当前房间 revision。
 4. 持久事件广播为 `batch_applied`、`comment_changed` 或 `reindex`。临时的锁、presence、心跳和维护消息不会递增房间 revision，除非对应消息另有明确规定。
+5. 客户端正常断开或退出时发送 `leave_room`，服务端立即释放昵称、行锁、维护状态和恢复会话；网络中断等异常掉线不发送该消息，仍可在五分钟内使用 resume token 恢复身份。
 
 ## 顺序与冲突规则
 

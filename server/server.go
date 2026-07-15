@@ -183,7 +183,12 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 	server.roomLimiter.success(remoteIP)
-	defer server.memberDisconnected(joinedRoom.id, joinedMember.id)
+	leftRoom := false
+	defer func() {
+		if !leftRoom {
+			server.memberDisconnected(joinedRoom.id, joinedMember.id)
+		}
+	}()
 	server.hub.attach(joinedRoom, joinedMember, connection)
 
 	joined, joinedRevision, ok := server.hub.joinedPayload(joinedRoom.id, joinedMember.id)
@@ -212,6 +217,16 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 				return
 			}
 			continue
+		}
+		if envelope.Type == "leave_room" {
+			var empty struct{}
+			if err := decodePayload(envelope.Payload, &empty); err != nil {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "leave request is invalid", false)
+				continue
+			}
+			server.memberLeft(joinedRoom.id, joinedMember.id)
+			leftRoom = true
+			return
 		}
 		if envelope.Type == "lock_request" || envelope.Type == "lock_release" {
 			var reference protocol.LineReference
@@ -391,6 +406,12 @@ func writeCommentError(ctx context.Context, connection *websocket.Conn, requestI
 func (server *Server) memberDisconnected(roomID, memberID string) {
 	for _, event := range server.hub.disconnect(roomID, memberID, server.maintenanceTimeouts()) {
 		broadcastTransient("disconnect-"+memberID, server.hub.currentRevision(roomID), event.typeName, event.payload, event.recipients)
+	}
+}
+
+func (server *Server) memberLeft(roomID, memberID string) {
+	for _, event := range server.hub.leave(roomID, memberID, server.maintenanceTimeouts()) {
+		broadcastTransient("leave-"+memberID, server.hub.currentRevision(roomID), event.typeName, event.payload, event.recipients)
 	}
 }
 

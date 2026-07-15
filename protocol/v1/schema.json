@@ -8,7 +8,7 @@
     "protocol_version": {"const": 1},
     "type": {
       "enum": [
-        "access_auth", "access_ok", "create_room", "join_room", "room_joined",
+        "access_auth", "access_ok", "create_room", "join_room", "room_joined", "leave_room",
         "submit_batch", "batch_applied", "batch_rejected", "snapshot_request",
         "lock_request", "lock_release", "lock_state", "presence", "heartbeat",
         "maintenance_request", "maintenance_release", "maintenance_state", "maintenance_cancel_request",
@@ -37,6 +37,10 @@
     {
       "if": {"properties": {"type": {"const": "room_joined"}}},
       "then": {"properties": {"payload": {"$ref": "#/$defs/snapshot_message"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "leave_room"}}},
+      "then": {"properties": {"payload": {"$ref": "#/$defs/empty_payload"}}}
     },
     {
       "if": {"properties": {"type": {"const": "snapshot_request"}}},

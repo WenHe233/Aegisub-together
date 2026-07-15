@@ -123,7 +123,7 @@ WireEnvelope DecodeFrame(bool binary, std::vector<std::uint8_t> const& data) {
 
 bool IsKnownMessageType(std::string const& type) {
 	static constexpr char const* types[] = {
-		"access_auth", "access_ok", "create_room", "join_room", "room_joined",
+		"access_auth", "access_ok", "create_room", "join_room", "room_joined", "leave_room",
 		"submit_batch", "batch_applied", "batch_rejected", "snapshot_request",
 		"lock_request", "lock_release", "lock_state", "presence", "heartbeat",
 		"maintenance_request", "maintenance_release", "maintenance_state",

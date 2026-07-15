@@ -177,6 +177,7 @@ class CollaborationTransport::Impl {
 	std::condition_variable wake;
 	std::deque<WireEnvelope> outgoing;
 	std::deque<TransportEvent> events;
+	std::optional<WireEnvelope> final_message;
 	std::thread worker;
 	bool stopping = false;
 	bool running = false;
@@ -723,7 +724,7 @@ class CollaborationTransport::Impl {
 			Generation generation(this, generation_id);
 			generation.start(config.server_url);
 			bool opened = generation.wait_open_or_end();
-			if (is_stopping()) generation.request_stop();
+			if (is_stopping() && !opened) generation.request_stop();
 			if (opened && !is_stopping()) {
 				attempt = 0;
 				push_state(TransportState::connected);
@@ -733,7 +734,28 @@ class CollaborationTransport::Impl {
 			auto stop_deadline = std::chrono::steady_clock::time_point::max();
 			while (opened && !generation.is_ended()) {
 				if (is_stopping()) {
-					generation.request_stop();
+					WireEnvelope envelope;
+					bool have_final_message = false;
+					if (generation.can_send()) {
+						std::lock_guard<std::mutex> lock(mutex);
+						if (final_message) {
+							envelope = std::move(*final_message);
+							final_message.reset();
+							have_final_message = true;
+						}
+					}
+					if (have_final_message) {
+						try { generation.send(EncodeFrame(envelope)); }
+						catch (std::exception const& error) { push_error(failure_from_exception(error, "encode", "encode final protocol message")); }
+					}
+					else {
+						bool pending_final_message = false;
+						{
+							std::lock_guard<std::mutex> lock(mutex);
+							pending_final_message = final_message.has_value();
+						}
+						if (!pending_final_message) generation.request_stop();
+					}
 					if (stop_deadline == std::chrono::steady_clock::time_point::max())
 						stop_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
 					if (std::chrono::steady_clock::now() >= stop_deadline) generation.force_cancel();
@@ -783,15 +805,17 @@ public:
 		config = std::move(input);
 		outgoing.clear();
 		events.clear();
+		final_message.reset();
 		stopping = false;
 		running = true;
 		worker = std::thread([this] { run(); });
 	}
 
-	void stop() {
+	void stop(std::optional<WireEnvelope> message = std::nullopt) {
 		{
 			std::lock_guard<std::mutex> lock(mutex);
 			if (!running && !worker.joinable()) return;
+			final_message = std::move(message);
 			stopping = true;
 		}
 		wake.notify_all();
@@ -819,6 +843,7 @@ CollaborationTransport::CollaborationTransport() : impl(new Impl) { }
 CollaborationTransport::~CollaborationTransport() = default;
 void CollaborationTransport::Start(TransportConfig config) { impl->start(std::move(config)); }
 void CollaborationTransport::Stop() { impl->stop(); }
+void CollaborationTransport::Stop(WireEnvelope final_message) { impl->stop(std::move(final_message)); }
 bool CollaborationTransport::Send(WireEnvelope envelope) { return impl->send(std::move(envelope)); }
 std::optional<TransportEvent> CollaborationTransport::PollEvent() { return impl->poll(); }
 

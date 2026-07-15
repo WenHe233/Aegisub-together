@@ -226,19 +226,31 @@ func (hub *hub) join(input protocol.JoinRoom, now time.Time, resumeTimeout time.
 	return joinedRoom, joinedMember, nil
 }
 
-func (hub *hub) leave(roomID, nickname, memberID string) {
+func (hub *hub) leave(roomID, memberID string, timeouts maintenanceTimeouts) []transientEvent {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
-	for _, existingRoom := range hub.rooms {
-		if existingRoom.id != roomID {
-			continue
-		}
-		existingMember := existingRoom.members[nickname]
-		if existingMember != nil && existingMember.id == memberID {
-			delete(existingRoom.members, nickname)
-		}
-		return
+	value := hub.roomByID(roomID)
+	joinedMember := memberByID(value, memberID)
+	if value == nil || joinedMember == nil {
+		return nil
 	}
+	now := time.Now()
+	delete(value.members, joinedMember.nickname)
+	delete(value.sessions, joinedMember.resumeToken)
+	joinedMember.connection = nil
+	joinedMember.disconnectedAt = now
+	states := releaseMemberLocks(value, memberID, "")
+	maintenanceChanged := disconnectMaintenance(value, memberID, now, hub.store)
+	recipients := connectedMembers(value)
+	events := make([]transientEvent, 0, len(states)+2)
+	for _, state := range states {
+		events = append(events, transientEvent{roomID: roomID, typeName: "lock_state", payload: state, recipients: recipients})
+	}
+	events = append(events, transientEvent{roomID: roomID, typeName: "presence", payload: presenceSnapshot(value), recipients: recipients})
+	if maintenanceChanged {
+		events = append(events, transientEvent{roomID: roomID, typeName: "maintenance_state", payload: maintenanceState(value, timeouts), recipients: recipients})
+	}
+	return events
 }
 
 func newMember(nickname string) (*member, error) {
