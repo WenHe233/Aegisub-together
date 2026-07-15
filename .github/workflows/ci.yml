@@ -124,6 +124,64 @@ jobs:
       - name: Run test
         run: meson test -C build --verbose "gtest main"
 
+      - uses: actions/setup-go@v5
+        if: matrix.config.name == 'Windows MSVC Release'
+        with:
+          go-version: 1.26.5
+
+      - name: Run Windows collaboration transport smoke test
+        if: matrix.config.name == 'Windows MSVC Release'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $serverExe = Join-Path $env:RUNNER_TEMP 'aegisub-together-server.exe'
+          Push-Location server
+          go build -o $serverExe ./cmd/aegisub-together-server
+          Pop-Location
+
+          $accessPassword = 'transport-access-pass'
+          $roomPassword = 'transport-room-pass'
+          $accessHash = $accessPassword | & $serverExe hash-password
+          if ($LASTEXITCODE -ne 0) { throw 'Could not hash the transport smoke access password.' }
+
+          $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+          $listener.Start()
+          $port = ([System.Net.IPEndPoint]$listener.LocalEndpoint).Port
+          $listener.Stop()
+          $database = Join-Path $env:RUNNER_TEMP 'transport-smoke.db'
+          $stdout = Join-Path $env:RUNNER_TEMP 'transport-smoke.stdout.log'
+          $stderr = Join-Path $env:RUNNER_TEMP 'transport-smoke.stderr.log'
+          $env:AEGISUB_COLLAB_ACCESS_PASSWORD_HASH = $accessHash.Trim()
+          $env:AEGISUB_COLLAB_DATABASE = $database
+          $server = Start-Process -FilePath $serverExe -ArgumentList @('serve', '-listen', "127.0.0.1:$port") `
+            -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+          try {
+            $healthy = $false
+            for ($attempt = 0; $attempt -lt 60; $attempt++) {
+              try {
+                $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$port/healthz" -TimeoutSec 2
+                if ($response.StatusCode -eq 200) { $healthy = $true; break }
+              }
+              catch { Start-Sleep -Milliseconds 250 }
+            }
+            if (-not $healthy) {
+              Get-Content $stdout -ErrorAction SilentlyContinue
+              Get-Content $stderr -ErrorAction SilentlyContinue
+              throw 'Temporary collaboration server did not become healthy.'
+            }
+
+            $env:AEGISUB_COLLAB_SMOKE_URL = "ws://127.0.0.1:$port/v1/ws"
+            $env:AEGISUB_COLLAB_SMOKE_ACCESS_PASSWORD = $accessPassword
+            $env:AEGISUB_COLLAB_SMOKE_ROOM_PASSWORD = $roomPassword
+            & .\build\tests\gtest-main.exe `
+              --gtest_filter=collaboration_transport.DISABLED_live_websocket_smoke `
+              --gtest_also_run_disabled_tests
+            if ($LASTEXITCODE -ne 0) { throw 'Windows collaboration transport smoke test failed.' }
+          }
+          finally {
+            if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -Force }
+          }
+
       # Windows artifacts
       - name: Generate Windows installer
         if: matrix.config.os == 'windows-latest'

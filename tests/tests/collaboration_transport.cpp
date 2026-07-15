@@ -3,6 +3,10 @@
 #include <main.h>
 
 #include "../../src/collaboration_transport.h"
+#include <libaegisub/collaboration_room.h>
+
+#include <cstdlib>
+#include <thread>
 
 using namespace agi::collab;
 using namespace std::chrono_literals;
@@ -76,4 +80,77 @@ TEST(collaboration_transport, remembers_insecure_server_confirmation_by_canonica
 	EXPECT_EQ(1U, confirmed.size());
 	RememberInsecureServerConfirmation("ws://example.test/v1/ws", confirmed);
 	EXPECT_EQ(1U, confirmed.size());
+}
+
+TEST(collaboration_transport, DISABLED_live_websocket_smoke) {
+	auto* url = std::getenv("AEGISUB_COLLAB_SMOKE_URL");
+	auto* access_password = std::getenv("AEGISUB_COLLAB_SMOKE_ACCESS_PASSWORD");
+	auto* room_password = std::getenv("AEGISUB_COLLAB_SMOKE_ROOM_PASSWORD");
+	if (!url || !access_password || !room_password) return;
+
+	auto wait_for = [&](CollaborationTransport& transport, std::string const& type, bool state_event = false) -> std::optional<TransportEvent> {
+		auto deadline = std::chrono::steady_clock::now() + 20s;
+		while (std::chrono::steady_clock::now() < deadline) {
+			if (auto event = transport.PollEvent()) {
+				if (event->type == TransportEventType::error) {
+					ADD_FAILURE() << event->detail;
+					return std::nullopt;
+				}
+				if (state_event && event->type == TransportEventType::state && event->state == TransportState::connected) return event;
+				if (!state_event && event->type == TransportEventType::message && event->message.type == type) return event;
+			}
+			std::this_thread::sleep_for(10ms);
+		}
+		ADD_FAILURE() << "timed out waiting for " << type;
+		return std::nullopt;
+	};
+	auto send = [&](CollaborationTransport& transport, std::string type, std::string payload, std::string request_id) {
+		WireEnvelope envelope;
+		envelope.type = std::move(type);
+		envelope.request_id = std::move(request_id);
+		envelope.payload_json = std::move(payload);
+		return transport.Send(std::move(envelope));
+	};
+
+	CollaborationTransport creator;
+	creator.Start({url});
+	ASSERT_TRUE(wait_for(creator, "connected", true));
+	ASSERT_TRUE(send(creator, "access_auth", EncodeAccessAuth(access_password), "smoke-auth"));
+	ASSERT_TRUE(wait_for(creator, "access_ok"));
+	CreateRoomRequest create;
+	create.room_name = "native-smoke-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+	create.room_password = room_password;
+	create.nickname = "native-smoke";
+	create.lock_enabled = false;
+	std::uint32_t random = 0x91e10da5U;
+	std::string incompressible_style;
+	incompressible_style.reserve(48 * 1024);
+	for (std::size_t index = 0; index < 48 * 1024; ++index) {
+		random ^= random << 13;
+		random ^= random >> 17;
+		random ^= random << 5;
+		incompressible_style.push_back(static_cast<char>('!' + random % 90));
+	}
+	create.snapshot.styles.emplace_back(std::move(incompressible_style));
+	ASSERT_TRUE(send(creator, "create_room", EncodeCreateRoom(create), "smoke-create"));
+	ASSERT_TRUE(wait_for(creator, "room_joined"));
+
+	CollaborationTransport joiner;
+	joiner.Start({url});
+	ASSERT_TRUE(wait_for(joiner, "connected", true));
+	ASSERT_TRUE(send(joiner, "access_auth", EncodeAccessAuth(access_password), "smoke-join-auth"));
+	ASSERT_TRUE(wait_for(joiner, "access_ok"));
+	JoinRoomRequest join{create.room_name, create.room_password, "native-joiner", {}};
+	ASSERT_TRUE(send(joiner, "join_room", EncodeJoinRoom(join), "smoke-join"));
+	ASSERT_TRUE(wait_for(joiner, "room_joined"));
+	for (int index = 0; index < 3; ++index) {
+		ASSERT_TRUE(send(creator, "heartbeat", "{}", "smoke-heartbeat-" + std::to_string(index)));
+		ASSERT_TRUE(wait_for(creator, "heartbeat"));
+		ASSERT_TRUE(send(joiner, "heartbeat", "{}", "smoke-join-heartbeat-" + std::to_string(index)));
+		ASSERT_TRUE(wait_for(joiner, "heartbeat"));
+	}
+	auto stop_started = std::chrono::steady_clock::now();
+	joiner.Stop();
+	creator.Stop();
+	EXPECT_LT(std::chrono::steady_clock::now() - stop_started, 2s);
 }
