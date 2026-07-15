@@ -6860,3 +6860,421 @@ msgstr ""
 msgid "This will install Aegisub {#BUILD_GIT_VERSION_STRING} on your computer.%n%nAegisub is covered by the GNU General Public License version 2. This means you may use the application for any purpose without charge, but that no warranties of any kind are given either.%n%nSee the Aegisub website for information on obtaining the source code."
 msgstr ""
 
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration connection failed"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The connection failed before Aegisub received the room confirmation. The room may already have been created; try joining the same room instead of creating it again."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The connection failed before Aegisub joined the room."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Copy diagnostics"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid ""
+"Author: %s\n"
+"State: %s\n"
+"Created: %s\n"
+"Based on line version: %d\n"
+"\n"
+"%s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid ""
+"\n"
+"\n"
+"Suggested text:\n"
+"%s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Line comments and suggestions"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Include a suggested subtitle text"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Accept suggestion"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Reject"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resolve"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Accepted"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Rejected"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resolved"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "[%s] %s: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Comments on this line:"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "New comment:"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Add comment"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "A comment message is required."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Cannot add comment"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The collaboration server address must be a valid ws:// or wss:// URL without credentials or a fragment."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Invalid server"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Room names must be 1-64 characters and nicknames 1-32 characters."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Invalid room details"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The room password must be 8-128 UTF-8 bytes."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Invalid room password"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Create collaboration room"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Join collaboration room"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Remember passwords in Windows Credential Manager"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Require line locks"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Server:"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Server access password:"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Room:"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Room password:"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Nickname:"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration send queue is unavailable."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Could not update saved credentials"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Could not persist offline collaboration state: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Connection lost. Offline edits are being saved and will be reconciled after reconnecting."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "apply collaboration update"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Offline collaboration edit could not be saved: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration change could not be queued: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Line is read-only: locked by %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration comment revision gap detected; refreshing room snapshot..."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "An accepted suggestion conflicts with a pending local change; refreshing room snapshot..."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Offline reconciliation was cancelled; the journal was preserved."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Reconciling offline edits atomically; editing is temporarily frozen."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Waiting for room maintenance mode to reconcile offline edits."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration maintenance mode is active. Other members are frozen."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Room is frozen for maintenance by %s."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "another member"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid " %s requested cancellation."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration revision gap detected; refreshing room snapshot..."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "A pending collaboration change conflicts with a remote update."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Offline collaboration edits were reconciled successfully."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Rejected collaboration changes saved to %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Could not save rejected collaboration changes: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration recovery failed"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration batch rejected: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "subtitle line %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "the Styles section"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "the Script Info section"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Both the server and your offline copy changed %s. Which version should be kept?"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resolve offline collaboration conflict"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Keep local"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Use server"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Reconnected; no offline changes needed to be submitted."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Could not remove saved credentials"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Connected to collaboration room %s as %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration request failed: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The WebSocket connection ended before room_joined was received."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration connection lost; retrying while offline edits remain enabled..."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Joining a room replaces the core subtitle data in memory. Save the current document before continuing?"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Save before joining"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "This ws:// connection is not encrypted. Server passwords, room passwords, subtitles, and collaboration data can be read or changed in transit. Continue only on a trusted local network."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Unencrypted collaboration connection"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "initialize collaboration metadata"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "A saved offline collaboration journal exists for this room. Resume and reconcile those edits?"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resume offline collaboration edits"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resume"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Discard journal"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "restore offline collaboration edits"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The offline collaboration journal could not be loaded: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Invalid offline journal"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Connecting to collaboration server..."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaborative undo/redo refused: nothing can be changed safely"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaborative undo/redo refused: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaborative undo/redo refused because a target line is not locked by you."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Create Room..."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Join Room..."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Disconnect"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Line &Comments and Suggestions..."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Enter &Maintenance Mode"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Leave Maintenance Mode"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Request Maintenance &Cancellation"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Force Maintenance Cancellation"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Collaboration"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Redo collaborative change"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Redo collaborative change"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Undo collaborative change"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Undo collaborative change"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "joined collaboration room"
+msgstr ""
+

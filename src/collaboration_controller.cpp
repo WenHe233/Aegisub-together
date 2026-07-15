@@ -107,6 +107,14 @@ public:
 	}
 };
 
+wxString comment_state_label(std::string const& state) {
+	if (state == "open") return _("Open");
+	if (state == "accepted") return _("Accepted");
+	if (state == "rejected") return _("Rejected");
+	if (state == "resolved") return _("Resolved");
+	return to_wx(state);
+}
+
 class CommentsDialog final : public wxDialog {
 	std::vector<Comment> comments;
 	wxListBox* list;
@@ -130,7 +138,7 @@ class CommentsDialog final : public wxDialog {
 		if (selected == wxNOT_FOUND) { detail->Clear(); return; }
 		auto const& comment = comments[static_cast<std::size_t>(selected)];
 		wxString text = fmt_tl("Author: %s\nState: %s\nCreated: %s\nBased on line version: %d\n\n%s",
-			comment.author_name, comment.state, comment.created_at, comment.base_line_version, comment.body);
+			comment.author_name, comment_state_label(comment.state), comment.created_at, comment.base_line_version, comment.body);
 		if (comment.suggested_text) text += fmt_tl("\n\nSuggested text:\n%s", *comment.suggested_text);
 		detail->SetValue(text);
 	}
@@ -161,7 +169,7 @@ public:
 		for (auto const& comment : this->comments) {
 			auto preview = to_wx(comment.body);
 			if (preview.length() > 70) preview = preview.Left(67) + "...";
-			list->Append(fmt_tl("[%s] %s: %s", comment.state, comment.author_name, preview));
+			list->Append(fmt_tl("[%s] %s: %s", comment_state_label(comment.state), comment.author_name, preview));
 		}
 		auto root = new wxBoxSizer(wxVERTICAL);
 		root->Add(new wxStaticText(this, wxID_ANY, _("Comments on this line:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
@@ -490,7 +498,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			offline_journal.pending = sync.Pending();
 			try { capture_offline_document(); }
 			catch (std::exception const& error) {
-				context->frame->StatusTimeout(to_wx(std::string("Could not persist offline collaboration state: ") + error.what()));
+				context->frame->StatusTimeout(fmt_tl("Could not persist offline collaboration state: %s", error.what()));
 			}
 		}
 		lock_holders.clear();
@@ -537,7 +545,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		if (offline_session && phase != Phase::joined) {
 			try { capture_offline_document(); }
 			catch (std::exception const& error) {
-				context->frame->StatusTimeout(to_wx(std::string("Offline collaboration edit could not be saved: ") + error.what()));
+				context->frame->StatusTimeout(fmt_tl("Offline collaboration edit could not be saved: %s", error.what()));
 			}
 			return;
 		}
@@ -556,7 +564,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			if (!batch.operations.empty()) send("submit_batch", EncodeSubmitBatch(batch));
 		}
 		catch (std::exception const& error) {
-			context->frame->StatusTimeout(to_wx(std::string("Collaboration change could not be queued: ") + error.what()));
+			context->frame->StatusTimeout(fmt_tl("Collaboration change could not be queued: %s", error.what()));
 			request_snapshot();
 		}
 	}
@@ -652,7 +660,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		bool owned = maintenance.holder_id && *maintenance.holder_id == room.member_id;
 		wxString message = owned
 			? _("Collaboration maintenance mode is active. Other members are frozen.")
-			: fmt_tl("Room is frozen for maintenance by %s.", maintenance.holder_name ? *maintenance.holder_name : std::string("another member"));
+			: fmt_tl("Room is frozen for maintenance by %s.", maintenance.holder_name ? *maintenance.holder_name : from_wx(_("another member")));
 		if (owned && maintenance.cancel_requested_name)
 			message += fmt_tl(" %s requested cancellation.", *maintenance.cancel_requested_name);
 		context->frame->SetCollaborationBanner(message);
@@ -724,10 +732,10 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		auto rejection = DecodeRejectedBatch(envelope.payload_json);
 		try {
 			auto recovery = context->subsController->SaveCollaborationRecovery();
-			context->frame->StatusTimeout(to_wx("Rejected collaboration changes saved to " + recovery.string()));
+			context->frame->StatusTimeout(fmt_tl("Rejected collaboration changes saved to %s", recovery.string()));
 		}
 		catch (std::exception const& error) {
-			wxMessageBox(to_wx(std::string("Could not save rejected collaboration changes: ") + error.what()),
+			wxMessageBox(fmt_tl("Could not save rejected collaboration changes: %s", error.what()),
 				_("Collaboration recovery failed"), wxOK | wxICON_ERROR, context->parent);
 		}
 		auto removed = sync.RejectBatch(rejection);
@@ -739,7 +747,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		}
 		rejected_batches.insert(rejected_batches.end(), removed.begin(), removed.end());
 		revision = (std::max)(revision, envelope.room_revision);
-		context->frame->StatusTimeout(to_wx("Collaboration batch rejected: " + rejection.message));
+		context->frame->StatusTimeout(fmt_tl("Collaboration batch rejected: %s", rejection.message));
 		request_snapshot();
 	}
 
@@ -878,7 +886,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			else if (envelope.type == "error") {
 				auto error = DecodeProtocolError(envelope.payload_json);
 				auto message = error.message.empty() ? error.code : error.message;
-				if (phase == Phase::joined) context->frame->StatusTimeout(to_wx("Collaboration request failed: " + message));
+				if (phase == Phase::joined) context->frame->StatusTimeout(fmt_tl("Collaboration request failed: %s", message));
 				else fail_protocol(message);
 			}
 			else revision = (std::max)(revision, envelope.room_revision);
@@ -912,7 +920,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 				if (!policy.retry) {
 					if (!transport_failure_reported) {
 						TransportFailureDialog dialog(context->parent,
-							event->detail.empty() ? "The WebSocket connection ended before room_joined was received." : event->detail,
+							event->detail.empty() ? from_wx(_("The WebSocket connection ended before room_joined was received.")) : event->detail,
 							policy.create_may_have_completed);
 						dialog.ShowModal();
 					}
@@ -995,7 +1003,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 				else remove_offline_journal();
 			}
 			catch (std::exception const& error) {
-				wxMessageBox(to_wx(std::string("The offline collaboration journal could not be loaded: ") + error.what()),
+				wxMessageBox(fmt_tl("The offline collaboration journal could not be loaded: %s", error.what()),
 					_("Invalid offline journal"), wxOK | wxICON_ERROR, context->parent);
 				input = ConnectionInput{};
 				return;
@@ -1123,7 +1131,9 @@ public:
 		std::string error;
 		auto operations = BuildSelectiveTransition(sync.Confirmed(), entry.expected, target, &error);
 		if (operations.empty()) {
-			context->frame->StatusTimeout(to_wx("Collaborative undo/redo refused: " + (error.empty() ? std::string("nothing can be changed safely") : error)));
+			context->frame->StatusTimeout(error.empty()
+				? _("Collaborative undo/redo refused: nothing can be changed safely")
+				: fmt_tl("Collaborative undo/redo refused: %s", error));
 			return;
 		}
 		if (!maintenance_owned() && room.lock_enabled) {
@@ -1139,7 +1149,7 @@ public:
 		}
 		DocumentState target_state = sync.Confirmed();
 		if (!ApplyOperations(target_state, operations, &error)) {
-			context->frame->StatusTimeout(to_wx("Collaborative undo/redo refused: " + error));
+			context->frame->StatusTimeout(fmt_tl("Collaborative undo/redo refused: %s", error));
 			return;
 		}
 		auto batch = sync.QueueLocalSnapshot(mint_batch_id(), target_state.snapshot);

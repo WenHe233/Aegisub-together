@@ -145,6 +145,9 @@ jobs:
           if ($archive.Length -lt 10MB) { throw "portable archive is unexpectedly small" }
           $listing = 7z l $archive.FullName | Out-String
           if ($listing -notmatch 'aegisub\.exe') { throw "portable archive does not contain aegisub.exe" }
+          if ($listing -notmatch 'locale[\\/]zh_CN[\\/]LC_MESSAGES[\\/]aegisub\.mo') {
+            throw "portable archive does not contain the Simplified Chinese translation catalog"
+          }
           Move-Item -LiteralPath build/aegisub-portable-64.zip -Destination "Aegisub-Together-$env:RELEASE_VERSION-windows-x64-portable.zip"
       - uses: actions/upload-artifact@v4
         with:

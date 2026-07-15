@@ -6891,7 +6891,7 @@ msgstr "更改纵横比(&A)"
 
 #: default_menu.json:0
 msgid "Save"
-msgstr ""
+msgstr "保存"
 
 #: default_menu.json:0
 msgid "Save As..."
@@ -6945,6 +6945,436 @@ msgstr ""
 #: packages/win_installer/fragment_strings.iss:1
 msgid "Update Checker:"
 msgstr "自动更新："
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration connection failed"
+msgstr "协作连接失败"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The connection failed before Aegisub received the room confirmation. The room may already have been created; try joining the same room instead of creating it again."
+msgstr "Aegisub 在收到房间确认前连接失败。房间可能已经创建；请尝试加入同名房间，而不要再次创建。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The connection failed before Aegisub joined the room."
+msgstr "Aegisub 在加入房间前连接失败。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Copy diagnostics"
+msgstr "复制诊断信息"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid ""
+"Author: %s\n"
+"State: %s\n"
+"Created: %s\n"
+"Based on line version: %d\n"
+"\n"
+"%s"
+msgstr ""
+"作者：%s\n"
+"状态：%s\n"
+"创建时间：%s\n"
+"基于行版本：%d\n"
+"\n"
+"%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid ""
+"\n"
+"\n"
+"Suggested text:\n"
+"%s"
+msgstr ""
+"\n"
+"\n"
+"建议文本：\n"
+"%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Line comments and suggestions"
+msgstr "行批注与建议"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Include a suggested subtitle text"
+msgstr "附带建议的字幕文本"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Accept suggestion"
+msgstr "采纳建议"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Reject"
+msgstr "拒绝"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resolve"
+msgstr "解决"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Accepted"
+msgstr "已采纳"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Rejected"
+msgstr "已拒绝"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resolved"
+msgstr "已解决"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "[%s] %s: %s"
+msgstr "[%s] %s：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Comments on this line:"
+msgstr "此行的批注："
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "New comment:"
+msgstr "新批注："
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Add comment"
+msgstr "添加批注"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "A comment message is required."
+msgstr "必须填写批注内容。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Cannot add comment"
+msgstr "无法添加批注"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The collaboration server address must be a valid ws:// or wss:// URL without credentials or a fragment."
+msgstr "协作服务器地址必须是有效的 ws:// 或 wss:// URL，且不能包含用户凭据或片段。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Invalid server"
+msgstr "服务器地址无效"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Room names must be 1-64 characters and nicknames 1-32 characters."
+msgstr "房间名必须为 1–64 个字符，昵称必须为 1–32 个字符。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Invalid room details"
+msgstr "房间信息无效"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The room password must be 8-128 UTF-8 bytes."
+msgstr "房间密码必须为 8–128 个 UTF-8 字节。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Invalid room password"
+msgstr "房间密码无效"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Create collaboration room"
+msgstr "创建协作房间"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Join collaboration room"
+msgstr "加入协作房间"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Remember passwords in Windows Credential Manager"
+msgstr "在 Windows 凭据管理器中记住密码"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Require line locks"
+msgstr "启用行锁"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Server:"
+msgstr "服务器："
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Server access password:"
+msgstr "服务器访问密码："
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Room:"
+msgstr "房间："
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Room password:"
+msgstr "房间密码："
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Nickname:"
+msgstr "昵称："
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration send queue is unavailable."
+msgstr "协作发送队列不可用。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Could not update saved credentials"
+msgstr "无法更新已保存的凭据"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Could not persist offline collaboration state: %s"
+msgstr "无法持久保存离线协作状态：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Connection lost. Offline edits are being saved and will be reconciled after reconnecting."
+msgstr "连接已断开。离线编辑正在保存，并将在重新连接后进行对账。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "apply collaboration update"
+msgstr "应用协作更新"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Offline collaboration edit could not be saved: %s"
+msgstr "无法保存离线协作编辑：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration change could not be queued: %s"
+msgstr "无法将协作更改加入队列：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Line is read-only: locked by %s"
+msgstr "此行只读：已被 %s 锁定"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration comment revision gap detected; refreshing room snapshot..."
+msgstr "检测到协作批注版本缺口；正在刷新房间快照..."
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "An accepted suggestion conflicts with a pending local change; refreshing room snapshot..."
+msgstr "已采纳的建议与待处理的本地更改冲突；正在刷新房间快照..."
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Offline reconciliation was cancelled; the journal was preserved."
+msgstr "离线对账已取消；日志已保留。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Reconciling offline edits atomically; editing is temporarily frozen."
+msgstr "正在以原子方式对账离线编辑；编辑暂时冻结。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Waiting for room maintenance mode to reconcile offline edits."
+msgstr "正在等待房间维护模式以对账离线编辑。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration maintenance mode is active. Other members are frozen."
+msgstr "协作维护模式已启用。其他成员已被冻结。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Room is frozen for maintenance by %s."
+msgstr "房间已由 %s 冻结以进行维护。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "another member"
+msgstr "其他成员"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid " %s requested cancellation."
+msgstr " %s 请求取消维护模式。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration revision gap detected; refreshing room snapshot..."
+msgstr "检测到协作版本缺口；正在刷新房间快照..."
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "A pending collaboration change conflicts with a remote update."
+msgstr "待处理的协作更改与远程更新冲突。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Offline collaboration edits were reconciled successfully."
+msgstr "离线协作编辑已成功对账。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Rejected collaboration changes saved to %s"
+msgstr "被拒绝的协作更改已保存到 %s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Could not save rejected collaboration changes: %s"
+msgstr "无法保存被拒绝的协作更改：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration recovery failed"
+msgstr "协作恢复失败"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration batch rejected: %s"
+msgstr "协作批次被拒绝：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "subtitle line %s"
+msgstr "字幕行 %s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "the Styles section"
+msgstr "样式（Styles）节"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "the Script Info section"
+msgstr "脚本信息（Script Info）节"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Both the server and your offline copy changed %s. Which version should be kept?"
+msgstr "服务器和离线副本都更改了%s。要保留哪个版本？"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resolve offline collaboration conflict"
+msgstr "解决离线协作冲突"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Keep local"
+msgstr "保留本地版本"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Use server"
+msgstr "使用服务器版本"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Reconnected; no offline changes needed to be submitted."
+msgstr "已重新连接；没有需要提交的离线更改。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Could not remove saved credentials"
+msgstr "无法删除已保存的凭据"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Connected to collaboration room %s as %s"
+msgstr "已以 %s 身份连接到协作房间 %s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration request failed: %s"
+msgstr "协作请求失败：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The WebSocket connection ended before room_joined was received."
+msgstr "在收到 room_joined 前 WebSocket 连接已结束。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaboration connection lost; retrying while offline edits remain enabled..."
+msgstr "协作连接已断开；正在重试，离线编辑仍保持启用..."
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Joining a room replaces the core subtitle data in memory. Save the current document before continuing?"
+msgstr "加入房间会替换内存中的核心字幕数据。继续前是否保存当前文档？"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Save before joining"
+msgstr "加入前保存"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "This ws:// connection is not encrypted. Server passwords, room passwords, subtitles, and collaboration data can be read or changed in transit. Continue only on a trusted local network."
+msgstr "此 ws:// 连接未加密。服务器密码、房间密码、字幕和协作数据在传输中可能被读取或篡改。请仅在可信的本地网络中继续。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Unencrypted collaboration connection"
+msgstr "未加密的协作连接"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "initialize collaboration metadata"
+msgstr "初始化协作元数据"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "A saved offline collaboration journal exists for this room. Resume and reconcile those edits?"
+msgstr "此房间存在已保存的离线协作日志。是否恢复并对账这些编辑？"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resume offline collaboration edits"
+msgstr "恢复离线协作编辑"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Resume"
+msgstr "恢复"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Discard journal"
+msgstr "丢弃日志"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "restore offline collaboration edits"
+msgstr "恢复离线协作编辑"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "The offline collaboration journal could not be loaded: %s"
+msgstr "无法加载离线协作日志：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Invalid offline journal"
+msgstr "离线日志无效"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Connecting to collaboration server..."
+msgstr "正在连接协作服务器..."
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaborative undo/redo refused: nothing can be changed safely"
+msgstr "协作撤销/重做被拒绝：没有可安全更改的内容"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaborative undo/redo refused: %s"
+msgstr "协作撤销/重做被拒绝：%s"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Collaborative undo/redo refused because a target line is not locked by you."
+msgstr "协作撤销/重做被拒绝，因为目标行未被您锁定。"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Create Room..."
+msgstr "创建房间(&C)..."
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Join Room..."
+msgstr "加入房间(&J)..."
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Disconnect"
+msgstr "断开连接(&D)"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Line &Comments and Suggestions..."
+msgstr "行批注与建议(&C)..."
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Enter &Maintenance Mode"
+msgstr "进入维护模式(&M)"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Leave Maintenance Mode"
+msgstr "退出维护模式(&L)"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Request Maintenance &Cancellation"
+msgstr "请求取消维护(&C)"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Force Maintenance Cancellation"
+msgstr "强制取消维护(&F)"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Collaboration"
+msgstr "协作(&C)"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Redo collaborative change"
+msgstr "重做协作更改(&R)"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Redo collaborative change"
+msgstr "重做协作更改"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "&Undo collaborative change"
+msgstr "撤销协作更改(&U)"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "Undo collaborative change"
+msgstr "撤销协作更改"
+
+#: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
+msgid "joined collaboration room"
+msgstr "已加入协作房间"
+
+
 
 #~ msgid "    Subtitle format handler: %s"
 #~ msgstr "    字幕格式处理器： %s"
