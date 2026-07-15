@@ -55,6 +55,12 @@ struct CollaborationServerUrl {
 	std::uint16_t port = 0;
 };
 
+struct ConnectionLossPolicy {
+	bool retry = false;
+	bool enable_offline_journal = false;
+	bool create_may_have_completed = false;
+};
+
 class CollaborationTransport final {
 	class Impl;
 	std::unique_ptr<Impl> impl;
@@ -73,6 +79,7 @@ public:
 
 std::chrono::milliseconds ReconnectDelay(unsigned attempt, std::chrono::milliseconds initial, std::chrono::milliseconds maximum);
 std::string FormatTransportFailure(TransportEvent::Failure const& failure);
+ConnectionLossPolicy EvaluateConnectionLoss(bool joined_once, bool create_request_sent);
 
 CollaborationServerUrl ParseCollaborationServerUrl(std::string const& server_url);
 bool RequiresInsecureServerConfirmation(std::string const& server_url, std::vector<std::string> const& confirmed_servers);

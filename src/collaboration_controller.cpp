@@ -366,6 +366,8 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	std::deque<WireEnvelope> deferred_persistent_messages;
 	unsigned mutation_depth = 0;
 	bool transport_failure_reported = false;
+	bool joined_once = false;
+	bool create_request_sent = false;
 	agi::signal::Connection commit_connection;
 	agi::signal::Connection active_line_connection;
 	agi::signal::Connection selection_connection;
@@ -405,7 +407,10 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	void send_room_request() {
 		if (input.mode == RoomMode::create) {
 			CreateRoomRequest request{input.room_name, input.room_password, input.nickname, input.lock_enabled, create_snapshot};
-			if (send("create_room", EncodeCreateRoom(request))) phase = Phase::waiting_room;
+			if (send("create_room", EncodeCreateRoom(request))) {
+				create_request_sent = true;
+				phase = Phase::waiting_room;
+			}
 		}
 		else {
 			JoinRoomRequest request{input.room_name, input.room_password, input.nickname, room.resume_token};
@@ -839,6 +844,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		input.mode = RoomMode::join;
 		load_snapshot_on_join = false;
 		phase = Phase::joined;
+		joined_once = true;
 		if (auto* active = context->selectionController->GetActiveLine()) {
 			active_line_id = ass::GetMetadataValue(*context->ass, active->ExtradataIds.get(), IdExtradataKey);
 		}
@@ -888,9 +894,9 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			else if (event->type == TransportEventType::error) {
 				auto detail = event->detail.empty() ? FormatTransportFailure(event->failure) : event->detail;
 				LOG_E("collaboration/transport") << detail;
-				if (phase != Phase::joined && !transport_failure_reported) {
+				if (!joined_once && !transport_failure_reported) {
 					transport_failure_reported = true;
-					TransportFailureDialog dialog(context->parent, detail, input.mode == RoomMode::create && phase == Phase::waiting_room);
+					TransportFailureDialog dialog(context->parent, detail, create_request_sent);
 					dialog.ShowModal();
 				}
 				else context->frame->StatusTimeout(to_wx(detail));
@@ -902,7 +908,18 @@ class CollaborationController::Impl final : public wxEvtHandler {
 				update_editability();
 			}
 			else if (event->state == TransportState::retry_wait) {
-				enter_offline_mode();
+				auto policy = EvaluateConnectionLoss(joined_once, create_request_sent);
+				if (!policy.retry) {
+					if (!transport_failure_reported) {
+						TransportFailureDialog dialog(context->parent,
+							event->detail.empty() ? "The WebSocket connection ended before room_joined was received." : event->detail,
+							policy.create_may_have_completed);
+						dialog.ShowModal();
+					}
+					disconnect();
+					return;
+				}
+				if (policy.enable_offline_journal) enter_offline_mode();
 				context->frame->StatusTimeout(_("Collaboration connection lost; retrying while offline edits remain enabled..."));
 			}
 		}
@@ -989,6 +1006,8 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		room = RoomJoined{};
 		revision = 0;
 		transport_failure_reported = false;
+		joined_once = false;
+		create_request_sent = false;
 		phase = Phase::connecting;
 		update_editability();
 		transport.Start({input.server_url});
@@ -1153,6 +1172,8 @@ public:
 		deferred_persistent_messages.clear();
 		mutation_depth = 0;
 		transport_failure_reported = false;
+		joined_once = false;
+		create_request_sent = false;
 		active_line_id.clear();
 		phase = Phase::idle;
 		revision = 0;

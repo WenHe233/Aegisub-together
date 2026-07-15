@@ -62,6 +62,7 @@ all_test_sources += [
 if collaboration_enabled
     all_test_sources += [
         '../src/collaboration_transport_win.cpp',
+        'tests/collaboration_connection_policy.cpp',
         'tests/collaboration_transport.cpp',
     ]
 endif

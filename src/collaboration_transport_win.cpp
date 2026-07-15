@@ -832,6 +832,14 @@ std::chrono::milliseconds ReconnectDelay(unsigned attempt, std::chrono::millisec
 	return (std::min)(result, maximum);
 }
 
+ConnectionLossPolicy EvaluateConnectionLoss(bool joined_once, bool create_request_sent) {
+	ConnectionLossPolicy policy;
+	policy.retry = joined_once;
+	policy.enable_offline_journal = joined_once;
+	policy.create_may_have_completed = !joined_once && create_request_sent;
+	return policy;
+}
+
 std::string CredentialTarget(std::string const& server_url, std::string const& room_name, std::string const& secret_name) {
 	if (server_url.empty() || secret_name.empty()) throw std::invalid_argument("credential identity is incomplete");
 	return "AegisubTogether:" + std::to_string(server_url.size()) + ":" + server_url
