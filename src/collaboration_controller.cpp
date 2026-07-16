@@ -630,6 +630,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		if (active_line_id == next) return;
 		active_line_id = std::move(next);
 		update_editability();
+		show_active_line_status();
 		schedule_lock_set_request();
 	}
 
@@ -663,11 +664,13 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			}
 		}
 		update_editability();
+		show_active_line_status();
 		if (context->subsGrid) context->subsGrid->Refresh(false);
 	}
 
 	void handle_presence(WireEnvelope const& envelope) {
 		presence = DecodePresence(envelope.payload_json);
+		show_active_line_status();
 		if (context->subsGrid) context->subsGrid->Refresh(false);
 	}
 
@@ -1218,17 +1221,28 @@ public:
 		else if (!send("maintenance_request", "{}")) pending_global_replace.reset();
 		return true;
 	}
-	int line_lock_state(AssDialogue const* line) const {
-		if (phase != Phase::joined || !line) return 0;
+	LineCollaborationState line_state(AssDialogue const* line) const {
+		if (phase != Phase::joined || !line) return {};
 		auto id = ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey);
 		if (room.lock_enabled) {
 			auto holder = lock_holders.find(id);
-			if (holder == lock_holders.end()) return 0;
-			return holder->second == room.member_id ? 1 : 2;
+			if (holder == lock_holders.end()) return {};
+			auto name = lock_holder_names.find(id);
+			return {
+				holder->second == room.member_id ? LineCollaborationKind::owned_lock : LineCollaborationKind::remote_lock,
+				name == lock_holder_names.end() ? std::string{} : name->second
+			};
 		}
-		for (auto const& member : presence)
-			if (member.line_id && *member.line_id == id) return member.member_id == room.member_id ? 1 : 2;
-		return 0;
+		for (auto const& member : presence) {
+			if (member.member_id != room.member_id && member.line_id && *member.line_id == id)
+				return {LineCollaborationKind::remote_presence, member.nickname};
+		}
+		return {};
+	}
+	void show_active_line_status() const {
+		auto state = line_state(context->selectionController->GetActiveLine());
+		if (state.kind == LineCollaborationKind::remote_lock && !state.holder_name.empty())
+			context->frame->StatusTimeout(fmt_tl("Active line is locked by %s.", state.holder_name));
 	}
 	void request_maintenance() { if (phase == Phase::joined) send("maintenance_request", "{}"); }
 	void release_maintenance() { if (phase == Phase::joined) send("maintenance_release", "{}"); }
@@ -1369,7 +1383,7 @@ void CollaborationController::EndMutationGuard() { impl->end_mutation(); }
 bool CollaborationController::CanRunCommand(std::string const& command_name) const { return impl->can_run_command(command_name); }
 bool CollaborationController::CanModifySelectedRows() const { return impl->can_modify_selected_rows(); }
 bool CollaborationController::RequestGlobalReplace(SearchReplaceSettings const& settings) { return impl->request_global_replace(settings); }
-int CollaborationController::LineLockState(AssDialogue const* line) const { return impl->line_lock_state(line); }
+LineCollaborationState CollaborationController::LineState(AssDialogue const* line) const { return impl->line_state(line); }
 void CollaborationController::RequestMaintenance() { impl->request_maintenance(); }
 void CollaborationController::ReleaseMaintenance() { impl->release_maintenance(); }
 void CollaborationController::RequestMaintenanceCancel() { impl->request_maintenance_cancel(); }

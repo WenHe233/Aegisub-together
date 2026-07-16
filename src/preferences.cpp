@@ -306,6 +306,9 @@ void Interface_Colours(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(grid, _("Header background"), "Colour/Subtitle Grid/Header");
 	p->OptionAdd(grid, _("Left Column"), "Colour/Subtitle Grid/Left Column");
 	p->OptionAdd(grid, _("Active Line Border"), "Colour/Subtitle Grid/Active Border");
+	p->OptionAdd(grid, _("Collaborative own lock"), "Colour/Subtitle Grid/Collaboration/Own Lock");
+	p->OptionAdd(grid, _("Collaborative remote lock"), "Colour/Subtitle Grid/Collaboration/Remote Lock");
+	p->OptionAdd(grid, _("Collaborative remote presence"), "Colour/Subtitle Grid/Collaboration/Remote Presence");
 	p->OptionAdd(grid, _("Lines"), "Colour/Subtitle Grid/Lines");
 	p->OptionAdd(grid, _("CPS Error"), "Colour/Subtitle Grid/CPS Error");
 

@@ -12,6 +12,18 @@ namespace agi {
 struct Context;
 namespace collab {
 
+enum class LineCollaborationKind {
+	none,
+	owned_lock,
+	remote_lock,
+	remote_presence
+};
+
+struct LineCollaborationState {
+	LineCollaborationKind kind = LineCollaborationKind::none;
+	std::string holder_name;
+};
+
 class CollaborationController final {
 	class Impl;
 	std::unique_ptr<Impl> impl;
@@ -31,8 +43,7 @@ public:
 	bool CanRunCommand(std::string const& command_name) const;
 	bool CanModifySelectedRows() const;
 	bool RequestGlobalReplace(SearchReplaceSettings const& settings);
-	/// 0 = none, 1 = owned by this client, 2 = held/present remotely.
-	int LineLockState(AssDialogue const* line) const;
+	LineCollaborationState LineState(AssDialogue const* line) const;
 	void RequestMaintenance();
 	void ReleaseMaintenance();
 	void RequestMaintenanceCancel();

@@ -37,9 +37,7 @@
 #include "ass_file.h"
 #include "audio_box.h"
 #include "compat.h"
-#ifdef WITH_COLLABORATION
 #include "collaboration_controller.h"
-#endif
 #include "fold_controller.h"
 #include "grid_column.h"
 #include "options.h"
@@ -107,6 +105,9 @@ BaseGrid::BaseGrid(wxWindow* parent, agi::Context *context)
 		OPT_SUB("Colour/Subtitle Grid/Background/Selection", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Background/Open Fold", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Background/Closed Fold", &BaseGrid::UpdateStyle, this),
+		OPT_SUB("Colour/Subtitle Grid/Collaboration/Own Lock", &BaseGrid::UpdateStyle, this),
+		OPT_SUB("Colour/Subtitle Grid/Collaboration/Remote Lock", &BaseGrid::UpdateStyle, this),
+		OPT_SUB("Colour/Subtitle Grid/Collaboration/Remote Presence", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Collision", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Header", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Colour/Subtitle Grid/Left Column", &BaseGrid::UpdateStyle, this),
@@ -190,6 +191,8 @@ void BaseGrid::UpdateStyle() {
 	row_colors.FoldOpen.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Open Fold")->GetColor()));
 	row_colors.FoldClosed.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Closed Fold")->GetColor()));
 	row_colors.LeftCol.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Left Column")->GetColor()));
+	row_colors.CollaborationOwnLock.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Collaboration/Own Lock")->GetColor()));
+	row_colors.CollaborationRemoteLock.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Collaboration/Remote Lock")->GetColor()));
 
 	if (width_helper)
 		width_helper->ClearCache();
@@ -364,6 +367,11 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 	for (int i : agi::util::range(nDraw)) {
 		wxBrush color = row_colors.Default;
 		AssDialogue *curDiag = vis_index_line_map[i + yPos];
+		agi::collab::LineCollaborationState collaboration_state;
+#ifdef WITH_COLLABORATION
+		if (context->collaboration)
+			collaboration_state = context->collaboration->LineState(curDiag);
+#endif
 
 		bool inSel = !!selection.count(curDiag);
 		if (inSel && curDiag->Comment)
@@ -382,6 +390,10 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		if (curDiag->Fold.hasFold() && !inSel) {
 			color = curDiag->Fold.isFolded() ? row_colors.FoldClosed : row_colors.FoldOpen;
 		}
+		if (!inSel && collaboration_state.kind == agi::collab::LineCollaborationKind::owned_lock)
+			color = row_colors.CollaborationOwnLock;
+		else if (!inSel && collaboration_state.kind == agi::collab::LineCollaborationKind::remote_lock)
+			color = row_colors.CollaborationRemoteLock;
 
 		dc.SetBrush(color);
 
@@ -409,12 +421,6 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 
 #ifdef WITH_COLLABORATION
 		if (context->collaboration) {
-			int lock_state = context->collaboration->LineLockState(curDiag);
-			if (lock_state) {
-				dc.SetPen(*wxTRANSPARENT_PEN);
-				dc.SetBrush(lock_state == 1 ? wxColour(46, 160, 67) : wxColour(210, 60, 60));
-				dc.DrawCircle(4, y + lineHeight / 2, 3);
-			}
 			int comments = context->collaboration->LineCommentCount(curDiag);
 			if (comments) {
 				auto label = wxString::Format("%d", comments);
@@ -424,6 +430,25 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 			}
 		}
 #endif
+		if (collaboration_state.kind != agi::collab::LineCollaborationKind::none) {
+			wxColour state_color;
+			wxPenStyle style = wxPENSTYLE_SOLID;
+			if (collaboration_state.kind == agi::collab::LineCollaborationKind::owned_lock)
+				state_color = row_colors.CollaborationOwnLock.GetColour();
+			else if (collaboration_state.kind == agi::collab::LineCollaborationKind::remote_lock)
+				state_color = row_colors.CollaborationRemoteLock.GetColour();
+			else {
+				state_color = to_wx(OPT_GET("Colour/Subtitle Grid/Collaboration/Remote Presence")->GetColor());
+				style = wxPENSTYLE_SHORT_DASH;
+			}
+			dc.SetBrush(*wxTRANSPARENT_BRUSH);
+			dc.SetPen(wxPen(state_color.ChangeLightness(70), inSel ? 2 : 1, style));
+			dc.DrawRectangle(1, y + 1, w - 2, lineHeight - 1);
+			if (collaboration_state.kind != agi::collab::LineCollaborationKind::remote_presence) {
+				dc.SetPen(wxPen(state_color.ChangeLightness(65), 4));
+				dc.DrawLine(2, y + 2, 2, y + lineHeight - 1);
+			}
+		}
 
 		// Draw grid
 		dc.SetPen(grid_pen);
@@ -479,6 +504,22 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 		row = mid(0, row, GetVisRows()-1);
 	AssDialogue *dlg = GetVisDialogue(row);
 	if (!dlg) row = 0;
+
+#ifdef WITH_COLLABORATION
+	if (event.Moving() && context->collaboration) {
+		auto state = context->collaboration->LineState(dlg);
+		wxString tooltip;
+		if (state.kind == agi::collab::LineCollaborationKind::remote_lock && !state.holder_name.empty())
+			tooltip = wxString::Format(_("Locked by %s"), to_wx(state.holder_name));
+		else if (state.kind == agi::collab::LineCollaborationKind::remote_presence && !state.holder_name.empty())
+			tooltip = wxString::Format(_("Active row of %s"), to_wx(state.holder_name));
+		if (tooltip != collaboration_tooltip) {
+			collaboration_tooltip = tooltip;
+			if (tooltip.empty()) UnsetToolTip();
+			else SetToolTip(tooltip);
+		}
+	}
+#endif
 
 	// Find the column the mouse is over
 	int colx = event.GetX();

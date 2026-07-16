@@ -83,7 +83,10 @@ class BaseGrid final : public wxWindow {
 		wxBrush LeftCol;
 		wxBrush FoldOpen;
 		wxBrush FoldClosed;
+		wxBrush CollaborationOwnLock;
+		wxBrush CollaborationRemoteLock;
 	} row_colors;
+	wxString collaboration_tooltip;
 
 	std::vector<AssDialogue*> index_line_map;  ///< Row number -> dialogue line
 	std::vector<AssDialogue*> vis_index_line_map;  ///< Visible Row number -> dialogue line
