@@ -4,7 +4,7 @@
 
 - 正式编码前从 `8165f1a` 新建 `feat/collaboration`，保留现有 `feature` 分支，不重写远端历史。
 - 先完善并提交 `docs/aegisub-collab-spec.md`；其后每个可测试功能完成即单独提交，全部使用 Conventional Commits。
-- v1 同步核心 ASS：Dialogue、Styles、Script Info 和协作 Extradata；不传输附件、视频或 Aegisub Project Garbage。
+- v2 同步核心 ASS：Dialogue、Styles、Script Info 和协作 Extradata；不传输附件、视频或 Aegisub Project Garbage。
 - shadow 只能在服务器确认后推进，客户端使用 `confirmed shadow + pending batches + projected shadow`。
 - 协作模式不用 Aegisub 原生全文件快照 undo，改用本成员已确认批次的逆 op。
 - 行锁 60 秒无交互释放，presence 继续保留；批次拒绝后回滚并保存恢复 `.ass`。
@@ -13,7 +13,7 @@
 
 ## 2. 协议、状态与安全接口
 
-- WebSocket 入口为 `/v1/ws`。消息统一包含 `protocol_version`、`type`、`request_id`、`room_revision` 和 payload。
+- WebSocket 入口保持 `/v1/ws`，应用协议版本升级为 2。消息统一包含 `protocol_version`、`type`、`request_id`、`room_revision` 和 payload；v2 客户端与服务端明确拒绝 v1。
 - 控制消息使用文本 JSON；超过 32 KiB 的批次和快照使用 zlib 压缩二进制 JSON，解压上限 64 MiB。
 - 每个成功原子批次递增一次房间 revision；同批 op 共享 revision。Dialogue op 为：
   - `modify(id, fields, base_version)`
@@ -40,7 +40,7 @@
    - 写入同步边界、协议、状态机、超时、恢复和发布决策。
 2. `docs(plan): add collaboration implementation plan`
    - 将本执行计划纳入仓库，作为提交和验收清单。
-3. `feat(protocol): define collaboration protocol v1`
+3. `feat(protocol): define collaboration protocol v2`
    - 增加协议文档、JSON Schema、错误码、黄金消息样例和跨语言测试夹具。
 4. `feat(server): add authenticated room lifecycle`
    - 实现访问认证、建房/入房、当前文件初始化、唯一昵称、快照和统一鉴权错误。
@@ -49,7 +49,7 @@
 6. `feat(server): add canonical line ordering`
    - 实现 Base62 顺序键、并发插入、anchor 降级和 reindex 屏障。
 7. `feat(server): enforce locks and presence`
-   - 实现焦点锁、60 秒空闲租约、30 秒心跳回收和锁关闭模式。
+   - 实现最多 10,000 行的原子选择集合锁、60 秒空闲租约、30 秒心跳回收和锁关闭模式；任一冲突时整组只读且不保留旧锁。
 8. `feat(server): add maintenance arbitration`
    - 实现全房冻结、10 分钟空闲、60 分钟上限和取消请求/强制取消。
 9. `feat(server): add comments and offline reconciliation support`

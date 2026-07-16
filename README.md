@@ -22,6 +22,7 @@ Aegisub Together 是基于 arch1t3cht Aegisub 分支开发的在线协作字幕�
 - [协作架构与协议规格](docs/aegisub-collab-spec.md)
 - [实施计划](docs/aegisub-collab-implementation-plan.md)
 - [服务端部署指南](docs/collaboration-deployment.md)
+- [开发、测试与发布规范](docs/development-and-release.md)
 
 ---
 
