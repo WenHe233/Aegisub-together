@@ -527,37 +527,44 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 	if ((click || holding || dclick) && dlg) {
 		int old_extend = extendRow;
 
-		// SetActiveLine will scroll the grid if the row is only half-visible,
-		// but we don't want to scroll until the mouse moves or the button is
-		// released, to avoid selecting multiple lines on a click
-		int old_y_pos = yPos;
-		context->selectionController->SetActiveLine(dlg);
-		ScrollTo(old_y_pos);
 		extendRow = VisRowToRow(row);
 
 		auto const& selection = context->selectionController->GetSelectedSet();
+		auto set_selection_and_active = [&](Selection new_selection) {
+			int old_y_pos = yPos;
+			context->selectionController->SetSelectionAndActive(std::move(new_selection), dlg);
+			ScrollTo(old_y_pos);
+		};
 
 		// Toggle selected
 		if (click && ctrl && !shift && !alt) {
 			bool isSel = !!selection.count(dlg);
-			if (isSel && selection.size() == 1) return;
-			SelectRow(row, true, !isSel);
+			if (isSel && selection.size() == 1) {
+				context->selectionController->SetActiveLine(dlg);
+				return;
+			}
+			auto newsel = selection;
+			if (isSel) newsel.erase(dlg);
+			else newsel.insert(dlg);
+			set_selection_and_active(std::move(newsel));
 			return;
 		}
 
 		// Normal click
 		if ((click || dclick) && !shift && !ctrl && !alt) {
+			set_selection_and_active({dlg});
 			if (dclick) {
 				context->audioBox->ScrollToActiveLine();
 				context->videoController->JumpToTime(dlg->Start);
 			}
-			SelectRow(row, false);
 			return;
 		}
 
 		// Change active line only
-		if (click && !shift && !ctrl && alt)
+		if (click && !shift && !ctrl && alt) {
+			context->selectionController->SetActiveLine(dlg);
 			return;
+		}
 
 		// Block select
 		if ((click && shift && !alt) || holding) {
@@ -573,7 +580,7 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 			if (ctrl) newsel = selection;
 			for (int i = i1; i <= i2; i++)
 				newsel.insert(GetDialogue(i));
-			context->selectionController->SetSelectedSet(std::move(newsel));
+			set_selection_and_active(std::move(newsel));
 			return;
 		}
 
