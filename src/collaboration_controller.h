@@ -6,6 +6,7 @@
 #include <string>
 
 class AssDialogue;
+struct SearchReplaceSettings;
 
 namespace agi {
 struct Context;
@@ -28,6 +29,8 @@ public:
 	void BeginMutationGuard();
 	void EndMutationGuard();
 	bool CanRunCommand(std::string const& command_name) const;
+	bool CanModifySelectedRows() const;
+	bool RequestGlobalReplace(SearchReplaceSettings const& settings);
 	/// 0 = none, 1 = owned by this client, 2 = held/present remotely.
 	int LineLockState(AssDialogue const* line) const;
 	void RequestMaintenance();

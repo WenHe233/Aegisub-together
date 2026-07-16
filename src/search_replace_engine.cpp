@@ -170,6 +170,7 @@ bool SearchReplaceEngine::FindReplace(bool replace) {
 	auto matches = GetMatcher(settings);
 
 	AssDialogue *line = context->selectionController->GetActiveLine();
+	if (!line || context->ass->Events.empty()) return false;
 	auto it = context->ass->iterator_to(*line);
 	size_t pos = 0;
 
@@ -237,6 +238,10 @@ bool SearchReplaceEngine::FindReplace(bool replace) {
 bool SearchReplaceEngine::ReplaceAll() {
 	if (!initialized)
 		return false;
+	if (context->ass->Events.empty()) {
+		wxMessageBox(_("No matches found."));
+		return true;
+	}
 
 	size_t count = 0;
 

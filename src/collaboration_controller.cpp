@@ -14,6 +14,7 @@
 #include "include/aegisub/context.h"
 #include "options.h"
 #include "selection_controller.h"
+#include "search_replace_engine.h"
 #include "subs_edit_box.h"
 #include "subs_controller.h"
 
@@ -374,6 +375,8 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	agi::fs::path offline_journal_path;
 	std::optional<Snapshot> reconciliation_target;
 	std::string reconciliation_batch_id;
+	std::optional<SearchReplaceSettings> pending_global_replace;
+	std::string global_replace_batch_id;
 	struct HistoryEntry { Snapshot undo_target; Snapshot redo_target; Snapshot expected; };
 	struct HistoryAction { std::string batch_id; bool undo = true; };
 	std::vector<HistoryEntry> undo_history;
@@ -611,7 +614,10 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			auto local = ass::CaptureSnapshot(*context->ass, versions,
 				sync.Projected().snapshot.styles_version, sync.Projected().snapshot.script_info_version);
 			auto batch = sync.QueueLocalSnapshot(mint_batch_id(), local);
-			if (!batch.operations.empty()) send("submit_batch", EncodeSubmitBatch(batch));
+			if (!batch.operations.empty()) {
+				if (pending_global_replace) global_replace_batch_id = batch.batch_id;
+				send("submit_batch", EncodeSubmitBatch(batch));
+			}
 		}
 		catch (std::exception const& error) {
 			context->frame->StatusTimeout(fmt_tl("Collaboration change could not be queued: %s", error.what()));
@@ -683,6 +689,25 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		if (context->subsGrid) context->subsGrid->Refresh(false);
 	}
 
+	void run_pending_global_replace() {
+		if (!pending_global_replace || !maintenance.active || !maintenance.holder_id || *maintenance.holder_id != room.member_id) return;
+		global_replace_batch_id.clear();
+		context->search->Configure(*pending_global_replace);
+		try {
+			context->search->ReplaceAll();
+		}
+		catch (std::exception const& error) {
+			pending_global_replace.reset();
+			send("maintenance_release", "{}");
+			wxMessageBox(to_wx(error.what()), _("Replace failed"), wxOK | wxICON_ERROR, context->parent);
+			return;
+		}
+		if (global_replace_batch_id.empty()) {
+			pending_global_replace.reset();
+			send("maintenance_release", "{}");
+		}
+	}
+
 	void handle_maintenance_state(WireEnvelope const& envelope) {
 		maintenance = DecodeMaintenanceState(envelope.payload_json);
 		lock_holders.clear();
@@ -690,6 +715,10 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		lock_request_inflight = false;
 		lock_request_scheduled = false;
 		update_editability();
+		if (pending_global_replace) {
+			run_pending_global_replace();
+			return;
+		}
 		if (reconciliation_target) {
 			bool owned = maintenance.active && maintenance.holder_id && *maintenance.holder_id == room.member_id;
 			if (owned && reconciliation_batch_id.empty()) {
@@ -737,6 +766,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	void handle_applied_batch(WireEnvelope const& envelope) {
 		auto batch = DecodeAppliedBatch(envelope.payload_json);
 		bool reconciliation_ack = !reconciliation_batch_id.empty() && batch.batch_id == reconciliation_batch_id;
+		bool global_replace_ack = !global_replace_batch_id.empty() && batch.batch_id == global_replace_batch_id;
 		auto before = sync.Confirmed().snapshot;
 		if (room.lock_enabled) {
 			for (auto const& operation : batch.operations) {
@@ -797,6 +827,11 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			context->frame->SetCollaborationBanner({});
 			context->frame->StatusTimeout(_("Offline collaboration edits were reconciled successfully."));
 		}
+		if (global_replace_ack && result.own_batch_confirmed) {
+			global_replace_batch_id.clear();
+			pending_global_replace.reset();
+			send("maintenance_release", "{}");
+		}
 		update_editability();
 	}
 
@@ -815,6 +850,11 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		if (reconciliation_batch_id == rejection.batch_id) {
 			reconciliation_batch_id.clear();
 			reconciliation_target.reset();
+			send("maintenance_release", "{}");
+		}
+		if (global_replace_batch_id == rejection.batch_id) {
+			global_replace_batch_id.clear();
+			pending_global_replace.reset();
 			send("maintenance_release", "{}");
 		}
 		rejected_batches.insert(rejected_batches.end(), removed.begin(), removed.end());
@@ -967,7 +1007,14 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			else if (envelope.type == "error") {
 				auto error = DecodeProtocolError(envelope.payload_json);
 				auto message = error.message.empty() ? error.code : error.message;
-				if (phase == Phase::joined) context->frame->StatusTimeout(fmt_tl("Collaboration request failed: %s", message));
+				if (phase == Phase::joined) {
+					if (pending_global_replace) {
+						pending_global_replace.reset();
+						global_replace_batch_id.clear();
+						wxMessageBox(fmt_tl("Replace all could not enter maintenance mode: %s", message), _("Replace unavailable"), wxOK | wxICON_WARNING, context->parent);
+					}
+					else context->frame->StatusTimeout(fmt_tl("Collaboration request failed: %s", message));
+				}
 				else fail_protocol(message);
 			}
 			else revision = (std::max)(revision, envelope.room_revision);
@@ -1132,6 +1179,7 @@ public:
 	}
 	bool can_run_command(std::string const& name) const {
 		if (phase != Phase::joined) return true;
+		if (name == "edit/find_replace") return true;
 		if (maintenance.active) return maintenance.holder_id && *maintenance.holder_id == room.member_id;
 		if (!room.lock_enabled) return true;
 		auto starts = [&](char const* prefix) { return name.compare(0, std::char_traits<char>::length(prefix), prefix) == 0; };
@@ -1139,8 +1187,7 @@ public:
 			name == "time/next" || name == "time/prev" || starts("grid/fold/") || starts("grid/tag")) return true;
 		if (name == "edit/undo") return can_collaborative_undo();
 		if (name == "edit/redo") return can_collaborative_redo();
-		if (name == "edit/find_replace" ||
-			starts("automation/") || name == "time/shift" || name == "time/continuous/start" ||
+		if (starts("automation/") || name == "time/shift" || name == "time/continuous/start" ||
 			name == "time/continuous/end" || name == "tool/resampleres" || name == "tool/time/postprocess" ||
 			name == "tool/time/kanji") return false;
 		bool mutation = starts("edit/") || starts("time/") || starts("visual/") || starts("subtitle/insert/") ||
@@ -1149,6 +1196,27 @@ public:
 			name == "tool/translation_assistant/insert_original";
 		if (!mutation) return true;
 		return owns_selected_lock_set();
+	}
+	bool can_modify_selected_rows() const {
+		if (phase != Phase::joined) return true;
+		if (maintenance.active) return maintenance.holder_id && *maintenance.holder_id == room.member_id;
+		return !room.lock_enabled || owns_selected_lock_set();
+	}
+	bool request_global_replace(SearchReplaceSettings const& settings) {
+		if (phase != Phase::joined) return false;
+		if (pending_global_replace || !global_replace_batch_id.empty()) {
+			wxMessageBox(_("Another collaborative replace operation is still pending."), _("Replace unavailable"), wxOK | wxICON_WARNING, context->parent);
+			return true;
+		}
+		if (maintenance.active && (!maintenance.holder_id || *maintenance.holder_id != room.member_id)) {
+			wxMessageBox(fmt_tl("Maintenance mode is currently held by %s.", maintenance.holder_name ? *maintenance.holder_name : from_wx(_("another member"))),
+				_("Replace unavailable"), wxOK | wxICON_WARNING, context->parent);
+			return true;
+		}
+		pending_global_replace = settings;
+		if (maintenance.active) run_pending_global_replace();
+		else if (!send("maintenance_request", "{}")) pending_global_replace.reset();
+		return true;
 	}
 	int line_lock_state(AssDialogue const* line) const {
 		if (phase != Phase::joined || !line) return 0;
@@ -1268,6 +1336,8 @@ public:
 		offline_journal_path.clear();
 		reconciliation_target.reset();
 		reconciliation_batch_id.clear();
+		pending_global_replace.reset();
+		global_replace_batch_id.clear();
 		undo_history.clear();
 		redo_history.clear();
 		history_action.reset();
@@ -1297,6 +1367,8 @@ bool CollaborationController::IsJoined() const { return impl->joined(); }
 void CollaborationController::BeginMutationGuard() { impl->begin_mutation(); }
 void CollaborationController::EndMutationGuard() { impl->end_mutation(); }
 bool CollaborationController::CanRunCommand(std::string const& command_name) const { return impl->can_run_command(command_name); }
+bool CollaborationController::CanModifySelectedRows() const { return impl->can_modify_selected_rows(); }
+bool CollaborationController::RequestGlobalReplace(SearchReplaceSettings const& settings) { return impl->request_global_replace(settings); }
 int CollaborationController::LineLockState(AssDialogue const* line) const { return impl->line_lock_state(line); }
 void CollaborationController::RequestMaintenance() { impl->request_maintenance(); }
 void CollaborationController::ReleaseMaintenance() { impl->release_maintenance(); }

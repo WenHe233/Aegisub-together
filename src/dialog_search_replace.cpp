@@ -22,6 +22,9 @@
 #include "dialog_search_replace.h"
 
 #include "compat.h"
+#ifdef WITH_COLLABORATION
+#include "collaboration_controller.h"
+#endif
 #include "dialog_manager.h"
 #include "include/aegisub/context.h"
 #include "options.h"
@@ -138,7 +141,18 @@ void DialogSearchReplace<has_replace>::FindReplace(bool (SearchReplaceEngine::*f
 
 	c->search->Configure(*settings);
 	try {
-		((*c->search).*func)();
+		bool handled = false;
+#ifdef WITH_COLLABORATION
+		if (c->collaboration && c->collaboration->IsJoined() && func != &SearchReplaceEngine::FindNext) {
+			if (func == &SearchReplaceEngine::ReplaceAll && settings->limit_to == SearchReplaceSettings::Limit::ALL)
+				handled = c->collaboration->RequestGlobalReplace(*settings);
+			else if (!c->collaboration->CanModifySelectedRows()) {
+				wxMessageBox(_("All selected rows must be locked by you before replacing text."), _("Replace unavailable"), wxOK | wxICON_WARNING, this);
+				handled = true;
+			}
+		}
+#endif
+		if (!handled) ((*c->search).*func)();
 	}
 	catch (std::exception const& e) {
 		wxMessageBox(to_wx(e.what()), "Error", wxOK | wxICON_ERROR | wxCENTER, this);
@@ -185,6 +199,7 @@ void ShowSearchReplaceDialog(agi::Context *context) {
 
 	context->dialog->Show<DialogSearchReplace<replace>>(context);
 	auto dialog = context->dialog->Get<DialogSearchReplace<replace>>();
+	if (!dialog) return;
 
 	dialog->find_edit->SetFocus();
 	dialog->find_edit->SelectAll();
