@@ -7278,3 +7278,65 @@ msgstr ""
 msgid "joined collaboration room"
 msgstr ""
 
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Locked by %s"
+msgstr ""
+
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Active row of %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp
+msgid "More than 10,000 lines are selected. Use maintenance mode for this operation."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp
+#, c-format
+msgid "Selected lines are read-only: %s is editing line %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp
+msgid "Replace failed"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp
+#, c-format
+msgid "Replace all could not enter maintenance mode: %s"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp ../src/dialog_search_replace.cpp
+msgid "Replace unavailable"
+msgstr ""
+
+#: ../src/collaboration_controller.cpp
+msgid "Another collaborative replace operation is still pending."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp
+#, c-format
+msgid "Maintenance mode is currently held by %s."
+msgstr ""
+
+#: ../src/collaboration_controller.cpp
+#, c-format
+msgid "Active line is locked by %s."
+msgstr ""
+
+#: ../src/dialog_search_replace.cpp
+msgid "All selected rows must be locked by you before replacing text."
+msgstr ""
+
+#: ../src/preferences.cpp
+msgid "Collaborative own lock"
+msgstr ""
+
+#: ../src/preferences.cpp
+msgid "Collaborative remote lock"
+msgstr ""
+
+#: ../src/preferences.cpp
+msgid "Collaborative remote presence"
+msgstr ""
+

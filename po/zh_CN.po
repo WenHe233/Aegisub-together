@@ -7374,6 +7374,69 @@ msgstr "撤销协作更改"
 msgid "joined collaboration room"
 msgstr "已加入协作房间"
 
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Locked by %s"
+msgstr "由 %s 锁定"
+
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Active row of %s"
+msgstr "%s 的活动行"
+
+#: ../src/collaboration_controller.cpp
+msgid "More than 10,000 lines are selected. Use maintenance mode for this operation."
+msgstr "已选择超过 10,000 行。请使用维护模式执行此操作。"
+
+#: ../src/collaboration_controller.cpp
+#, c-format
+msgid "Selected lines are read-only: %s is editing line %s"
+msgstr "所选行只读：%s 正在编辑行 %s"
+
+#: ../src/collaboration_controller.cpp
+msgid "Replace failed"
+msgstr "替换失败"
+
+#: ../src/collaboration_controller.cpp
+#, c-format
+msgid "Replace all could not enter maintenance mode: %s"
+msgstr "全部替换无法进入维护模式：%s"
+
+#: ../src/collaboration_controller.cpp ../src/dialog_search_replace.cpp
+msgid "Replace unavailable"
+msgstr "替换不可用"
+
+#: ../src/collaboration_controller.cpp
+msgid "Another collaborative replace operation is still pending."
+msgstr "另一个协作替换操作仍在等待确认。"
+
+#: ../src/collaboration_controller.cpp
+#, c-format
+msgid "Maintenance mode is currently held by %s."
+msgstr "维护模式当前由 %s 持有。"
+
+#: ../src/collaboration_controller.cpp
+#, c-format
+msgid "Active line is locked by %s."
+msgstr "活动行已被 %s 锁定。"
+
+#: ../src/dialog_search_replace.cpp
+msgid "All selected rows must be locked by you before replacing text."
+msgstr "替换文本前，全部选中行都必须由您锁定。"
+
+#: ../src/preferences.cpp
+msgid "Collaborative own lock"
+msgstr "自己的协作锁"
+
+#: ../src/preferences.cpp
+msgid "Collaborative remote lock"
+msgstr "其他成员的协作锁"
+
+#: ../src/preferences.cpp
+msgid "Collaborative remote presence"
+msgstr "远端活动行"
+
+
 
 
 #~ msgid "    Subtitle format handler: %s"
