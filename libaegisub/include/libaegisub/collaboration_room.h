@@ -7,6 +7,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <unordered_map>
 
 namespace agi { namespace collab {
 
@@ -101,6 +102,9 @@ LockStateMessage DecodeLockState(std::string const& payload_json);
 std::string EncodeLockSetRequest(std::vector<std::string> line_ids,
 	std::optional<std::string> const& active_line_id, std::int64_t generation);
 LockSetStateMessage DecodeLockSetState(std::string const& payload_json);
+bool OwnsCompleteLockSet(std::vector<std::string> const& selected_line_ids,
+	std::unordered_map<std::string, std::string> const& lock_holders,
+	std::string const& member_id, bool request_pending);
 std::vector<PresenceMember> DecodePresence(std::string const& payload_json);
 MaintenanceStateMessage DecodeMaintenanceState(std::string const& payload_json);
 std::string EncodeCommentCreate(std::string const& line_id, std::int64_t base_line_version,

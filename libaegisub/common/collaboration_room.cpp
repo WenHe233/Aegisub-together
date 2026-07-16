@@ -307,6 +307,16 @@ LockSetStateMessage DecodeLockSetState(std::string const& payload_json) {
 	return state;
 }
 
+bool OwnsCompleteLockSet(std::vector<std::string> const& selected_line_ids,
+	std::unordered_map<std::string, std::string> const& lock_holders,
+	std::string const& member_id, bool request_pending) {
+	if (request_pending || member_id.empty() || selected_line_ids.empty() || selected_line_ids.size() > MaximumLockSetSize) return false;
+	return std::all_of(selected_line_ids.begin(), selected_line_ids.end(), [&](std::string const& line_id) {
+		auto holder = lock_holders.find(line_id);
+		return holder != lock_holders.end() && holder->second == member_id;
+	});
+}
+
 std::vector<PresenceMember> DecodePresence(std::string const& payload_json) {
 	auto root = parse(payload_json);
 	auto const& object = static_cast<json::Object const&>(root);

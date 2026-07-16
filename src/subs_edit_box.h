@@ -78,6 +78,7 @@ class SubsEditBox final : public wxPanel {
 	bool button_bar_split = true;
 	/// Are the controls currently enabled?
 	bool controls_enabled = true;
+	bool collaboration_editable = true;
 
 	agi::Context *c;
 

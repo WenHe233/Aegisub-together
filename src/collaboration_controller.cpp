@@ -358,6 +358,15 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	bool applying_snapshot = false;
 	std::string active_line_id;
 	std::unordered_map<std::string, std::string> lock_holders;
+	std::unordered_map<std::string, std::string> lock_holder_names;
+	std::vector<std::string> desired_lock_ids;
+	std::optional<std::string> desired_active_line_id;
+	std::int64_t next_lock_generation = 1;
+	std::int64_t latest_lock_generation = 0;
+	std::chrono::steady_clock::time_point lock_debounce_at;
+	bool lock_request_scheduled = false;
+	bool lock_request_inflight = false;
+	bool lock_selection_too_large = false;
 	std::vector<PresenceMember> presence;
 	MaintenanceStateMessage maintenance;
 	bool offline_session = false;
@@ -380,17 +389,55 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	agi::signal::Connection active_line_connection;
 	agi::signal::Connection selection_connection;
 
+	std::vector<std::string> selected_line_ids() const {
+		std::vector<std::string> line_ids;
+		line_ids.reserve(context->selectionController->GetSelectedSet().size());
+		for (auto const* line : context->selectionController->GetSelectedSet()) {
+			auto id = ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey);
+			if (!id.empty()) line_ids.push_back(std::move(id));
+		}
+		std::sort(line_ids.begin(), line_ids.end());
+		line_ids.erase(std::unique(line_ids.begin(), line_ids.end()), line_ids.end());
+		return line_ids;
+	}
+
+	bool owns_selected_lock_set() const {
+		auto line_ids = selected_line_ids();
+		return OwnsCompleteLockSet(line_ids, lock_holders, room.member_id, lock_request_inflight || lock_request_scheduled);
+	}
+
 	void update_editability() {
 		if (!context->subsEditBox) return;
 		bool owns_maintenance = phase == Phase::joined && maintenance.active && maintenance.holder_id && *maintenance.holder_id == room.member_id;
 		bool editable = phase == Phase::idle || (offline_session && phase != Phase::joined) || owns_maintenance ||
 			(phase == Phase::joined && !maintenance.active && !room.lock_enabled);
 		if (reconciliation_target) editable = false;
-		if (!editable && phase == Phase::joined && !maintenance.active && context->selectionController->GetSelectedSet().size() == 1 && !active_line_id.empty()) {
-			auto holder = lock_holders.find(active_line_id);
-			editable = holder != lock_holders.end() && holder->second == room.member_id;
-		}
+		if (!editable && phase == Phase::joined && !maintenance.active) editable = owns_selected_lock_set();
 		context->subsEditBox->SetCollaborationEditable(editable);
+	}
+
+	void schedule_lock_set_request() {
+		if (phase != Phase::joined) return;
+		desired_lock_ids = selected_line_ids();
+		desired_active_line_id = active_line_id.empty() ? std::nullopt : std::optional<std::string>(active_line_id);
+		lock_selection_too_large = desired_lock_ids.size() > MaximumLockSetSize;
+		if (lock_selection_too_large) {
+			desired_lock_ids.clear();
+			context->frame->StatusTimeout(_("More than 10,000 lines are selected. Use maintenance mode for this operation."));
+		}
+		lock_request_scheduled = true;
+		lock_request_inflight = true;
+		lock_debounce_at = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+		update_editability();
+	}
+
+	void send_scheduled_lock_set() {
+		if (!lock_request_scheduled || phase != Phase::joined || std::chrono::steady_clock::now() < lock_debounce_at) return;
+		lock_request_scheduled = false;
+		latest_lock_generation = next_lock_generation++;
+		if (!send("lock_set_request", EncodeLockSetRequest(desired_lock_ids, desired_active_line_id, latest_lock_generation)))
+			lock_request_inflight = false;
+		update_editability();
 	}
 
 	std::string request_id(char const* prefix) {
@@ -502,6 +549,9 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			}
 		}
 		lock_holders.clear();
+		lock_holder_names.clear();
+		lock_request_inflight = false;
+		lock_request_scheduled = false;
 		presence.clear();
 		maintenance = MaintenanceStateMessage{};
 		phase = Phase::connecting;
@@ -570,28 +620,44 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	}
 
 	void on_active_line_changed(AssDialogue* line) {
-		auto previous = active_line_id;
 		auto next = line ? ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey) : std::string{};
-		if (previous == next) return;
+		if (active_line_id == next) return;
 		active_line_id = std::move(next);
 		update_editability();
-		if (phase != Phase::joined) return;
-		if (!previous.empty()) send("lock_release", EncodeLineReference(previous));
-		if (!active_line_id.empty()) send("lock_request", EncodeLineReference(active_line_id));
+		schedule_lock_set_request();
 	}
 
-	void on_selection_changed() { update_editability(); }
+	void on_selection_changed() {
+		if (auto* active = context->selectionController->GetActiveLine())
+			active_line_id = ass::GetMetadataValue(*context->ass, active->ExtradataIds.get(), IdExtradataKey);
+		else active_line_id.clear();
+		update_editability();
+		schedule_lock_set_request();
+	}
 
-	void handle_lock_state(WireEnvelope const& envelope) {
-		auto state = DecodeLockState(envelope.payload_json);
-		if (state.holder_id) lock_holders[state.line_id] = *state.holder_id;
-		else lock_holders.erase(state.line_id);
+	void handle_lock_set_state(WireEnvelope const& envelope) {
+		auto state = DecodeLockSetState(envelope.payload_json);
+		if (state.member_id == room.member_id && state.generation > 0 && state.generation < latest_lock_generation) return;
+		for (auto holder = lock_holders.begin(); holder != lock_holders.end();) {
+			if (holder->second == state.member_id) {
+				lock_holder_names.erase(holder->first);
+				holder = lock_holders.erase(holder);
+			}
+			else ++holder;
+		}
+		for (auto const& line_id : state.line_ids) {
+			lock_holders[line_id] = state.member_id;
+			lock_holder_names[line_id] = state.member_name;
+		}
+		if (state.member_id == room.member_id) {
+			lock_request_inflight = false;
+			if (!state.granted && !state.conflicts.empty()) {
+				auto const& conflict = state.conflicts.front();
+				context->frame->StatusTimeout(fmt_tl("Selected lines are read-only: %s is editing line %s", conflict.holder_name, conflict.line_id));
+			}
+		}
 		update_editability();
 		if (context->subsGrid) context->subsGrid->Refresh(false);
-		if (state.line_id == active_line_id && state.holder_id && *state.holder_id != room.member_id && state.holder_name)
-			context->frame->StatusTimeout(fmt_tl("Line is read-only: locked by %s", *state.holder_name));
-		if (room.lock_enabled && state.line_id == active_line_id && !state.holder_id && phase == Phase::joined)
-			send("lock_request", EncodeLineReference(active_line_id));
 	}
 
 	void handle_presence(WireEnvelope const& envelope) {
@@ -620,6 +686,9 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	void handle_maintenance_state(WireEnvelope const& envelope) {
 		maintenance = DecodeMaintenanceState(envelope.payload_json);
 		lock_holders.clear();
+		lock_holder_names.clear();
+		lock_request_inflight = false;
+		lock_request_scheduled = false;
 		update_editability();
 		if (reconciliation_target) {
 			bool owned = maintenance.active && maintenance.holder_id && *maintenance.holder_id == room.member_id;
@@ -654,7 +723,6 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		}
 		if (!maintenance.active) {
 			context->frame->SetCollaborationBanner({});
-			if (!active_line_id.empty()) send("lock_request", EncodeLineReference(active_line_id));
 			return;
 		}
 		bool owned = maintenance.holder_id && *maintenance.holder_id == room.member_id;
@@ -670,12 +738,16 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		auto batch = DecodeAppliedBatch(envelope.payload_json);
 		bool reconciliation_ack = !reconciliation_batch_id.empty() && batch.batch_id == reconciliation_batch_id;
 		auto before = sync.Confirmed().snapshot;
-		if (batch.actor_id == room.member_id && room.lock_enabled) {
+		if (room.lock_enabled) {
 			for (auto const& operation : batch.operations) {
-				if (operation.operation.kind == OperationKind::Insert || operation.operation.kind == OperationKind::Restore)
-					lock_holders[operation.operation.line_id] = room.member_id;
-				else if (operation.operation.kind == OperationKind::Delete)
+				if (operation.operation.kind == OperationKind::Insert || operation.operation.kind == OperationKind::Restore) {
+					lock_holders[operation.operation.line_id] = batch.actor_id;
+					lock_holder_names[operation.operation.line_id] = batch.actor_id == room.member_id ? input.nickname : from_wx(_("another member"));
+				}
+				else if (operation.operation.kind == OperationKind::Delete) {
 					lock_holders.erase(operation.operation.line_id);
+					lock_holder_names.erase(operation.operation.line_id);
+				}
 			}
 		}
 		auto result = sync.ApplyBatch(batch, envelope.room_revision, room.member_id);
@@ -856,8 +928,17 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		if (auto* active = context->selectionController->GetActiveLine()) {
 			active_line_id = ass::GetMetadataValue(*context->ass, active->ExtradataIds.get(), IdExtradataKey);
 		}
+		lock_holders.clear();
+		lock_holder_names.clear();
+		for (auto const& state : room.lock_sets) {
+			for (auto const& line_id : state.line_ids) {
+				lock_holders[line_id] = state.member_id;
+				lock_holder_names[line_id] = state.member_name;
+			}
+		}
+		presence = room.presence;
 		update_editability();
-		if (!active_line_id.empty()) send("lock_request", EncodeLineReference(active_line_id));
+		schedule_lock_set_request();
 		last_heartbeat = std::chrono::steady_clock::now();
 		persist_credentials();
 		context->frame->StatusTimeout(fmt_tl("Connected to collaboration room %s as %s", input.room_name, input.nickname));
@@ -879,7 +960,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			else if (envelope.type == "batch_applied" && phase == Phase::joined) handle_applied_batch(envelope);
 			else if (envelope.type == "batch_rejected" && phase == Phase::joined) handle_rejected_batch(envelope);
 			else if (envelope.type == "snapshot_state" && phase == Phase::joined) handle_snapshot_state(envelope);
-			else if (envelope.type == "lock_state" && phase == Phase::joined) handle_lock_state(envelope);
+			else if (envelope.type == "lock_set_state" && phase == Phase::joined) handle_lock_set_state(envelope);
 			else if (envelope.type == "presence" && phase == Phase::joined) handle_presence(envelope);
 			else if (envelope.type == "maintenance_state" && phase == Phase::joined) handle_maintenance_state(envelope);
 			else if (envelope.type == "comment_changed" && phase == Phase::joined) handle_comment_change(envelope);
@@ -935,6 +1016,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 			send("heartbeat", "{}");
 			last_heartbeat = std::chrono::steady_clock::now();
 		}
+		send_scheduled_lock_set();
 	}
 
 	bool prompt_to_save_before_join() {
@@ -1066,12 +1148,7 @@ public:
 			name == "tool/styling_assistant/commit" || name == "tool/translation_assistant/commit" ||
 			name == "tool/translation_assistant/insert_original";
 		if (!mutation) return true;
-		auto const& selection = context->selectionController->GetSelectedSet();
-		if (selection.size() != 1) return false;
-		auto* line = *selection.begin();
-		auto id = ass::GetMetadataValue(*context->ass, line->ExtradataIds.get(), IdExtradataKey);
-		auto holder = lock_holders.find(id);
-		return holder != lock_holders.end() && holder->second == room.member_id;
+		return owns_selected_lock_set();
 	}
 	int line_lock_state(AssDialogue const* line) const {
 		if (phase != Phase::joined || !line) return 0;
@@ -1177,6 +1254,13 @@ public:
 		sync = SyncState{};
 		rejected_batches.clear();
 		lock_holders.clear();
+		lock_holder_names.clear();
+		desired_lock_ids.clear();
+		desired_active_line_id.reset();
+		lock_request_scheduled = false;
+		lock_request_inflight = false;
+		lock_selection_too_large = false;
+		latest_lock_generation = 0;
 		presence.clear();
 		maintenance = MaintenanceStateMessage{};
 		offline_session = false;

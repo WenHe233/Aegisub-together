@@ -377,7 +377,7 @@ void SubsEditBox::UpdateFields(int type, bool repopulate_lists) {
 		comment_box->SetValue(line->Comment);
 		style_box->Select(style_box->FindString(to_wx(line->Style)));
 		active_style = line ? c->ass->GetStyle(line->Style) : nullptr;
-		style_edit_button->Enable(active_style != nullptr);
+		style_edit_button->Enable(collaboration_editable && active_style != nullptr);
 
 		if (repopulate_lists) PopulateList(effect_box, AssDialogue_Effect);
 		effect_box->ChangeValue(to_wx(line->Effect));
@@ -596,9 +596,21 @@ void SubsEditBox::SetControlsState(bool state) {
 }
 
 void SubsEditBox::SetCollaborationEditable(bool editable) {
-	Enable(editable);
+	// Keep the container and read-only display alive so active-line changes are
+	// always reflected, even while another member owns the selected rows.
+	collaboration_editable = editable;
 	edit_ctrl->SetReadOnly(!editable);
-	secondary_editor->SetEditable(editable);
+	secondary_editor->SetEditable(false);
+	comment_box->Enable(editable);
+	style_box->Enable(editable);
+	style_edit_button->Enable(editable && active_style != nullptr);
+	actor_box->Enable(editable);
+	effect_box->Enable(editable);
+	layer->Enable(editable);
+	start_time->Enable(editable);
+	end_time->Enable(editable);
+	duration->Enable(editable);
+	for (auto* control : margin) control->Enable(editable);
 }
 
 void SubsEditBox::OnSplit(wxCommandEvent&) {
