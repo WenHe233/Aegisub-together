@@ -2,7 +2,9 @@ package protocol
 
 import "encoding/json"
 
-const Version = 1
+const Version = 2
+
+const MaximumLockSetSize = 10000
 
 type Envelope struct {
 	ProtocolVersion int             `json:"protocol_version"`
@@ -104,11 +106,13 @@ type CommentChanged struct {
 }
 
 type RoomJoined struct {
-	RoomID      string   `json:"room_id"`
-	MemberID    string   `json:"member_id"`
-	ResumeToken string   `json:"resume_token"`
-	LockEnabled bool     `json:"lock_enabled"`
-	Snapshot    Snapshot `json:"snapshot"`
+	RoomID      string         `json:"room_id"`
+	MemberID    string         `json:"member_id"`
+	ResumeToken string         `json:"resume_token"`
+	LockEnabled bool           `json:"lock_enabled"`
+	Snapshot    Snapshot       `json:"snapshot"`
+	LockSets    []LockSetState `json:"lock_sets"`
+	Presence    Presence       `json:"presence"`
 }
 
 type SnapshotRequest struct {
@@ -169,6 +173,28 @@ type BatchRejected struct {
 
 type LineReference struct {
 	LineID string `json:"line_id"`
+}
+
+type LockSetRequest struct {
+	LineIDs      []string `json:"line_ids"`
+	ActiveLineID *string  `json:"active_line_id"`
+	Generation   int64    `json:"generation"`
+}
+
+type LockConflict struct {
+	LineID      string `json:"line_id"`
+	HolderID    string `json:"holder_id"`
+	HolderName  string `json:"holder_name"`
+	ExpiresInMS int64  `json:"expires_in_ms"`
+}
+
+type LockSetState struct {
+	MemberID   string         `json:"member_id"`
+	MemberName string         `json:"member_name"`
+	Granted    bool           `json:"granted"`
+	LineIDs    []string       `json:"line_ids"`
+	Conflicts  []LockConflict `json:"conflicts"`
+	Generation int64          `json:"generation"`
 }
 
 type LockState struct {

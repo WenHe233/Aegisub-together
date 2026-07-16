@@ -25,14 +25,6 @@ struct JoinRoomRequest {
 	std::string resume_token;
 };
 
-struct RoomJoined {
-	std::string room_id;
-	std::string member_id;
-	std::string resume_token;
-	bool lock_enabled = true;
-	Snapshot snapshot;
-};
-
 struct ProtocolError {
 	std::string code;
 	std::string message;
@@ -48,10 +40,38 @@ struct LockStateMessage {
 	std::int64_t expires_in_ms = 0;
 };
 
+constexpr std::size_t MaximumLockSetSize = 10000;
+
+struct LockConflictMessage {
+	std::string line_id;
+	std::string holder_id;
+	std::string holder_name;
+	std::int64_t expires_in_ms = 0;
+};
+
+struct LockSetStateMessage {
+	std::string member_id;
+	std::string member_name;
+	bool granted = false;
+	std::vector<std::string> line_ids;
+	std::vector<LockConflictMessage> conflicts;
+	std::int64_t generation = 0;
+};
+
 struct PresenceMember {
 	std::string member_id;
 	std::string nickname;
 	std::optional<std::string> line_id;
+};
+
+struct RoomJoined {
+	std::string room_id;
+	std::string member_id;
+	std::string resume_token;
+	bool lock_enabled = true;
+	Snapshot snapshot;
+	std::vector<LockSetStateMessage> lock_sets;
+	std::vector<PresenceMember> presence;
 };
 
 struct MaintenanceStateMessage {
@@ -78,6 +98,9 @@ RoomJoined DecodeRoomJoined(std::string const& payload_json);
 ProtocolError DecodeProtocolError(std::string const& payload_json);
 std::string EncodeLineReference(std::string const& line_id);
 LockStateMessage DecodeLockState(std::string const& payload_json);
+std::string EncodeLockSetRequest(std::vector<std::string> line_ids,
+	std::optional<std::string> const& active_line_id, std::int64_t generation);
+LockSetStateMessage DecodeLockSetState(std::string const& payload_json);
 std::vector<PresenceMember> DecodePresence(std::string const& payload_json);
 MaintenanceStateMessage DecodeMaintenanceState(std::string const& payload_json);
 std::string EncodeCommentCreate(std::string const& line_id, std::int64_t base_line_version,

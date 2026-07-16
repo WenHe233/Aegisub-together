@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegisub-together.invalid/protocol/v2/schema.json",
+  "title": "Aegisub Together protocol v2 envelope",
+  "type": "object",
+  "required": ["protocol_version", "type", "request_id", "room_revision", "payload"],
+  "properties": {
+    "protocol_version": {"const": 2},
+    "type": {"enum": ["access_auth", "access_ok", "create_room", "join_room", "room_joined", "leave_room", "submit_batch", "batch_applied", "batch_rejected", "snapshot_request", "snapshot_state", "lock_set_request", "lock_set_state", "presence", "heartbeat", "maintenance_request", "maintenance_release", "maintenance_state", "maintenance_cancel_request", "maintenance_cancel_force", "comment_create", "comment_set_state", "comment_changed", "audit_request", "audit_page", "reindex", "error"]},
+    "request_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "room_revision": {"type": "integer", "minimum": 0},
+    "payload": {"type": "object"}
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {"if": {"properties": {"type": {"const": "lock_set_request"}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/lock_set_request"}}}},
+    {"if": {"properties": {"type": {"const": "lock_set_state"}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/lock_set_state"}}}},
+    {"if": {"properties": {"type": {"const": "room_joined"}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/room_joined"}}}}
+  ],
+  "$defs": {
+    "line_id": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{10}-[1-9][0-9]*$", "maxLength": 31},
+    "nullable_line_id": {"anyOf": [{"$ref": "#/$defs/line_id"}, {"type": "null"}]},
+    "lock_set_request": {
+      "type": "object",
+      "required": ["line_ids", "active_line_id", "generation"],
+      "properties": {
+        "line_ids": {"type": "array", "maxItems": 10000, "uniqueItems": true, "items": {"$ref": "#/$defs/line_id"}},
+        "active_line_id": {"$ref": "#/$defs/nullable_line_id"},
+        "generation": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "lock_conflict": {
+      "type": "object",
+      "required": ["line_id", "holder_id", "holder_name", "expires_in_ms"],
+      "properties": {
+        "line_id": {"$ref": "#/$defs/line_id"},
+        "holder_id": {"type": "string", "minLength": 1},
+        "holder_name": {"type": "string", "minLength": 1},
+        "expires_in_ms": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "lock_set_state": {
+      "type": "object",
+      "required": ["member_id", "member_name", "granted", "line_ids", "conflicts", "generation"],
+      "properties": {
+        "member_id": {"type": "string", "minLength": 1},
+        "member_name": {"type": "string", "minLength": 1},
+        "granted": {"type": "boolean"},
+        "line_ids": {"type": "array", "maxItems": 10000, "uniqueItems": true, "items": {"$ref": "#/$defs/line_id"}},
+        "conflicts": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/lock_conflict"}},
+        "generation": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "presence_member": {
+      "type": "object",
+      "required": ["member_id", "nickname", "line_id", "last_seen"],
+      "properties": {"member_id": {"type": "string"}, "nickname": {"type": "string"}, "line_id": {"$ref": "#/$defs/nullable_line_id"}, "last_seen": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "presence": {"type": "object", "required": ["members"], "properties": {"members": {"type": "array", "items": {"$ref": "#/$defs/presence_member"}}}, "additionalProperties": false},
+    "room_joined": {
+      "type": "object",
+      "required": ["room_id", "member_id", "resume_token", "lock_enabled", "snapshot", "lock_sets", "presence"],
+      "properties": {
+        "room_id": {"type": "string", "minLength": 1}, "member_id": {"type": "string", "minLength": 1}, "resume_token": {"type": "string", "minLength": 1}, "lock_enabled": {"type": "boolean"},
+        "snapshot": {"type": "object"}, "lock_sets": {"type": "array", "items": {"$ref": "#/$defs/lock_set_state"}}, "presence": {"$ref": "#/$defs/presence"}
+      },
+      "additionalProperties": true
+    }
+  }
+}

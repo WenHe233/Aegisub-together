@@ -9,7 +9,7 @@
 
 namespace agi { namespace collab {
 
-constexpr int ProtocolVersion = 1;
+constexpr int ProtocolVersion = 2;
 constexpr std::size_t CompressionThreshold = 32 * 1024;
 constexpr std::size_t MaximumEnvelopeSize = 64 * 1024 * 1024;
 

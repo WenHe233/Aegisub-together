@@ -84,7 +84,7 @@ func dial(t *testing.T, url string) *websocket.Conn {
 
 func send(t *testing.T, connection *websocket.Conn, messageType, requestID string, payload any) {
 	t.Helper()
-	data, err := json.Marshal(protocol.OutboundEnvelope{ProtocolVersion: 1, Type: messageType, RequestID: requestID, RoomRevision: 0, Payload: payload})
+	data, err := json.Marshal(protocol.OutboundEnvelope{ProtocolVersion: protocol.Version, Type: messageType, RequestID: requestID, RoomRevision: 0, Payload: payload})
 	if err != nil {
 		t.Fatal(err)
 	}

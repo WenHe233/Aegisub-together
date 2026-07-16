@@ -1,0 +1,1 @@
+{"protocol_version":2,"type":"lock_set_state","request_id":"lock-17","room_revision":8,"payload":{"member_id":"member-1","member_name":"translator","granted":false,"line_ids":[],"conflicts":[{"line_id":"9K3MT7Q2CD-2","holder_id":"member-2","holder_name":"proofreader","expires_in_ms":42000}],"generation":17}}

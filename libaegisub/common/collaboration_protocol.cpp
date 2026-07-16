@@ -125,7 +125,7 @@ bool IsKnownMessageType(std::string const& type) {
 	static constexpr char const* types[] = {
 		"access_auth", "access_ok", "create_room", "join_room", "room_joined", "leave_room",
 		"submit_batch", "batch_applied", "batch_rejected", "snapshot_request",
-		"lock_request", "lock_release", "lock_state", "presence", "heartbeat",
+		"lock_set_request", "lock_set_state", "presence", "heartbeat",
 		"maintenance_request", "maintenance_release", "maintenance_state",
 		"maintenance_cancel_request", "maintenance_cancel_force", "comment_create",
 		"comment_set_state", "comment_changed", "snapshot_state", "audit_request",

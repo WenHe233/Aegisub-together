@@ -7,6 +7,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
 
 namespace agi { namespace collab {
 namespace {
@@ -210,6 +211,13 @@ RoomJoined DecodeRoomJoined(std::string const& payload_json) {
 	joined.resume_token = static_cast<json::String const&>(required(object, "resume_token"));
 	joined.lock_enabled = static_cast<json::Boolean const&>(required(object, "lock_enabled"));
 	joined.snapshot = decode_snapshot(required(object, "snapshot"));
+	auto lock_sets = object.find("lock_sets");
+	if (lock_sets != object.end()) {
+		for (auto const& encoded : static_cast<json::Array const&>(lock_sets->second))
+			joined.lock_sets.push_back(DecodeLockSetState(write(encoded)));
+	}
+	auto presence = object.find("presence");
+	if (presence != object.end()) joined.presence = DecodePresence(write(presence->second));
 	if (joined.room_id.empty() || joined.member_id.empty() || joined.resume_token.empty())
 		throw std::invalid_argument("room join identity is incomplete");
 	return joined;
@@ -244,6 +252,58 @@ LockStateMessage DecodeLockState(std::string const& payload_json) {
 	state.expires_in_ms = static_cast<json::Integer const&>(required(object, "expires_in_ms"));
 	if (!IsValidLineId(state.line_id) || state.requester_id.empty() || state.expires_in_ms < 0)
 		throw std::invalid_argument("invalid collaboration lock state");
+	return state;
+}
+
+std::string EncodeLockSetRequest(std::vector<std::string> line_ids,
+	std::optional<std::string> const& active_line_id, std::int64_t generation) {
+	if (generation < 0 || line_ids.size() > MaximumLockSetSize)
+		throw std::invalid_argument("invalid collaboration lock set request");
+	std::sort(line_ids.begin(), line_ids.end());
+	if (std::adjacent_find(line_ids.begin(), line_ids.end()) != line_ids.end())
+		throw std::invalid_argument("duplicate collaboration lock set line");
+	for (auto const& line_id : line_ids)
+		if (!IsValidLineId(line_id)) throw std::invalid_argument("invalid collaboration lock set line");
+	if (active_line_id && !IsValidLineId(*active_line_id))
+		throw std::invalid_argument("invalid collaboration active line");
+	json::Object object;
+	json::Array lines;
+	for (auto const& line_id : line_ids) lines.emplace_back(line_id);
+	object["line_ids"] = std::move(lines);
+	if (active_line_id) object["active_line_id"] = *active_line_id;
+	else object["active_line_id"] = json::Null{};
+	object["generation"] = generation;
+	return encode_object(std::move(object));
+}
+
+LockSetStateMessage DecodeLockSetState(std::string const& payload_json) {
+	auto root = parse(payload_json);
+	auto const& object = static_cast<json::Object const&>(root);
+	LockSetStateMessage state;
+	state.member_id = static_cast<json::String const&>(required(object, "member_id"));
+	state.member_name = static_cast<json::String const&>(required(object, "member_name"));
+	state.granted = static_cast<json::Boolean const&>(required(object, "granted"));
+	state.generation = static_cast<json::Integer const&>(required(object, "generation"));
+	for (auto const& encoded : static_cast<json::Array const&>(required(object, "line_ids"))) {
+		auto line_id = static_cast<json::String const&>(encoded);
+		if (!IsValidLineId(line_id)) throw std::invalid_argument("invalid collaboration lock set line");
+		state.line_ids.push_back(std::move(line_id));
+	}
+	for (auto const& encoded : static_cast<json::Array const&>(required(object, "conflicts"))) {
+		auto const& conflict_object = static_cast<json::Object const&>(encoded);
+		LockConflictMessage conflict;
+		conflict.line_id = static_cast<json::String const&>(required(conflict_object, "line_id"));
+		conflict.holder_id = static_cast<json::String const&>(required(conflict_object, "holder_id"));
+		conflict.holder_name = static_cast<json::String const&>(required(conflict_object, "holder_name"));
+		conflict.expires_in_ms = static_cast<json::Integer const&>(required(conflict_object, "expires_in_ms"));
+		if (!IsValidLineId(conflict.line_id) || conflict.holder_id.empty() || conflict.holder_name.empty() || conflict.expires_in_ms < 0)
+			throw std::invalid_argument("invalid collaboration lock conflict");
+		state.conflicts.push_back(std::move(conflict));
+	}
+	if (state.member_id.empty() || state.member_name.empty() || state.generation < 0 ||
+		state.line_ids.size() > MaximumLockSetSize || (state.granted && !state.conflicts.empty()) ||
+		(!state.granted && !state.line_ids.empty()))
+		throw std::invalid_argument("invalid collaboration lock set state");
 	return state;
 }
 

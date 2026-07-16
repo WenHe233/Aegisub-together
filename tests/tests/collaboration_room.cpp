@@ -60,6 +60,15 @@ TEST(collaboration_room, encodes_line_references_and_decodes_lock_presence) {
 	EXPECT_FALSE(presence[1].line_id);
 }
 
+TEST(collaboration_room, encodes_and_decodes_atomic_lock_sets) {
+	auto encoded = EncodeLockSetRequest({"9K3MT7Q2CD-2", "9K3MT7Q2CD-1"}, std::string("9K3MT7Q2CD-2"), 17);
+	EXPECT_NE(std::string::npos, encoded.find("\"generation\" : 17"));
+	auto state = DecodeLockSetState(R"({"member_id":"member-1","member_name":"translator","granted":true,"line_ids":["9K3MT7Q2CD-1","9K3MT7Q2CD-2"],"conflicts":[],"generation":17})");
+	EXPECT_TRUE(state.granted);
+	EXPECT_EQ(2u, state.line_ids.size());
+	EXPECT_THROW(EncodeLockSetRequest({"9K3MT7Q2CD-1", "9K3MT7Q2CD-1"}, std::nullopt, 1), std::invalid_argument);
+}
+
 TEST(collaboration_room, decodes_maintenance_ownership_and_cancel_window) {
 	auto state = DecodeMaintenanceState(R"({"active":true,"holder_id":"member-1","holder_name":"translator","started_at":"2026-07-14T00:00:00Z","idle_expires_at":"2026-07-14T00:10:00Z","hard_expires_at":"2026-07-14T01:00:00Z","cancel_requested_by":"member-2","cancel_requested_name":"proofreader","cancel_force_at":"2026-07-14T00:00:30Z"})");
 	EXPECT_TRUE(state.active);
