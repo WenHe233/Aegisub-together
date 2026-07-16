@@ -160,6 +160,7 @@ func (hub *hub) joinedPayload(roomID, memberID string) (protocol.RoomJoined, int
 			return protocol.RoomJoined{
 				RoomID: value.id, MemberID: joinedMember.id, ResumeToken: joinedMember.resumeToken,
 				LockEnabled: value.lockEnabled, Snapshot: cloneSnapshot(value.snapshot),
+				LockSets: lockSetsSnapshot(value), Presence: presenceSnapshot(value),
 			}, value.revision, true
 		}
 	}
@@ -239,12 +240,14 @@ func (hub *hub) leave(roomID, memberID string, timeouts maintenanceTimeouts) []t
 	delete(value.sessions, joinedMember.resumeToken)
 	joinedMember.connection = nil
 	joinedMember.disconnectedAt = now
-	states := releaseMemberLocks(value, memberID, "")
+	released := releaseMemberLocks(value, memberID)
 	maintenanceChanged := disconnectMaintenance(value, memberID, now, hub.store)
 	recipients := connectedMembers(value)
-	events := make([]transientEvent, 0, len(states)+2)
-	for _, state := range states {
-		events = append(events, transientEvent{roomID: roomID, typeName: "lock_state", payload: state, recipients: recipients})
+	events := make([]transientEvent, 0, 3)
+	if released {
+		events = append(events, transientEvent{roomID: roomID, typeName: "lock_set_state", payload: protocol.LockSetState{
+			MemberID: memberID, MemberName: joinedMember.nickname, Granted: true, LineIDs: []string{}, Conflicts: []protocol.LockConflict{},
+		}, recipients: recipients})
 	}
 	events = append(events, transientEvent{roomID: roomID, typeName: "presence", payload: presenceSnapshot(value), recipients: recipients})
 	if maintenanceChanged {

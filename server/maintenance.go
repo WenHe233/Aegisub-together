@@ -36,7 +36,7 @@ func (hub *hub) currentMaintenance(roomID string, timeouts maintenanceTimeouts) 
 	return maintenanceState(value, timeouts), true
 }
 
-func (hub *hub) requestMaintenance(roomID, memberID string, now time.Time, timeouts maintenanceTimeouts) (protocol.MaintenanceState, []protocol.LockState, []*member, error) {
+func (hub *hub) requestMaintenance(roomID, memberID string, now time.Time, timeouts maintenanceTimeouts) (protocol.MaintenanceState, []protocol.LockSetState, []*member, error) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	value := hub.roomByID(roomID)
@@ -129,13 +129,15 @@ func maintenanceState(value *room, timeouts maintenanceTimeouts) protocol.Mainte
 	return state
 }
 
-func releaseAllLocks(value *room) []protocol.LockState {
-	states := make([]protocol.LockState, 0, len(value.locks))
-	for lineID, existing := range value.locks {
-		delete(value.locks, lineID)
-		states = append(states, unlockedState(lineID, existing.memberID))
+func releaseAllLocks(value *room) []protocol.LockSetState {
+	members := make(map[string]struct{})
+	for _, existing := range value.locks {
+		members[existing.memberID] = struct{}{}
 	}
-	return states
+	for memberID := range members {
+		releaseMemberLocks(value, memberID)
+	}
+	return lockStatesForMembers(value, members, "", 0, true, nil)
 }
 
 func maintenanceAuditDetails(lease *maintenanceLease, endedAt time.Time) map[string]any {

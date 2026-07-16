@@ -88,7 +88,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		operation.LineID = remapped(operation.LineID, remap)
-		if existing, locked := lockedByOther(value, operation.LineID, actorID); locked {
+		if existing, owned := lockOwnedBy(value, operation.LineID, actorID); !owned {
 			return protocol.AppliedOperation{}, lockFailure(operation.LineID, existing)
 		}
 		line, index := findLine(value.snapshot.Lines, operation.LineID)
@@ -135,7 +135,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 			return protocol.AppliedOperation{}, invalidOperation(err)
 		}
 		operation.LineID = remapped(operation.LineID, remap)
-		if existing, locked := lockedByOther(value, operation.LineID, actorID); locked {
+		if existing, owned := lockOwnedBy(value, operation.LineID, actorID); !owned {
 			return protocol.AppliedOperation{}, lockFailure(operation.LineID, existing)
 		}
 		line, index := findLine(value.snapshot.Lines, operation.LineID)
@@ -155,7 +155,7 @@ func applyOperation(value *room, actorID string, raw json.RawMessage, remap map[
 		operation.LineID = remapped(operation.LineID, remap)
 		operation.LeftID = remappedPointer(operation.LeftID, remap)
 		operation.RightID = remappedPointer(operation.RightID, remap)
-		if existing, locked := lockedByOther(value, operation.LineID, actorID); locked {
+		if existing, owned := lockOwnedBy(value, operation.LineID, actorID); !owned {
 			return protocol.AppliedOperation{}, lockFailure(operation.LineID, existing)
 		}
 		line, index := findLine(value.snapshot.Lines, operation.LineID)
@@ -265,7 +265,11 @@ func invalidLine(lineID string) error {
 }
 
 func lockFailure(lineID string, existing lineLock) error {
-	return &batchFailure{code: "line_locked", message: fmt.Sprintf("line is locked by %s", existing.nickname), lineID: lineID}
+	message := "line is not locked by the submitting member"
+	if existing.nickname != "" {
+		message = fmt.Sprintf("line is locked by %s", existing.nickname)
+	}
+	return &batchFailure{code: "line_locked", message: message, lineID: lineID}
 }
 
 func mergeFields(target *protocol.LineFields, update protocol.LineFields) {

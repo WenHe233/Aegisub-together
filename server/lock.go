@@ -17,47 +17,7 @@ type transientEvent struct {
 	recipients []*member
 }
 
-func (hub *hub) requestLock(roomID, memberID, lineID string, now time.Time, idleTimeout time.Duration) ([]protocol.LockState, protocol.Presence, []*member, error) {
-	hub.mu.Lock()
-	defer hub.mu.Unlock()
-	value := hub.roomByID(roomID)
-	joinedMember := memberByID(value, memberID)
-	if value == nil || joinedMember == nil || liveLine(value.snapshot.Lines, lineID) == nil {
-		return nil, protocol.Presence{}, nil, errors.New("line or member does not exist")
-	}
-	if value.maintenance != nil && value.maintenance.holderID != memberID {
-		return nil, protocol.Presence{}, nil, errMaintenanceActive
-	}
-	joinedMember.activeLine = lineID
-	joinedMember.lastSeen = now
-	states := releaseMemberLocks(value, memberID, lineID)
-	state := protocol.LockState{LineID: lineID, RequesterID: memberID}
-	if existing, locked := value.locks[lineID]; locked && now.Sub(existing.lastActivity) >= idleTimeout {
-		delete(value.locks, lineID)
-		states = append(states, unlockedState(lineID, existing.memberID))
-	}
-	if !value.lockEnabled {
-		state.Granted = true
-	} else if existing, locked := value.locks[lineID]; locked && existing.memberID != memberID {
-		state.HolderID = stringPointerValue(existing.memberID)
-		state.HolderName = stringPointerValue(existing.nickname)
-		remaining := idleTimeout - now.Sub(existing.lastActivity)
-		if remaining < 0 {
-			remaining = 0
-		}
-		state.ExpiresInMS = remaining.Milliseconds()
-	} else {
-		value.locks[lineID] = lineLock{memberID: memberID, nickname: joinedMember.nickname, lastActivity: now}
-		state.Granted = true
-		state.HolderID = stringPointerValue(memberID)
-		state.HolderName = stringPointerValue(joinedMember.nickname)
-		state.ExpiresInMS = idleTimeout.Milliseconds()
-	}
-	states = append(states, state)
-	return states, presenceSnapshot(value), connectedMembers(value), nil
-}
-
-func (hub *hub) releaseLock(roomID, memberID, lineID string, now time.Time) ([]protocol.LockState, protocol.Presence, []*member, error) {
+func (hub *hub) requestLockSet(roomID, memberID string, request protocol.LockSetRequest, now time.Time, idleTimeout time.Duration) ([]protocol.LockSetState, protocol.Presence, []*member, error) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	value := hub.roomByID(roomID)
@@ -65,15 +25,63 @@ func (hub *hub) releaseLock(roomID, memberID, lineID string, now time.Time) ([]p
 	if value == nil || joinedMember == nil {
 		return nil, protocol.Presence{}, nil, errors.New("room or member does not exist")
 	}
-	joinedMember.lastSeen = now
-	if joinedMember.activeLine == lineID {
+	if request.Generation < 0 || len(request.LineIDs) > protocol.MaximumLockSetSize {
+		return nil, protocol.Presence{}, nil, errors.New("lock set is invalid or too large")
+	}
+	seen := make(map[string]struct{}, len(request.LineIDs))
+	for _, lineID := range request.LineIDs {
+		if !validLineID(lineID) || liveLine(value.snapshot.Lines, lineID) == nil {
+			return nil, protocol.Presence{}, nil, errors.New("lock set contains an invalid or missing line")
+		}
+		if _, exists := seen[lineID]; exists {
+			return nil, protocol.Presence{}, nil, errors.New("lock set contains duplicate lines")
+		}
+		seen[lineID] = struct{}{}
+	}
+	if request.ActiveLineID != nil {
+		if !validLineID(*request.ActiveLineID) || liveLine(value.snapshot.Lines, *request.ActiveLineID) == nil {
+			return nil, protocol.Presence{}, nil, errors.New("active line is invalid or missing")
+		}
+		joinedMember.activeLine = *request.ActiveLineID
+	} else {
 		joinedMember.activeLine = ""
 	}
-	states := make([]protocol.LockState, 0, 1)
-	if existing, locked := value.locks[lineID]; locked && existing.memberID == memberID {
-		delete(value.locks, lineID)
-		states = append(states, unlockedState(lineID, memberID))
+	joinedMember.lastSeen = now
+	if value.maintenance != nil && value.maintenance.holderID != memberID {
+		return nil, protocol.Presence{}, nil, errMaintenanceActive
 	}
+
+	changedMembers := expireLocks(value, now, idleTimeout)
+	if !value.lockEnabled {
+		changedMembers[memberID] = struct{}{}
+		releaseMemberLocks(value, memberID)
+		states := lockStatesForMembers(value, changedMembers, memberID, request.Generation, true, nil)
+		return states, presenceSnapshot(value), connectedMembers(value), nil
+	}
+
+	conflicts := make([]protocol.LockConflict, 0)
+	for _, lineID := range request.LineIDs {
+		if existing, locked := value.locks[lineID]; locked && existing.memberID != memberID {
+			remaining := idleTimeout - now.Sub(existing.lastActivity)
+			if remaining < 0 {
+				remaining = 0
+			}
+			conflicts = append(conflicts, protocol.LockConflict{
+				LineID: lineID, HolderID: existing.memberID, HolderName: existing.nickname, ExpiresInMS: remaining.Milliseconds(),
+			})
+		}
+	}
+	sort.Slice(conflicts, func(left, right int) bool { return conflicts[left].LineID < conflicts[right].LineID })
+	changedMembers[memberID] = struct{}{}
+	releaseMemberLocks(value, memberID)
+	if len(conflicts) != 0 {
+		states := lockStatesForMembers(value, changedMembers, memberID, request.Generation, false, conflicts)
+		return states, presenceSnapshot(value), connectedMembers(value), nil
+	}
+	for _, lineID := range request.LineIDs {
+		value.locks[lineID] = lineLock{memberID: memberID, nickname: joinedMember.nickname, lastActivity: now}
+	}
+	states := lockStatesForMembers(value, changedMembers, memberID, request.Generation, true, nil)
 	return states, presenceSnapshot(value), connectedMembers(value), nil
 }
 
@@ -95,7 +103,7 @@ func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout, resumeTimeo
 	var events []transientEvent
 	var staleConnections []*websocket.Conn
 	for _, value := range hub.rooms {
-		var states []protocol.LockState
+		changedMembers := expireLocks(value, now, idleTimeout)
 		presenceChanged := false
 		maintenanceChanged := false
 		if lease := value.maintenance; lease != nil && (now.Sub(lease.lastActivity) >= maintenanceTimeouts.idle || now.Sub(lease.startedAt) >= maintenanceTimeouts.hard) {
@@ -108,16 +116,12 @@ func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout, resumeTimeo
 				maintenanceChanged = true
 			}
 		}
-		for lineID, existing := range value.locks {
-			if now.Sub(existing.lastActivity) >= idleTimeout {
-				delete(value.locks, lineID)
-				states = append(states, unlockedState(lineID, existing.memberID))
-			}
-		}
 		for nickname, joinedMember := range value.members {
 			if joinedMember.connection != nil && now.Sub(joinedMember.lastHeartbeat) >= heartbeatTimeout {
 				staleConnections = append(staleConnections, joinedMember.connection)
-				states = append(states, releaseMemberLocks(value, joinedMember.id, "")...)
+				if releaseMemberLocks(value, joinedMember.id) {
+					changedMembers[joinedMember.id] = struct{}{}
+				}
 				maintenanceChanged = disconnectMaintenance(value, joinedMember.id, now, hub.store) || maintenanceChanged
 				joinedMember.connection = nil
 				joinedMember.disconnectedAt = now
@@ -131,8 +135,8 @@ func (hub *hub) expire(now time.Time, idleTimeout, heartbeatTimeout, resumeTimeo
 			}
 		}
 		recipients := connectedMembers(value)
-		for _, state := range states {
-			events = append(events, transientEvent{roomID: value.id, typeName: "lock_state", payload: state, recipients: recipients})
+		for _, state := range lockStatesForMembers(value, changedMembers, "", 0, true, nil) {
+			events = append(events, transientEvent{roomID: value.id, typeName: "lock_set_state", payload: state, recipients: recipients})
 		}
 		if presenceChanged {
 			events = append(events, transientEvent{roomID: value.id, typeName: "presence", payload: presenceSnapshot(value), recipients: recipients})
@@ -156,12 +160,14 @@ func (hub *hub) disconnect(roomID, memberID string, timeouts maintenanceTimeouts
 	delete(value.members, joinedMember.nickname)
 	joinedMember.connection = nil
 	joinedMember.disconnectedAt = now
-	states := releaseMemberLocks(value, memberID, "")
+	released := releaseMemberLocks(value, memberID)
 	maintenanceChanged := disconnectMaintenance(value, memberID, now, hub.store)
 	recipients := connectedMembers(value)
-	events := make([]transientEvent, 0, len(states)+2)
-	for _, state := range states {
-		events = append(events, transientEvent{roomID: roomID, typeName: "lock_state", payload: state, recipients: recipients})
+	events := make([]transientEvent, 0, 3)
+	if released {
+		events = append(events, transientEvent{roomID: roomID, typeName: "lock_set_state", payload: protocol.LockSetState{
+			MemberID: memberID, MemberName: joinedMember.nickname, Granted: true, LineIDs: []string{}, Conflicts: []protocol.LockConflict{},
+		}, recipients: recipients})
 	}
 	events = append(events, transientEvent{roomID: roomID, typeName: "presence", payload: presenceSnapshot(value), recipients: recipients})
 	if maintenanceChanged {
@@ -184,13 +190,76 @@ func (hub *hub) connections() []*websocket.Conn {
 	return connections
 }
 
-func releaseMemberLocks(value *room, memberID, exceptLine string) []protocol.LockState {
-	var states []protocol.LockState
+func releaseMemberLocks(value *room, memberID string) bool {
+	released := false
 	for lineID, existing := range value.locks {
-		if existing.memberID == memberID && lineID != exceptLine {
+		if existing.memberID == memberID {
 			delete(value.locks, lineID)
-			states = append(states, unlockedState(lineID, memberID))
+			released = true
 		}
+	}
+	return released
+}
+
+func expireLocks(value *room, now time.Time, idleTimeout time.Duration) map[string]struct{} {
+	changed := make(map[string]struct{})
+	for lineID, existing := range value.locks {
+		if now.Sub(existing.lastActivity) >= idleTimeout {
+			delete(value.locks, lineID)
+			changed[existing.memberID] = struct{}{}
+		}
+	}
+	return changed
+}
+
+func lockSetForMember(value *room, memberID string) []string {
+	lineIDs := make([]string, 0)
+	for lineID, existing := range value.locks {
+		if existing.memberID == memberID {
+			lineIDs = append(lineIDs, lineID)
+		}
+	}
+	sort.Strings(lineIDs)
+	return lineIDs
+}
+
+func lockSetsSnapshot(value *room) []protocol.LockSetState {
+	members := make(map[string]struct{})
+	for _, existing := range value.locks {
+		members[existing.memberID] = struct{}{}
+	}
+	return lockStatesForMembers(value, members, "", 0, true, nil)
+}
+
+func lockStatesForMembers(value *room, members map[string]struct{}, requesterID string, generation int64, granted bool, conflicts []protocol.LockConflict) []protocol.LockSetState {
+	memberIDs := make([]string, 0, len(members))
+	for memberID := range members {
+		memberIDs = append(memberIDs, memberID)
+	}
+	sort.Strings(memberIDs)
+	states := make([]protocol.LockSetState, 0, len(memberIDs))
+	for _, memberID := range memberIDs {
+		name := "disconnected"
+		if joined := memberByID(value, memberID); joined != nil {
+			name = joined.nickname
+		} else {
+			for _, existing := range value.locks {
+				if existing.memberID == memberID {
+					name = existing.nickname
+					break
+				}
+			}
+		}
+		state := protocol.LockSetState{MemberID: memberID, MemberName: name, Granted: true, LineIDs: lockSetForMember(value, memberID), Conflicts: []protocol.LockConflict{}}
+		if memberID == requesterID {
+			state.Generation = generation
+			state.Granted = granted
+			if !granted {
+				state.LineIDs = []string{}
+				state.Conflicts = append([]protocol.LockConflict(nil), conflicts...)
+			}
+		}
+		states = append(states, state)
 	}
 	return states
 }
@@ -222,16 +291,12 @@ func memberByID(value *room, memberID string) *member {
 	return nil
 }
 
-func unlockedState(lineID, requesterID string) protocol.LockState {
-	return protocol.LockState{LineID: lineID, RequesterID: requesterID, Granted: false}
-}
-
 func stringPointerValue(value string) *string { return &value }
 
-func lockedByOther(value *room, lineID, memberID string) (lineLock, bool) {
+func lockOwnedBy(value *room, lineID, memberID string) (lineLock, bool) {
 	if !value.lockEnabled {
-		return lineLock{}, false
+		return lineLock{}, true
 	}
 	existing, locked := value.locks[lineID]
-	return existing, locked && existing.memberID != memberID
+	return existing, locked && existing.memberID == memberID
 }

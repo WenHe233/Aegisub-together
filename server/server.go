@@ -228,20 +228,13 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 			leftRoom = true
 			return
 		}
-		if envelope.Type == "lock_request" || envelope.Type == "lock_release" {
-			var reference protocol.LineReference
-			if err := decodePayload(envelope.Payload, &reference); err != nil || !validLineID(reference.LineID) {
-				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "lock request is invalid", false)
+		if envelope.Type == "lock_set_request" {
+			var lockRequest protocol.LockSetRequest
+			if err := decodePayload(envelope.Payload, &lockRequest); err != nil {
+				_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "invalid_message", "lock set request is invalid", false)
 				continue
 			}
-			var states []protocol.LockState
-			var presence protocol.Presence
-			var recipients []*member
-			if envelope.Type == "lock_request" {
-				states, presence, recipients, err = server.hub.requestLock(joinedRoom.id, joinedMember.id, reference.LineID, time.Now(), server.config.LockIdleTimeout)
-			} else {
-				states, presence, recipients, err = server.hub.releaseLock(joinedRoom.id, joinedMember.id, reference.LineID, time.Now())
-			}
+			states, presence, recipients, err := server.hub.requestLockSet(joinedRoom.id, joinedMember.id, lockRequest, time.Now(), server.config.LockIdleTimeout)
 			if err != nil {
 				if errors.Is(err, errMaintenanceActive) {
 					_ = writeProtocolError(request.Context(), connection, envelope.RequestID, server.hub.currentRevision(joinedRoom.id), "maintenance_active", err.Error(), true)
@@ -252,7 +245,7 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 			}
 			revision := server.hub.currentRevision(joinedRoom.id)
 			for _, state := range states {
-				broadcastTransient(envelope.RequestID, revision, "lock_state", state, recipients)
+				broadcastTransient(envelope.RequestID, revision, "lock_set_state", state, recipients)
 			}
 			broadcastTransient(envelope.RequestID, revision, "presence", presence, recipients)
 			continue
@@ -266,7 +259,7 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 			now := time.Now()
 			timeouts := server.maintenanceTimeouts()
 			var state protocol.MaintenanceState
-			var states []protocol.LockState
+			var states []protocol.LockSetState
 			var recipients []*member
 			switch envelope.Type {
 			case "maintenance_request":
@@ -284,7 +277,7 @@ func (server *Server) websocket(writer http.ResponseWriter, request *http.Reques
 			}
 			revision := server.hub.currentRevision(joinedRoom.id)
 			for _, lockState := range states {
-				broadcastTransient(envelope.RequestID, revision, "lock_state", lockState, recipients)
+				broadcastTransient(envelope.RequestID, revision, "lock_set_state", lockState, recipients)
 			}
 			broadcastTransient(envelope.RequestID, revision, "maintenance_state", state, recipients)
 			continue
