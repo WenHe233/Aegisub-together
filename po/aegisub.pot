@@ -196,7 +196,7 @@ msgstr ""
 
 #: ../src/charset_detect.cpp:55
 msgid ""
-"Aegisub could not narrow down the character set to a single one.\n"
+"Aegisub Together could not narrow down the character set to a single one.\n"
 "Please pick one below:"
 msgstr ""
 
@@ -213,7 +213,7 @@ msgid "About"
 msgstr ""
 
 #: ../src/command/app.cpp:59 ../src/dialog_about.cpp:44
-msgid "About Aegisub"
+msgid "About Aegisub Together"
 msgstr ""
 
 #: ../src/command/app.cpp:68
@@ -285,7 +285,7 @@ msgid "Language"
 msgstr ""
 
 #: ../src/command/app.cpp:158
-msgid "Select Aegisub interface language"
+msgid "Select Aegisub Together interface language"
 msgstr ""
 
 #: ../src/command/app.cpp:181
@@ -323,7 +323,7 @@ msgid "Options"
 msgstr ""
 
 #: ../src/command/app.cpp:207
-msgid "Configure Aegisub"
+msgid "Configure Aegisub Together"
 msgstr ""
 
 #: ../src/command/app.cpp:221 ../src/command/app.cpp:222
@@ -355,7 +355,7 @@ msgid "Check for Updates"
 msgstr ""
 
 #: ../src/command/app.cpp:261
-msgid "Check to see if there is a new version of Aegisub available"
+msgid "Check to see if there is a new version of Aegisub Together available"
 msgstr ""
 
 #: ../src/command/app.cpp:271 ../src/command/app.cpp:272
@@ -1476,7 +1476,7 @@ msgid "Bug Tracker"
 msgstr ""
 
 #: ../src/command/help.cpp:50
-msgid "Visit Aegisub's bug tracker to report bugs and request new features"
+msgid "Visit Aegisub Together's bug tracker to report bugs and request new features"
 msgstr ""
 
 #: ../src/command/help.cpp:69
@@ -1524,7 +1524,7 @@ msgid "Website"
 msgstr ""
 
 #: ../src/command/help.cpp:107
-msgid "Visit Aegisub's official website"
+msgid "Visit the Aegisub Together project website"
 msgstr ""
 
 #: ../src/command/keyframe.cpp:50 ../src/command/keyframe.cpp:51
@@ -4146,7 +4146,7 @@ msgid "Remove fro&m dictionary"
 msgstr ""
 
 #: ../src/dialog_spellchecker.cpp:279
-msgid "Aegisub has finished checking spelling of this script."
+msgid "Aegisub Together has finished checking spelling of this script."
 msgstr ""
 
 #: ../src/dialog_spellchecker.cpp:279 ../src/dialog_spellchecker.cpp:283
@@ -4154,7 +4154,7 @@ msgid "Spell checking complete."
 msgstr ""
 
 #: ../src/dialog_spellchecker.cpp:283
-msgid "Aegisub has found no spelling mistakes in this script."
+msgid "Aegisub Together has found no spelling mistakes in this script."
 msgstr ""
 
 #: ../src/dialog_spellchecker.cpp:329 ../src/dialog_spellchecker.cpp:343
@@ -4873,21 +4873,21 @@ msgid "HTTP request failed, got HTTP response %d."
 msgstr ""
 
 #: ../src/dialog_version_check.cpp:342
-msgid "An update to Aegisub was found."
+msgid "An update to Aegisub Together was found."
 msgstr ""
 
 #: ../src/dialog_version_check.cpp:344
-msgid "Several possible updates to Aegisub were found."
+msgid "Several possible updates to Aegisub Together were found."
 msgstr ""
 
 #: ../src/dialog_version_check.cpp:346
-msgid "There are no updates to Aegisub."
+msgid "There are no updates to Aegisub Together."
 msgstr ""
 
 #: ../src/dialog_version_check.cpp:374
 #, c-format
 msgid ""
-"There was an error checking for updates to Aegisub:\n"
+"There was an error checking for updates to Aegisub Together:\n"
 "%s\n"
 "\n"
 "If other applications can access the Internet fine, this is probably a "
@@ -4895,7 +4895,7 @@ msgid ""
 msgstr ""
 
 #: ../src/dialog_version_check.cpp:378
-msgid "An unknown error occurred while checking for updates to Aegisub."
+msgid "An unknown error occurred while checking for updates to Aegisub Together."
 msgstr ""
 
 #: ../src/dialog_video_details.cpp:45
@@ -5212,13 +5212,13 @@ msgstr ""
 #: ../src/main.cpp:276
 #, c-format
 msgid ""
-"Oops, Aegisub has crashed!\n"
+"Oops, Aegisub Together has crashed!\n"
 "\n"
 "An attempt has been made to save a copy of your file to:\n"
 "\n"
 "%s\n"
 "\n"
-"Aegisub will now close."
+"Aegisub Together will now close."
 msgstr ""
 
 #: ../src/main.cpp:303
@@ -5227,7 +5227,7 @@ msgstr ""
 
 #: ../src/main.cpp:303
 msgid ""
-"Do you want Aegisub to check for updates whenever it starts? You can still "
+"Do you want Aegisub Together to check for updates whenever it starts? You can still "
 "do it manually via the Help menu."
 msgstr ""
 
@@ -6018,7 +6018,7 @@ msgid "Max BS cache size (MB)"
 msgstr ""
 
 #: ../src/preferences.cpp:428
-msgid "Use Aegisub's Cache"
+msgid "Use Aegisub Together's Cache"
 msgstr ""
 
 #: ../src/preferences.cpp:434
@@ -6847,7 +6847,7 @@ msgstr ""
 
 
 #: packages/win_installer/fragment_strings.iss:1
-msgid "Automatically check for new versions of Aegisub"
+msgid "Automatically check for new versions of Aegisub Together"
 msgstr ""
 
 
@@ -6857,7 +6857,7 @@ msgstr ""
 
 
 #: packages/win_installer/fragment_strings.iss:1
-msgid "This will install Aegisub {#BUILD_GIT_VERSION_STRING} on your computer.%n%nAegisub is covered by the GNU General Public License version 2. This means you may use the application for any purpose without charge, but that no warranties of any kind are given either.%n%nSee the Aegisub website for information on obtaining the source code."
+msgid "This will install Aegisub Together {#BUILD_GIT_VERSION_STRING} on your computer.%n%nAegisub Together is covered by the GNU General Public License version 2. This means you may use the application for any purpose without charge, but that no warranties of any kind are given either.%n%nSee the Aegisub Together website for information on obtaining the source code."
 msgstr ""
 
 #: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
@@ -6865,11 +6865,11 @@ msgid "Collaboration connection failed"
 msgstr ""
 
 #: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
-msgid "The connection failed before Aegisub received the room confirmation. The room may already have been created; try joining the same room instead of creating it again."
+msgid "The connection failed before Aegisub Together received the room confirmation. The room may already have been created; try joining the same room instead of creating it again."
 msgstr ""
 
 #: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
-msgid "The connection failed before Aegisub joined the room."
+msgid "The connection failed before Aegisub Together joined the room."
 msgstr ""
 
 #: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp

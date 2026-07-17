@@ -276,11 +276,11 @@ bool DialogSpellChecker::FindNext() {
 	}
 
 	if (IsShown()) {
-		wxMessageBox(_("Aegisub has finished checking spelling of this script."), _("Spell checking complete."));
+		wxMessageBox(_("Aegisub Together has finished checking spelling of this script."), _("Spell checking complete."));
 		Close();
 	}
 	else {
-		wxMessageBox(_("Aegisub has found no spelling mistakes in this script."), _("Spell checking complete."));
+		wxMessageBox(_("Aegisub Together has found no spelling mistakes in this script."), _("Spell checking complete."));
 		throw agi::UserCancelException("No spelling mistakes");
 	}
 

@@ -12,7 +12,7 @@ Name: "macros\modules\luajson"; Description: "LuaJSON"; Types: full
 #endif
 Name: "dictionaries"; Description: "Spellcheck Dictionaries"; Types: full
 Name: "dictionaries\en_US"; Description: "English (US)"; Types: full
-Name: "translations"; Description: "Aegisub Translations"; Types: full
+Name: "translations"; Description: "Aegisub Together Translations"; Types: full
 
 [Tasks]
 Name: "startmenuicon"; Description: "{cm:StartMenuIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -20,19 +20,18 @@ Name: "checkforupdates"; Description: "{cm:CheckForUpdates}"; GroupDescription: 
 
 [Files]
 ; main
-DestDir: {app}; Source: "{#BUILD_ROOT}\aegisub.exe"; Flags: ignoreversion; Components: main
+DestDir: {app}; Source: "{#BUILD_ROOT}\aegisub-together.exe"; Flags: ignoreversion; Components: main
 DestDir: {app}; Source: "{#INSTALLER_DIR}\license.txt"; Flags: ignoreversion; Components: main
 
 [Icons]
-Name: {commonprograms}\Aegisub; Filename: {app}\aegisub.exe; WorkingDir: {app}; IconIndex: 0; Tasks: startmenuicon; Comment: Create and edit subtitle files
+Name: {commonprograms}\Aegisub Together; Filename: {app}\aegisub-together.exe; WorkingDir: {app}; IconIndex: 0; Tasks: startmenuicon; Comment: Create and edit subtitle files
 
 [Registry]
-; Register in App Paths so the user can conveniently enter 'aegisub' in their Run box
-Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\aegisub.exe"; ValueType: string; ValueName: ""; ValueData: "{app}\aegisub.exe"; Flags: uninsdeletekey
-Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\aegisub.exe"; ValueType: string; ValueName: ""; ValueData: "{app}\aegisub.exe"; Flags: uninsdeletekey
+; Register in App Paths so the user can conveniently enter 'aegisub-together' in their Run box
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\aegisub-together.exe"; ValueType: string; ValueName: ""; ValueData: "{app}\aegisub-together.exe"; Flags: uninsdeletekey
 
 [Run]
-Filename: {app}\aegisub.exe; Description: {cm:LaunchProgram,Aegisub}; Flags: nowait postinstall skipifsilent
+Filename: {app}\aegisub-together.exe; Description: {cm:LaunchProgram,Aegisub Together}; Flags: nowait postinstall skipifsilent
 
 [InstallDelete]
 Type: files; Name: "{app}\ffms2_64.dll"

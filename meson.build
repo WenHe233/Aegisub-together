@@ -1,4 +1,4 @@
-project('Aegisub', ['c', 'cpp'],
+project('Aegisub Together', ['c', 'cpp'],
         license: 'BSD-3-Clause',
         meson_version: '>=1.0.0',
         default_options: ['cpp_std=c++17', 'buildtype=debugoptimized'],
@@ -44,7 +44,7 @@ else
     bindir = prefix / get_option('bindir')
     datadir = prefix / get_option('datadir')
     localedir = prefix / get_option('localedir')
-    dataroot = datadir / 'aegisub'
+    dataroot = datadir / 'aegisub-together'
 endif
 docdir = prefix / 'doc'
 
@@ -454,12 +454,12 @@ aegisub_c_pch = ['src/include/agi_pre_c.h']
 link_args = []
 link_depends = []
 if host_machine.system() == 'windows'
-    manifest_file = configure_file(copy: true, input: 'src/res/aegisub.exe.manifest', output: 'aegisub.exe.manifest')
+    manifest_file = configure_file(copy: true, input: 'src/res/aegisub-together.exe.manifest', output: 'aegisub-together.exe.manifest')
     link_args += ['/MANIFEST:EMBED', '/MANIFESTINPUT:@0@'.format(manifest_file)]
     link_depends += manifest_file
 endif
 
-aegisub = executable('aegisub', aegisub_src, version_h, acconf, resrc,
+aegisub = executable('aegisub-together', aegisub_src, version_h, acconf, resrc,
                      link_with: [libresrc, libluabins, libaegisub],
                      link_args: link_args,
                      link_depends: link_depends,

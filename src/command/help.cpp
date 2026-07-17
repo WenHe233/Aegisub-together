@@ -47,7 +47,7 @@ struct help_bugs final : public Command {
 	CMD_ICON(bugtracker_button)
 	STR_MENU("&Bug Tracker...")
 	STR_DISP("Bug Tracker")
-	STR_HELP("Visit Aegisub's bug tracker to report bugs and request new features")
+	STR_HELP("Visit Aegisub Together's bug tracker to report bugs and request new features")
 
 	void operator()(agi::Context *c) override {
 		if (wxGetMouseState().CmdDown()) {
@@ -59,7 +59,7 @@ struct help_bugs final : public Command {
 				throw c->parent;
 			}
 		}
-		wxLaunchDefaultBrowser("https://github.com/Aegisub/Aegisub/issues", wxBROWSER_NEW_WINDOW);
+		wxLaunchDefaultBrowser("https://github.com/WenHe233/Aegisub-together/issues", wxBROWSER_NEW_WINDOW);
 	}
 };
 
@@ -104,10 +104,10 @@ struct help_website final : public Command {
 	CMD_ICON(website_button)
 	STR_MENU("&Website")
 	STR_DISP("Website")
-	STR_HELP("Visit Aegisub's official website")
+	STR_HELP("Visit the Aegisub Together project website")
 
 	void operator()(agi::Context *) override {
-		wxLaunchDefaultBrowser("http://www.aegisub.org/", wxBROWSER_NEW_WINDOW);
+		wxLaunchDefaultBrowser("https://github.com/WenHe233/Aegisub-together", wxBROWSER_NEW_WINDOW);
 	}
 };
 }

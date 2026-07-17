@@ -7,15 +7,15 @@
 #include BUILD_ROOT + "\git_version.h"
 
 [Setup]
-AppName=Aegisub
-AppVerName=Aegisub {#BUILD_GIT_VERSION_STRING}
+AppName=Aegisub Together
+AppVerName=Aegisub Together {#BUILD_GIT_VERSION_STRING}
 AppVersion={#INSTALLER_VERSION}
-AppPublisher=Aegisub Team
-AppPublisherURL=http://www.aegisub.org/
-AppSupportURL=https://github.com/Aegsiub/Aegisub/issues
+AppPublisher=Aegisub Together contributors
+AppPublisherURL=https://github.com/WenHe233/Aegisub-together
+AppSupportURL=https://github.com/WenHe233/Aegisub-together/issues
 AppCopyright=2005-{#CURRENT_YEAR} The Aegisub Team
 VersionInfoVersion={#INSTALLER_VERSION}
-DefaultGroupName=Aegisub
+DefaultGroupName=Aegisub Together
 AllowNoIcons=true
 OutputDir={#BUILD_ROOT}
 Compression=lzma/ultra64
@@ -29,14 +29,14 @@ UsePreviousSetupType=no
 UsePreviousAppDir=yes
 UsePreviousTasks=no
 UsedUserAreasWarning=no
-UninstallDisplayIcon={app}\aegisub.exe
+UninstallDisplayIcon={app}\aegisub-together.exe
 ; Default to a large welcome bitmap, suitable for large fonts
 ; The normal fonts version is selected by code below
 WizardImageFile={#INSTALLER_DIR}\welcome-large.bmp
 WizardSmallImageFile={#INSTALLER_DIR}\aegisub-large.bmp
 
-OutputBaseFilename=Aegisub-{#BUILD_GIT_VERSION_STRING}
-VersionInfoDescription=Aegisub {#BUILD_GIT_VERSION_STRING}
+OutputBaseFilename=Aegisub-Together-{#BUILD_GIT_VERSION_STRING}
+VersionInfoDescription=Aegisub Together {#BUILD_GIT_VERSION_STRING}
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"

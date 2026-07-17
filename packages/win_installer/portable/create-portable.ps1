@@ -32,7 +32,7 @@ Write-Output BUILD_ROOT=$BuildRoot
 Write-Output SOURCE_ROOT=$SourceRoot
 $InstallerDir = Join-Path $BuildRoot "install"
 $InstallerDepsDir = Join-Path $BuildRoot "installer-deps"
-$PortableOutputDir = Join-Path $BuildRoot "aegisub-portable"
+$PortableOutputDir = Join-Path $BuildRoot "aegisub-together-portable"
 
 
 Write-Output Goto building dir
@@ -47,7 +47,7 @@ Remove-Item -LiteralPath "install" -Force -Recurse
 Write-Output 'Make install'
 meson install --no-rebuild --destdir $InstallerDir
 Write-Output 'Gathering files'
-Copy-New-Item $InstallerDir\bin\aegisub.exe  $PortableOutputDir
+Copy-New-Item $InstallerDir\bin\aegisub-together.exe  $PortableOutputDir
 
 Write-Output 'Copying - translations'
 Copy-New-Items "$InstallerDir\share\locale\*"  "$PortableOutputDir\locale" -Recurse
@@ -73,7 +73,7 @@ Copy-New-Item $InstallerDepsDir\XAudio2_redist\build\native\release\bin\x64\xaud
 Rename-Item $PortableOutputDir\Redist\xaudio2_9redist.dll $PortableOutputDir\Redist\XAudio2_9.dll
 
 Write-Output 'Copying - automation'
-Copy-New-Items "$InstallerDir\share\aegisub\automation\*"  "$PortableOutputDir\automation\"  -Recurse
+Copy-New-Items "$InstallerDir\share\aegisub-together\automation\*"  "$PortableOutputDir\automation\"  -Recurse
 Write-Output 'Copying - automation\DEPCTRL'
 Copy-New-Items "$InstallerDepsDir\DependencyControl\modules\*"  "$PortableOutputDir\automation\include\l0\"  -Recurse
 Copy-New-Items "$InstallerDepsDir\DependencyControl\macros\*"  "$PortableOutputDir\automation\autoload\"  -Recurse
@@ -93,5 +93,5 @@ Copy-New-Item $SourceRoot\packages\win_installer\portable\config.json  $Portable
 
 
 Write-Output 'Creating portable zip'
-Remove-Item aegisub-portable-64.zip
-7z a aegisub-portable-64.zip aegisub-portable\
+Remove-Item aegisub-together-portable-64.zip
+7z a aegisub-together-portable-64.zip aegisub-together-portable\

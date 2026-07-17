@@ -436,7 +436,7 @@ void Advanced_Audio(wxTreebook *book, Preferences *parent) {
 #ifdef WITH_BESTSOURCE
 	auto bs = p->PageSizer("BestSource");
 	p->OptionAdd(bs, _("Max BS cache size (MB)"), "Provider/Audio/BestSource/Max Cache Size");
-	p->OptionAdd(bs, _("Use Aegisub's Cache"), "Provider/Audio/BestSource/Aegisub Cache");
+	p->OptionAdd(bs, _("Use Aegisub Together's Cache"), "Provider/Audio/BestSource/Aegisub Cache");
 #endif
 
 

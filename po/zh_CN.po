@@ -373,10 +373,10 @@ msgstr "文件未被识别为脚本"
 
 #: ../src/charset_detect.cpp:55
 msgid ""
-"Aegisub could not narrow down the character set to a single one.\n"
+"Aegisub Together could not narrow down the character set to a single one.\n"
 "Please pick one below:"
 msgstr ""
-"Aegisub无法确定文字编码\n"
+"Aegisub Together 无法确定文字编码\n"
 "请从下列中选择："
 
 #: ../src/charset_detect.cpp:56
@@ -392,8 +392,8 @@ msgid "About"
 msgstr "关于"
 
 #: ../src/command/app.cpp:59 ../src/dialog_about.cpp:44
-msgid "About Aegisub"
-msgstr "关于 Aegisub"
+msgid "About Aegisub Together"
+msgstr "关于 Aegisub Together"
 
 #: ../src/command/app.cpp:68
 msgid "&Audio+Subs View"
@@ -464,8 +464,8 @@ msgid "Language"
 msgstr "语言"
 
 #: ../src/command/app.cpp:158
-msgid "Select Aegisub interface language"
-msgstr "选择Aegisub界面语言"
+msgid "Select Aegisub Together interface language"
+msgstr "选择 Aegisub Together 界面语言"
 
 #: ../src/command/app.cpp:181
 msgid "&Log window"
@@ -502,8 +502,8 @@ msgid "Options"
 msgstr "选项"
 
 #: ../src/command/app.cpp:207
-msgid "Configure Aegisub"
-msgstr "配置Aegisub"
+msgid "Configure Aegisub Together"
+msgstr "配置 Aegisub Together"
 
 #: ../src/command/app.cpp:221 ../src/command/app.cpp:222
 msgid "Toggle global hotkey overrides"
@@ -534,8 +534,8 @@ msgid "Check for Updates"
 msgstr "检查更新"
 
 #: ../src/command/app.cpp:261
-msgid "Check to see if there is a new version of Aegisub available"
-msgstr "检查是否有可用的新版Aegisub"
+msgid "Check to see if there is a new version of Aegisub Together available"
+msgstr "检查是否有可用的新版 Aegisub Together"
 
 #: ../src/command/app.cpp:271 ../src/command/app.cpp:272
 msgid "Minimize"
@@ -1660,8 +1660,8 @@ msgid "Bug Tracker"
 msgstr "Bug跟踪系统"
 
 #: ../src/command/help.cpp:50
-msgid "Visit Aegisub's bug tracker to report bugs and request new features"
-msgstr "访问Aegisub的Bug跟踪系统来报告bug和要求新增功能"
+msgid "Visit Aegisub Together's bug tracker to report bugs and request new features"
+msgstr "访问 Aegisub Together 的问题跟踪系统来报告问题或提出新功能"
 
 #: ../src/command/help.cpp:69
 msgid "&Contents"
@@ -1708,8 +1708,8 @@ msgid "Website"
 msgstr "网站"
 
 #: ../src/command/help.cpp:107
-msgid "Visit Aegisub's official website"
-msgstr "访问Aegisub的官方网站"
+msgid "Visit the Aegisub Together project website"
+msgstr "访问 Aegisub Together 项目网站"
 
 #: ../src/command/keyframe.cpp:50 ../src/command/keyframe.cpp:51
 msgid "Close Keyframes"
@@ -4362,16 +4362,16 @@ msgid "Remove fro&m dictionary"
 msgstr "从字典移除(&M)"
 
 #: ../src/dialog_spellchecker.cpp:279
-msgid "Aegisub has finished checking spelling of this script."
-msgstr "Aegisub已经检查完该脚本的拼写检查。"
+msgid "Aegisub Together has finished checking spelling of this script."
+msgstr "Aegisub Together 已完成该脚本的拼写检查。"
 
 #: ../src/dialog_spellchecker.cpp:279 ../src/dialog_spellchecker.cpp:283
 msgid "Spell checking complete."
 msgstr "拼写检查完成。"
 
 #: ../src/dialog_spellchecker.cpp:283
-msgid "Aegisub has found no spelling mistakes in this script."
-msgstr "Aegisub没有发现该脚本的拼写错误。"
+msgid "Aegisub Together has found no spelling mistakes in this script."
+msgstr "Aegisub Together 未在该脚本中发现拼写错误。"
 
 #: ../src/dialog_spellchecker.cpp:329 ../src/dialog_spellchecker.cpp:343
 msgid "spell check replace"
@@ -5092,34 +5092,34 @@ msgid "HTTP request failed, got HTTP response %d."
 msgstr "HTTP请求失败，返回的状态 %d。"
 
 #: ../src/dialog_version_check.cpp:342
-msgid "An update to Aegisub was found."
-msgstr "发现Aegisub更新。"
+msgid "An update to Aegisub Together was found."
+msgstr "发现 Aegisub Together 更新。"
 
 #: ../src/dialog_version_check.cpp:344
-msgid "Several possible updates to Aegisub were found."
-msgstr "发现几个Aegisub可用更新。"
+msgid "Several possible updates to Aegisub Together were found."
+msgstr "发现多个可能的 Aegisub Together 更新。"
 
 #: ../src/dialog_version_check.cpp:346
-msgid "There are no updates to Aegisub."
-msgstr "没有发现Aegisub更新。"
+msgid "There are no updates to Aegisub Together."
+msgstr "没有发现 Aegisub Together 更新。"
 
 #: ../src/dialog_version_check.cpp:374
 #, c-format
 msgid ""
-"There was an error checking for updates to Aegisub:\n"
+"There was an error checking for updates to Aegisub Together:\n"
 "%s\n"
 "\n"
 "If other applications can access the Internet fine, this is probably a "
 "temporary server problem on our end."
 msgstr ""
-"Aegisub检查更新时出错：\n"
+"Aegisub Together 检查更新时出错：\n"
 "%s\n"
 "\n"
 "如果其他程序可以正常访问互联网，那么这很可能是我们的服务器的临时问题。"
 
 #: ../src/dialog_version_check.cpp:378
-msgid "An unknown error occurred while checking for updates to Aegisub."
-msgstr "Aegisub检查更新时发生未知错误。"
+msgid "An unknown error occurred while checking for updates to Aegisub Together."
+msgstr "Aegisub Together 检查更新时发生未知错误。"
 
 #: ../src/dialog_video_details.cpp:45
 msgid "Video Details"
@@ -5444,20 +5444,21 @@ msgstr "热键命令名称无效"
 #: ../src/main.cpp:276
 #, c-format
 msgid ""
-"Oops, Aegisub has crashed!\n"
+"Oops, Aegisub Together has crashed!\n"
 "\n"
 "An attempt has been made to save a copy of your file to:\n"
 "\n"
 "%s\n"
 "\n"
-"Aegisub will now close."
+"Aegisub Together will now close."
 msgstr ""
-"喔唷，Aegisub娘崩溃啦！\n"
+"糟糕，Aegisub Together 崩溃了！\n"
 "\n"
 "已经将你的文件的副本保存到了：\n"
 "\n"
 "%s\n"
-"Aegisub被迫立即关闭。"
+"\n"
+"Aegisub Together 将立即关闭。"
 
 #: ../src/main.cpp:303
 msgid "Check for updates?"
@@ -5465,9 +5466,9 @@ msgstr "检查更新吗？"
 
 #: ../src/main.cpp:303
 msgid ""
-"Do you want Aegisub to check for updates whenever it starts? You can still "
+"Do you want Aegisub Together to check for updates whenever it starts? You can still "
 "do it manually via the Help menu."
-msgstr "您想让Aegisub启动时检查更新吗？您也可以通过帮助菜单手动进行。"
+msgstr "您想让 Aegisub Together 在启动时检查更新吗？您也可以通过帮助菜单手动检查。"
 
 #: ../src/main.cpp:420 ../src/main.cpp:423
 msgid "Program error"
@@ -5477,11 +5478,11 @@ msgstr "程序错误"
 #, c-format
 msgid ""
 "An unexpected error has occurred. Please save your work and restart "
-"Aegisub.\n"
+"Aegisub Together.\n"
 "\n"
 "Error Message: %s"
 msgstr ""
-"发生了一个意外的错误。请保存您的文件并重启Aegisub。\n"
+"发生意外错误。请保存您的工作并重启 Aegisub Together。\n"
 "\n"
 "错误信息： %s"
 
@@ -6264,8 +6265,8 @@ msgid "Max BS cache size (MB)"
 msgstr ""
 
 #: ../src/preferences.cpp:428
-msgid "Use Aegisub's Cache"
-msgstr ""
+msgid "Use Aegisub Together's Cache"
+msgstr "使用 Aegisub Together 缓存"
 
 #: ../src/preferences.cpp:434
 msgid "Portaudio device"
@@ -6918,8 +6919,8 @@ msgid "Window"
 msgstr ""
 
 #: packages/win_installer/fragment_strings.iss:1
-msgid "Automatically check for new versions of Aegisub"
-msgstr "自动检查Aegisub的新版本"
+msgid "Automatically check for new versions of Aegisub Together"
+msgstr "自动检查 Aegisub Together 的新版本"
 
 #: packages/win_installer/fragment_strings.iss:1
 msgid "Create a start menu icon"
@@ -6931,15 +6932,15 @@ msgstr "正在安装运行库……"
 
 #: packages/win_installer/fragment_strings.iss:1
 msgid ""
-"This will install Aegisub {#BUILD_GIT_VERSION_STRING} on your computer."
-"%n%nAegisub is covered by the GNU General Public License version 2. This "
+"This will install Aegisub Together {#BUILD_GIT_VERSION_STRING} on your computer."
+"%n%nAegisub Together is covered by the GNU General Public License version 2. This "
 "means you may use the application for any purpose without charge, but that "
-"no warranties of any kind are given either.%n%nSee the Aegisub website for "
+"no warranties of any kind are given either.%n%nSee the Aegisub Together website for "
 "information on obtaining the source code."
 msgstr ""
-"将会在您的电脑上安装Aegisub {#BUILD_GIT_VERSION_STRING} 。%n%nAegisub适用于"
+"将会在您的电脑上安装 Aegisub Together {#BUILD_GIT_VERSION_STRING}。%n%nAegisub Together 适用于"
 "GNU通用公共许可证第二版(GPLv2)，这意味着您可以将该应用程序用于任何目的而不需"
-"要支付费用，但同时也不会得到任何形式的担保。%n%n您可以到Aegisub官网获取源代码"
+"要支付费用，但同时也不会得到任何形式的担保。%n%n您可以到 Aegisub Together 项目网站获取源代码"
 "信息。"
 
 #: packages/win_installer/fragment_strings.iss:1
@@ -6951,12 +6952,12 @@ msgid "Collaboration connection failed"
 msgstr "协作连接失败"
 
 #: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
-msgid "The connection failed before Aegisub received the room confirmation. The room may already have been created; try joining the same room instead of creating it again."
-msgstr "Aegisub 在收到房间确认前连接失败。房间可能已经创建；请尝试加入同名房间，而不要再次创建。"
+msgid "The connection failed before Aegisub Together received the room confirmation. The room may already have been created; try joining the same room instead of creating it again."
+msgstr "Aegisub Together 在收到房间确认前连接失败。房间可能已经创建；请尝试加入同名房间，而不要再次创建。"
 
 #: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
-msgid "The connection failed before Aegisub joined the room."
-msgstr "Aegisub 在加入房间前连接失败。"
+msgid "The connection failed before Aegisub Together joined the room."
+msgstr "Aegisub Together 在加入房间前连接失败。"
 
 #: ../src/collaboration_controller.cpp ../src/frame_main.cpp ../src/command/edit.cpp ../src/subs_controller.cpp
 msgid "Copy diagnostics"

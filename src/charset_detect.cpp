@@ -52,7 +52,7 @@ std::string GetEncoding(agi::fs::path const& filename) {
 
 	auto choices = agi::charset::GetEncodingsList<wxArrayString>();
 	int choice = wxGetSingleChoiceIndex(
-		_("Aegisub could not narrow down the character set to a single one.\nPlease pick one below:"),
+		_("Aegisub Together could not narrow down the character set to a single one.\nPlease pick one below:"),
 		_("Choose character set"),
 		choices);
 	if (choice == -1) throw agi::UserCancelException("Cancelled encoding selection");

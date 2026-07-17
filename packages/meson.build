@@ -16,7 +16,7 @@ elif host_machine.system() == 'darwin'
     run_target('osx-build-dmg',
                command: [build_dmg_sh, meson.project_source_root(), meson.project_build_root(), meson.project_version()])
 else
-    conf_pkg.set('AEGISUB_COMMAND', 'aegisub')
+    conf_pkg.set('AEGISUB_COMMAND', 'aegisub-together')
 
     desktop_template = configure_file(input: 'desktop/aegisub.desktop.in.in',
                                       output: 'aegisub.desktop.in',
@@ -50,7 +50,7 @@ else
     endforeach
 
     if get_option('build_appimage')
-      install_symlink('AppRun', install_dir: '/', pointing_to: bindir.strip('/') / 'aegisub')
+      install_symlink('AppRun', install_dir: '/', pointing_to: bindir.strip('/') / 'aegisub-together')
       install_symlink('.DirIcon', install_dir: '/', pointing_to: datadir.strip('/') / 'icons' / 'hicolor' / 'scalable' / 'apps' / 'aegisub.svg')
       install_symlink('aegisub.desktop', install_dir: '/', pointing_to: datadir.strip('/') / 'applications' / 'aegisub.desktop')
     endif

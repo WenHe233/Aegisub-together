@@ -120,6 +120,15 @@ jobs:
 
       - name: Build
         run: meson compile -C build
+
+      - name: Verify Aegisub Together Windows identity
+        if: matrix.config.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $exe = Get-Item -LiteralPath build/aegisub-together.exe
+          if (Test-Path -LiteralPath build/aegisub.exe) { throw 'legacy aegisub.exe was produced' }
+          if ($exe.VersionInfo.ProductName -ne 'Aegisub Together') { throw "unexpected product name: $($exe.VersionInfo.ProductName)" }
+          if ($exe.VersionInfo.OriginalFilename -ne 'aegisub-together.exe') { throw "unexpected original filename: $($exe.VersionInfo.OriginalFilename)" }
       
       - name: Run test
         run: meson test -C build --verbose "gtest main"
@@ -199,7 +208,7 @@ jobs:
         if: matrix.config.os == 'windows-latest'
         with:
           name: ${{ matrix.config.name }} - installer
-          path: build/Aegisub-*.exe
+          path: build/Aegisub-Together-*.exe
           if-no-files-found: error
       
       - name: Upload artifacts - portable.zip
@@ -207,4 +216,4 @@ jobs:
         if: matrix.config.os == 'windows-latest'
         with:
           name: ${{ matrix.config.name }} - portable
-          path: build/aegisub-portable-64.zip
+          path: build/aegisub-together-portable-64.zip

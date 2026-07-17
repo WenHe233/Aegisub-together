@@ -288,7 +288,7 @@ void DoCheck(bool interactive) {
 
 	agi::format(stream,
 		"GET %s?rev=%d&rel=%d&os=%s&lang=%s&aegilang=%s HTTP/1.0\r\n"
-		"User-Agent: Aegisub %s\r\n"
+		"User-Agent: Aegisub-Together %s\r\n"
 		"Host: %s\r\n"
 		"Accept: */*\r\n"
 		"Connection: close\r\n\r\n"
@@ -339,11 +339,11 @@ void DoCheck(bool interactive) {
 		agi::dispatch::Main().Async([=]{
 			wxString text;
 			if (results.size() == 1)
-				text = _("An update to Aegisub was found.");
+				text = _("An update to Aegisub Together was found.");
 			else if (results.size() > 1)
-				text = _("Several possible updates to Aegisub were found.");
+				text = _("Several possible updates to Aegisub Together were found.");
 			else
-				text = _("There are no updates to Aegisub.");
+				text = _("There are no updates to Aegisub Together.");
 
 			new VersionCheckerResultDialog(text, results);
 		});
@@ -371,11 +371,11 @@ void PerformVersionCheck(bool interactive) {
 		}
 		catch (const agi::Exception &e) {
 			PostErrorEvent(interactive, fmt_tl(
-				"There was an error checking for updates to Aegisub:\n%s\n\nIf other applications can access the Internet fine, this is probably a temporary server problem on our end.",
+				"There was an error checking for updates to Aegisub Together:\n%s\n\nIf other applications can access the Internet fine, this is probably a temporary server problem on our end.",
 				e.GetMessage()));
 		}
 		catch (...) {
-			PostErrorEvent(interactive, _("An unknown error occurred while checking for updates to Aegisub."));
+			PostErrorEvent(interactive, _("An unknown error occurred while checking for updates to Aegisub Together."));
 		}
 
 		VersionCheckLock.unlock();

@@ -132,6 +132,14 @@ TEST(lagi_path, platform_paths_have_values) {
 	TEST_PLATFORM_PATH_TOKEN("?temp");
 }
 
+#ifdef _WIN32
+TEST(lagi_path, windows_user_data_is_isolated_from_upstream_aegisub) {
+	Path p;
+	EXPECT_EQ("Aegisub Together", p.Decode("?user").filename().string());
+	EXPECT_EQ("Aegisub Together", p.Decode("?local").filename().string());
+}
+#endif
+
 TEST(lagi_path, making_empty_absolute_gives_empty) {
 	Path p;
 	ASSERT_NO_THROW(p.MakeAbsolute("", "?data"));

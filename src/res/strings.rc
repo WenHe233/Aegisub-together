@@ -7,29 +7,29 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE 
 BEGIN
 	// Application "friendly name"
-	10000 "Aegisub"
+	10000 "Aegisub Together"
 	// Description of application's purpose
-	10001 "Create and edit styled subtitles with Aegisub."
+	10001 "Create and edit styled subtitles with Aegisub Together."
 	// Association name for generic subtitle formats
-	10101 "Aegisub subtitle file"
+	10101 "Aegisub Together subtitle file"
 	// Association name for .ass
-	10102 "Aegisub Advanced SSA subtitles"
+	10102 "Aegisub Together Advanced SSA subtitles"
 	// Association name for .ssa
-	10103 "Aegisub SubStation Alpha subtitles"
+	10103 "Aegisub Together SubStation Alpha subtitles"
 	// Association name for .srt
-	10104 "Aegisub SubRip text subtitles"
+	10104 "Aegisub Together SubRip text subtitles"
 	// Association name for .ttxt
-	10105 "Aegisub MPEG-4 timed text"
+	10105 "Aegisub Together MPEG-4 timed text"
 	// Association name for .mks
-	10106 "Aegisub Matroska subtitles"
+	10106 "Aegisub Together Matroska subtitles"
 	// Association name for .txt
-	10107 "Aegisub raw text file"
+	10107 "Aegisub Together raw text file"
 	// Association name for .mp4, .ogg and maybe other media containers (which could have either audio or video)
-	10108 "Aegisub media file"
+	10108 "Aegisub Together media file"
 	// Association name for .mka, .mp3, .aac, .m4a, .wav, other audio formats
-	10109 "Aegisub audio file"
+	10109 "Aegisub Together audio file"
 	// Association name for .mkv, .avi, .avs, other video formats
-	10110 "Aegisub video file"
+	10110 "Aegisub Together video file"
 END
 
 #pragma code_page(65001)

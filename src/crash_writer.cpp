@@ -84,7 +84,7 @@ void Write(std::string const& error) {
 	if (file.is_open()) {
 		file << util::strftime("--- %y-%m-%d %H:%M:%S ------------------\n");
 		file << agi::format("VER - %s\n", GetAegisubLongVersionString());
-		file << agi::format("EXC - Aegisub has crashed with unhandled exception \"%s\".\n", error);
+		file << agi::format("EXC - Aegisub Together has crashed with unhandled exception \"%s\".\n", error);
 		file << "----------------------------------------\n\n";
 		file.close();
 	}

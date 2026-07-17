@@ -87,7 +87,7 @@ AvisynthAudioProvider::AvisynthAudioProvider(agi::fs::path const& filename) try 
 				LoadFromClip(env->Invoke("DirectShowSource", AVSValue(args, 3), argnames));
 			// Otherwise fail
 			else
-				throw agi::AudioProviderError("No suitable audio source filter found. Try placing DirectShowSource.dll in the Aegisub application directory.");
+				throw agi::AudioProviderError("No suitable audio source filter found. Try placing DirectShowSource.dll in the Aegisub Together application directory.");
 		}
 	}
 	catch (AvisynthError &err) {

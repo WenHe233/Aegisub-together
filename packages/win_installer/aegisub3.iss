@@ -4,8 +4,8 @@
 #include "fragment_strings.iss"
 
 [Setup]
-AppID={{24BC8B57-716C-444F-B46B-A3349B9164C5}
-DefaultDirName={commonpf}\Aegisub
+AppID={{20ABE862-D228-445F-9024-5D014F2F4362}
+DefaultDirName={commonpf}\Aegisub Together
 PrivilegesRequired=poweruser
 ArchitecturesInstallIn64BitMode=x64
 ArchitecturesAllowed=x64
@@ -20,7 +20,6 @@ ArchitecturesAllowed=x64
 
 [Code]
 #include "fragment_shell_code.iss"
-#include "fragment_migrate_code.iss"
 #include "fragment_beautify_code.iss"
 
 procedure InitializeWizard;
@@ -30,15 +29,13 @@ end;
 
 function InitializeSetup: Boolean;
 begin
-  Result := InitializeSetupMigration;
+  Result := True;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   Updates: String;
 begin
-  CurStepChangedMigration(CurStep);
-
   if CurStep = ssPostInstall then
   begin
     if WizardIsTaskSelected('checkforupdates') then

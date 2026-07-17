@@ -85,8 +85,8 @@ public:
 		wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
 		auto* root = new wxBoxSizer(wxVERTICAL);
 		auto message = create_may_have_completed
-			? _("The connection failed before Aegisub received the room confirmation. The room may already have been created; try joining the same room instead of creating it again.")
-			: _("The connection failed before Aegisub joined the room.");
+			? _("The connection failed before Aegisub Together received the room confirmation. The room may already have been created; try joining the same room instead of creating it again.")
+			: _("The connection failed before Aegisub Together joined the room.");
 		root->Add(new wxStaticText(this, wxID_ANY, message), wxSizerFlags().Expand().Border(wxALL, 10));
 		diagnostics = new wxTextCtrl(this, wxID_ANY, to_wx(detail), wxDefaultPosition, wxSize(620, 180),
 			wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);

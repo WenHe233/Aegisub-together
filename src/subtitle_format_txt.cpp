@@ -136,7 +136,7 @@ void TXTSubtitleFormat::WriteFile(const AssFile *src, agi::fs::path const& filen
 	bool strip_formatting = true;
 
 	TextFileWriter file(filename, encoding);
-	file.WriteLineToFile(std::string("# Exported by Aegisub ") + GetAegisubShortVersionString());
+	file.WriteLineToFile(std::string("# Exported by Aegisub Together ") + GetAegisubShortVersionString());
 
 	// Write the file
 	for (auto const& dia : src->Events) {
