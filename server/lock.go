@@ -297,6 +297,9 @@ func lockOwnedBy(value *room, lineID, memberID string) (lineLock, bool) {
 	if !value.lockEnabled {
 		return lineLock{}, true
 	}
+	if value.maintenance != nil && value.maintenance.holderID == memberID {
+		return lineLock{}, true
+	}
 	existing, locked := value.locks[lineID]
 	return existing, locked && existing.memberID == memberID
 }

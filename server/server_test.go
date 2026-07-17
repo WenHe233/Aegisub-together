@@ -970,6 +970,17 @@ func TestMaintenanceClearsLocksFreezesOthersAndReleases(t *testing.T) {
 	if rejected == nil || rejected.Code != "maintenance_active" {
 		t.Fatalf("non-holder batch was not frozen: %#v", rejected)
 	}
+
+	_, _, rejected = submitBatch(t, holder, "maintenance-holder-batch", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("maintenance replacement")},
+	})
+	if rejected != nil {
+		t.Fatalf("maintenance holder could not modify a line after locks were cleared: %#v", rejected)
+	}
+	receiveType(t, holder, "maintenance_state")
+	receiveType(t, owner, "batch_applied")
+	receiveType(t, owner, "maintenance_state")
+
 	send(t, holder, "maintenance_release", "maintenance-release", struct{}{})
 	releasedEnvelope := receiveType(t, owner, "maintenance_state")
 	receiveType(t, holder, "maintenance_state")
@@ -982,7 +993,7 @@ func TestMaintenanceClearsLocksFreezesOthersAndReleases(t *testing.T) {
 	receiveType(t, holder, "lock_set_state")
 	receiveType(t, holder, "presence")
 	_, _, rejected = submitBatch(t, owner, "after-maintenance", protocol.ModifyOperation{
-		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("allowed")},
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 2, Fields: protocol.LineFields{Text: stringPointer("allowed")},
 	})
 	if rejected != nil {
 		t.Fatalf("edit remained frozen after maintenance release: %#v", rejected)
@@ -997,6 +1008,38 @@ func TestMaintenanceClearsLocksFreezesOthersAndReleases(t *testing.T) {
 	}
 	if grants != 1 || releases != 1 {
 		t.Fatalf("maintenance audit events missing: grants=%d releases=%d", grants, releases)
+	}
+}
+
+func TestMaintenanceHolderCanAtomicallyReplaceAllUnlockedLines(t *testing.T) {
+	_, _, url := configuredTestServer(t, Config{})
+	holder := dial(t, url)
+	authenticate(t, holder, "")
+
+	snapshot := sampleSnapshot()
+	second := snapshot.Lines[0]
+	second.LineID = "9K3MT7Q2CD-2"
+	second.PosKey = "k"
+	second.Fields.Text = stringPointer("World")
+	snapshot.Lines = append(snapshot.Lines, second)
+	send(t, holder, "create_room", "room-maintenance-replace", protocol.CreateRoom{
+		RoomName: "episode-01", RoomPassword: "room password", Nickname: "timer", LockEnabled: true, Snapshot: snapshot,
+	})
+	receiveType(t, holder, "room_joined")
+
+	send(t, holder, "maintenance_request", "maintenance-start", struct{}{})
+	receiveType(t, holder, "maintenance_state")
+	_, applied, rejected := submitBatch(t, holder, "replace-all", protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-1", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("Replaced one")},
+	}, protocol.ModifyOperation{
+		Op: "modify", LineID: "9K3MT7Q2CD-2", BaseVersion: 1, Fields: protocol.LineFields{Text: stringPointer("Replaced two")},
+	})
+	if rejected != nil {
+		t.Fatalf("maintenance replace-all batch was rejected after locks were cleared: %#v", rejected)
+	}
+	if len(applied.Operations) != 2 || applied.Operations[0].Line == nil || applied.Operations[1].Line == nil ||
+		*applied.Operations[0].Line.Fields.Text != "Replaced one" || *applied.Operations[1].Line.Fields.Text != "Replaced two" {
+		t.Fatalf("maintenance replace-all batch did not apply atomically: %#v", applied)
 	}
 }
 
