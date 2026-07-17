@@ -46,9 +46,9 @@ void SelectionController::SetSelectionAndActive(Selection new_selection, AssDial
 	if (active_line)
 		context->ass->Properties.active_row = active_line->Row;
 
-	AnnounceSelectedSetChanged();
 	if (active_line_changed)
 		AnnounceActiveLineChanged(new_line);
+	AnnounceSelectedSetChanged();
 }
 
 std::vector<AssDialogue *> SelectionController::GetSortedSelection() const {

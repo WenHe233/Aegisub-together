@@ -338,9 +338,29 @@ void SubsTextEditCtrl::UpdateCallTip() {
 }
 
 void SubsTextEditCtrl::SetTextTo(std::string const& text) {
+	struct ProgrammaticUpdateGuard {
+		SubsTextEditCtrl *control;
+		bool was_read_only;
+
+		explicit ProgrammaticUpdateGuard(SubsTextEditCtrl *control)
+		: control(control)
+		, was_read_only(control->GetReadOnly())
+		{
+			control->SetEvtHandlerEnabled(false);
+			control->Freeze();
+			if (was_read_only)
+				control->SetReadOnly(false);
+		}
+
+		~ProgrammaticUpdateGuard() {
+			if (was_read_only)
+				control->SetReadOnly(true);
+			control->SetEvtHandlerEnabled(true);
+			control->Thaw();
+		}
+	} guard(this);
+
 	osx::ime::invalidate(this);
-	SetEvtHandlerEnabled(false);
-	Freeze();
 
 	auto insertion_point = GetInsertionPoint();
 	if (static_cast<size_t>(insertion_point) > line_text.size())
@@ -361,8 +381,6 @@ void SubsTextEditCtrl::SetTextTo(std::string const& text) {
 		SetSelection(pos, pos);
 	}
 
-	SetEvtHandlerEnabled(true);
-	Thaw();
 }
 
 void SubsTextEditCtrl::Paste() {
