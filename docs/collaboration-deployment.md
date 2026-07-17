@@ -23,7 +23,7 @@ chmod 600 .env server.env
 
 ```sh
 printf '%s\n' '请替换为高强度密码' | \
-  docker run --rm -i ghcr.io/wenhe233/aegisub-together-server:v0.0.4 hash-password
+  docker run --rm -i ghcr.io/wenhe233/aegisub-together-server:v0.0.5 hash-password
 ```
 
 把输出写入 `server.env`，并保留单引号，防止哈希中的 `$` 被 shell 展开。`ARCHIVE_DAYS=0` 表示关闭冷归档，也是默认值；正整数表示房间无活动多少天后归档。归档会压缩房间状态并裁剪回放日志，但不会永久删除字幕，持有原房间凭据的客户端再次加入时会自动恢复。
@@ -60,7 +60,7 @@ docker compose run --rm --no-deps server \
 
 ```sh
 sha256sum -c SHA256SUMS
-sudo install -m 0755 aegisub-together-server-v0.0.4-linux-amd64 \
+sudo install -m 0755 aegisub-together-server-v0.0.5-linux-amd64 \
   /usr/local/bin/aegisub-together-server
 sudo useradd --system --home /var/lib/aegisub-together \
   --shell /usr/sbin/nologin aegisub-collab
