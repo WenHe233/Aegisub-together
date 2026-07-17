@@ -37,6 +37,7 @@ all_test_sources += [
     'tests/dialogue_lexer.cpp',
     'tests/format.cpp',
     'tests/fs.cpp',
+    'tests/grid_selection.cpp',
     'tests/hotkey.cpp',
     'tests/iconv.cpp',
     'tests/ifind.cpp',
@@ -79,7 +80,7 @@ endif
 runner = executable(
     'gtest-main',
     all_test_sources,
-    include_directories : [test_inc, libaegisub_inc, deps_inc],
+    include_directories : [test_inc, include_directories('../src'), libaegisub_inc, deps_inc],
     dependencies : all_test_deps,
     cpp_args : extra_args,
     link_with : all_test_dep_libs,

@@ -341,6 +341,7 @@ public:
 }
 
 class CollaborationController::Impl final : public wxEvtHandler {
+	friend class CollaborationController;
 	enum class Phase { idle, connecting, waiting_access, waiting_room, joined };
 
 	Context* context;
@@ -368,6 +369,7 @@ class CollaborationController::Impl final : public wxEvtHandler {
 	bool lock_request_scheduled = false;
 	bool lock_request_inflight = false;
 	bool lock_selection_too_large = false;
+	bool selection_gesture_active = false;
 	std::vector<PresenceMember> presence;
 	MaintenanceStateMessage maintenance;
 	bool offline_session = false;
@@ -406,7 +408,8 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	bool owns_selected_lock_set() const {
 		auto line_ids = selected_line_ids();
-		return OwnsCompleteLockSet(line_ids, lock_holders, room.member_id, lock_request_inflight || lock_request_scheduled);
+		return OwnsCompleteLockSet(line_ids, lock_holders, room.member_id,
+			selection_gesture_active || lock_request_inflight || lock_request_scheduled);
 	}
 
 	void update_editability() {
@@ -421,6 +424,10 @@ class CollaborationController::Impl final : public wxEvtHandler {
 
 	void schedule_lock_set_request() {
 		if (phase != Phase::joined) return;
+		if (selection_gesture_active) {
+			update_editability();
+			return;
+		}
 		desired_lock_ids = selected_line_ids();
 		desired_active_line_id = active_line_id.empty() ? std::nullopt : std::optional<std::string>(active_line_id);
 		lock_selection_too_large = desired_lock_ids.size() > MaximumLockSetSize;
@@ -640,6 +647,23 @@ class CollaborationController::Impl final : public wxEvtHandler {
 		else active_line_id.clear();
 		update_editability();
 		schedule_lock_set_request();
+	}
+
+	void begin_selection_gesture() {
+		if (selection_gesture_active) return;
+		selection_gesture_active = true;
+		if (lock_request_scheduled) {
+			lock_request_scheduled = false;
+			lock_request_inflight = false;
+		}
+		update_editability();
+	}
+
+	void end_selection_gesture() {
+		if (!selection_gesture_active) return;
+		selection_gesture_active = false;
+		schedule_lock_set_request();
+		update_editability();
 	}
 
 	void handle_lock_set_state(WireEnvelope const& envelope) {
@@ -1342,6 +1366,7 @@ public:
 		lock_request_scheduled = false;
 		lock_request_inflight = false;
 		lock_selection_too_large = false;
+		selection_gesture_active = false;
 		latest_lock_generation = 0;
 		presence.clear();
 		maintenance = MaintenanceStateMessage{};
@@ -1382,6 +1407,8 @@ void CollaborationController::BeginMutationGuard() { impl->begin_mutation(); }
 void CollaborationController::EndMutationGuard() { impl->end_mutation(); }
 bool CollaborationController::CanRunCommand(std::string const& command_name) const { return impl->can_run_command(command_name); }
 bool CollaborationController::CanModifySelectedRows() const { return impl->can_modify_selected_rows(); }
+void CollaborationController::BeginSelectionGesture() { impl->begin_selection_gesture(); }
+void CollaborationController::EndSelectionGesture() { impl->end_selection_gesture(); }
 bool CollaborationController::RequestGlobalReplace(SearchReplaceSettings const& settings) { return impl->request_global_replace(settings); }
 LineCollaborationState CollaborationController::LineState(AssDialogue const* line) const { return impl->line_state(line); }
 void CollaborationController::RequestMaintenance() { impl->request_maintenance(); }

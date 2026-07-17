@@ -39,6 +39,7 @@
 #include "compat.h"
 #include "collaboration_controller.h"
 #include "fold_controller.h"
+#include "grid_selection_logic.h"
 #include "grid_column.h"
 #include "options.h"
 #include "project.h"
@@ -120,9 +121,10 @@ BaseGrid::BaseGrid(wxWindow* parent, agi::Context *context)
 	});
 
 	Bind(wxEVT_CONTEXT_MENU, &BaseGrid::OnContextMenu, this);
+	Bind(wxEVT_MOUSE_CAPTURE_LOST, &BaseGrid::OnMouseCaptureLost, this);
 }
 
-BaseGrid::~BaseGrid() { }
+BaseGrid::~BaseGrid() { EndSelectionGesture(); }
 
 BEGIN_EVENT_TABLE(BaseGrid,wxWindow)
 	EVT_PAINT(BaseGrid::OnPaint)
@@ -540,7 +542,9 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 			if (dlg)
 				MakeVisRowVisible(row);
 			holding = false;
-			ReleaseMouse();
+			if (HasCapture())
+				ReleaseMouse();
+			EndSelectionGesture();
 		}
 		else {
 			// Only scroll if the mouse has moved to a different row to avoid
@@ -558,7 +562,17 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 	}
 	else if (click && dlg) {
 		holding = true;
+		drag_anchor_row = shift && extendRow >= 0 ? extendRow : VisRowToRow(row);
+		drag_additive = ctrl;
+		drag_base_rows.clear();
+		for (auto const* selected : context->selectionController->GetSelectedSet())
+			drag_base_rows.insert(selected->Row);
 		CaptureMouse();
+		selection_gesture_active = true;
+#ifdef WITH_COLLABORATION
+		if (context->collaboration)
+			context->collaboration->BeginSelectionGesture();
+#endif
 	}
 
 	if (dlg && columns[col]->OnMouseEvent(dlg, context, event)) {
@@ -607,21 +621,19 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 			return;
 		}
 
-		// Block select
+		// Block select. Keep the drag anchor independent from active-line
+		// notifications, which update extendRow as the pointer moves.
 		if ((click && shift && !alt) || holding) {
-			extendRow = old_extend;
-			int i1 = VisRowToRow(row);
-			int i2 = extendRow;
-
-			if (i1 > i2)
-				std::swap(i1, i2);
-
-			// Toggle each
+			if (click && shift)
+				drag_anchor_row = old_extend;
+			extendRow = drag_anchor_row;
+			auto rows = grid::DragSelectionRows(drag_anchor_row, VisRowToRow(row),
+				drag_base_rows, drag_additive);
 			Selection newsel;
-			if (ctrl) newsel = selection;
-			for (int i = i1; i <= i2; i++)
-				newsel.insert(GetDialogue(i));
+			for (int selected_row : rows)
+				newsel.insert(GetDialogue(selected_row));
 			set_selection_and_active(std::move(newsel));
+			extendRow = drag_anchor_row;
 			return;
 		}
 
@@ -640,6 +652,22 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 	}
 
 	event.Skip();
+}
+
+void BaseGrid::EndSelectionGesture() {
+	if (!selection_gesture_active) return;
+	selection_gesture_active = false;
+	drag_base_rows.clear();
+	drag_additive = false;
+#ifdef WITH_COLLABORATION
+	if (context->collaboration)
+		context->collaboration->EndSelectionGesture();
+#endif
+}
+
+void BaseGrid::OnMouseCaptureLost(wxMouseCaptureLostEvent &) {
+	holding = false;
+	EndSelectionGesture();
 }
 
 void BaseGrid::OnContextMenu(wxContextMenuEvent &evt) {

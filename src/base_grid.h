@@ -30,6 +30,7 @@
 #include <libaegisub/signal.h>
 
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include <wx/window.h>
@@ -46,6 +47,10 @@ class BaseGrid final : public wxWindow {
 	std::vector<agi::signal::Connection> connections;
 	int lineHeight = 1;     ///< Height of a line in pixels in the current font
 	bool holding = false;   ///< Is a drag selection in process?
+	bool selection_gesture_active = false;
+	bool drag_additive = false;
+	int drag_anchor_row = -1;
+	std::set<int> drag_base_rows;
 	int scrollWheelProgress  = 0;	///< How close we are to reaching a full mouse wheel step
 	wxFont font;            ///< Current grid font
 	wxScrollBar *scrollBar; ///< The grid's scrollbar
@@ -103,6 +108,7 @@ class BaseGrid final : public wxWindow {
 	void OnKeyDown(wxKeyEvent &event);
 	void OnCharHook(wxKeyEvent &event);
 	void OnMouseEvent(wxMouseEvent &event);
+	void OnMouseCaptureLost(wxMouseCaptureLostEvent &event);
 	void OnPaint(wxPaintEvent &event);
 	void OnScroll(wxScrollEvent &event);
 	void OnShowColMenu(wxCommandEvent &event);
@@ -120,6 +126,7 @@ class BaseGrid final : public wxWindow {
 	void UpdateStyle();
 
 	void SelectRow(int row, bool addToSelected = false, bool select=true);
+	void EndSelectionGesture();
 
 	int GetRows() const { return index_line_map.size(); }
 	int GetVisRows() const { return vis_index_line_map.size(); }

@@ -42,6 +42,8 @@ public:
 	void EndMutationGuard();
 	bool CanRunCommand(std::string const& command_name) const;
 	bool CanModifySelectedRows() const;
+	void BeginSelectionGesture();
+	void EndSelectionGesture();
 	bool RequestGlobalReplace(SearchReplaceSettings const& settings);
 	LineCollaborationState LineState(AssDialogue const* line) const;
 	void RequestMaintenance();
