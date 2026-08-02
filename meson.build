@@ -191,7 +191,6 @@ else
         wx.dependency('wxmono'),
         wx.dependency('wxregex'),
         wx.dependency('wxscintilla'),
-        wx.dependency('wxlexilla'),
     ]
 
     if host_machine.system() == 'windows' or host_machine.system() == 'darwin'
@@ -319,22 +318,25 @@ endif
 conf_meson = configuration_data()
 conf_meson.set('DEFAULT_PLAYER_AUDIO', def_audio)
 
-if get_option('enable_update_checker')
-    curl_disable = ['tool', 'dict', 'file', 'ftp', 'gopher', 'imap', 'ldap', 'ldaps', 'mqtt', 'pop3', 'rtmp', 'rtsp', 'smb', 'smtp', 'telnet', 'tftp']
-    curl_options = []
-    foreach opt : curl_disable
-        curl_options += opt + '=disabled'
-    endforeach
+curl_disable = ['tool', 'dict', 'file', 'ftp', 'gopher', 'imap', 'ldap', 'ldaps', 'mqtt', 'pop3', 'rtmp', 'rtsp', 'smb', 'smtp', 'telnet', 'tftp']
+curl_options = []
+foreach opt : curl_disable
+    curl_options += opt + '=disabled'
+endforeach
 
-    if host_machine.system() == 'windows'
-        curl_options += 'schannel=enabled'
-    elif host_machine.system() == 'darwin'
-        curl_options += 'secure-transport=enabled'
-    else
-        curl_options += 'openssl=enabled'
-    endif
+if host_machine.system() == 'windows'
+    curl_options += 'schannel=enabled'
+elif host_machine.system() == 'darwin'
+    curl_options += 'secure-transport=enabled'
+else
+    curl_options += 'openssl=enabled'
+endif
 
-    deps += dependency('libcurl', allow_fallback: true, default_options: curl_options)
+# AI features use libcurl independently of the optional update checker.
+deps += dependency('libcurl', allow_fallback: true, default_options: curl_options)
+
+if host_machine.system() == 'windows'
+    deps += cc.find_library('advapi32', required: true)
 endif
 
 luajit = dependency('luajit', version: '>=2.0.0', required: get_option('system_luajit'),

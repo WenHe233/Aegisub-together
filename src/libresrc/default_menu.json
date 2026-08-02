@@ -21,6 +21,7 @@
         {},
         { "command" : "grid/copytext/translator" },
         { "command" : "edit/line/change-text" },
+		{ "command" : "ai/review" },
         {},
         { "command" : "grid/fold/create" },
         { "command" : "grid/fold/toggle" },

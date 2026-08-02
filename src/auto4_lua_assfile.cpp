@@ -476,7 +476,19 @@ namespace Automation4 {
 				// insert
 				CheckBounds(n);
 
+				lua_getfield(L, 3, "source_line_text");
+				bool has_source_line = lua_isstring(L, -1);
+				lua_pop(L, 1);
+
 				auto e = LuaToTrackedAssEntry(L);
+				AssEntry *old_entry = lines[n - 1];
+				// Scripts written before source_line_text existed may replace a
+				// dialogue line without copying the field.
+				if (!has_source_line && old_entry && old_entry->Group() == AssEntryGroup::DIALOGUE && e->Group() == AssEntryGroup::DIALOGUE) {
+					auto old_line = static_cast<AssDialogue *>(old_entry);
+					auto new_line = static_cast<AssDialogue *>(e.get());
+					new_line->SourceLineText = old_line->SourceLineText;
+				}
 				modification_type |= modification_mask(e.get());
 				QueueLineForDeletion(n - 1);
 				AssignLine(n - 1, std::move(e));

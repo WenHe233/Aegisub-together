@@ -18,16 +18,13 @@
 #include "ass_file.h"
 
 namespace agi { struct Context; }
-class AssDialogue;
 
 extern const char *source_line_key;
 
 class SourceLineController {
 	agi::Context *context;
-	agi::signal::Connection pre_commit_listener;
 	agi::signal::Connection save_listener;
 
-	void OnPreCommit(int type, const AssDialogue *single_line);
 	void OnBeforeSave(AssFile& file);
 
 	void LoadFromExtradata();
@@ -37,4 +34,8 @@ class SourceLineController {
 
 public:
 	explicit SourceLineController(agi::Context *context);
+
+	/// Populate source lines after a subtitle file has been loaded.
+	/// This must not be tied to COMMIT_NEW, which is also used by undo/redo.
+	void OnFileLoad();
 };

@@ -48,7 +48,7 @@
 #endif
 
 const char *GetAegisubLongVersionString() {
-	return "-- nyaa's edition v3.5.6";
+	return "-- nyaa's edition v4.0";
 }
 
 const char *GetAegisubShortVersionString() {

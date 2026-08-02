@@ -266,7 +266,8 @@ bool paste_over(wxWindow *parent, std::vector<bool>& pasteOverOptions, AssDialog
 		}
 
 		old_line.Text = text;
-		old_line.SourceLineText = new_line.SourceLineText;
+		if (!new_line.SourceLineText.get().empty())
+			old_line.SourceLineText = new_line.SourceLineText;
 	}
 
 	return true;

@@ -250,6 +250,29 @@ TEST(lagi_cajun, ReaderScanErrors) {
 
 	std::istringstream unexpected_eof("\"abc");
 	EXPECT_THROW(json::Reader::Read(ue, unexpected_eof), json::Exception);
+
+	std::istringstream invalid_unicode("\"\\u12x4\"");
+	EXPECT_THROW(json::Reader::Read(ue, invalid_unicode), json::Exception);
+
+	std::istringstream incomplete_unicode("\"\\u123\"");
+	EXPECT_THROW(json::Reader::Read(ue, incomplete_unicode), json::Exception);
+
+	std::istringstream orphan_low_surrogate("\"\\uDE00\"");
+	EXPECT_THROW(json::Reader::Read(ue, orphan_low_surrogate), json::Exception);
+
+	std::istringstream missing_low_surrogate("\"\\uD83Dabc\"");
+	EXPECT_THROW(json::Reader::Read(ue, missing_low_surrogate), json::Exception);
+}
+
+TEST(lagi_cajun, ReaderDecodesUnicodeEscapes) {
+	json::UnknownElement ue;
+	std::istringstream unicode("\"\\u00e1rv\\u00edz \\uD83D\\uDE00\"");
+	json::Reader::Read(ue, unicode);
+	EXPECT_EQ("árvíz 😀", static_cast<json::String const&>(ue));
+
+	std::istringstream escaped_backslash("\"\\\\u00e1\"");
+	json::Reader::Read(ue, escaped_backslash);
+	EXPECT_EQ("\\u00e1", static_cast<json::String const&>(ue));
 }
 
 std::string roundtrip_test(const char *in) {

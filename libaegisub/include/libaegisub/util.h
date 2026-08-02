@@ -60,6 +60,11 @@ namespace agi::util {
 		void map_range(size_t& start, size_t& end);
 	};
 
+	/// Convert ASS dialogue text to compact plain text by removing override
+	/// blocks, replacing ASS line/space escapes with spaces, collapsing ASCII
+	/// whitespace, and trimming the result.
+	std::string clean_ass_text(std::string_view str);
+
 	/// Set the name of the calling thread in the Visual Studio debugger
 	/// @param name New name for the thread
 	void SetThreadName(const char *name);

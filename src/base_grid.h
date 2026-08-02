@@ -146,6 +146,8 @@ public:
 
 	void SetByFrame(bool state);
 	void ScrollTo(int y);
+	/// Scroll the subtitle grid so that line and its surrounding rows are visible.
+	void MakeDialogueVisible(AssDialogue *line);
 
 	DECLARE_EVENT_TABLE()
 };

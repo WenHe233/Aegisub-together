@@ -164,17 +164,21 @@ void VideoController::Play() {
 }
 
 void VideoController::PlayLine() {
-	Stop();
-
 	AssDialogue *curline = context->selectionController->GetActiveLine();
 	if (!curline) return;
+	PlayRange(curline->Start, curline->End);
+}
 
-	context->audioController->PlayRange(TimeRange(curline->Start, curline->End));
+void VideoController::PlayRange(int range_start_ms, int range_end_ms) {
+	Stop();
+	if (!provider || range_end_ms <= range_start_ms) return;
+
+	context->audioController->PlayRange(TimeRange(range_start_ms, range_end_ms));
 
 	// Round-trip conversion to convert start to exact
-	int startFrame = FrameAtTime(context->selectionController->GetActiveLine()->Start, agi::vfr::START);
+	int startFrame = FrameAtTime(range_start_ms, agi::vfr::START);
 	start_ms = TimeAtFrame(startFrame);
-	end_frame = FrameAtTime(context->selectionController->GetActiveLine()->End, agi::vfr::END) + 1;
+	end_frame = FrameAtTime(range_end_ms, agi::vfr::END) + 1;
 
 	JumpToFrame(startFrame);
 

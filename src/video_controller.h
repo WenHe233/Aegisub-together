@@ -161,6 +161,8 @@ public:
 	void PrevFrame();
 	/// Seek to the beginning of the current line, then play to the end of it
 	void PlayLine();
+	/// Seek to start_ms, then play the open video until end_ms
+	void PlayRange(int start_ms, int end_ms);
 	/// Stop playing
 	void Stop();
 

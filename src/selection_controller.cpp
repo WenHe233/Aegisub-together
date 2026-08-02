@@ -26,6 +26,7 @@
 SelectionController::SelectionController(agi::Context *c) : context(c) { }
 
 void SelectionController::SetSelectedSet(Selection new_selection) {
+	if (new_selection == selection) return;
 	selection = std::move(new_selection);
 	AnnounceSelectedSetChanged();
 }
@@ -41,14 +42,16 @@ void SelectionController::SetActiveLine(AssDialogue *new_line) {
 
 void SelectionController::SetSelectionAndActive(Selection new_selection, AssDialogue *new_line) {
 	bool active_line_changed = new_line != active_line;
+	bool selection_changed = new_selection != selection;
 	selection = std::move(new_selection);
 	active_line = new_line;
 	if (active_line)
 		context->ass->Properties.active_row = active_line->Row;
 
-	AnnounceSelectedSetChanged();
 	if (active_line_changed)
 		AnnounceActiveLineChanged(new_line);
+	if (selection_changed)
+		AnnounceSelectedSetChanged();
 }
 
 std::vector<AssDialogue *> SelectionController::GetSortedSelection() const {

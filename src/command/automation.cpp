@@ -29,6 +29,7 @@
 //
 // Aegisub Project http://www.aegisub.org/
 
+#include "compat.h"
 #include "command.h"
 
 #include "../auto4_base.h"
@@ -38,6 +39,39 @@
 #include "../libresrc/libresrc.h"
 #include "../options.h"
 
+#include <wx/menu.h>
+#include <wx/timer.h>
+
+static const std::vector<std::string>& RecentPrefixes() {
+	static const std::vector<std::string> prefixes = {
+		"nyaa/",
+		"muteki/"
+	};
+
+	return prefixes;
+}
+
+static std::string FormatRecentName(std::string name) {
+	// cut first 3 part
+	for (int i = 0; i < 3; ++i) {
+		size_t pos = name.find('/');
+
+		if (pos == std::string::npos)
+			break;
+
+		name.erase(0, pos + 1);
+	}
+
+	// cut optional group (like "nyaa/")
+	for (auto const& prefix : RecentPrefixes()) {
+		if (name.rfind(prefix, 0) == 0) {
+			name.erase(0, prefix.size());
+			break;
+		}
+	}
+
+	return name;
+}
 
 namespace {
 	using cmd::Command;
@@ -98,6 +132,73 @@ struct meta final : public Command {
 	}
 };
 
+struct automation_last final : public Command {
+	CMD_NAME("am/last")
+	CMD_ICON(redo_button)
+	STR_MENU("Run last script")
+	STR_DISP("Run last script")
+	STR_HELP("Run last automation script, press twice fast to open last options")
+
+	void operator()(agi::Context *c) override {
+		static wxTimer *timer = nullptr;
+		static agi::Context *timer_context = nullptr;
+
+		auto recent = OPT_GET("Automation/Recent")->GetListString();
+
+		recent.erase(
+			std::remove_if(recent.begin(), recent.end(), [](std::string const& s) {
+				return s.empty();
+			}),
+			recent.end());
+
+		if (recent.empty())
+			return;
+
+		if (timer && timer->IsRunning()) {
+			timer->Stop();
+
+			wxMenu menu;
+			const size_t max_items = std::min<size_t>(recent.size(), 10);
+
+			for (size_t i = 0; i < max_items; ++i) {
+				wxString label(FormatRecentName(recent[i]));
+
+				const int id = wxID_HIGHEST + 1000 + int(i);
+				menu.Append(id, label);
+
+				menu.Bind(wxEVT_MENU, [c, recent, i](wxCommandEvent&) {
+					cmd::call(recent[i], c);
+				}, id);
+			}
+
+			c->frame->PopupMenu(&menu, c->frame->ScreenToClient(wxGetMousePosition()));
+
+			return;
+		}
+
+		timer_context = c;
+
+		if (!timer) {
+			timer = new wxTimer(c->frame);
+
+			c->frame->Bind(wxEVT_TIMER, [](wxTimerEvent&) {
+				auto recent = OPT_GET("Automation/Recent")->GetListString();
+
+				recent.erase(
+					std::remove_if(recent.begin(), recent.end(), [](std::string const& s) {
+						return s.empty();
+					}),
+					recent.end());
+
+				if (!recent.empty() && timer_context)
+					cmd::call(recent.front(), timer_context);
+			}, timer->GetId());
+		}
+
+		timer->StartOnce(250);
+	}
+};
+
 }
 
 namespace cmd {
@@ -106,5 +207,6 @@ namespace cmd {
 		reg(std::make_unique<open_manager>());
 		reg(std::make_unique<reload_all>());
 		reg(std::make_unique<reload_autoload>());
+		reg(std::make_unique<automation_last>());
 	}
 }

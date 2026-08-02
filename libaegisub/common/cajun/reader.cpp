@@ -16,7 +16,6 @@ Author: Terry Caton
 
 TODO:
 * better documentation
-* unicode character decoding
 
 */
 
@@ -201,6 +200,43 @@ void Reader::MatchExpectedString(std::string const& sExpected, InputStream& inpu
 
 void Reader::MatchString(std::string& string, InputStream& inputStream) {
 	MatchExpectedString("\"", inputStream);
+	auto read_hex_quad = [&] {
+		unsigned int value = 0;
+		for (int i = 0; i < 4; ++i) {
+			if (inputStream.EOS())
+				throw ScanException("Incomplete Unicode escape sequence in string", inputStream.GetLocation());
+
+			int c = inputStream.Get();
+			unsigned int digit;
+			if (c >= '0' && c <= '9') digit = c - '0';
+			else if (c >= 'a' && c <= 'f') digit = c - 'a' + 10;
+			else if (c >= 'A' && c <= 'F') digit = c - 'A' + 10;
+			else
+				throw ScanException("Invalid hexadecimal digit in Unicode escape sequence", inputStream.GetLocation());
+			value = value * 16 + digit;
+		}
+		return value;
+	};
+	auto append_utf8 = [&](unsigned int codepoint) {
+		if (codepoint <= 0x7F) {
+			string.push_back(static_cast<char>(codepoint));
+		}
+		else if (codepoint <= 0x7FF) {
+			string.push_back(static_cast<char>(0xC0 | (codepoint >> 6)));
+			string.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+		}
+		else if (codepoint <= 0xFFFF) {
+			string.push_back(static_cast<char>(0xE0 | (codepoint >> 12)));
+			string.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+			string.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+		}
+		else {
+			string.push_back(static_cast<char>(0xF0 | (codepoint >> 18)));
+			string.push_back(static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F)));
+			string.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+			string.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+		}
+	};
 
 	while (!inputStream.EOS() && inputStream.Peek() != '"') {
 		char c = inputStream.Get();
@@ -217,7 +253,24 @@ void Reader::MatchString(std::string& string, InputStream& inputStream) {
 				case 'n':  string.push_back('\n'); break;
 				case 'r':  string.push_back('\r'); break;
 				case 't':  string.push_back('\t'); break;
-				case 'u':  // TODO: what do we do with this?
+				case 'u': {
+					auto codepoint = read_hex_quad();
+					if (codepoint >= 0xD800 && codepoint <= 0xDBFF) {
+						if (inputStream.EOS() || inputStream.Get() != '\\' ||
+							inputStream.EOS() || inputStream.Get() != 'u')
+							throw ScanException("High surrogate is not followed by a Unicode low surrogate", inputStream.GetLocation());
+
+						auto low = read_hex_quad();
+						if (low < 0xDC00 || low > 0xDFFF)
+							throw ScanException("Invalid Unicode low surrogate", inputStream.GetLocation());
+						codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low - 0xDC00);
+					}
+					else if (codepoint >= 0xDC00 && codepoint <= 0xDFFF) {
+						throw ScanException("Unicode low surrogate without a high surrogate", inputStream.GetLocation());
+					}
+					append_utf8(codepoint);
+					break;
+				}
 				default:
 					throw ScanException(std::string("Unrecognized escape sequence found in string: \\") + c, inputStream.GetLocation());
 			}

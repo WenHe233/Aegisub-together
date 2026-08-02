@@ -78,6 +78,21 @@
 using namespace agi::lua;
 using namespace Automation4;
 
+static void AddAutomationRecent(std::string const& cmd_name) {
+	auto recent = OPT_GET("Automation/Recent")->GetListString();
+
+	recent.erase(
+		std::remove(recent.begin(), recent.end(), cmd_name),
+		recent.end());
+
+	recent.insert(recent.begin(), cmd_name);
+
+	if (recent.size() > 10)
+		recent.resize(10);
+
+	OPT_SET("Automation/Recent")->SetListString(recent);
+}
+
 namespace {
 	wxString get_wxstring(lua_State *L, int idx)
 	{
@@ -1087,6 +1102,8 @@ namespace {
 
 	void LuaCommand::operator()(agi::Context *c)
 	{
+		AddAutomationRecent(name());
+
 		c->textSelectionController->DropStagedChanges();
 		LuaStackcheck stackcheck(L);
 		set_context(L, c);

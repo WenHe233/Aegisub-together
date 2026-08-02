@@ -42,4 +42,11 @@ TEST(lagi_util, try_parse_int) {
 	EXPECT_EQ(1.0, i);
 }
 
+TEST(lagi_util, clean_ass_text) {
+	EXPECT_EQ("Hello world", util::clean_ass_text("  {\\i1}Hello\\N world{\\i0}  "));
+	EXPECT_EQ("A B C D", util::clean_ass_text("A\\NB\\nC\\hD"));
+	EXPECT_EQ("foobar", util::clean_ass_text("foo{comment}bar"));
+	EXPECT_EQ("one two three", util::clean_ass_text("one\r\n\t two   three"));
+}
+
 }

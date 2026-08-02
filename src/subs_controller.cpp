@@ -29,6 +29,7 @@
 #include "options.h"
 #include "project.h"
 #include "selection_controller.h"
+#include "source_line_controller.h"
 #include "subtitle_format.h"
 #include "text_selection_controller.h"
 
@@ -174,6 +175,7 @@ ProjectProperties SubsController::Load(agi::fs::path const& filename, const char
 	auto props = context->ass->Properties;
 
 	SetFileName(filename);
+	context->sourceLineController->OnFileLoad();
 
 	// Push the initial state of the file onto the undo stack
 	undo_stack.clear();

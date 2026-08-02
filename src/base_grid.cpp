@@ -293,6 +293,20 @@ void BaseGrid::MakeRowVisible(int row) {
 		ScrollTo(row - h/lineHeight + 3);
 }
 
+void BaseGrid::MakeDialogueVisible(AssDialogue *line) {
+	auto it = vis_lookup.find(line);
+	if (it == vis_lookup.end()) return;
+
+	// Place the requested line near the upper third even if the grid still
+	// considers it visible. This is used by modal review dialogs where the
+	// user needs the neighbouring rows as context and repainting can otherwise
+	// be deferred until after the dialog closes.
+	int page_rows = std::max(1, GetClientSize().GetHeight() / lineHeight);
+	ScrollTo(it->second - page_rows / 3);
+	Refresh(false);
+	Update();
+}
+
 void BaseGrid::MakeActiveLineVisible() {
 	AssDialogue* activeLine = context->selectionController->GetActiveLine();
 

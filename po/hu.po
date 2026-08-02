@@ -6857,3 +6857,435 @@ msgstr "Hozzárendelt fájlok betöltése"
 
 msgid "Attempt to load associated files to the subtitle"
 msgstr "A felirathoz hozzárendelt fájlok betöltésének megpróbálása"
+
+msgid "Run last script"
+msgstr "Utolsó script"
+
+msgid "Run last automation script, press twice fast to open last options"
+msgstr "Utolsó script futtatása, kétszeri gyors nyomással pedig opciók listázása"
+
+#: ../src/command/ai.cpp
+msgid "Selected line %d has no English source text."
+msgstr "A(z) %d. kijelölt sorhoz nincs angol forrásszöveg."
+
+msgid "AI translation"
+msgstr "AI-fordítás"
+
+msgid "The selected scene is %d:%02d long. The maximum for one AI conversation is 2:00."
+msgstr "A kijelölt jelenet hossza %d:%02d. Egy AI-beszélgetés legfeljebb 2:00 hosszú lehet."
+
+msgid "A temporary audio file could not be created."
+msgstr "Nem sikerült létrehozni az ideiglenes hangfájlt."
+
+msgid "The temporary audio file could not be prepared."
+msgstr "Nem sikerült előkészíteni az ideiglenes hangfájlt."
+
+msgid "The audio clip could not be created"
+msgstr "Nem sikerült létrehozni a hangrészletet"
+
+msgid "Configure AI connection..."
+msgstr "AI-kapcsolat beállítása…"
+
+msgid "Configure AI connection"
+msgstr "AI-kapcsolat beállítása"
+
+msgid "Configure the per-user OpenAI API connection"
+msgstr "A felhasználónkénti OpenAI API-kapcsolat beállítása"
+
+msgid "Translate selected lines with AI..."
+msgstr "Kijelölt sorok fordítása AI-jal…"
+
+msgid "Translate selected lines with AI"
+msgstr "Kijelölt sorok fordítása AI-jal"
+
+msgid "Send up to two minutes of selected subtitle audio and English source lines for AI-assisted Hungarian translation"
+msgstr "Legfeljebb két perc kijelölt felirathang és az angol forrássorok elküldése AI-segített magyar fordításhoz"
+
+#: ../src/dialog_ai_connection.cpp
+msgid "API key is available for this Aegisub session."
+msgstr "Az API-kulcs ehhez az Aegisub-munkamenethez használható."
+
+msgid "API key is provided by the OPENAI_API_KEY environment variable."
+msgstr "Az API-kulcsot az OPENAI_API_KEY környezeti változó adja meg."
+
+msgid "API key is stored securely in Windows Credential Manager."
+msgstr "Az API-kulcs biztonságosan, a Windows Hitelesítőadat-kezelőben van tárolva."
+
+msgid "No API key is configured."
+msgstr "Nincs beállítva API-kulcs."
+
+msgid "Enter an OpenAI API key first."
+msgstr "Előbb adj meg egy OpenAI API-kulcsot."
+
+msgid "AI connection"
+msgstr "AI-kapcsolat"
+
+msgid "The OpenAI connection is working."
+msgstr "Az OpenAI-kapcsolat működik."
+
+msgid "AI connection failed"
+msgstr "Az AI-kapcsolat sikertelen"
+
+msgid "Delete the API key stored by Aegisub on this computer?"
+msgstr "Törlöd az Aegisub által ezen a számítógépen tárolt API-kulcsot?"
+
+msgid "Delete API key"
+msgstr "API-kulcs törlése"
+
+msgid "The API key could not be deleted"
+msgstr "Nem sikerült törölni az API-kulcsot"
+
+msgid "The API key could not be saved"
+msgstr "Nem sikerült menteni az API-kulcsot"
+
+msgid "An OpenAI API key is required for AI translation."
+msgstr "Az AI-fordításhoz OpenAI API-kulcs szükséges."
+
+msgid "Each user connects with their own OpenAI API key. The key is never stored in subtitle files or Aegisub's configuration file."
+msgstr "Minden felhasználó a saját OpenAI API-kulcsával kapcsolódik. A kulcs soha nem kerül a feliratfájlba vagy az Aegisub beállításfájljába."
+
+msgid "New API key:"
+msgstr "Új API-kulcs:"
+
+msgid "Leave empty to keep using the current key"
+msgstr "Hagyd üresen a jelenlegi kulcs további használatához"
+
+msgid "Translation model:"
+msgstr "Fordítási modell:"
+
+msgid "Transcription model:"
+msgstr "Beszédfelismerési modell:"
+
+msgid "Store the key securely in Windows Credential Manager"
+msgstr "Kulcs biztonságos tárolása a Windows Hitelesítőadat-kezelőben"
+
+msgid "Additional translation instructions:"
+msgstr "További fordítási utasítások:"
+
+msgid "Test connection"
+msgstr "Kapcsolat tesztelése"
+
+msgid "Delete stored key"
+msgstr "Tárolt kulcs törlése"
+
+#: ../src/dialog_ai_translate.cpp
+msgid "Cancel request and close"
+msgstr "Kérés megszakítása és bezárás"
+
+msgid "Transcribing the Japanese audio..."
+msgstr "A japán hanganyag átírása…"
+
+msgid "You: "
+msgstr "Te: "
+
+msgid "The AI is updating the suggestions..."
+msgstr "Az AI frissíti a javaslatokat…"
+
+msgid "Line %d"
+msgstr "%d. sor"
+
+msgid "English source: "
+msgstr "Angol forrás: "
+
+msgid "Japanese: "
+msgstr "Japán: "
+
+msgid "Apply this line"
+msgstr "Sor alkalmazása"
+
+msgid "Notes: "
+msgstr "Megjegyzések: "
+
+msgid "AI request failed"
+msgstr "Az AI-kérés sikertelen"
+
+msgid "Request cancelled."
+msgstr "A kérés megszakítva."
+
+msgid "The request failed. You can close the dialog or retry by reopening it."
+msgstr "A kérés sikertelen. Bezárhatod az ablakot, vagy az újbóli megnyitásával újrapróbálhatod."
+
+msgid "AI: "
+msgstr "AI: "
+
+msgid "Translation suggestions are ready."
+msgstr "A fordítási javaslatok elkészültek."
+
+msgid "Suggestions updated."
+msgstr "A javaslatok frissültek."
+
+msgid "apply AI translation"
+msgstr "AI-fordítás alkalmazása"
+
+msgid "Cancelling the request..."
+msgstr "A kérés megszakítása…"
+
+msgid "AI subtitle translation"
+msgstr "AI feliratfordítás"
+
+msgid "Preparing AI request..."
+msgstr "AI-kérés előkészítése…"
+
+msgid "Chat about this scene"
+msgstr "Beszélgetés erről a jelenetről"
+
+msgid "Send"
+msgstr "Küldés"
+
+msgid "Apply selected lines and close"
+msgstr "Kijelölt sorok alkalmazása és bezárás"
+
+msgid "AI-assisted subtitle translation"
+msgstr "AI-segédletű feliratfordítás"
+
+msgid "Selected lines: %d"
+msgstr "Kijelölt sorok: %d"
+
+msgid "Japanese audio and English source text are used together for context."
+msgstr "A japán hangot és az angol forrásszöveget együtt használjuk kontextusként."
+
+msgid "Request status"
+msgstr "Kérés állapota"
+
+msgid "English source"
+msgstr "Angol forrás"
+
+msgid "Japanese / Romaji"
+msgstr "Japán / romaji"
+
+msgid "Romaji: "
+msgstr "Romaji: "
+
+msgid "Hungarian translation"
+msgstr "Magyar fordítás"
+
+msgid "Alternative suggestions"
+msgstr "Alternatív javaslatok"
+
+msgid "Review selected lines with AI..."
+msgstr "Kijelölt sorok ellenőrzése AI-jal…"
+
+msgid "Review selected lines with AI"
+msgstr "Kijelölt sorok ellenőrzése AI-jal"
+
+msgid "Check up to two minutes of Hungarian subtitles against Japanese audio and English source lines"
+msgstr "Legfeljebb két percnyi magyar felirat ellenőrzése japán hang és angol forrássorok alapján"
+
+msgid "AI subtitle review"
+msgstr "AI felirat-ellenőrzés"
+
+msgid "An OpenAI API key is required for AI subtitle review."
+msgstr "Az AI felirat-ellenőrzéshez OpenAI API-kulcs szükséges."
+
+msgid "Additional review instructions:"
+msgstr "További ellenőrzési utasítások:"
+
+msgid "Review model:"
+msgstr "Ellenőrzési modell:"
+
+msgid "AI model:"
+msgstr "AI-modell:"
+
+msgid "Available OpenAI models and pricing"
+msgstr "Elérhető OpenAI-modellek és árak"
+
+msgid "OK - no change needed"
+msgstr "Rendben – nem szükséges módosítás"
+
+msgid "Minor issue"
+msgstr "Kisebb probléma"
+
+msgid "Major issue"
+msgstr "Jelentős probléma"
+
+msgid "Review result"
+msgstr "Ellenőrzés eredménye"
+
+msgid "(empty)"
+msgstr "(üres)"
+
+msgid "AI review"
+msgstr "AI-ellenőrzés"
+
+msgid "No review returned"
+msgstr "Nem érkezett ellenőrzési eredmény"
+
+msgid "Play this line"
+msgstr "Sor hangjának lejátszása"
+
+msgid "Current subtitle"
+msgstr "Jelenlegi feliratszöveg"
+
+msgid "Assessment"
+msgstr "Értékelés"
+
+msgid "Issues found"
+msgstr "Talált problémák"
+
+msgid "Suggested correction"
+msgstr "Javasolt javítás"
+
+msgid "Transcribing the Japanese audio and reviewing the subtitles..."
+msgstr "A japán hang átírása és a feliratok ellenőrzése…"
+
+msgid "You"
+msgstr "Te"
+
+msgid "The AI is reviewing your follow-up question..."
+msgstr "Az AI ellenőrzi a kiegészítő kérésedet…"
+
+msgid "Subtitle review is ready."
+msgstr "A felirat-ellenőrzés elkészült."
+
+msgid "Follow-up review is ready."
+msgstr "A kiegészítő ellenőrzés elkészült."
+
+msgid "AI subtitle quality review"
+msgstr "AI feliratminőség-ellenőrzés"
+
+msgid "Read-only review; subtitle text will not be changed."
+msgstr "Csak olvasható ellenőrzés; a feliratszöveg nem módosul."
+
+msgid "Play full scene"
+msgstr "Teljes jelenet lejátszása"
+
+msgid "Conversation"
+msgstr "Beszélgetés"
+
+msgid "Ask a follow-up question"
+msgstr "Kiegészítő kérdés"
+
+msgid "Ask about meaning, tone, wording, or a specific line..."
+msgstr "Kérdezz a jelentésről, hangnemről, megfogalmazásról vagy egy konkrét sorról…"
+
+msgid "Stop playback"
+msgstr "Lejátszás megállítása"
+
+msgid "AI"
+msgstr "AI"
+
+msgid "Cancel request"
+msgstr "Kérés megszakítása"
+
+msgid "Spelling / typo"
+msgstr "Helyesírás / elgépelés"
+
+msgid "Punctuation"
+msgstr "Központozás"
+
+msgid "Grammar"
+msgstr "Nyelvtan"
+
+msgid "Wording / style"
+msgstr "Megfogalmazás / stílus"
+
+msgid "High CPS"
+msgstr "Magas CPS"
+
+msgid "Word repetition"
+msgstr "Szóismétlés"
+
+msgid "Subtitle consistency"
+msgstr "Feliratbeli következetesség"
+
+msgid "Source-line mismatch"
+msgstr "Eltérés a forrássortól"
+
+msgid "AI analysis in progress: checking %d target lines in full-subtitle context..."
+msgstr "AI-elemzés folyamatban: %d célsor ellenőrzése a teljes felirat kontextusában…"
+
+msgid "AI post-check failed"
+msgstr "Az AI-utóellenőrzés sikertelen"
+
+msgid "The AI post-check failed."
+msgstr "Az AI-utóellenőrzés sikertelen."
+
+msgid "The AI returned too few safe alternatives or did not preserve ASS formatting."
+msgstr "Az AI túl kevés biztonságos változatot adott, vagy nem őrizte meg az ASS-formázást."
+
+msgid "No subtitle text was changed. Please run the post-check again."
+msgstr "Egyetlen feliratszöveg sem változott meg. Futtasd újra az utóellenőrzést."
+
+msgid "No clear Hungarian spelling, style, consistency or CPS issue was found in the checked lines."
+msgstr "Nem találtam egyértelmű magyar helyesírási, stilisztikai, következetességi vagy CPS-problémát az ellenőrzött sorokban."
+
+msgid "AI post-check"
+msgstr "AI-utóellenőrzés"
+
+msgid "Suggestion %d of %d - line %d"
+msgstr "%d/%d. javaslat – %d. sor"
+
+msgid "Line %d   %s - %s   Current CPS: %d"
+msgstr "%d. sor   %s – %s   Jelenlegi CPS: %d"
+
+msgid " (above the 15 CPS limit)"
+msgstr " (a 15 CPS-es határ felett)"
+
+msgid "Selected version CPS: %d%s"
+msgstr "A kijelölt változat CPS-e: %d%s"
+
+msgid "apply AI post-check corrections"
+msgstr "AI-utóellenőrzés javításainak alkalmazása"
+
+msgid "Post-check complete. Applied: %d; skipped: %d."
+msgstr "Az utóellenőrzés befejeződött. Alkalmazva: %d; kihagyva: %d."
+
+msgid "Approve or skip every remaining suggestion before closing the post-check."
+msgstr "Az utóellenőrzés bezárása előtt hagyd jóvá vagy hagyd ki az összes hátralévő javaslatot."
+
+msgid "Hungarian subtitle post-check"
+msgstr "Magyar felirat utóellenőrzése"
+
+msgid "Spelling, wording, CPS, repetition, consistency and source-line checks"
+msgstr "Helyesírás, megfogalmazás, CPS, szóismétlés, következetesség és forrássor ellenőrzése"
+
+msgid "Preparing AI analysis..."
+msgstr "AI-elemzés előkészítése…"
+
+msgid "Source line"
+msgstr "Forrássor"
+
+msgid "Choose a proposed correction"
+msgstr "Válassz egy javítási javaslatot"
+
+msgid "Selected version preview:"
+msgstr "A kijelölt változat előnézete:"
+
+msgid "Approve selected correction"
+msgstr "Kijelölt javítás jóváhagyása"
+
+msgid "AI post-check..."
+msgstr "Utóellenőrzés…"
+
+msgid "Check Hungarian spelling, wording, CPS and consistency, then approve corrections one by one"
+msgstr "Magyar helyesírás, megfogalmazás, CPS és következetesség ellenőrzése, majd a javítások egyenkénti jóváhagyása"
+
+msgid "Selected lines (%d)"
+msgstr "Kijelölt sorok (%d)"
+
+msgid "All Default / Default - ... lines (%d)"
+msgstr "Minden Default / Default - ... sor (%d)"
+
+msgid "Choose which subtitle lines the AI post-check should be allowed to change."
+msgstr "Válaszd ki, mely feliratsorokat módosíthatja az AI-utóellenőrzés."
+
+msgid "AI post-check scope"
+msgstr "Az AI-utóellenőrzés hatóköre"
+
+msgid "The chosen scope contains no dialogue lines to check."
+msgstr "A kiválasztott hatókörben nincs ellenőrizhető párbeszédsor."
+
+msgid "The AI response referred to an invalid or duplicate subtitle line."
+msgstr "Az AI-válasz érvénytelen vagy ismétlődő feliratsorra hivatkozott."
+
+msgid "AI analysis in progress"
+msgstr "AI-elemzés folyamatban"
+
+msgid "Back"
+msgstr "Vissza"
+
+msgid "Skip"
+msgstr "Kihagyás"
+
+msgid "Cancel review"
+msgstr "Ellenőrzés megszakítása"

@@ -159,6 +159,33 @@ void tagless_find_helper::map_range(size_t &s, size_t &e) {
 	}
 }
 
+std::string clean_ass_text(std::string_view str) {
+	tagless_find_helper helper;
+	auto tagless = helper.strip_tags(std::string(str), 0);
+
+	std::string cleaned;
+	cleaned.reserve(tagless.size());
+	bool pending_space = false;
+	for (size_t i = 0; i < tagless.size(); ++i) {
+		auto c = tagless[i];
+		if (c == '\\' && i + 1 < tagless.size() &&
+			(tagless[i + 1] == 'N' || tagless[i + 1] == 'n' || tagless[i + 1] == 'h')) {
+			pending_space = true;
+			++i;
+			continue;
+		}
+		if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f' || c == '\v') {
+			pending_space = true;
+			continue;
+		}
+		if (pending_space && !cleaned.empty())
+			cleaned += ' ';
+		pending_space = false;
+		cleaned += c;
+	}
+	return cleaned;
+}
+
 void InitLocale() {
 	auto id = boost::locale::util::get_system_locale(true);
 	UErrorCode err = U_ZERO_ERROR;

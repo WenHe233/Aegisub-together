@@ -410,6 +410,37 @@ class AutomationMenu final : public wxMenu {
 	agi::signal::Connection local_slot;
 	std::vector<wxMenuItem *> all_items;
 
+	bool mutekiOnly = false;
+
+	static const std::vector<std::string>& MutekiPrefixes() {
+		static const std::vector<std::string> prefixes = {
+			"nyaa/",
+			"muteki/"
+		};
+
+		return prefixes;
+	}
+
+	static bool IsMutekiMacro(std::string const& name) {
+		for (auto const& prefix : MutekiPrefixes()) {
+			if (name.rfind(prefix, 0) == 0)
+				return true;
+		}
+
+		return false;
+	}
+
+	static std::string StripMutekiPrefix(std::string name) {
+		for (auto const& prefix : MutekiPrefixes()) {
+			if (name.rfind(prefix, 0) == 0) {
+				name.erase(0, prefix.size());
+				break;
+			}
+		}
+
+		return name;
+	}
+
 	struct WorkItem {
 		std::string displayname;
 		cmd::Command *command;
@@ -456,20 +487,32 @@ class AutomationMenu final : public wxMenu {
 			cm->Remove(item);
 
 		wxMenuItemList &items = GetMenuItems();
+
 		// Remove everything but automation manager and the separator
-		for (size_t i = items.size() - 1; i >= 2; --i)
-			Delete(items[i]);
+		const size_t itemStart = mutekiOnly ? 0 : 3;
+		while (items.size() > itemStart) {
+			Delete(items[items.size() - 1]);
+		}
 
 		auto macros = config::global_scripts->GetMacros();
 		boost::push_back(macros, c->local_scripts->GetMacros());
 		if (macros.empty()) {
-			Append(-1, _("No Automation macros loaded"))->Enable(false);
+			Append(-1, mutekiOnly ? _("No Muteki macros loaded") : _("No Automation macros loaded"))->Enable(false);
 			return;
 		}
 
 		WorkItem top("");
 		for (auto macro : macros) {
-			const auto name = from_wx(macro->StrMenu(c));
+			auto name = from_wx(macro->StrMenu(c));
+			bool isMuteki = IsMutekiMacro(name);
+
+			if (mutekiOnly != isMuteki)
+				continue;
+
+			if (mutekiOnly) {
+				name = StripMutekiPrefix(name);
+			}
+
 			WorkItem *parent = &top;
 			for (auto section : agi::Split(name, wxS('/'))) {
 				std::string sectionname(section.begin(), section.end());
@@ -486,14 +529,19 @@ class AutomationMenu final : public wxMenu {
 		top.GenerateMenu(this, this);
 	}
 public:
-	AutomationMenu(agi::Context *c, CommandManager *cm)
+	AutomationMenu(agi::Context *c, CommandManager *cm, bool mutekiOnly = false)
 	: c(c)
 	, cm(cm)
+	, mutekiOnly(mutekiOnly)
 	, global_slot(config::global_scripts->AddScriptChangeListener(&AutomationMenu::Regenerate, this))
 	, local_slot(c->local_scripts->AddScriptChangeListener(&AutomationMenu::Regenerate, this))
 	{
-		cm->AddCommand(cmd::get("am/meta"), this);
-		AppendSeparator();
+		if (!mutekiOnly) {
+			cm->AddCommand(cmd::get("am/meta"), this);
+			cm->AddCommand(cmd::get("am/last"), this);
+			AppendSeparator();
+		}
+
 		Regenerate();
 	}
 };
@@ -528,6 +576,8 @@ namespace menu {
 				read_entry(item, "special", &submenu);
 				if (submenu == "automation")
 					menu->Append(new AutomationMenu(c, &menu->cm), wxGetTranslation(to_wx(disp)));
+				else if (submenu == "muteki")
+					menu->Append(new AutomationMenu(c, &menu->cm, true), wxGetTranslation(to_wx(disp)));
 			}
 		}
 

@@ -94,9 +94,21 @@
 	},
 
 
+	"AI" : {
+		"OpenAI" : {
+			"Model" : "gpt-5.6-terra",
+			"Transcription Model" : "gpt-transcribe"
+		},
+		"Review" : {
+			"Instructions" : ""
+		}
+	},
+
+
 	"Automation" : {
 		"Autoreload Mode" : 1,
-		"Trace Level" : 3
+		"Trace Level" : 3,
+		"Recent" : [{"string": ""}]
 	},
 
 

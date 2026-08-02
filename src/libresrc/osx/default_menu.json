@@ -7,7 +7,9 @@
         { "submenu" : "main/timing",   "text" : "&Timing" },
         { "submenu" : "main/video",    "text" : "&Video" },
         { "submenu" : "main/audio",    "text" : "&Audio" },
+        { "submenu" : "main/ai",       "text" : "A&I" },
         { "special" : "automation",    "text" : "A&utomation" },
+        { "special" : "muteki",    "text" : "Muteki Fansub" },
         { "submenu" : "main/window",   "text" : "Window" },
         { "submenu" : "main/help",     "text" : "&Help", "special" : "help" }
     ],
@@ -44,6 +46,12 @@
         { "command" : "subtitle/find/next" },
         { "command" : "edit/find_replace" },
         { "command" : "subtitle/spellcheck" }
+    ],
+    "main/ai" : [
+        { "command" : "ai/proofread" },
+        { "command" : "ai/review" },
+        {},
+        { "command" : "ai/configure" }
     ],
     "main/subtitle" : [
         { "command" : "tool/style/manager" },

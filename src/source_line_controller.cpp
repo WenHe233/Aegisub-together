@@ -24,21 +24,18 @@ const char *source_line_key = "_aegi_source_line";
 
 SourceLineController::SourceLineController(agi::Context *context)
 : context(context)
-, pre_commit_listener(context->ass->AddPreCommitListener(&SourceLineController::OnPreCommit, this))
 , save_listener(context->subsController->AddBeforeSaveListener(&SourceLineController::OnBeforeSave, this))
 {
 }
 
-void SourceLineController::OnPreCommit(int type, const AssDialogue * /*single_line*/) {
-	if (type == AssFile::COMMIT_NEW) {
-		LoadFromExtradata();
+void SourceLineController::OnFileLoad() {
+	LoadFromExtradata();
 
-		auto ext = context->subsController->Filename().extension().string();
-		std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return (char)std::tolower(c); });
+	auto ext = context->subsController->Filename().extension().string();
+	std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return (char)std::tolower(c); });
 
-		if (ext == ".mkv")
-			BuildFromStrippedText();
-	}
+	if (ext == ".mkv")
+		BuildFromStrippedText();
 }
 
 void SourceLineController::OnBeforeSave(AssFile& file) {
@@ -58,8 +55,10 @@ void SourceLineController::LoadFromExtradata() {
 }
 
 void SourceLineController::BuildFromStrippedText() {
-	for (auto line = context->ass->Events.begin(); line != context->ass->Events.end(); ++line)
-		line->SourceLineText = line->GetStrippedText();
+	for (auto line = context->ass->Events.begin(); line != context->ass->Events.end(); ++line) {
+		if (line->SourceLineText.get().empty())
+			line->SourceLineText = line->GetStrippedText();
+	}
 }
 
 void SourceLineController::ClearExtradata(AssFile& file) {
