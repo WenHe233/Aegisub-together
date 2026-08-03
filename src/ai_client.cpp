@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <iterator>
 #include <mutex>
 #include <sstream>
 #include <utility>
@@ -26,6 +27,8 @@ namespace ai {
 namespace {
 
 constexpr char api_base[] = "https://api.openai.com/v1";
+constexpr size_t proofread_max_input_chars = 900000;
+constexpr size_t proofread_max_lines_per_request = 300;
 #ifdef _WIN32
 constexpr wchar_t credential_target[] = L"MutekiAegisub/AI/OpenAI/default";
 #endif
@@ -339,8 +342,8 @@ std::string instructions(std::string const& custom) {
 std::string proofread_instructions(std::string const& custom) {
 	std::string prompt =
 		"You are a meticulous Hungarian subtitle proofreader. Review only input lines "
-		"where target is 1, but use every supplied line, in chronological order, as "
-		"scene and whole-subtitle context. Return one combined issue object per flawed "
+		"where target is 1, and use every supplied line in the chronologically ordered "
+		"batch as context. Return one combined issue object per flawed "
 		"target line and no object for correct lines. Keep false positives very low for "
 		"spelling claims. Check Hungarian spelling and typos, unambiguous comma and other "
 		"punctuation errors, grammar, awkward or unclear wording in context, repeated words "
@@ -709,7 +712,49 @@ ReviewResult OpenAIClient::Continue(ReviewResult const& previous,
 }
 
 ProofreadResult OpenAIClient::Proofread(std::vector<SubtitleLine> const& lines) const {
-	json::Array input_lines;
+	auto make_context = [](std::vector<SubtitleLine const *> const& batch) {
+		json::Array input_lines;
+		for (auto line : batch) {
+			json::Array row;
+			row.emplace_back(line->id);
+			row.emplace_back(line->target ? 1 : 0);
+			row.emplace_back(line->source_text);
+			row.emplace_back(line->ass_text);
+			row.emplace_back(line->actor);
+			input_lines.emplace_back(std::move(row));
+		}
+
+		json::Object context;
+		context["language"] = "hu";
+		context["task"] = "hungarian_subtitle_proofread";
+		json::Array columns;
+		for (auto name : {"line_id", "target", "source_line", "ass_text", "actor"})
+			columns.emplace_back(name);
+		context["columns"] = std::move(columns);
+		context["lines"] = std::move(input_lines);
+		return write_json(context);
+	};
+
+	ProofreadResult combined;
+	std::vector<SubtitleLine const *> batch;
+	size_t estimated_chars = 256;
+	size_t request_count = 0;
+	auto send_batch = [&] {
+		if (batch.empty()) return;
+		auto message = make_context(batch);
+		if (message.size() > proofread_max_input_chars)
+			throw Error("Az AI-utóellenőrzés egyik feliratsora túl hosszú a feldolgozáshoz.");
+		auto part = proofread_request(api_key, model, custom_instructions,
+			message, cancelled);
+		if (request_count++ == 0)
+			combined.message = std::move(part.message);
+		combined.issues.insert(combined.issues.end(),
+			std::make_move_iterator(part.issues.begin()),
+			std::make_move_iterator(part.issues.end()));
+		batch.clear();
+		estimated_chars = 256;
+	};
+
 	for (auto const& line : lines) {
 		json::Array row;
 		row.emplace_back(line.id);
@@ -717,19 +762,19 @@ ProofreadResult OpenAIClient::Proofread(std::vector<SubtitleLine> const& lines) 
 		row.emplace_back(line.source_text);
 		row.emplace_back(line.ass_text);
 		row.emplace_back(line.actor);
-		input_lines.emplace_back(std::move(row));
+		auto row_chars = write_json(row).size() + 1;
+		if (row_chars + 256 > proofread_max_input_chars)
+			throw Error("Az AI-utóellenőrzés egyik feliratsora túl hosszú a feldolgozáshoz.");
+		if (!batch.empty() && (batch.size() >= proofread_max_lines_per_request ||
+			estimated_chars + row_chars > proofread_max_input_chars))
+			send_batch();
+		batch.push_back(&line);
+		estimated_chars += row_chars;
 	}
-
-	json::Object context;
-	context["language"] = "hu";
-	context["task"] = "hungarian_subtitle_proofread";
-	json::Array columns;
-	for (auto name : {"line_id", "target", "source_line", "ass_text", "actor"})
-		columns.emplace_back(name);
-	context["columns"] = std::move(columns);
-	context["lines"] = std::move(input_lines);
-	return proofread_request(api_key, model, custom_instructions,
-		write_json(context), cancelled);
+	send_batch();
+	if (request_count > 1)
+		combined.message.clear();
+	return combined;
 }
 
 std::string GetApiKey() {

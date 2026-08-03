@@ -23,7 +23,6 @@
 
 #include <algorithm>
 #include <climits>
-#include <set>
 #include <utility>
 #include <vector>
 
@@ -34,10 +33,15 @@
 namespace {
 
 constexpr int max_scene_duration_ms = 120000;
+constexpr size_t max_review_lines = 100;
 constexpr int audio_padding_ms = 200;
 
 bool is_default_dialogue_style(std::string const& style) {
 	return style == "Default" || style.compare(0, 10, "Default - ") == 0;
+}
+
+bool has_subtitle_text(AssDialogue const *line) {
+	return line && !line->Comment && !agi::util::clean_ass_text(line->GetStrippedText()).empty();
 }
 
 struct TemporaryFile final {
@@ -63,7 +67,7 @@ struct ai_review final : public cmd::Command {
 	CMD_NAME("ai/review")
 	STR_MENU("Review selected lines with AI...")
 	STR_DISP("Review selected lines with AI")
-	STR_HELP("Check up to two minutes of Hungarian subtitles against Japanese audio and English source lines")
+	STR_HELP("Check up to 100 lines and two minutes of Hungarian subtitles against Japanese audio and English source lines")
 	CMD_TYPE(cmd::COMMAND_VALIDATE)
 
 	bool Validate(agi::Context const *c) override {
@@ -76,6 +80,13 @@ struct ai_review final : public cmd::Command {
 
 		auto lines = c->selectionController->GetSortedSelection();
 		if (lines.empty() || !c->project->AudioProvider()) return;
+		if (lines.size() > max_review_lines) {
+			wxMessageBox(fmt_tl(
+				"At most 100 subtitle lines can be reviewed at once. The current selection contains %d lines. Select a smaller scene.",
+				static_cast<int>(lines.size())),
+				_("AI subtitle review"), wxOK | wxICON_WARNING, c->parent);
+			return;
+		}
 
 		int start = INT_MAX;
 		int end = 0;
@@ -83,7 +94,7 @@ struct ai_review final : public cmd::Command {
 			start = std::min(start, static_cast<int>(line->Start));
 			end = std::max(end, static_cast<int>(line->End));
 			if (agi::util::clean_ass_text(line->SourceLineText.get()).empty()) {
-				wxMessageBox(agi::format(_("Selected line %d has no English source text."), line->Row + 1),
+				wxMessageBox(fmt_tl("Selected line %d has no English source text.", line->Row + 1),
 					_("AI subtitle review"), wxOK | wxICON_WARNING, c->parent);
 				return;
 			}
@@ -91,8 +102,8 @@ struct ai_review final : public cmd::Command {
 
 		if (end - start > max_scene_duration_ms) {
 			auto duration = end - start;
-			wxMessageBox(agi::format(
-				_("The selected scene is %d:%02d long. The maximum for one AI conversation is 2:00."),
+			wxMessageBox(fmt_tl(
+				"The selected scene is %d:%02d long. AI subtitle review can process scenes up to 2:00. Select a shorter scene.",
 				duration / 60000, (duration / 1000) % 60),
 				_("AI subtitle review"), wxOK | wxICON_WARNING, c->parent);
 			return;
@@ -155,7 +166,16 @@ struct ai_proofread final : public cmd::Command {
 	CMD_TYPE(cmd::COMMAND_VALIDATE)
 
 	bool Validate(agi::Context const *c) override {
-		return c->ass && !c->ass->Events.empty();
+		if (!c->ass) return false;
+
+		auto const& selected = c->selectionController->GetSelectedSet();
+		if (selected.size() >= 100)
+			return std::any_of(selected.begin(), selected.end(), has_subtitle_text);
+
+		return std::any_of(c->ass->Events.begin(), c->ass->Events.end(),
+			[](AssDialogue const& line) {
+				return is_default_dialogue_style(line.Style.get()) && has_subtitle_text(&line);
+			});
 	}
 
 	void operator()(agi::Context *c) override {
@@ -174,28 +194,26 @@ struct ai_proofread final : public cmd::Command {
 		}
 
 		auto target_lines = use_selection ? selected : default_lines;
-		if (target_lines.empty()) {
-			wxMessageBox(_("The chosen scope contains no dialogue lines to check."),
+		if (target_lines.empty() ||
+			!std::any_of(target_lines.begin(), target_lines.end(), has_subtitle_text)) {
+			wxMessageBox(_("The chosen scope contains no subtitle text to check."),
 				_("AI post-check"), wxOK | wxICON_INFORMATION, c->parent);
 			return;
 		}
 
-		std::set<int> target_ids;
-		for (auto line : target_lines) target_ids.insert(line->Id);
 		std::vector<ai::SubtitleLine> context_lines;
-		context_lines.reserve(c->ass->Events.size());
-		for (auto& line : c->ass->Events) {
-			if (line.Comment) continue;
+		context_lines.reserve(target_lines.size());
+		for (auto line : target_lines) {
 			ai::SubtitleLine input;
-			input.id = line.Id;
-			input.start_ms = static_cast<int>(line.Start);
-			input.end_ms = static_cast<int>(line.End);
-			input.source_text = agi::util::clean_ass_text(line.SourceLineText.get());
-			input.current_text = agi::util::clean_ass_text(line.GetStrippedText());
-			input.actor = line.Actor.get();
-			input.style = line.Style.get();
-			input.ass_text = line.Text.get();
-			input.target = target_ids.count(line.Id) != 0;
+			input.id = line->Id;
+			input.start_ms = static_cast<int>(line->Start);
+			input.end_ms = static_cast<int>(line->End);
+			input.source_text = agi::util::clean_ass_text(line->SourceLineText.get());
+			input.current_text = agi::util::clean_ass_text(line->GetStrippedText());
+			input.actor = line->Actor.get();
+			input.style = line->Style.get();
+			input.ass_text = line->Text.get();
+			input.target = true;
 			context_lines.push_back(std::move(input));
 		}
 

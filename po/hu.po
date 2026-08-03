@@ -6871,8 +6871,11 @@ msgstr "A(z) %d. kijelölt sorhoz nincs angol forrásszöveg."
 msgid "AI translation"
 msgstr "AI-fordítás"
 
-msgid "The selected scene is %d:%02d long. The maximum for one AI conversation is 2:00."
-msgstr "A kijelölt jelenet hossza %d:%02d. Egy AI-beszélgetés legfeljebb 2:00 hosszú lehet."
+msgid "At most 100 subtitle lines can be reviewed at once. The current selection contains %d lines. Select a smaller scene."
+msgstr "Egyszerre legfeljebb 100 feliratsor ellenőrizhető, a jelenlegi kijelölés pedig %d sort tartalmaz. Jelölj ki egy kisebb jelenetet."
+
+msgid "The selected scene is %d:%02d long. AI subtitle review can process scenes up to 2:00. Select a shorter scene."
+msgstr "A kijelölt jelenet hossza %d:%02d, az AI felirat-ellenőrzés azonban legfeljebb 2:00 hosszú jelenetet tud feldolgozni. Jelölj ki egy rövidebb jelenetet."
 
 msgid "A temporary audio file could not be created."
 msgstr "Nem sikerült létrehozni az ideiglenes hangfájlt."
@@ -7068,8 +7071,8 @@ msgstr "Kijelölt sorok ellenőrzése AI-jal…"
 msgid "Review selected lines with AI"
 msgstr "Kijelölt sorok ellenőrzése AI-jal"
 
-msgid "Check up to two minutes of Hungarian subtitles against Japanese audio and English source lines"
-msgstr "Legfeljebb két percnyi magyar felirat ellenőrzése japán hang és angol forrássorok alapján"
+msgid "Check up to 100 lines and two minutes of Hungarian subtitles against Japanese audio and English source lines"
+msgstr "Legfeljebb 100 sor és két percnyi magyar felirat ellenőrzése japán hang és angol forrássorok alapján"
 
 msgid "AI subtitle review"
 msgstr "AI felirat-ellenőrzés"
