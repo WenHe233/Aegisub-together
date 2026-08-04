@@ -48,7 +48,7 @@
 #endif
 
 const char *GetAegisubLongVersionString() {
-	return "-- nyaa's edition v4.0";
+	return "-- nyaa's edition v4.1";
 }
 
 const char *GetAegisubShortVersionString() {
@@ -76,6 +76,10 @@ bool GetIsOfficialRelease() {
 
 const char *GetVersionNumber() {
 	return BUILD_GIT_VERSION_STRING;
+}
+
+const char *GetMutekiVersionString() {
+	return "4.1";
 }
 
 int GetSVNRevision() {

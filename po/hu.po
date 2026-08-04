@@ -7292,3 +7292,270 @@ msgstr "Kihagyás"
 
 msgid "Cancel review"
 msgstr "Ellenőrzés megszakítása"
+
+msgid "Fill from audio recognition..."
+msgstr "Kitöltés hangfelismeréssel…"
+
+msgid "Fill from audio recognition"
+msgstr "Kitöltés hangfelismeréssel"
+
+msgid "Fill the selected lines with audio-recognized timed romaji karaoke"
+msgstr "A kijelölt sorok kitöltése hangfelismeréssel készült, időzített romaji karaokéval"
+
+msgid "Time karaoke lines..."
+msgstr "Sorok karaoke időzítése…"
+
+msgid "Time karaoke lines"
+msgstr "Sorok karaoke időzítése"
+
+msgid "Add audio-aligned karaoke tags to the selected lines"
+msgstr "Hanghoz igazított karaoke-szótagtagek hozzáadása a kijelölt sorokhoz"
+
+msgid "Create kanji lines..."
+msgstr "Kanji sorok létrehozása…"
+
+msgid "Create kanji lines"
+msgstr "Kanji sorok létrehozása"
+
+msgid "Create plain kanji lines below the selected romaji lines without karaoke timing"
+msgstr "Időzítés nélküli kanji sorok létrehozása a kijelölt romaji sorok alatt"
+
+msgid "AI karaoke"
+msgstr "AI-karaoke"
+
+msgid "The karaoke request failed."
+msgstr "A karaoke-kérés sikertelen."
+
+msgid "AI karaoke failed"
+msgstr "Az AI-karaoke sikertelen"
+
+msgid "The karaoke result could not be validated."
+msgstr "A karaoke-eredményt nem sikerült érvényesíteni."
+
+msgid "fill karaoke lines from audio recognition"
+msgstr "karaoke-sorok kitöltése hangfelismeréssel"
+
+msgid "create kanji lines with AI"
+msgstr "kanji sorok létrehozása AI-val"
+
+msgid "time karaoke lines with AI"
+msgstr "karaoke-sorok időzítése AI-val"
+
+msgid "AI karaoke could not be applied"
+msgstr "Az AI-karaoke nem alkalmazható"
+
+msgid "Fill selected lines from audio recognition"
+msgstr "Kijelölt sorok kitöltése hangfelismeréssel"
+
+msgid "Create kanji lines from selected romaji"
+msgstr "Kanji sorok létrehozása a kijelölt romajikból"
+
+msgid "Time selected karaoke lines from audio"
+msgstr "Kijelölt sorok karaoke időzítése hang alapján"
+
+msgid "Recognizing the Japanese audio and calculating romaji karaoke timing..."
+msgstr "A japán hang felismerése és a romaji karaoke-időzítés kiszámítása…"
+
+msgid "Creating kanji lines from the selected romaji..."
+msgstr "Kanji sorok létrehozása a kijelölt romajikból…"
+
+msgid "Output style"
+msgstr "Kimeneti stílus"
+
+msgid "Kanji style:"
+msgstr "Kanji stílusa:"
+
+msgid "Choose the kanji style, then create the lines."
+msgstr "Válaszd ki a kanji stílusát, majd hozd létre a sorokat."
+
+msgid "The selection contains no dialogue lines."
+msgstr "A kijelölés nem tartalmaz párbeszédsort."
+
+msgid "The karaoke audio interval is invalid."
+msgstr "A karaoke hangintervalluma érvénytelen."
+
+msgid "AI karaoke can process at most 10 minutes at once. Choose a shorter interval."
+msgstr "Az AI-karaoke egyszerre legfeljebb 10 percet tud feldolgozni. Válassz rövidebb intervallumot."
+
+msgid "The generated WAV file is too large for the AI request. Choose a shorter interval."
+msgstr "A létrehozott WAV-fájl túl nagy az AI-kéréshez. Válassz rövidebb intervallumot."
+
+msgid "Karaoke timing model:"
+msgstr "Karaoke-időzítési modell:"
+
+msgid "Use whisper-1 for word timestamps"
+msgstr "A szóidőbélyegekhez használd a whisper-1 modellt"
+
+msgid "Use advanced karaoke timing rules"
+msgstr "Haladó karaoke-időzítési szabályok használata"
+
+msgid "Disable this option to restore the previous AI timing behavior."
+msgstr "Kapcsold ki ezt a beállítást az AI korábbi időzítési viselkedésének visszaállításához."
+
+msgid "Advanced karaoke timing guide"
+msgstr "Haladó karaoke-időzítési útmutató"
+
+msgid "Find in &Folder..."
+msgstr "Keresés &mappában..."
+
+msgid "Find in Folder"
+msgstr "Keresés mappában"
+
+msgid "Find text in subtitle files under a folder"
+msgstr "Szöveg keresése egy mappa feliratfájljaiban"
+
+msgid "Source Line"
+msgstr "Forrás sor"
+
+msgid "Please select an existing folder."
+msgstr "Válassz egy létező mappát."
+
+msgid "Please enter the text to find."
+msgstr "Add meg a keresendő szöveget."
+
+msgid "Invalid regular expression:\n%s"
+msgstr "Érvénytelen reguláris kifejezés:\n%s"
+
+msgid "Searching..."
+msgstr "Keresés..."
+
+msgid "%zu subtitle files searched, %zu matches found"
+msgstr "%zu feliratfájl átvizsgálva, %zu találat"
+
+msgid "Folder search failed:\n%s"
+msgstr "A mappában keresés sikertelen:\n%s"
+
+msgid "Search stopped: %zu subtitle files searched, %zu matches found"
+msgstr "A keresés leállítva: %zu feliratfájl átvizsgálva, %zu találat"
+
+msgid "Search complete: %zu subtitle files searched, %zu matches found"
+msgstr "A keresés kész: %zu feliratfájl átvizsgálva, %zu találat"
+
+msgid "Select a folder to search"
+msgstr "Keresési mappa kiválasztása"
+
+msgid "Match &whole word"
+msgstr "Keresés &teljes szóként"
+
+msgid "&Search"
+msgstr "&Keresés"
+
+msgid "S&top"
+msgstr "&Leállítás"
+
+msgid "Ready."
+msgstr "Kész."
+
+msgid "Copy to &Clipboard"
+msgstr "Másolás a &vágólapra"
+
+msgid "&Open Result"
+msgstr "Találat &megnyitása"
+
+msgid "Folder:"
+msgstr "Mappa:"
+
+msgid "Selected subtitle text:"
+msgstr "Kijelölt feliratszöveg:"
+
+msgid "Stopping search..."
+msgstr "Keresés leállítása..."
+
+msgid "Match %zu - Line %zu"
+msgstr "%zu. találat – %zu. sor"
+
+msgid "Include styles (comma-separated):"
+msgstr "Bevont stílusok (vesszővel elválasztva):"
+
+msgid "Exclude styles (comma-separated):"
+msgstr "Kizárt stílusok (vesszővel elválasztva):"
+
+msgid "Browse"
+msgstr "Tallózás"
+
+msgid "Open subtitle at match"
+msgstr "Felirat megnyitása a találatnál"
+
+msgid "Muteki update"
+msgstr "Muteki frissítés"
+
+msgid "Base URL"
+msgstr "Alap URL"
+
+msgid "&Update"
+msgstr "&Frissítés"
+
+msgid "&Update..."
+msgstr "&Frissítés..."
+
+msgid "Update"
+msgstr "Frissítés"
+
+msgid "Install a specific &version..."
+msgstr "Bizonyos &verzió telepítése..."
+
+msgid "Install a specific version"
+msgstr "Bizonyos verzió telepítése"
+
+msgid "&Changelog..."
+msgstr "&Változáslista..."
+
+msgid "Changelog"
+msgstr "Változáslista"
+
+msgid "Update Muteki &Automation scripts..."
+msgstr "Muteki &Automation scriptek frissítése..."
+
+msgid "Update Muteki Automation scripts"
+msgstr "Muteki Automation scriptek frissítése"
+
+msgid "Downloading update package..."
+msgstr "Frissítési csomag letöltése..."
+
+msgid "Confirm update"
+msgstr "Frissítés megerősítése"
+
+msgid "Installed version: %s\nSelected version: %s\n\nChanges:"
+msgstr "Telepített verzió: %s\nKiválasztott verzió: %s\n\nVáltozások:"
+
+msgid "No change description is available."
+msgstr "Nem érhető el változásleírás."
+
+msgid "Do you want to download and install this version?"
+msgstr "Szeretnéd letölteni és telepíteni ezt a verziót?"
+
+msgid "The update was cancelled because Aegisub could not be closed."
+msgstr "A frissítés megszakadt, mert az Aegisubot nem sikerült bezárni."
+
+msgid "Muteki update error"
+msgstr "Muteki frissítési hiba"
+
+msgid "No newer version is available.\n\nInstalled version: %s\nLatest published version: %s"
+msgstr "Nem érhető el újabb verzió.\n\nTelepített verzió: %s\nLegújabb közzétett verzió: %s"
+
+msgid "Select the version to install:"
+msgstr "Válaszd ki a telepítendő verziót:"
+
+msgid "The selected version is older than the installed version. Do you want to continue?"
+msgstr "A kiválasztott verzió régebbi a telepítettnél. Szeretnéd folytatni?"
+
+msgid "Confirm downgrade"
+msgstr "Visszalépés megerősítése"
+
+msgid "Aegisub changelog"
+msgstr "Aegisub változáslista"
+
+msgid "Muteki Automation scripts were updated successfully.\n\nTarget folder: %s"
+msgstr "A Muteki Automation scriptek sikeresen frissültek.\n\nCélmappa: %s"
+
+msgid "Check for and install the latest Muteki Aegisub version"
+msgstr "A legújabb Muteki Aegisub-verzió keresése és telepítése"
+
+msgid "Select and install a Muteki Aegisub version"
+msgstr "Muteki Aegisub-verzió kiválasztása és telepítése"
+
+msgid "Show the Muteki Aegisub changelog"
+msgstr "A Muteki Aegisub változáslistájának megjelenítése"
+
+msgid "Download, install and reload the Muteki Automation scripts"
+msgstr "A Muteki Automation scriptek letöltése, telepítése és újratöltése"

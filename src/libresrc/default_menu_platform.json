@@ -10,7 +10,8 @@
         { "special" : "automation",    "text" : "A&utomation" },
         { "special" : "muteki",        "text" : "Muteki Fansub" },
         { "submenu" : "main/view",     "text" : "Vie&w" },
-        { "submenu" : "main/help",     "text" : "&Help", "special" : "help" }
+        { "submenu" : "main/help",     "text" : "&Help", "special" : "help" },
+        { "submenu" : "main/muteki-update", "text" : "&Update" }
     ],
     "main/file" : [
         { "command" : "subtitle/new" },
@@ -41,13 +42,27 @@
         {},
         { "command" : "subtitle/find" },
         { "command" : "subtitle/find/next" },
-        { "command" : "edit/find_replace" }
+        { "command" : "edit/find_replace" },
+        { "command" : "edit/find_in_folder" }
     ],
     "main/ai" : [
         { "command" : "ai/proofread" },
         { "command" : "ai/review" },
+		{ "submenu" : "main/ai/karaoke", "text" : "Karaoke" },
         {},
         { "command" : "ai/configure" }
+    ],
+	"main/ai/karaoke" : [
+		{ "command" : "ai/karaoke/recognition" },
+		{ "command" : "ai/karaoke/syllables" },
+		{ "command" : "ai/karaoke/kanji" }
+	],
+    "main/muteki-update" : [
+        { "command" : "muteki-update/check" },
+        { "command" : "muteki-update/install-version" },
+        { "command" : "muteki-update/changelog" },
+        {},
+        { "command" : "muteki-update/automation" }
     ],
     "main/subtitle" : [
         { "command" : "tool/style/manager" },

@@ -47,12 +47,20 @@
 #include <wx/clipbrd.h>
 #include <wx/filedlg.h>
 #include <wx/stdpaths.h>
+#include <wx/utils.h>
 #include <wx/window.h>
 
 #ifdef __APPLE__
 #include <libaegisub/util_osx.h>
 #include <CoreText/CTFont.h>
 #endif
+
+void LaunchAegisubAtLine(agi::fs::path const& subtitle, size_t line) {
+	auto quote = [](wxString value) { value.Replace("\"", "\\\""); return "\"" + value + "\""; };
+	auto command = quote(wxStandardPaths::Get().GetExecutablePath()) + " --aegisub-no-linked --aegisub-select-line="
+		+ wxString::Format("%zu", line) + " " + quote(to_wx(subtitle.string()));
+	wxExecute(command, wxEXEC_ASYNC);
+}
 
 /// @brief There shall be no kiB, MiB stuff here Pretty reading of size
 wxString PrettySize(int bytes) {

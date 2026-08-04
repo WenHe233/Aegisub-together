@@ -36,6 +36,7 @@
 #include "../ass_karaoke.h"
 #include "../ass_style.h"
 #include "../compat.h"
+#include "../dialog_folder_search.h"
 #include "../dialog_search_replace.h"
 #include "../dialogs.h"
 #include "../font_size_object.h"
@@ -886,6 +887,14 @@ struct edit_find_replace final : public Command {
 		c->videoController->Stop();
 		ShowSearchReplaceDialog(c, true);
 	}
+};
+
+struct edit_find_in_folder final : public Command {
+	CMD_NAME("edit/find_in_folder")
+	STR_MENU("Find in &Folder...")
+	STR_DISP("Find in Folder")
+	STR_HELP("Find text in subtitle files under a folder")
+	void operator()(agi::Context *c) override { ShowFolderSearchDialog(c); }
 };
 
 static void copy_lines(agi::Context *c) {
@@ -1803,6 +1812,7 @@ namespace cmd {
 		reg(std::make_unique<edit_color_shadow>());
 		reg(std::make_unique<edit_font>());
 		reg(std::make_unique<edit_find_replace>());
+		reg(std::make_unique<edit_find_in_folder>());
 		reg(std::make_unique<edit_line_copy>());
 		reg(std::make_unique<edit_line_cut>());
 		reg(std::make_unique<edit_line_delete>());

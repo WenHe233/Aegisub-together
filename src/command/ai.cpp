@@ -8,6 +8,7 @@
 #include "../ass_file.h"
 #include "../compat.h"
 #include "../dialog_ai_connection.h"
+#include "../dialog_ai_karaoke.h"
 #include "../dialog_ai_proofread.h"
 #include "../dialog_ai_translate.h"
 #include "../format.h"
@@ -223,6 +224,40 @@ struct ai_proofread final : public cmd::Command {
 	}
 };
 
+template<ai::KaraokeMode Mode>
+struct ai_karaoke : public cmd::Command {
+	CMD_TYPE(cmd::COMMAND_VALIDATE)
+	bool Validate(agi::Context const *c) override {
+		return !c->selectionController->GetSelectedSet().empty() &&
+			(Mode == ai::KaraokeMode::KanjiGeneration || c->project->AudioProvider());
+	}
+	void operator()(agi::Context *c) override {
+		if (ai::GetApiKey().empty() && !ShowAIConnectionDialog(c->parent, true)) return;
+		ShowAIKaraokeDialog(c, Mode, c->selectionController->GetSortedSelection());
+	}
+};
+
+struct ai_karaoke_recognition final : public ai_karaoke<ai::KaraokeMode::AudioRecognition> {
+	CMD_NAME("ai/karaoke/recognition")
+	STR_MENU("Fill from audio recognition...")
+	STR_DISP("Fill from audio recognition")
+	STR_HELP("Fill the selected lines with audio-recognized timed romaji karaoke")
+};
+
+struct ai_karaoke_syllables final : public ai_karaoke<ai::KaraokeMode::SyllableTiming> {
+	CMD_NAME("ai/karaoke/syllables")
+	STR_MENU("Time karaoke lines...")
+	STR_DISP("Time karaoke lines")
+	STR_HELP("Add audio-aligned karaoke tags to the selected lines")
+};
+
+struct ai_karaoke_kanji final : public ai_karaoke<ai::KaraokeMode::KanjiGeneration> {
+	CMD_NAME("ai/karaoke/kanji")
+	STR_MENU("Create kanji lines...")
+	STR_DISP("Create kanji lines")
+	STR_HELP("Create plain kanji lines below the selected romaji lines without karaoke timing")
+};
+
 } // namespace
 
 namespace cmd {
@@ -230,5 +265,8 @@ void init_ai() {
 	reg(std::make_unique<ai_configure>());
 	reg(std::make_unique<ai_review>());
 	reg(std::make_unique<ai_proofread>());
+	reg(std::make_unique<ai_karaoke_recognition>());
+	reg(std::make_unique<ai_karaoke_syllables>());
+	reg(std::make_unique<ai_karaoke_kanji>());
 }
 }

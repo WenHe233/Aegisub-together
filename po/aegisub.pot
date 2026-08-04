@@ -18,6 +18,142 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
+#: ../src/command/ai.cpp
+msgid "Fill from audio recognition..."
+msgstr ""
+
+#: ../src/command/ai.cpp
+msgid "Fill from audio recognition"
+msgstr ""
+
+#: ../src/command/ai.cpp
+msgid "Fill the selected lines with audio-recognized timed romaji karaoke"
+msgstr ""
+
+#: ../src/command/ai.cpp
+msgid "Time karaoke lines..."
+msgstr ""
+
+#: ../src/command/ai.cpp
+msgid "Time karaoke lines"
+msgstr ""
+
+#: ../src/command/ai.cpp
+msgid "Add audio-aligned karaoke tags to the selected lines"
+msgstr ""
+
+#: ../src/command/ai.cpp
+msgid "Create kanji lines..."
+msgstr ""
+
+#: ../src/command/ai.cpp ../src/dialog_ai_karaoke.cpp
+msgid "Create kanji lines"
+msgstr ""
+
+#: ../src/command/ai.cpp
+msgid "Create plain kanji lines below the selected romaji lines without karaoke timing"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "AI karaoke"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "The karaoke request failed."
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "AI karaoke failed"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "The karaoke result could not be validated."
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "fill karaoke lines from audio recognition"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "create kanji lines with AI"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "time karaoke lines with AI"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "AI karaoke could not be applied"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "Fill selected lines from audio recognition"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "Create kanji lines from selected romaji"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "Time selected karaoke lines from audio"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "Recognizing the Japanese audio and calculating romaji karaoke timing..."
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "Creating kanji lines from the selected romaji..."
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "Output style"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "Kanji style:"
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "Choose the kanji style, then create the lines."
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "The selection contains no dialogue lines."
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "The karaoke audio interval is invalid."
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "AI karaoke can process at most 10 minutes at once. Choose a shorter interval."
+msgstr ""
+
+#: ../src/dialog_ai_karaoke.cpp
+msgid "The generated WAV file is too large for the AI request. Choose a shorter interval."
+msgstr ""
+
+#: ../src/dialog_ai_connection.cpp
+msgid "Karaoke timing model:"
+msgstr ""
+
+#: ../src/dialog_ai_connection.cpp
+msgid "Use whisper-1 for word timestamps"
+msgstr ""
+
+#: ../src/dialog_ai_connection.cpp
+msgid "Use advanced karaoke timing rules"
+msgstr ""
+
+#: ../src/dialog_ai_connection.cpp
+msgid "Disable this option to restore the previous AI timing behavior."
+msgstr ""
+
+#: ../src/dialog_ai_connection.cpp
+msgid "Advanced karaoke timing guide"
+msgstr ""
+
 #: ../src/aegisublocale.cpp:113 ../src/command/app.cpp:156
 msgid "Language"
 msgstr ""
@@ -6966,5 +7102,89 @@ msgstr ""
 
 #: packages/win_installer/fragment_strings.iss:1
 msgid "This will install Aegisub {#BUILD_GIT_VERSION_STRING} on your computer.%n%nAegisub is covered by the GNU General Public License version 2. This means you may use the application for any purpose without charge, but that no warranties of any kind are given either.%n%nSee the Aegisub website for information on obtaining the source code."
+msgstr ""
+
+msgid "Muteki update"
+msgstr ""
+
+msgid "Base URL"
+msgstr ""
+
+msgid "&Update"
+msgstr ""
+
+msgid "&Update..."
+msgstr ""
+
+msgid "Update"
+msgstr ""
+
+msgid "Install a specific &version..."
+msgstr ""
+
+msgid "Install a specific version"
+msgstr ""
+
+msgid "&Changelog..."
+msgstr ""
+
+msgid "Changelog"
+msgstr ""
+
+msgid "Update Muteki &Automation scripts..."
+msgstr ""
+
+msgid "Update Muteki Automation scripts"
+msgstr ""
+
+msgid "Downloading update package..."
+msgstr ""
+
+msgid "Confirm update"
+msgstr ""
+
+msgid "Installed version: %s\nSelected version: %s\n\nChanges:"
+msgstr ""
+
+msgid "No change description is available."
+msgstr ""
+
+msgid "Do you want to download and install this version?"
+msgstr ""
+
+msgid "The update was cancelled because Aegisub could not be closed."
+msgstr ""
+
+msgid "Muteki update error"
+msgstr ""
+
+msgid "No newer version is available.\n\nInstalled version: %s\nLatest published version: %s"
+msgstr ""
+
+msgid "Select the version to install:"
+msgstr ""
+
+msgid "The selected version is older than the installed version. Do you want to continue?"
+msgstr ""
+
+msgid "Confirm downgrade"
+msgstr ""
+
+msgid "Aegisub changelog"
+msgstr ""
+
+msgid "Muteki Automation scripts were updated successfully.\n\nTarget folder: %s"
+msgstr ""
+
+msgid "Check for and install the latest Muteki Aegisub version"
+msgstr ""
+
+msgid "Select and install a Muteki Aegisub version"
+msgstr ""
+
+msgid "Show the Muteki Aegisub changelog"
+msgstr ""
+
+msgid "Download, install and reload the Muteki Automation scripts"
 msgstr ""
 

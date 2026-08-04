@@ -44,5 +44,7 @@ const char *GetAegisubBuildCredit();
 bool GetIsOfficialRelease();
 /// Version number
 const char *GetVersionNumber();
+/// Muteki release number used by the built-in updater
+const char *GetMutekiVersionString();
 /// Get SVN revision
 int GetSVNRevision();

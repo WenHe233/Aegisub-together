@@ -96,8 +96,10 @@
 
 	"AI" : {
 		"OpenAI" : {
+			"Advanced Karaoke Timing" : true,
 			"Model" : "gpt-5.6-terra",
-			"Transcription Model" : "gpt-transcribe"
+			"Transcription Model" : "gpt-transcribe",
+			"Karaoke Timing Model" : "whisper-1"
 		},
 		"Review" : {
 			"Instructions" : ""
@@ -109,6 +111,10 @@
 		"Autoreload Mode" : 1,
 		"Trace Level" : 3,
 		"Recent" : [{"string": ""}]
+	},
+
+	"Muteki Update" : {
+		"Base URL" : "https://mutekifansub.hu/public/nyaa/Aegisub/"
 	},
 
 

@@ -39,6 +39,9 @@
 
 #include "auto4_base.h"
 #include "auto4_lua_factory.h"
+#include "ass_dialogue.h"
+#include "ass_file.h"
+#include "base_grid.h"
 #include "compat.h"
 #include "crash_writer.h"
 #include "dialogs.h"
@@ -48,8 +51,10 @@
 #include "frame_main.h"
 #include "include/aegisub/context.h"
 #include "libresrc/libresrc.h"
+#include "muteki_update.h"
 #include "options.h"
 #include "project.h"
+#include "selection_controller.h"
 #include "subs_controller.h"
 #include "subtitles_provider_libass.h"
 #include "utils.h"
@@ -66,6 +71,7 @@
 #include <libaegisub/util.h>
 
 #include <boost/interprocess/streams/bufferstream.hpp>
+#include <optional>
 #include <wx/clipbrd.h>
 #include <wx/msgdlg.h>
 #include <wx/stackwalk.h>
@@ -128,6 +134,9 @@ static wxString exception_message = "Oops, Aegisub has crashed!\n\nAn attempt ha
 /// @brief Gets called when application starts.
 /// @return bool
 bool AegisubApp::OnInit() {
+	if (muteki_update::RunHelperMode(argv.GetArguments()))
+		return false;
+
 	// App name (yeah, this is a little weird to get rid of an odd warning)
 #if defined(__WXMSW__) || defined(__WXMAC__)
 	SetAppName("Aegisub");
@@ -292,7 +301,7 @@ bool AegisubApp::OnInit() {
 
 		// Open main frame
 		StartupLog("Create main window");
-		NewProjectContext();
+		auto& initial_context = NewProjectContext();
 
 		// Version checker
 		StartupLog("Possibly perform automatic updates check");
@@ -317,8 +326,26 @@ bool AegisubApp::OnInit() {
 		// Get parameter subs
 		StartupLog("Parse command line");
 		auto const& args = argv.GetArguments();
-		if (args.size() > 1)
-			OpenFiles(wxArrayStringsAdapter(args.size() - 1, &args[1]));
+		wxArrayString files;
+		bool no_linked = false;
+		std::optional<size_t> selected_line;
+		for (size_t i = 1; i < args.size(); ++i) {
+			if (args[i] == "--aegisub-no-linked") no_linked = true;
+			else if (args[i].StartsWith("--aegisub-select-line=")) {
+				unsigned long long value;
+				if (args[i].AfterFirst('=').ToULongLong(&value)) selected_line = static_cast<size_t>(value);
+			}
+			else files.push_back(args[i]);
+		}
+		if (no_linked && files.size() == 1) {
+			initial_context.project->LoadSubtitles(from_wx(files[0]), "", false);
+			if (selected_line && *selected_line < initial_context.ass->Events.size()) {
+				auto line = std::next(initial_context.ass->Events.begin(), *selected_line);
+				initial_context.selectionController->SetSelectionAndActive({&*line}, &*line);
+				initial_context.subsGrid->MakeDialogueVisible(&*line);
+			}
+		}
+		else if (!files.empty()) OpenFiles(files);
 	}
 	catch (agi::Exception const& e) {
 		wxMessageBox(to_wx(e.GetMessage()), _("Fatal error while initializing"));
@@ -366,6 +393,7 @@ int AegisubApp::OnExit() {
 	// Keep this last!
 	delete agi::log::log;
 	crash_writer::Cleanup();
+	muteki_update::LaunchPendingUpdate();
 
 	return wxApp::OnExit();
 }
@@ -387,11 +415,13 @@ agi::Context& AegisubApp::NewProjectContext() {
 	return *frame->context;
 }
 
-void AegisubApp::CloseAll() {
-	for (auto frame : frames) {
+bool AegisubApp::CloseAll() {
+	auto open_frames = frames;
+	for (auto frame : open_frames) {
 		if (!frame->Close())
-			break;
+			return false;
 	}
+	return true;
 }
 
 void AegisubApp::UnhandledException([[maybe_unused]] bool stackWalk) {

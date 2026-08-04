@@ -58,6 +58,7 @@ int SmallestPowerOf2(int x);
 /// Contrary to what the name suggests, this does not close the currently
 /// running process.
 void RestartAegisub();
+void LaunchAegisubAtLine(agi::fs::path const& subtitle, size_t line);
 
 /// Add the OS X 10.7+ full-screen button to a window
 void AddFullScreenButton(wxWindow *window);

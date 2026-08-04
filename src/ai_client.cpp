@@ -12,6 +12,7 @@
 #include <curl/curl.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iterator>
 #include <mutex>
@@ -316,6 +317,150 @@ json::Object proofread_response_schema() {
 	return schema;
 }
 
+json::Object karaoke_syllable_schema() {
+	json::Object properties;
+	properties["start_ms"] = type_schema("integer");
+	properties["end_ms"] = type_schema("integer");
+	properties["text"] = type_schema("string");
+	properties["romaji"] = type_schema("string");
+	json::Object language;
+	language["type"] = "string";
+	json::Array language_values;
+	for (auto value : {"ja", "en", "other"}) language_values.emplace_back(value);
+	language["enum"] = std::move(language_values);
+	properties["language"] = std::move(language);
+	json::Array required;
+	for (auto name : {"start_ms", "end_ms", "text", "romaji", "language"})
+		required.emplace_back(name);
+	json::Object schema;
+	schema["type"] = "object";
+	schema["properties"] = std::move(properties);
+	schema["required"] = std::move(required);
+	schema["additionalProperties"] = false;
+	return schema;
+}
+
+json::Object karaoke_response_schema() {
+	json::Object syllables;
+	syllables["type"] = "array";
+	syllables["items"] = karaoke_syllable_schema();
+
+	json::Object line_properties;
+	line_properties["source_line_id"] = type_schema("integer");
+	line_properties["start_ms"] = type_schema("integer");
+	line_properties["end_ms"] = type_schema("integer");
+	line_properties["romaji"] = type_schema("string");
+	line_properties["syllables"] = std::move(syllables);
+	json::Array line_required;
+	for (auto name : {"source_line_id", "start_ms", "end_ms", "romaji", "syllables"})
+		line_required.emplace_back(name);
+	json::Object line;
+	line["type"] = "object";
+	line["properties"] = std::move(line_properties);
+	line["required"] = std::move(line_required);
+	line["additionalProperties"] = false;
+
+	json::Object lines;
+	lines["type"] = "array";
+	lines["items"] = std::move(line);
+	json::Object properties;
+	properties["lines"] = std::move(lines);
+	json::Array required;
+	required.emplace_back("lines");
+	json::Object schema;
+	schema["type"] = "object";
+	schema["properties"] = std::move(properties);
+	schema["required"] = std::move(required);
+	schema["additionalProperties"] = false;
+	return schema;
+}
+
+json::Object kanji_response_schema() {
+	json::Object line_properties;
+	line_properties["source_line_id"] = type_schema("integer");
+	line_properties["kanji"] = type_schema("string");
+	json::Array line_required;
+	line_required.emplace_back("source_line_id");
+	line_required.emplace_back("kanji");
+	json::Object line;
+	line["type"] = "object";
+	line["properties"] = std::move(line_properties);
+	line["required"] = std::move(line_required);
+	line["additionalProperties"] = false;
+
+	json::Object lines;
+	lines["type"] = "array";
+	lines["items"] = std::move(line);
+	json::Object properties;
+	properties["lines"] = std::move(lines);
+	json::Array required;
+	required.emplace_back("lines");
+	json::Object schema;
+	schema["type"] = "object";
+	schema["properties"] = std::move(properties);
+	schema["required"] = std::move(required);
+	schema["additionalProperties"] = false;
+	return schema;
+}
+
+std::string karaoke_instructions(KaraokeMode mode, bool advanced_timing) {
+	std::string common =
+		"You are a Japanese karaoke timing specialist. Use the supplied Japanese "
+		"audio transcript and its measured time units as the timing authority. All "
+		"times are integer milliseconds relative to the beginning of the supplied "
+		"clip. Keep output chronological, inside the clip, and free of ASS tags. "
+		"Split Japanese singing into individual mora-sized karaoke units, not words. "
+		"A romaji unit is normally one Japanese mora and typically 1-3 Latin letters "
+		"such as a, ka, shi, kyo, or n; never return a whole multi-mora word as one "
+		"syllable. Split English singing into natural spoken English syllables, never "
+		"individual letters. Set syllable.language to ja for Japanese, en for English, "
+		"or other. Even when the singing is very fast, include every supplied lyric "
+		"syllable and never omit text to make the timing easier. "
+		"Anchor every syllable start and end to the actually sung phoneme. Do not spread "
+		"syllables evenly across the subtitle line, and do not extend the final syllables "
+		"into trailing silence. Preserve real silent gaps between sung syllables. Do not "
+		"insert Japanese "
+		"middle dots (・ or ･) or Latin middle dots (·). "
+		"Every syllable must have start_ms < end_ms and syllable starts must increase. ";
+	if (advanced_timing) {
+		// Rules distilled from the Karaoke Mugen advanced timing guide. These stay
+		// optional so users can compare them with the previous timing behaviour.
+		common +=
+			"Apply professional karaoke timing cues from the visible sound spectrum and "
+			"the musical pulse. Prefer a nearby beat or a clear voiced onset over evenly "
+			"distributed timing. For syllables beginning with s, z, x, soft c, f, h, or "
+			"English th, exclude most high-frequency pre-beat fricative noise and place the "
+			"boundary at the following beat or voiced onset. In initial st, sp, str, and "
+			"similar clusters, normally time to the t or p burst; split a separately held s "
+			"only when it is clearly sung as its own sound. For m, n, l, and y starts whose "
+			"consonant onset is indistinct, use the beat or first vowel onset. Include the "
+			"audible burst of k, t, tsu, chi, and similar plosives in their syllable. Preserve "
+			"real breathing and silent gaps rather than stretching the preceding syllable. "
+			"For Japanese, normally use one timing unit per kana or mora, keeping small "
+			"ya/yu/yo compounds together. Use an apostrophe for an independent n before a "
+			"vowel or y, as in ren'ai and kon'ya. Resolve doubled consonants, repeated vowels, "
+			"long vowels, and final n from what is actually audible: never combine two "
+			"distinct sung sound events into one karaoke unit, but do not force a split when "
+			"the singer produces one continuous sound. ";
+	}
+	if (mode == KaraokeMode::AudioRecognition) {
+		return common +
+			"Return exactly one result for every supplied lyric line, in the given order, "
+			"with its exact source_line_id, start_ms, and end_ms. Never omit, merge, split, "
+			"add, or reorder lines. Recognize the singing inside each line's fixed time "
+			"range and create accurate, easy-to-read Hepburn romaji. "
+			"Split the romaji into natural, singable syllable groups and time them from the "
+			"audio. In each syllable, text and romaji are the same romaji chunk. Return no "
+			"kanji or translation.";
+	}
+	return common +
+		"Return exactly one result for every supplied line and keep each line's given "
+		"start_ms and end_ms. Set source_line_id to the exact input id. Split the exact "
+		"input text among syllable.text without changing, omitting, or adding any byte; "
+		"their concatenation must reproduce it exactly. Use the audio to time those "
+		"chunks. Do not rewrite the line.";
+}
+
 std::string instructions(std::string const& custom) {
 	std::string prompt =
 		"You are a professional audiovisual subtitle quality reviewer. Audit the "
@@ -463,6 +608,56 @@ ProofreadResult parse_proofread(std::string const& output_text) {
 		// short model response is still safe to present to the user.
 		if (issue.suggestions.empty()) continue;
 		result.issues.push_back(std::move(issue));
+	}
+	return result;
+}
+
+KaraokeResult parse_karaoke(std::string const& output_text) {
+	auto parsed = parse_json(output_text);
+	auto const& object = static_cast<json::Object const&>(parsed);
+	auto lines_it = object.find("lines");
+	if (lines_it == object.end())
+		throw Error("A karaoke-válaszból hiányzik a lines mező.");
+
+	KaraokeResult result;
+	for (auto const& value : static_cast<json::Array const&>(lines_it->second)) {
+		auto const& item = static_cast<json::Object const&>(value);
+		KaraokeLine line;
+		line.source_line_id = static_cast<int>(static_cast<json::Integer const&>(item.at("source_line_id")));
+		line.start_ms = static_cast<int>(static_cast<json::Integer const&>(item.at("start_ms")));
+		line.end_ms = static_cast<int>(static_cast<json::Integer const&>(item.at("end_ms")));
+		line.kanji = string_field(item, "kanji");
+		line.romaji = string_field(item, "romaji");
+		for (auto const& syllable_value : static_cast<json::Array const&>(item.at("syllables"))) {
+			auto const& syllable_item = static_cast<json::Object const&>(syllable_value);
+			KaraokeSyllable syllable;
+			syllable.start_ms = static_cast<int>(static_cast<json::Integer const&>(syllable_item.at("start_ms")));
+			syllable.end_ms = static_cast<int>(static_cast<json::Integer const&>(syllable_item.at("end_ms")));
+			syllable.text = string_field(syllable_item, "text");
+			syllable.kanji = string_field(syllable_item, "kanji");
+			syllable.romaji = string_field(syllable_item, "romaji");
+			syllable.language = string_field(syllable_item, "language");
+			line.syllables.push_back(std::move(syllable));
+		}
+		result.lines.push_back(std::move(line));
+	}
+	return result;
+}
+
+KaraokeResult parse_kanji(std::string const& output_text) {
+	auto parsed = parse_json(output_text);
+	auto const& object = static_cast<json::Object const&>(parsed);
+	auto lines_it = object.find("lines");
+	if (lines_it == object.end())
+		throw Error("A kanji-válaszból hiányzik a lines mező.");
+
+	KaraokeResult result;
+	for (auto const& value : static_cast<json::Array const&>(lines_it->second)) {
+		auto const& item = static_cast<json::Object const&>(value);
+		KaraokeLine line;
+		line.source_line_id = static_cast<int>(static_cast<json::Integer const&>(item.at("source_line_id")));
+		line.kanji = string_field(item, "kanji");
+		result.lines.push_back(std::move(line));
 	}
 	return result;
 }
@@ -648,7 +843,7 @@ std::string OpenAIClient::Transcribe(agi::fs::path const& audio_file) const {
 
 	add_text("model", transcription_model);
 	add_text("response_format", "json");
-	add_text("languages[]", "ja");
+	add_text("language", "ja");
 	auto file_part = curl_mime_addpart(mime);
 	curl_mime_name(file_part, "file");
 	curl_mime_filedata(file_part, audio_file.string().c_str());
@@ -675,6 +870,207 @@ std::string OpenAIClient::Transcribe(agi::fs::path const& audio_file) const {
 	catch (std::exception const& error) {
 		throw Error(agi::format("A beszédfelismerési válasz nem értelmezhető: %s", error.what()));
 	}
+}
+
+TimedTranscript OpenAIClient::TranscribeTimed(agi::fs::path const& audio_file) const {
+	CurlHandle curl;
+	std::string response;
+	configure_common(curl, api_key, &response, cancelled);
+	curl_easy_setopt(curl, CURLOPT_URL, (std::string(api_base) + "/audio/transcriptions").c_str());
+
+	curl_mime *mime = curl_mime_init(curl);
+	if (!mime) throw Error("A hangfeltöltés előkészítése sikertelen.");
+	auto cleanup = [&] { curl_mime_free(mime); };
+	auto add_text = [&](char const *name, std::string const& value) {
+		auto part = curl_mime_addpart(mime);
+		curl_mime_name(part, name);
+		curl_mime_data(part, value.c_str(), CURL_ZERO_TERMINATED);
+	};
+	add_text("model", transcription_model);
+	add_text("response_format", "verbose_json");
+	add_text("timestamp_granularities[]", "word");
+	add_text("timestamp_granularities[]", "segment");
+	add_text("language", "ja");
+	auto file_part = curl_mime_addpart(mime);
+	curl_mime_name(file_part, "file");
+	curl_mime_filedata(file_part, audio_file.string().c_str());
+	curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+	try {
+		auto headers = authenticated_headers(api_key, false);
+		response = perform(curl, headers, cancelled);
+		cleanup();
+	}
+	catch (...) {
+		cleanup();
+		throw;
+	}
+
+	auto number_field = [](json::Object const& object, char const *name) {
+		auto const& value = object.at(name);
+		try { return static_cast<double>(static_cast<json::Double const&>(value)); }
+		catch (json::Exception const&) {
+			return static_cast<double>(static_cast<json::Integer const&>(value));
+		}
+	};
+	try {
+		auto parsed = parse_json(response);
+		auto const& root = static_cast<json::Object const&>(parsed);
+		TimedTranscript transcript;
+		transcript.text = string_field(root, "text");
+		auto append_units = [&](char const *field) {
+			auto it = root.find(field);
+			if (it == root.end()) return;
+			for (auto const& value : static_cast<json::Array const&>(it->second)) {
+				auto const& unit = static_cast<json::Object const&>(value);
+				auto text = string_field(unit, "word", string_field(unit, "text"));
+				if (text.empty()) continue;
+				transcript.units.push_back({
+					static_cast<int>(std::lround(number_field(unit, "start") * 1000.0)),
+					static_cast<int>(std::lround(number_field(unit, "end") * 1000.0)),
+					std::move(text)});
+			}
+		};
+		append_units("words");
+		if (transcript.units.empty()) append_units("segments");
+		if (transcript.text.empty() || transcript.units.empty())
+			throw Error("A beszédfelismerés nem adott időbélyeges japán átiratot. Ellenőrizd, hogy a beállított átírási modell támogatja-e a verbose_json időbélyegeket.");
+		return transcript;
+	}
+	catch (Error const&) { throw; }
+	catch (std::exception const& error) {
+		throw Error(agi::format("Az időbélyeges beszédfelismerési válasz nem értelmezhető: %s", error.what()));
+	}
+}
+
+KaraokeResult OpenAIClient::CreateKaraoke(KaraokeMode mode,
+	std::vector<KaraokeInputLine> const& lines,
+	TimedTranscript const& transcript, bool advanced_timing) const {
+	int context_start = lines.empty() ? 0 : lines.front().start_ms;
+	int context_end = lines.empty() ? 0 : lines.front().end_ms;
+	for (auto const& line : lines) {
+		context_start = std::min(context_start, line.start_ms);
+		context_end = std::max(context_end, line.end_ms);
+	}
+	context_start = std::max(0, context_start - 750);
+	context_end += 750;
+	json::Array transcript_units;
+	std::string relevant_transcript;
+	for (auto const& unit : transcript.units) {
+		if (!lines.empty() && (unit.end_ms < context_start || unit.start_ms > context_end)) continue;
+		json::Array row;
+		row.emplace_back(unit.start_ms);
+		row.emplace_back(unit.end_ms);
+		row.emplace_back(unit.text);
+		transcript_units.emplace_back(std::move(row));
+		if (!relevant_transcript.empty()) relevant_transcript += ' ';
+		relevant_transcript += unit.text;
+	}
+	if (transcript_units.empty()) {
+		for (auto const& unit : transcript.units) {
+			json::Array row;
+			row.emplace_back(unit.start_ms);
+			row.emplace_back(unit.end_ms);
+			row.emplace_back(unit.text);
+			transcript_units.emplace_back(std::move(row));
+		}
+		relevant_transcript = transcript.text;
+	}
+	json::Array input_lines;
+	for (auto const& line : lines) {
+		json::Array row;
+		row.emplace_back(line.id);
+		row.emplace_back(line.start_ms);
+		row.emplace_back(line.end_ms);
+		row.emplace_back(line.text);
+		input_lines.emplace_back(std::move(row));
+	}
+	json::Object context;
+	context["mode"] = mode == KaraokeMode::AudioRecognition ? "audio_recognition" : "syllable_timing";
+	context["advanced_timing"] = advanced_timing;
+	context["transcript"] = relevant_transcript;
+	json::Array transcript_columns;
+	for (auto name : {"start_ms", "end_ms", "text"}) transcript_columns.emplace_back(name);
+	context["transcript_columns"] = std::move(transcript_columns);
+	context["transcript_units"] = std::move(transcript_units);
+	json::Array line_columns;
+	for (auto name : {"line_id", "start_ms", "end_ms", "text"}) line_columns.emplace_back(name);
+	context["line_columns"] = std::move(line_columns);
+	context["lines"] = std::move(input_lines);
+
+	json::Array input;
+	input.emplace_back(message_item("user", write_json(context)));
+	json::Object format;
+	format["type"] = "json_schema";
+	format["name"] = "aegisub_karaoke";
+	format["strict"] = true;
+	format["schema"] = karaoke_response_schema();
+	json::Object text;
+	text["format"] = std::move(format);
+	text["verbosity"] = "low";
+	json::Object reasoning;
+	reasoning["effort"] = mode == KaraokeMode::AudioRecognition ? "low" : "high";
+	json::Object request;
+	request["model"] = model;
+	request["instructions"] = karaoke_instructions(mode, advanced_timing);
+	request["input"] = std::move(input);
+	request["text"] = std::move(text);
+	request["reasoning"] = std::move(reasoning);
+	request["store"] = false;
+	request["max_output_tokens"] = 16000;
+	auto response_text = post_json(api_key, std::string(api_base) + "/responses",
+		write_json(request), cancelled);
+	auto response_root_value = parse_json(response_text);
+	auto const& response_root = static_cast<json::Object const&>(response_root_value);
+	return parse_karaoke(extract_output_text(response_root));
+}
+
+KaraokeResult OpenAIClient::CreateKanji(std::vector<KaraokeInputLine> const& lines) const {
+	json::Array input_lines;
+	for (auto const& line : lines) {
+		json::Array row;
+		row.emplace_back(line.id);
+		row.emplace_back(line.text);
+		input_lines.emplace_back(std::move(row));
+	}
+	json::Object context;
+	context["task"] = "romaji_to_japanese_lyrics";
+	json::Array columns;
+	columns.emplace_back("line_id");
+	columns.emplace_back("romaji");
+	context["columns"] = std::move(columns);
+	context["lines"] = std::move(input_lines);
+
+	json::Array input;
+	input.emplace_back(message_item("user", write_json(context)));
+	json::Object format;
+	format["type"] = "json_schema";
+	format["name"] = "aegisub_kanji_lines";
+	format["strict"] = true;
+	format["schema"] = kanji_response_schema();
+	json::Object text;
+	text["format"] = std::move(format);
+	text["verbosity"] = "low";
+	json::Object reasoning;
+	reasoning["effort"] = "low";
+	json::Object request;
+	request["model"] = model;
+	request["instructions"] =
+		"Convert Japanese song lyrics written in romaji to accurate natural Japanese "
+		"kanji and kana. Return exactly one result for every input line, in the same "
+		"order and with its exact source_line_id. Preserve the meaning, wording, names, "
+		"repetitions, and line boundaries. Return plain subtitle text without ASS tags, "
+		"karaoke timing, translations, or middle dots (・, ･, or ·). If a line is entirely "
+		"English rather than Japanese romaji, return an empty kanji string for that line.";
+	request["input"] = std::move(input);
+	request["text"] = std::move(text);
+	request["reasoning"] = std::move(reasoning);
+	request["store"] = false;
+	request["max_output_tokens"] = 8000;
+	auto response_text = post_json(api_key, std::string(api_base) + "/responses",
+		write_json(request), cancelled);
+	auto response_root_value = parse_json(response_text);
+	auto const& response_root = static_cast<json::Object const&>(response_root_value);
+	return parse_kanji(extract_output_text(response_root));
 }
 
 ReviewResult OpenAIClient::Review(std::vector<SubtitleLine> const& lines,

@@ -588,9 +588,6 @@ struct FeatureKey {
 };
 
 void VisualToolVectorClip::DoRefresh() {
-	FILE *log = fopen("app.log", "a");
-	fprintf(log, "DoRefresh() \n");
-	fclose(log);
 	if (!active_line) return;
 
 	int scale;

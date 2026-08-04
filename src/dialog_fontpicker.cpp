@@ -99,9 +99,6 @@ static void LoadFontCache()
         json::Reader::Read(root, *agi::io::Open(path)); 
         json::Object& obj = root;
 
-        FILE *log = fopen("app.log", "a");
-        fprintf(log, "File path: %s \n\n", path.string().c_str());
-
         for (auto it = obj.begin(); it != obj.end(); ++it) {
             const std::string& name = it->first;
 
@@ -147,10 +144,7 @@ static void LoadFontCache()
                 continue;
             }
 
-            fprintf(log, "Font cache: %s installed_at = %lld usage = %lld \n", name.c_str(), (long long)g_installed_cache[name], (long long)g_usage_cache[name]);
         }
-
-        fclose(log);
     }
     catch (...) {
     }

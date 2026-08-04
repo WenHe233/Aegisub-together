@@ -83,6 +83,7 @@ void init_edit();
 void init_grid();
 void init_help();
 void init_keyframe();
+void init_muteki_update();
 void init_recent();
 void init_subtitle();
 void init_time();
@@ -101,6 +102,7 @@ void init_builtin_commands() {
 	init_grid();
 	init_help();
 	init_keyframe();
+	init_muteki_update();
 	init_recent();
 	init_subtitle();
 	init_time();

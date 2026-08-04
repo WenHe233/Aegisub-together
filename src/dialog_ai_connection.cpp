@@ -25,7 +25,9 @@ class AIConnectionDialog final : public wxDialog {
 	wxTextCtrl *key;
 	wxTextCtrl *model;
 	wxTextCtrl *transcription_model;
+	wxTextCtrl *karaoke_timing_model;
 	wxTextCtrl *review_instructions;
+	wxCheckBox *advanced_karaoke_timing;
 	wxCheckBox *remember;
 	wxStaticText *status;
 	bool require_key;
@@ -118,6 +120,8 @@ class AIConnectionDialog final : public wxDialog {
 
 		OPT_SET("AI/OpenAI/Model")->SetString(from_wx(model->GetValue()));
 		OPT_SET("AI/OpenAI/Transcription Model")->SetString(from_wx(transcription_model->GetValue()));
+		OPT_SET("AI/OpenAI/Karaoke Timing Model")->SetString(from_wx(karaoke_timing_model->GetValue()));
+		OPT_SET("AI/OpenAI/Advanced Karaoke Timing")->SetBool(advanced_karaoke_timing->IsChecked());
 		OPT_SET("AI/Review/Instructions")->SetString(from_wx(review_instructions->GetValue()));
 		config::opt->Flush();
 		EndModal(wxID_OK);
@@ -153,7 +157,27 @@ public:
 		transcription_model = new wxTextCtrl(this, wxID_ANY,
 			to_wx(OPT_GET("AI/OpenAI/Transcription Model")->GetString()));
 		form->Add(transcription_model, wxSizerFlags(1).Expand());
+
+		form->Add(new wxStaticText(this, wxID_ANY, _("Karaoke timing model:")), 0, wxALIGN_CENTER_VERTICAL);
+		karaoke_timing_model = new wxTextCtrl(this, wxID_ANY,
+			to_wx(OPT_GET("AI/OpenAI/Karaoke Timing Model")->GetString()));
+		karaoke_timing_model->SetHint(_("Use whisper-1 for word timestamps"));
+		form->Add(karaoke_timing_model, wxSizerFlags(1).Expand());
 		main->Add(form, wxSizerFlags().Expand().Border());
+		advanced_karaoke_timing = new wxCheckBox(this, wxID_ANY,
+			_("Use advanced karaoke timing rules"));
+		advanced_karaoke_timing->SetValue(
+			OPT_GET("AI/OpenAI/Advanced Karaoke Timing")->GetBool());
+		main->Add(advanced_karaoke_timing,
+			wxSizerFlags().Border(wxLEFT | wxRIGHT | wxBOTTOM));
+		auto advanced_help = new wxStaticText(this, wxID_ANY,
+			_("Disable this option to restore the previous AI timing behavior."));
+		advanced_help->Wrap(520);
+		main->Add(advanced_help, wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT | wxBOTTOM));
+		main->Add(new wxHyperlinkCtrl(this, wxID_ANY,
+			_("Advanced karaoke timing guide"),
+			"https://docs.karaokes.moe/contrib-guide/create-karaoke/advanced-timing/index.html"),
+			wxSizerFlags().Border(wxLEFT | wxRIGHT | wxBOTTOM));
 		main->Add(new wxHyperlinkCtrl(this, wxID_ANY,
 			_("Available OpenAI models and pricing"),
 			"https://developers.openai.com/api/docs/models"),

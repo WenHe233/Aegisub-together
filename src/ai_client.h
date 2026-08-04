@@ -41,6 +41,52 @@ struct ProofreadResult {
 	std::vector<ProofreadIssue> issues;
 };
 
+enum class KaraokeMode {
+	AudioRecognition,
+	SyllableTiming,
+	KanjiGeneration
+};
+
+struct TimedTranscriptUnit {
+	int start_ms = 0;
+	int end_ms = 0;
+	std::string text;
+};
+
+struct TimedTranscript {
+	std::string text;
+	std::vector<TimedTranscriptUnit> units;
+};
+
+struct KaraokeInputLine {
+	int id = 0;
+	int start_ms = 0;
+	int end_ms = 0;
+	std::string text;
+};
+
+struct KaraokeSyllable {
+	int start_ms = 0;
+	int end_ms = 0;
+	std::string text;
+	std::string kanji;
+	std::string romaji;
+	std::string language;
+};
+
+struct KaraokeLine {
+	int source_line_id = 0;
+	int start_ms = 0;
+	int end_ms = 0;
+	std::string kanji;
+	std::string romaji;
+	std::vector<KaraokeSyllable> syllables;
+};
+
+struct KaraokeResult {
+	std::vector<KaraokeLine> lines;
+};
+
 struct LineReview {
 	int id = 0;
 	std::string japanese;
@@ -73,6 +119,11 @@ public:
 
 	void TestConnection() const;
 	std::string Transcribe(agi::fs::path const& audio_file) const;
+	TimedTranscript TranscribeTimed(agi::fs::path const& audio_file) const;
+	KaraokeResult CreateKaraoke(KaraokeMode mode,
+		std::vector<KaraokeInputLine> const& lines,
+		TimedTranscript const& transcript, bool advanced_timing) const;
+	KaraokeResult CreateKanji(std::vector<KaraokeInputLine> const& lines) const;
 	ReviewResult Review(std::vector<SubtitleLine> const& lines,
 		std::string const& japanese_transcript) const;
 	ReviewResult Continue(ReviewResult const& previous,

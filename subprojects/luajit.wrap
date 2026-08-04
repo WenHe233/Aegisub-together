@@ -1,5 +1,5 @@
 [wrap-file]
-directory = LuaJIT-04dca7911ea255f37be799c18d74c305b921c1a6
+directory = luajit-2.1.1720049189-aegisub
 source_url = https://github.com/LuaJIT/LuaJIT/archive/04dca7911ea255f37be799c18d74c305b921c1a6.tar.gz
 source_filename = luajit-2.1.1720049189.tar.gz
 source_hash = 346b028d9ba85e04b7e23a43cc51ec076574d2efc0d271d4355141b0145cd6e0
