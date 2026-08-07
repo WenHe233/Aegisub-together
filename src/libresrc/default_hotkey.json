@@ -361,8 +361,14 @@
 		"video/tool/scale" : [
 			"H"
 		],
-		"video/tool/vector_clip" : [
+		"video/tool/mask_edit" : [
 			"K"
+		],
+		"video/tool/mask" : [
+			"L"
+		],
+		"video/tool/shape" : [
+			"M"
 		]
 	}
 }

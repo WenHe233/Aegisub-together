@@ -2641,346 +2641,65 @@ wxBitmap MakeVisualAISelectionBitmap(int size) {
 }
 
 std::vector<std::vector<Vector2D>> GenerateVisualAISelection(
-	wxWindow *parent, wxImage const& crop, std::string const& subject_prompt) {
+	wxWindow *parent, wxImage const& crop) {
 	if (!crop.IsOk() || crop.GetWidth() < 3 || crop.GetHeight() < 3)
 		throw ai::Error("The selected image range is empty.");
-	if (ai::GetApiKey().empty())
-		throw ai::Error("No working AI connection is configured.");
+	ai::CloudinaryCredentials credentials{
+		OPT_GET("AI/Cloudinary/Cloud Name")->GetString(),
+		OPT_GET("AI/Cloudinary/API Key")->GetString(),
+		ai::GetCloudinarySecret()};
+	if (!credentials.Complete())
+		throw ai::Error("Cloudinary is not configured. Open AI connection settings and enter the Cloudinary cloud name, API key and API secret.");
 
 	auto encode_png = [](wxImage const& image) {
 		wxMemoryOutputStream stream;
 		if (!image.SaveFile(stream, wxBITMAP_TYPE_PNG))
-			throw ai::Error("The AI selection image could not be encoded.");
+			throw ai::Error("The AI recognition image could not be encoded.");
 		std::vector<unsigned char> data(stream.GetSize());
 		if (!data.empty()) stream.CopyTo(data.data(), data.size());
 		return data;
 	};
-	auto image_png = encode_png(crop);
-	auto selection_model = OPT_GET("AI/OpenAI/Selection Model")->GetString();
-	uint64_t fingerprint = 1469598103934665603ULL;
-	for (unsigned char byte : image_png) {
-		fingerprint ^= byte;
-		fingerprint *= 1099511628211ULL;
+	constexpr double cloudinary_minimum_dimension = 100.0;
+	double request_scale = std::max({1.0,
+		cloudinary_minimum_dimension / crop.GetWidth(),
+		cloudinary_minimum_dimension / crop.GetHeight()});
+	wxImage request_image = crop;
+	if (request_scale > 1.0) {
+		int request_width = static_cast<int>(std::ceil(crop.GetWidth() * request_scale));
+		int request_height = static_cast<int>(std::ceil(crop.GetHeight() * request_scale));
+		request_image = crop.Scale(request_width, request_height, wxIMAGE_QUALITY_HIGH);
 	}
-	struct CacheEntry {
-		uint64_t fingerprint;
-		size_t png_size;
-		int width;
-		int height;
-		std::string model;
-		std::string prompt;
-		std::vector<ai::ImageContour> contours;
-	};
-	static std::deque<CacheEntry> cache;
-	static std::mutex cache_mutex;
-	std::vector<ai::ImageContour> ai_contours;
+	auto image_png = encode_png(request_image);
 	{
-		std::lock_guard<std::mutex> lock(cache_mutex);
-		auto cached = std::find_if(cache.begin(), cache.end(), [&](CacheEntry const& entry) {
-			return entry.fingerprint == fingerprint && entry.png_size == image_png.size() &&
-				entry.width == crop.GetWidth() && entry.height == crop.GetHeight() &&
-				entry.model == selection_model && entry.prompt == subject_prompt;
-		});
-		if (cached != cache.end()) {
-			CacheEntry entry = std::move(*cached);
-			cache.erase(cached);
-			cache.push_front(std::move(entry));
-			ai_contours = cache.front().contours;
-		}
-	}
-	bool request_cancelled = false;
-	auto request_contours = [&] {
-		std::vector<ai::ImageContour> requested;
-		std::string image_url = "data:image/png;base64," +
-			from_wx(wxBase64Encode(image_png.data(), image_png.size()));
-		std::string error_message;
-		DialogProgress progress(parent, _("AI selection"), _("Selecting the requested object..."));
+		std::string encoded;
+		std::string error;
+		DialogProgress progress(parent, _("AI recognition"), _("Recognizing the visible subject..."));
 		try {
 			progress.Run([&](agi::ProgressSink *sink) {
 				sink->SetIndeterminate();
-				try {
-					auto cancel = [sink] { return sink->IsCancelled(); };
-					requested = ai::SelectImageContours(ai::GetApiKey(),
-						selection_model, image_url, subject_prompt, cancel);
-				}
-				catch (std::exception const& error) {
-					error_message = error.what();
-				}
+				try { encoded = ai::CloudinaryRemoveBackground(credentials, image_png,
+					[sink] { return sink->IsCancelled(); }); }
+				catch (std::exception const& e) { error = e.what(); }
 			});
 		}
-		catch (agi::UserCancelException const&) {
-			request_cancelled = true;
-			return std::vector<ai::ImageContour>{};
+		catch (agi::UserCancelException const&) { return {}; }
+		if (!error.empty()) throw ai::Error(error);
+		wxMemoryBuffer data = wxBase64Decode(encoded.data(), encoded.size());
+		wxMemoryInputStream stream(data.GetData(), data.GetDataLen());
+		wxImage matte(stream, wxBITMAP_TYPE_PNG);
+		if (!matte.IsOk() || !matte.HasAlpha())
+			throw ai::Error("Cloudinary did not return a transparent selection matte.");
+		auto alpha = matte.GetAlpha();
+		std::vector<unsigned char> selected(static_cast<size_t>(matte.GetWidth()) * matte.GetHeight());
+		for (size_t i = 0; i < selected.size(); ++i) selected[i] = alpha[i] >= 32;
+		auto contours = trace_binary_mask(selected, matte.GetWidth(), matte.GetHeight(), 0, 0, .7);
+		if (matte.GetWidth() != crop.GetWidth() || matte.GetHeight() != crop.GetHeight()) {
+			float scale_x = static_cast<float>(crop.GetWidth()) / matte.GetWidth();
+			float scale_y = static_cast<float>(crop.GetHeight()) / matte.GetHeight();
+			for (auto& contour : contours)
+				for (auto& point : contour)
+					point = Vector2D(point.X() * scale_x, point.Y() * scale_y);
 		}
-		if (!error_message.empty()) throw ai::Error(error_message);
-		return requested;
-	};
-	if (ai_contours.empty()) {
-		ai_contours = request_contours();
-		if (request_cancelled) return {};
+		return contours;
 	}
-
-	auto render_contours = [&](std::vector<ai::ImageContour> const& source_contours) {
-		std::vector<RasterContour> semantic_contours;
-		semantic_contours.reserve(source_contours.size());
-		for (auto const& source_contour : source_contours) {
-			RasterContour contour;
-			contour.add = source_contour.operation == ai::ImageContourOperation::Add;
-			contour.points.reserve(source_contour.points.size());
-			for (auto const& source_point : source_contour.points) {
-				contour.points.emplace_back(
-					static_cast<float>(source_point.x * crop.GetWidth() / 1000.0),
-					static_cast<float>(source_point.y * crop.GetHeight() / 1000.0));
-			}
-			if (contour.points.size() >= 3)
-				semantic_contours.push_back(std::move(contour));
-		}
-		if (semantic_contours.empty())
-			return std::vector<std::vector<Vector2D>>{};
-		// The AI outline is a semantic prior. Graph cut aligns a valid prior to
-		// image pixels; owner filtering removes detached text/line-art islands.
-		auto semantic_mask = rasterize_contour_operations(semantic_contours,
-			crop.GetWidth(), crop.GetHeight());
-		std::vector<unsigned char> accepted_subtract;
-		auto refined_mask = refine_semantic_mask(crop, semantic_mask, accepted_subtract);
-		auto cleaned_mask = retain_semantic_components(refined_mask, semantic_mask.owners,
-			accepted_subtract, crop.GetWidth(), crop.GetHeight());
-		// Pixel contours are axis-aligned by construction. Scale RDP very mildly
-		// with the crop so one-pixel staircase noise is removed at HD sizes while
-		// small hair tips, fingers and corners stay within a 1.25 px error bound.
-		double contour_epsilon = std::clamp(.55 +
-			std::min(crop.GetWidth(), crop.GetHeight()) / 3000.0, .6, .9);
-		auto contours = trace_binary_mask(cleaned_mask,
-			crop.GetWidth(), crop.GetHeight(), 0, 0, contour_epsilon);
-		if (!contours.empty()) return contours;
-		return snap_semantic_contours(crop, semantic_contours);
-	};
-
-	auto contours = render_contours(ai_contours);
-	if (contours.empty())
-		throw ai::Error("The AI selection could not be aligned to a visible object boundary.");
-
-	{
-		std::lock_guard<std::mutex> lock(cache_mutex);
-		cache.erase(std::remove_if(cache.begin(), cache.end(), [&](CacheEntry const& entry) {
-			return entry.fingerprint == fingerprint && entry.png_size == image_png.size() &&
-				entry.width == crop.GetWidth() && entry.height == crop.GetHeight() &&
-				entry.model == selection_model && entry.prompt == subject_prompt;
-		}), cache.end());
-		cache.push_front({fingerprint, image_png.size(), crop.GetWidth(), crop.GetHeight(),
-			selection_model, subject_prompt, ai_contours});
-		while (cache.size() > 16) cache.pop_back();
-	}
-	return contours;
-#if 0
-	auto semantic_mask = rasterize_contour_operations(semantic_contours,
-		crop.GetWidth(), crop.GetHeight());
-	std::vector<unsigned char> accepted_subtract;
-	auto refined_mask = refine_semantic_mask(crop, semantic_mask, accepted_subtract);
-	auto topology_contours = trace_binary_mask(refined_mask,
-		crop.GetWidth(), crop.GetHeight(), 0, 0, .7);
-	if (topology_contours.empty()) return {};
-
-	auto pixels = crop.GetData();
-	auto sample = [&](Vector2D position, int channel) {
-			int x = std::clamp(static_cast<int>(std::lround(position.X())), 0, crop.GetWidth() - 1);
-			int y = std::clamp(static_cast<int>(std::lround(position.Y())), 0, crop.GetHeight() - 1);
-			return static_cast<int>(pixels[(static_cast<size_t>(y) * crop.GetWidth() + x) * 3 + channel]);
-	};
-	auto edge_strength = [&](Vector2D point, Vector2D normal) {
-		Vector2D outside = point + normal * 2.f;
-		Vector2D inside = point - normal * 2.f;
-		int strength = 0;
-		for (int channel = 0; channel < 3; ++channel)
-			strength += std::abs(sample(outside, channel) - sample(inside, channel));
-		return strength;
-	};
-	auto band_edge_strength = [&](Vector2D point, Vector2D normal) {
-		Vector2D tangent = normal.Perpendicular();
-		double positive[3]{}, negative[3]{};
-		int samples = 0;
-		for (int distance = 2; distance <= 5; ++distance) {
-			for (int tangent_offset = -1; tangent_offset <= 1; ++tangent_offset) {
-				Vector2D along = tangent * static_cast<float>(tangent_offset);
-				for (int channel = 0; channel < 3; ++channel) {
-					positive[channel] += sample(point + normal * static_cast<float>(distance) + along, channel);
-					negative[channel] += sample(point - normal * static_cast<float>(distance) + along, channel);
-				}
-				++samples;
-			}
-		}
-		double score = 0.0;
-		for (int channel = 0; channel < 3; ++channel) {
-			double difference = (positive[channel] - negative[channel]) / samples;
-			score += difference * difference;
-		}
-		return std::sqrt(score);
-	};
-	auto local_edge_strength = [&](int x, int y) {
-		x = std::clamp(x, 1, crop.GetWidth() - 2);
-		y = std::clamp(y, 1, crop.GetHeight() - 2);
-		auto offset = [&](int px, int py) {
-			return (static_cast<size_t>(py) * crop.GetWidth() + px) * 3;
-		};
-		int strength = 0;
-		for (int channel = 0; channel < 3; ++channel) {
-			strength += std::abs(static_cast<int>(pixels[offset(x + 1, y) + channel]) -
-				static_cast<int>(pixels[offset(x - 1, y) + channel]));
-			strength += std::abs(static_cast<int>(pixels[offset(x, y + 1) + channel]) -
-				static_cast<int>(pixels[offset(x, y - 1) + channel]));
-		}
-		return strength;
-	};
-	auto snap_contours_to_image = [&](std::vector<std::vector<Vector2D>> const& sources,
-		std::vector<unsigned char> const& boundary_mask, int radius,
-		double simplify_epsilon) {
-		std::vector<std::vector<Vector2D>> snapped;
-		for (auto base : sources) {
-			if (base.size() < 3) continue;
-			bool positive_winding = polygon_area(base) > 0.0;
-			std::vector<Vector2D> dense;
-			float point_spacing = std::clamp(
-				std::min(crop.GetWidth(), crop.GetHeight()) / 160.f, 1.5f, 4.f);
-			for (size_t i = 0; i < base.size(); ++i) {
-				Vector2D a = base[i];
-				Vector2D b = base[(i + 1) % base.size()];
-				int steps = std::max(1, static_cast<int>(std::ceil((b - a).Len() / point_spacing)));
-				for (int step = 0; step < steps; ++step)
-					dense.push_back(a + (b - a) * (static_cast<float>(step) / steps));
-			}
-			base = std::move(dense);
-			std::vector<Vector2D> normals(base.size());
-			std::vector<float> offsets(base.size());
-			std::vector<unsigned char> crop_edge(base.size());
-			for (size_t i = 0; i < base.size(); ++i) {
-				Vector2D tangent = base[(i + 1) % base.size()] -
-					base[(i + base.size() - 1) % base.size()];
-				normals[i] = tangent.SquareLen() > 1e-4f ?
-					tangent.Perpendicular().Unit() : Vector2D(0.f, 1.f);
-				// A subject cut by the selected range must stay exactly on that
-				// range edge. Sampling a clamped image outside it otherwise pulls
-				// the contour inward and creates a ragged crop boundary.
-				bool on_crop_edge = base[i].X() <= .01f || base[i].Y() <= .01f ||
-					base[i].X() >= crop.GetWidth() - .01f ||
-					base[i].Y() >= crop.GetHeight() - .01f;
-				crop_edge[i] = on_crop_edge;
-				if (on_crop_edge) continue;
-				float best_offset = 0.f;
-				double best_score = -1e9;
-				for (int offset = -radius; offset <= radius; ++offset) {
-					Vector2D candidate = base[i] + normals[i] * static_cast<float>(offset);
-					int x = std::clamp(static_cast<int>(std::lround(candidate.X())),
-						1, crop.GetWidth() - 2);
-					int y = std::clamp(static_cast<int>(std::lround(candidate.Y())),
-						1, crop.GetHeight() - 2);
-					auto selected_at = [&](Vector2D position) {
-						int mask_x = std::clamp(static_cast<int>(std::floor(position.X())),
-							0, crop.GetWidth() - 1);
-						int mask_y = std::clamp(static_cast<int>(std::floor(position.Y())),
-							0, crop.GetHeight() - 1);
-						return boundary_mask[static_cast<size_t>(mask_y) * crop.GetWidth() + mask_x] != 0;
-					};
-					bool separates_mask = selected_at(candidate + normals[i] * 1.5f) !=
-						selected_at(candidate - normals[i] * 1.5f);
-					double score = band_edge_strength(candidate, normals[i]) * 3.0 +
-						edge_strength(candidate, normals[i]) * .6 +
-						local_edge_strength(x, y) * .08 - std::abs(offset) * 6.0 -
-						(separates_mask ? 0.0 : 1000.0);
-					if (score > best_score) {
-						best_score = score;
-						best_offset = static_cast<float>(offset);
-					}
-				}
-				offsets[i] = best_offset;
-			}
-			std::vector<Vector2D> contour;
-			contour.reserve(base.size());
-			for (size_t i = 0; i < base.size(); ++i) {
-				float smooth_offset = (offsets[(i + base.size() - 2) % base.size()] +
-					offsets[(i + base.size() - 1) % base.size()] * 2.f + offsets[i] * 4.f +
-					offsets[(i + 1) % base.size()] * 2.f + offsets[(i + 2) % base.size()]) * .1f;
-				Vector2D point = crop_edge[i] ? base[i] :
-					base[i] + normals[i] * smooth_offset;
-				contour.emplace_back(std::clamp(point.X(), 0.f, static_cast<float>(crop.GetWidth())),
-					std::clamp(point.Y(), 0.f, static_cast<float>(crop.GetHeight())));
-			}
-			contour = simplify_closed(std::move(contour), simplify_epsilon);
-			if (contour.size() < 3) continue;
-			if ((polygon_area(contour) > 0.0) != positive_winding)
-				std::reverse(contour.begin(), contour.end());
-			snapped.push_back(std::move(contour));
-		}
-		return snapped;
-	};
-	int snap_radius = std::clamp(static_cast<int>(std::lround(
-		std::min(crop.GetWidth(), crop.GetHeight()) * .015)), 2, 8);
-	auto contours = snap_contours_to_image(topology_contours, refined_mask,
-		snap_radius, .45);
-	if (contours.empty()) return {};
-	// Build every outer component with only its own holes, then union the
-	// components. Unlike global even/odd or union-minus-all-holes, this preserves
-	// both overlapping foreground components and positive islands inside holes.
-	std::vector<unsigned char> canonical_mask(
-		static_cast<size_t>(crop.GetWidth()) * crop.GetHeight(), 0);
-	bool has_outer = false;
-	for (auto const& outer : contours) {
-		if (polygon_area(outer) <= 0.0) continue;
-		has_outer = true;
-		std::vector<unsigned char> component(canonical_mask.size(), 0);
-		apply_raster_polygon(component, crop.GetWidth(), crop.GetHeight(), outer, 1);
-		for (auto const& hole : contours) {
-			if (polygon_area(hole) >= 0.0 || hole.empty()) continue;
-			if (polygon_contains_point(outer, hole.front()))
-				apply_raster_polygon(component, crop.GetWidth(), crop.GetHeight(), hole, 0);
-		}
-		for (size_t i = 0; i < canonical_mask.size(); ++i)
-			canonical_mask[i] = canonical_mask[i] || component[i];
-	}
-	if (!has_outer) return {};
-	for (size_t i = 0; i < canonical_mask.size() && i < accepted_subtract.size(); ++i)
-		if (accepted_subtract[i]) canonical_mask[i] = 0;
-	// Reassert crop-edge pixels from the topology-safe refined mask. This keeps
-	// a subject cut by the selected range attached to the exact range boundary,
-	// even if simplification removed an intermediate edge anchor.
-	auto restore_crop_pixel = [&](int x, int y) {
-		size_t index = static_cast<size_t>(y) * crop.GetWidth() + x;
-		if (refined_mask[index] && !accepted_subtract[index]) canonical_mask[index] = 1;
-	};
-	for (int x = 0; x < crop.GetWidth(); ++x) {
-		restore_crop_pixel(x, 0);
-		restore_crop_pixel(x, crop.GetHeight() - 1);
-	}
-	for (int y = 0; y < crop.GetHeight(); ++y) {
-		restore_crop_pixel(0, y);
-		restore_crop_pixel(crop.GetWidth() - 1, y);
-	}
-
-	// Remove only single-pixel teeth and pinholes. This is deliberately one
-	// symmetric pass: it cleans raster artefacts without rounding hair tips,
-	// fingers, corners, or any protected background opening.
-	auto before_cleanup = canonical_mask;
-	for (int y = 1; y + 1 < crop.GetHeight(); ++y) {
-		for (int x = 1; x + 1 < crop.GetWidth(); ++x) {
-			size_t index = static_cast<size_t>(y) * crop.GetWidth() + x;
-			int neighbours = 0;
-			for (int dy = -1; dy <= 1; ++dy)
-				for (int dx = -1; dx <= 1; ++dx)
-					if (dx || dy) neighbours += before_cleanup[
-						static_cast<size_t>(y + dy) * crop.GetWidth() + x + dx] != 0;
-			if (before_cleanup[index] && neighbours == 0)
-				canonical_mask[index] = 0;
-			else if (!before_cleanup[index] && !accepted_subtract[index] && neighbours >= 7)
-				canonical_mask[index] = 1;
-		}
-	}
-	for (size_t i = 0; i < canonical_mask.size() && i < accepted_subtract.size(); ++i)
-		if (accepted_subtract[i]) canonical_mask[i] = 0;
-
-	// The topology pass has to rasterize overlapping semantic regions. Remove
-	// sub-pixel staircase deviations while keeping the canonical mask's exact
-	// component/hole relationships; another independent snap could cross a thin
-	// gap or make an outer loop intersect its hole.
-	return trace_binary_mask(canonical_mask,
-		crop.GetWidth(), crop.GetHeight(), 0, 0, .85);
-#endif
 }

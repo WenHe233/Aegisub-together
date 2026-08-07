@@ -64,7 +64,7 @@ void Spline::SetScale(int new_scale) {
 	scale = 1 << (raw_scale - 1);
 }
 
-std::string Spline::EncodeToAss() const {
+std::string Spline::EncodeToAss(int precision) const {
 	std::string result;
 	result.reserve(size() * 10);
 	char last = 0;
@@ -76,7 +76,7 @@ std::string Spline::EncodeToAss() const {
 					result += "m ";
 					last = 'm';
 				}
-				result += ToScript(pt.p1).Str(' ');
+				result += ToScript(pt.p1).Str(' ', precision);
 				break;
 
 			case SplineCurve::LINE:
@@ -84,7 +84,7 @@ std::string Spline::EncodeToAss() const {
 					result += "l ";
 					last = 'l';
 				}
-				result += ToScript(pt.p2).Str(' ');
+				result += ToScript(pt.p2).Str(' ', precision);
 				break;
 
 			case SplineCurve::BICUBIC:
@@ -92,9 +92,9 @@ std::string Spline::EncodeToAss() const {
 					result += "b ";
 					last = 'b';
 				}
-				result += ToScript(pt.p2).Str(' ') + " ";
-				result += ToScript(pt.p3).Str(' ') + " ";
-				result += ToScript(pt.p4).Str(' ');
+				result += ToScript(pt.p2).Str(' ', precision) + " ";
+				result += ToScript(pt.p3).Str(' ', precision) + " ";
+				result += ToScript(pt.p4).Str(' ', precision);
 				break;
 
 			default: break;

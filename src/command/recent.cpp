@@ -47,7 +47,7 @@ COMMAND_GROUP(recent_timecodes, "recent/timecodes", "Recent", "Recent", "Open re
 COMMAND_GROUP(recent_video,     "recent/video",     "Recent", "Recent", "Open recent video");
 
 struct open_video_recent final : public Command {
-	CMD_NAME("open/video/recent")
+	CMD_NAME("video/open/recent")
 	CMD_ICON(open_video_menu)
 	STR_MENU("Open Recent Video")
 	STR_DISP("Open Recent Video")

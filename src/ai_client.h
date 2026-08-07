@@ -42,24 +42,6 @@ struct ProofreadResult {
 	std::vector<ProofreadIssue> issues;
 };
 
-struct ImageContourPoint {
-	double x = 0.0;
-	double y = 0.0;
-};
-
-enum class ImageContourOperation {
-	Add,
-	Subtract
-};
-
-/// One semantic image region. Add regions are unioned first, then Subtract
-/// regions remove genuine background openings from that union.
-struct ImageContour {
-	ImageContourOperation operation = ImageContourOperation::Add;
-	std::string label;
-	std::vector<ImageContourPoint> points;
-};
-
 enum class KaraokeMode {
 	AudioRecognition,
 	SyllableTiming,
@@ -156,12 +138,27 @@ std::string EditImage(std::string const& api_key, std::string const& image_model
 	std::vector<unsigned char> const& mask_png, std::string const& size,
 	std::string const& prompt, std::function<bool()> const& is_cancelled = {});
 
-/// Analyze an image crop and return visible subject contours in normalized
-/// 0-1000 coordinates. Unlike EditImage this never generates replacement pixels.
-std::vector<ImageContour> SelectImageContours(std::string const& api_key,
-	std::string const& vision_model, std::string const& png_data_url,
-	std::string const& subject_prompt,
+struct CloudinaryCredentials {
+	std::string cloud_name;
+	std::string api_key;
+	std::string api_secret;
+	bool Complete() const { return !cloud_name.empty() && !api_key.empty() && !api_secret.empty(); }
+};
+
+std::string CloudinaryRemoveBackground(CloudinaryCredentials const& credentials,
+	std::vector<unsigned char> const& image_png,
 	std::function<bool()> const& is_cancelled = {});
+std::string CloudinaryGenerativeRemove(CloudinaryCredentials const& credentials,
+	std::vector<unsigned char> const& image_png, std::string const& prompt,
+	std::function<bool()> const& is_cancelled = {});
+void TestCloudinaryConnection(CloudinaryCredentials const& credentials);
+
+std::string GetCloudinarySecret();
+void SetSessionCloudinarySecret(std::string secret);
+void ClearSessionCloudinarySecret();
+bool StoreCloudinarySecret(std::string const& secret, std::string *error = nullptr);
+bool DeleteStoredCloudinarySecret(std::string *error = nullptr);
+bool HasStoredCloudinarySecret();
 
 enum class ApiKeySource {
 	None,

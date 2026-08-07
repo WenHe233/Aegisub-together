@@ -106,7 +106,6 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	Vector2D color_brush_last;
 	std::vector<Vector2D> color_brush_stroke;
 	int color_return_mode = VCLIP_DRAG;
-	std::string selection_prompt;
 	wxPopupTransientWindow *brush_popup = nullptr;
 	struct ColorHistoryState {
 		VisualColorSegmenter segmenter;
@@ -131,7 +130,7 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	float drawing_rotation = 0.f;
 	int drawing_scale_level = 1;
 
-	void Save();
+	void Save(int precision_override = -1);
 	void Commit(wxString message="") override;
 	void OnFrameChanged() override;
 	void OnCoordinateSystemsChanged() override;
@@ -160,13 +159,12 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	bool RedoColorHistory();
 	bool InitializeBrushSelection();
 	bool PrepareColorSelection(Vector2D sample_point);
-	bool PrepareAISelection(std::string const& prompt);
+	bool PrepareAISelection();
 	bool EnsureColorSegmenter();
 	bool CanOffsetSelection() const;
 	void ShowColorModeMenu();
 	void ShowAISelectionMenu();
 	void UpdateColorCursor();
-	void EditSelectionPrompt();
 	void RefreshColorContours();
 	void PaintColorBrush(Vector2D from, Vector2D to);
 	void PaintSelectionBrush(Vector2D from, Vector2D to);

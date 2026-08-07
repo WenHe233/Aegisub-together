@@ -87,7 +87,6 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	bool color_brush_moved = false;
 	Vector2D color_brush_last;
 	std::vector<Vector2D> color_brush_stroke;
-	std::string selection_prompt;
 	struct ColorHistoryState {
 		VisualColorSegmenter segmenter;
 		VisualColorSample sample;
@@ -144,19 +143,18 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	void UpdateColorOffset(Vector2D point);
 	void UpdateColorBrushSize(Vector2D point);
 	bool PrepareColorSelection(Vector2D sample_point);
-	bool PrepareAISelection(std::string const& prompt);
+	bool PrepareAISelection();
 	bool EnsureColorSegmenter();
 	void ShowColorModeMenu();
 	void ShowAISelectionMenu();
 	void UpdateColorCursor();
-	void EditSelectionPrompt();
 	void RefreshColorContours();
 	void PaintColorBrush(Vector2D from, Vector2D to);
 	void SyncColorSegmenterFromContours();
 	void ResetAIRefinement();
 	bool AcceptAIRefinement();
 	std::unique_ptr<wxImage> RunAIImageEdit(wxImage const& scene, wxImage const& mask,
-		std::string const& prompt, wxString const& progress_message);
+		std::string const& prompt, wxString const& progress_message, bool use_cloudinary);
 	void DrawTopBar();
 	Vector2D ColourSamplePoint() const;
 	agi::Color SampleColour(AssStyle const *style) const;

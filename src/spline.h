@@ -52,7 +52,7 @@ public:
 	Vector2D ToScript(Vector2D vec) const;
 
 	/// Encode to an ASS vector drawing
-	std::string EncodeToAss() const;
+	std::string EncodeToAss(int precision = 2) const;
 
 	/// Decode an ASS vector drawing
 	void DecodeFromAss(std::string const& str);

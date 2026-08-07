@@ -217,9 +217,7 @@ class AIProofreadDialog final : public wxDialog {
 
 	std::string ApiKey() const { return ai::GetApiKey(); }
 	std::string Model() const { return OPT_GET("AI/OpenAI/Model")->GetString(); }
-	std::string TranscriptionModel() const { return OPT_GET("AI/OpenAI/Transcription Model")->GetString(); }
-	std::string Instructions() const { return OPT_GET("AI/Review/Instructions")->GetString(); }
-
+	std::string TranscriptionModel() const { return "gpt-transcribe"; }
 	AssDialogue *CurrentLine() const {
 		if (issue_index >= result.issues.size()) return nullptr;
 		auto it = line_by_id.find(result.issues[issue_index].line_id);
@@ -293,15 +291,14 @@ class AIProofreadDialog final : public wxDialog {
 		auto key = ApiKey();
 		auto model = Model();
 		auto transcription_model = TranscriptionModel();
-		auto instructions = Instructions();
 		auto lines = context_lines;
 		agi::dispatch::Background().Async([this, key = std::move(key), model = std::move(model),
-			transcription_model = std::move(transcription_model), instructions = std::move(instructions),
+			transcription_model = std::move(transcription_model),
 			lines = std::move(lines)]() mutable {
 			auto outcome = std::make_shared<ProofreadOutcome>();
 			try {
 				ai::OpenAIClient client(std::move(key), std::move(model),
-					std::move(transcription_model), std::move(instructions), &cancelled);
+					std::move(transcription_model), {}, &cancelled);
 				outcome->result = client.Proofread(lines);
 			}
 			catch (std::exception const& error) {

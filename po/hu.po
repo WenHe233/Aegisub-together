@@ -6900,8 +6900,8 @@ msgstr "AI-kapcsolat beállítása…"
 msgid "Configure AI connection"
 msgstr "AI-kapcsolat beállítása"
 
-msgid "Configure the per-user OpenAI API connection"
-msgstr "A felhasználónkénti OpenAI API-kapcsolat beállítása"
+msgid "Configure the per-user OpenAI and Cloudinary API connections"
+msgstr "A felhasználónkénti OpenAI- és Cloudinary API-kapcsolatok beállítása"
 
 msgid "Translate selected lines with AI..."
 msgstr "Kijelölt sorok fordítása AI-jal…"
@@ -7088,17 +7088,11 @@ msgstr "AI felirat-ellenőrzés"
 msgid "An OpenAI API key is required for AI subtitle review."
 msgstr "Az AI felirat-ellenőrzéshez OpenAI API-kulcs szükséges."
 
-msgid "Additional review instructions:"
-msgstr "További ellenőrzési utasítások:"
-
 msgid "Review model:"
 msgstr "Ellenőrzési modell:"
 
 msgid "AI model:"
 msgstr "AI-modell:"
-
-msgid "AI selection model:"
-msgstr "AI-kijelölési modell:"
 
 msgid "Available OpenAI models and pricing"
 msgstr "Elérhető OpenAI-modellek és árak"
@@ -7391,20 +7385,117 @@ msgstr "Az AI-karaoke egyszerre legfeljebb 10 percet tud feldolgozni. Válassz r
 msgid "The generated WAV file is too large for the AI request. Choose a shorter interval."
 msgstr "A létrehozott WAV-fájl túl nagy az AI-kéréshez. Válassz rövidebb intervallumot."
 
-msgid "Karaoke timing model:"
-msgstr "Karaoke-időzítési modell:"
+#: src/dialog_ai_connection.cpp
+msgid "OpenAI"
+msgstr "OpenAI"
 
-msgid "Use whisper-1 for word timestamps"
-msgstr "A szóidőbélyegekhez használd a whisper-1 modellt"
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary"
+msgstr "Cloudinary"
 
-msgid "Use advanced karaoke timing rules"
-msgstr "Haladó karaoke-időzítési szabályok használata"
+#: src/dialog_ai_connection.cpp
+msgid "OpenAI is used for text features and custom image generation."
+msgstr "Az OpenAI a szöveges funkciókhoz és az egyedi képgeneráláshoz szükséges."
 
-msgid "Disable this option to restore the previous AI timing behavior."
-msgstr "Kapcsold ki ezt a beállítást az AI korábbi időzítési viselkedésének visszaállításához."
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary is used for text removal and automatic recognition in clips."
+msgstr "A Cloudinary a szöveg eltüntetéséhez és a clipek automatikus felismeréséhez szükséges."
 
-msgid "Advanced karaoke timing guide"
-msgstr "Haladó karaoke-időzítési útmutató"
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in Windows Credential Manager."
+msgstr "Az API-secret biztonságosan, a Windows Hitelesítőadat-kezelőben van tárolva."
+
+#: src/dialog_ai_connection.cpp
+msgid "API secret is available for this Aegisub session."
+msgstr "Az API-secret ehhez az Aegisub-munkamenethez használható."
+
+#: src/dialog_ai_connection.cpp
+msgid "No Cloudinary API secret is configured."
+msgstr "Nincs beállítva Cloudinary API-secret."
+
+#: src/dialog_ai_connection.cpp
+msgid "Enter the Cloudinary cloud name, API key and API secret first."
+msgstr "Előbb add meg a Cloudinary cloud name, API key és API secret adatait."
+
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary connection"
+msgstr "Cloudinary-kapcsolat"
+
+#: src/dialog_ai_connection.cpp
+msgid "The Cloudinary connection is working."
+msgstr "A Cloudinary-kapcsolat működik."
+
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary connection failed"
+msgstr "A Cloudinary-kapcsolat sikertelen"
+
+#: src/dialog_ai_connection.cpp
+msgid "Delete the OpenAI API key stored by Aegisub on this computer?"
+msgstr "Törlöd az Aegisub által ezen a számítógépen tárolt OpenAI API-kulcsot?"
+
+#: src/dialog_ai_connection.cpp
+msgid "Delete the Cloudinary API secret stored by Aegisub on this computer?"
+msgstr "Törlöd az Aegisub által ezen a számítógépen tárolt Cloudinary API-secretet?"
+
+#: src/dialog_ai_connection.cpp
+msgid "Delete API secret"
+msgstr "API-secret törlése"
+
+#: src/dialog_ai_connection.cpp
+msgid "The API secret could not be deleted"
+msgstr "Nem sikerült törölni az API-secretet"
+
+#: src/dialog_ai_connection.cpp
+msgid "The API secret could not be saved"
+msgstr "Nem sikerült menteni az API-secretet"
+
+#: src/dialog_ai_connection.cpp
+msgid "Cloud name:"
+msgstr "Cloud name:"
+
+#: src/dialog_ai_connection.cpp
+msgid "API key:"
+msgstr "API key:"
+
+#: src/dialog_ai_connection.cpp
+msgid "API secret:"
+msgstr "API secret:"
+
+#: src/dialog_ai_connection.cpp
+msgid "Leave empty to keep using the current secret"
+msgstr "Hagyd üresen a jelenlegi secret további használatához"
+
+#: src/dialog_ai_connection.cpp
+msgid "Register a Cloudinary account"
+msgstr "Cloudinary-fiók regisztrálása"
+
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in Windows Credential Manager"
+msgstr "Az API-secret biztonságos tárolása a Windows Hitelesítőadat-kezelőben"
+
+#: src/dialog_ai_connection.cpp
+msgid "Test OpenAI"
+msgstr "OpenAI tesztelése"
+
+#: src/dialog_ai_connection.cpp
+msgid "Test Cloudinary"
+msgstr "Cloudinary tesztelése"
+
+#: src/dialog_ai_connection.cpp
+msgid "Delete stored secret"
+msgstr "Tárolt secret törlése"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Cloudinary is not configured correctly. Open AI connection settings and enter the cloud name, API key and API secret."
+msgstr "A Cloudinary nincs megfelelően beállítva. Nyisd meg az AI-kapcsolat beállításait, és add meg a cloud name, API key és API secret adatokat."
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI recognition failed"
+msgstr "Az AI-felismerés sikertelen"
+
+#: src/visual_tool_mask.cpp
+msgid "AI text removal failed"
+msgstr "Az AI-szövegeltávolítás sikertelen"
 
 msgid "Find in &Folder..."
 msgstr "Keresés &mappában..."
@@ -7608,8 +7699,8 @@ msgid "Image model:"
 msgstr "Képmodell:"
 
 #: src/visual_tool_mask.cpp
-msgid "AI background removal"
-msgstr "AI háttér-helyreállítás"
+msgid "AI text removal"
+msgstr "AI szövegeltávolítás"
 
 #: src/visual_tool_mask.cpp
 msgid "AI custom generation"
@@ -7642,6 +7733,17 @@ msgstr "A törölt terület finomítása..."
 #: src/visual_tool_mask.cpp
 msgid "Erase again"
 msgstr "Törlés újra"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI recognition"
+msgstr "AI felismerés"
+
+msgid "Recognizing the visible subject..."
+msgstr "A látható tárgy felismerése..."
+
+#: src/visual_tool_mask.cpp
+msgid "You can refine the result again if you want."
+msgstr "Ha szeretnéd, újra finomíthatod az eredményt."
 
 #: src/visual_tool_mask.cpp
 msgid "The AI image response could not be decoded."
@@ -7885,10 +7987,6 @@ msgstr "Mód: pipettás hozzáadás"
 #: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
 msgid "Mode: Pipette subtract"
 msgstr "Mód: pipettás elvétel"
-
-#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
-msgid "AI select"
-msgstr "AI-kijelölés"
 
 #: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
 msgid "Automatic"

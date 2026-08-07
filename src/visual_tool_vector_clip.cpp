@@ -62,6 +62,11 @@ namespace {
 	using BrushPolygon = bg::model::polygon<BrushPoint>;
 	using BrushMultiPolygon = bg::model::multi_polygon<BrushPolygon>;
 
+	ai::CloudinaryCredentials configured_cloudinary() {
+		return {OPT_GET("AI/Cloudinary/Cloud Name")->GetString(),
+			OPT_GET("AI/Cloudinary/API Key")->GetString(), ai::GetCloudinarySecret()};
+	}
+
 	class BrushSettingsPopup final : public wxPopupTransientWindow {
 	public:
 		BrushSettingsPopup(wxWindow *parent, bool add, int radius,
@@ -509,7 +514,7 @@ std::pair<Vector2D, Vector2D> VisualToolVectorClip::ColorActionBounds(ColorActio
 	};
 	auto label_for = [&](ColorAction item) -> wxString {
 		if (item == ColorAction::SelectionMode) return mode_label();
-		if (item == ColorAction::AISelect) return _("AI select");
+		if (item == ColorAction::AISelect) return _("AI recognition");
 		if (item == ColorAction::AutoFill) return _("Auto fill");
 		if (item == ColorAction::Accept)
 			return _("Accept (ENTER)");
@@ -521,7 +526,7 @@ std::pair<Vector2D, Vector2D> VisualToolVectorClip::ColorActionBounds(ColorActio
 		int width, height;
 		gl_text->GetExtent(from_wx(label_for(item)), width, height);
 		return static_cast<float>(width + (item == ColorAction::SelectionMode ? 32 :
-			item == ColorAction::AISelect ? 32 : 48));
+			item == ColorAction::AISelect ? 24 : 48));
 	};
 	std::vector<ColorAction> actions{ColorAction::SelectionMode};
 	if (mode == VCLIP_COLOR) {
@@ -571,8 +576,7 @@ VisualToolVectorClip::ColorAction VisualToolVectorClip::ColorActionAt(Vector2D p
 		if (action == ColorAction::AutoFill && !has_color_sample) continue;
 		if (action == ColorAction::Cancel && color_stage == ColorStage::Range) continue;
 		if (action == ColorAction::SelectionMode && color_stage == ColorStage::Range) continue;
-		if (action == ColorAction::AISelect &&
-			(color_stage == ColorStage::Range || ai::GetApiKey().empty())) continue;
+		if (action == ColorAction::AISelect && color_stage == ColorStage::Range) continue;
 		auto [top_left, bottom_right] = ColorActionBounds(action);
 		if (point.X() >= top_left.X() && point.X() <= bottom_right.X() &&
 			point.Y() >= top_left.Y() && point.Y() <= bottom_right.Y()) return action;
@@ -608,19 +612,13 @@ void VisualToolVectorClip::ShowColorModeMenu() {
 }
 
 void VisualToolVectorClip::ShowAISelectionMenu() {
-	if (color_stage == ColorStage::Range || ai::GetApiKey().empty()) return;
-	constexpr int automatic_id = 17415;
-	constexpr int custom_id = 17416;
-	wxMenu menu;
-	menu.Append(automatic_id, _("Automatic"));
-	menu.Append(custom_id, _("Custom select"));
-	auto [top_left, bottom_right] = ColorActionBounds(ColorAction::AISelect);
-	int selected = parent->GetPopupMenuSelectionFromUser(menu,
-		wxPoint(static_cast<int>(top_left.X()), static_cast<int>(bottom_right.Y())));
-	if (selected == automatic_id)
-		PrepareAISelection("automatic selection of the complete visible extent of the single most prominent coherent person, character, animal, or foreground object in the range");
-	else if (selected == custom_id)
-		EditSelectionPrompt();
+	if (color_stage == ColorStage::Range) return;
+	if (!configured_cloudinary().Complete()) {
+		wxMessageBox(_("Cloudinary is not configured correctly. Open AI connection settings and enter the cloud name, API key and API secret."),
+			_("AI recognition failed"), wxOK | wxICON_ERROR, c->parent);
+		return;
+	}
+	PrepareAISelection();
 	UpdateColorCursor();
 	parent->Render();
 }
@@ -749,17 +747,8 @@ bool VisualToolVectorClip::InitializeBrushSelection() {
 	}
 }
 
-void VisualToolVectorClip::EditSelectionPrompt() {
-	if (color_stage == ColorStage::Range || ai::GetApiKey().empty()) return;
-	wxTextEntryDialog dialog(c->parent, _("Describe the object to select inside the range."),
-		_("Custom AI selection"), to_wx(selection_prompt));
-	if (dialog.ShowModal() != wxID_OK) return;
-	selection_prompt = from_wx(dialog.GetValue());
-	if (!selection_prompt.empty()) PrepareAISelection(selection_prompt);
-}
-
-bool VisualToolVectorClip::PrepareAISelection(std::string const& prompt) {
-	if (color_stage == ColorStage::Range || ai::GetApiKey().empty()) return false;
+bool VisualToolVectorClip::PrepareAISelection() {
+	if (color_stage == ColorStage::Range || !configured_cloudinary().Complete()) return false;
 	try {
 		auto frame = c->videoController->GetFrame(frame_number, true);
 		if (!frame || frame->width <= 0 || frame->height <= 0) return false;
@@ -774,7 +763,7 @@ bool VisualToolVectorClip::PrepareAISelection(std::string const& prompt) {
 		int right = std::clamp(static_cast<int>(std::ceil(std::max(raw_a.X(), raw_b.X()))), left + 1, frame->width);
 		int bottom = std::clamp(static_cast<int>(std::ceil(std::max(raw_a.Y(), raw_b.Y()))), top + 1, frame->height);
 		wxImage crop = GetImage(*frame).GetSubImage(wxRect(left, top, right - left, bottom - top));
-		auto contours = GenerateVisualAISelection(c->parent, crop, prompt);
+		auto contours = GenerateVisualAISelection(c->parent, crop);
 		for (auto& contour : contours) {
 			for (auto& point : contour)
 				point = point + Vector2D(static_cast<float>(left), static_cast<float>(top));
@@ -793,7 +782,7 @@ bool VisualToolVectorClip::PrepareAISelection(std::string const& prompt) {
 		return true;
 	}
 	catch (std::exception const& error) {
-		wxMessageBox(to_wx(error.what()), _("AI selection failed"), wxOK | wxICON_ERROR, c->parent);
+		wxMessageBox(to_wx(error.what()), _("AI recognition failed"), wxOK | wxICON_ERROR, c->parent);
 		return false;
 	}
 }
@@ -890,22 +879,84 @@ void VisualToolVectorClip::ApplyBrushStamp(Vector2D centre) {
 		return;
 	}
 
-	std::vector<size_t> affected;
+	std::vector<unsigned char> touched(starts.size());
 	for (size_t i = 0; i < starts.size(); ++i) {
 		if (circle_touches_polygon(centre, color_brush_radius, points,
 			static_cast<size_t>(starts[i]), static_cast<size_t>(counts[i])))
-			affected.push_back(i);
+			touched[i] = 1;
 	}
-	if (affected.empty()) {
+	if (std::none_of(touched.begin(), touched.end(), [](unsigned char value) { return value != 0; })) {
 		if (brush_add_mode) AppendBrushCircle(centre);
 		MakeFeatures();
 		return;
 	}
 
+	auto path_area = [&](size_t path) {
+		double area = 0.0;
+		size_t first = static_cast<size_t>(starts[path]);
+		size_t count = static_cast<size_t>(counts[path]);
+		for (size_t i = 0, previous = count - 1; i < count; previous = i++) {
+			double ax = points[(first + previous) * 2];
+			double ay = points[(first + previous) * 2 + 1];
+			double bx = points[(first + i) * 2];
+			double by = points[(first + i) * 2 + 1];
+			area += ax * by - bx * ay;
+		}
+		return area * .5;
+	};
+	std::vector<double> areas(starts.size());
+	for (size_t i = 0; i < starts.size(); ++i) areas[i] = std::abs(path_area(i));
+	std::vector<int> parents(starts.size(), -1);
+	for (size_t child = 0; child < starts.size(); ++child) {
+		size_t child_first = static_cast<size_t>(starts[child]);
+		Vector2D sample(points[child_first * 2], points[child_first * 2 + 1]);
+		double parent_area = std::numeric_limits<double>::max();
+		for (size_t candidate = 0; candidate < starts.size(); ++candidate) {
+			if (candidate == child || areas[candidate] <= areas[child] || areas[candidate] >= parent_area)
+				continue;
+			if (point_in_polygon(sample, points, static_cast<size_t>(starts[candidate]),
+				static_cast<size_t>(counts[candidate]))) {
+				parents[child] = static_cast<int>(candidate);
+				parent_area = areas[candidate];
+			}
+		}
+	}
+	std::vector<int> depths(starts.size());
+	for (size_t i = 0; i < starts.size(); ++i) {
+		int parent = parents[i];
+		for (size_t guard = 0; parent >= 0 && guard < starts.size(); ++guard) {
+			++depths[i];
+			parent = parents[static_cast<size_t>(parent)];
+		}
+	}
+
+	std::vector<size_t> affected;
 	std::vector<BrushPolygon> source;
-	for (size_t index : affected) {
-		auto polygon = make_brush_polygon(points, static_cast<size_t>(starts[index]),
-			static_cast<size_t>(counts[index]));
+	for (size_t outer = 0; outer < starts.size(); ++outer) {
+		if (depths[outer] % 2 != 0) continue;
+		bool group_touched = touched[outer] != 0;
+		std::vector<size_t> holes;
+		for (size_t candidate = 0; candidate < starts.size(); ++candidate) {
+			if (parents[candidate] != static_cast<int>(outer) || depths[candidate] % 2 == 0)
+				continue;
+			holes.push_back(candidate);
+			group_touched = group_touched || touched[candidate] != 0;
+		}
+		if (!group_touched) continue;
+		affected.push_back(outer);
+		affected.insert(affected.end(), holes.begin(), holes.end());
+		auto polygon = make_brush_polygon(points, static_cast<size_t>(starts[outer]),
+			static_cast<size_t>(counts[outer]));
+		for (size_t hole : holes) {
+			auto& inner = polygon.inners().emplace_back();
+			size_t first = static_cast<size_t>(starts[hole]);
+			size_t count = static_cast<size_t>(counts[hole]);
+			inner.reserve(count + 1);
+			for (size_t i = 0; i < count; ++i)
+				inner.emplace_back(points[(first + i) * 2], points[(first + i) * 2 + 1]);
+			if (!inner.empty()) inner.push_back(inner.front());
+		}
+		bg::correct(polygon);
 		if (!polygon.outer().empty()) source.push_back(std::move(polygon));
 	}
 	BrushPolygon circle = make_brush_circle(centre, color_brush_radius);
@@ -927,6 +978,8 @@ void VisualToolVectorClip::ApplyBrushStamp(Vector2D centre) {
 		}
 	}
 
+	std::sort(affected.begin(), affected.end());
+	affected.erase(std::unique(affected.begin(), affected.end()), affected.end());
 	for (auto it = affected.rbegin(); it != affected.rend(); ++it) {
 		size_t start = path_starts[*it];
 		spline.erase(spline.begin() + start, spline.begin() + PathEnd(start));
@@ -998,7 +1051,7 @@ void VisualToolVectorClip::AcceptColorContours() {
 	}
 	MakeFeatures();
 	SetSubTool(VCLIP_DRAG);
-	Save();
+	Save(1);
 	VisualToolBase::Commit(brush_edit ? _("Brush edit vector clip") : _("Add color contours"));
 }
 
@@ -1030,6 +1083,7 @@ bool VisualToolVectorClip::DeleteActivePath() {
 }
 
 void VisualToolVectorClip::OnMouseEvent(wxMouseEvent& event) {
+	if (!active_line) return;
 	if (mode != VCLIP_COLOR && mode != VCLIP_BRUSH) {
 		VisualTool<VisualToolVectorClipDraggableFeature>::OnMouseEvent(event);
 		return;
@@ -1215,9 +1269,7 @@ bool VisualToolVectorClip::OnKeyEvent(wxKeyEvent& event) {
 			return true;
 		if (mode == VCLIP_COLOR && event.CmdDown() &&
 			(key == 'Z' || key == 'Y')) {
-			if (key == 'Y' || event.ShiftDown()) RedoColorHistory();
-			else UndoColorHistory();
-			return true;
+			return key == 'Y' || event.ShiftDown() ? RedoColorHistory() : UndoColorHistory();
 		}
 		if ((key == WXK_RETURN || key == WXK_NUMPAD_ENTER) &&
 			mode == VCLIP_COLOR && !color_contours.empty()) {
@@ -1436,7 +1488,7 @@ void VisualToolVectorClip::DrawColorMode() {
 				case VisualSelectionMode::BrushSubtract: return _("Mode: Brush subtract");
 			}
 		}
-		if (action == ColorAction::AISelect) return _("AI select");
+		if (action == ColorAction::AISelect) return _("AI recognition");
 		if (action == ColorAction::AutoFill) return _("Auto fill");
 		if (action == ColorAction::Accept)
 			return _("Accept (ENTER)");
@@ -1459,11 +1511,12 @@ void VisualToolVectorClip::DrawColorMode() {
 		if (action == ColorAction::SelectionMode)
 			enabled = enabled && color_stage != ColorStage::Range;
 		if (action == ColorAction::AISelect)
-			enabled = color_stage != ColorStage::Range && !ai::GetApiKey().empty();
+			enabled = color_stage != ColorStage::Range;
 		if (action == ColorAction::Cancel)
 			enabled = color_stage != ColorStage::Range;
 		wxColour colour = action == ColorAction::Accept ? wxColour(31, 153, 76) :
 			action == ColorAction::Cancel ? wxColour(183, 54, 61) : wxColour(55, 59, 64);
+		if (action == ColorAction::AISelect) colour = wxColour(180, 105, 43);
 		if (action == ColorAction::AutoFill && color_auto_fill)
 			colour = wxColour(35, 125, 153);
 		if (!enabled) colour = wxColour(66, 69, 73);
@@ -1487,10 +1540,7 @@ void VisualToolVectorClip::DrawColorMode() {
 				Vector2D(bottom_right.X() - 10.f, icon.Y() + 3.f));
 		}
 		else if (action == ColorAction::AISelect) {
-			gl.SetFillColour(content, 1.f);
-			gl.DrawTriangle(Vector2D(bottom_right.X() - 14.f, icon.Y() - 2.f),
-				Vector2D(bottom_right.X() - 6.f, icon.Y() - 2.f),
-				Vector2D(bottom_right.X() - 10.f, icon.Y() + 3.f));
+			// Text-only action; unlike the mode selector it has no dropdown marker.
 		}
 		else if (action == ColorAction::AutoFill) {
 			gl.DrawRectangle(icon - Vector2D(7.f, 5.f), icon + Vector2D(7.f, 5.f));
@@ -1844,7 +1894,7 @@ void VisualToolVectorClip::SyncCurveFeatures(size_t idx) {
 	}
 }
 
-void VisualToolVectorClip::Save() {
+void VisualToolVectorClip::Save(int precision_override) {
 	if (drawing_mode) {
 		if (!active_line) return;
 		auto blocks = active_line->ParseTags();
@@ -1868,7 +1918,9 @@ void VisualToolVectorClip::Save() {
 	std::string value = "(";
 	if (spline.GetScale() != 1)
 		value += std::to_string(spline.GetScale()) + ",";
-	value += spline.EncodeToAss() + ")";
+	int precision = precision_override >= 0 ? precision_override :
+		(mode == VCLIP_COLOR || mode == VCLIP_BRUSH ? 1 : 2);
+	value += spline.EncodeToAss(precision) + ")";
 
 	for (auto line : c->selectionController->GetSelectedSet()) {
 		// This check is technically not correct as it could be outside of an

@@ -140,9 +140,7 @@ class AIReviewDialog final : public wxDialog {
 
 	std::string ApiKey() const { return ai::GetApiKey(); }
 	std::string Model() const { return OPT_GET("AI/OpenAI/Model")->GetString(); }
-	std::string TranscriptionModel() const { return OPT_GET("AI/OpenAI/Transcription Model")->GetString(); }
-	std::string Instructions() const { return OPT_GET("AI/Review/Instructions")->GetString(); }
-
+	std::string TranscriptionModel() const { return "gpt-transcribe"; }
 	void SetBusy(bool value, wxString const& message = {}) {
 		busy = value;
 		if (value && context->audioController && context->audioController->IsPlaying())
@@ -343,18 +341,17 @@ class AIReviewDialog final : public wxDialog {
 		auto key = ApiKey();
 		auto model = Model();
 		auto transcription_model = TranscriptionModel();
-		auto instructions = Instructions();
 		auto audio = audio_file;
 		auto lines = input_lines;
 
 		agi::dispatch::Background().Async([this, key = std::move(key), model = std::move(model),
-			transcription_model = std::move(transcription_model), instructions = std::move(instructions),
+			transcription_model = std::move(transcription_model),
 			audio = std::move(audio), lines = std::move(lines)]() mutable {
 			auto outcome = std::make_shared<RequestOutcome>();
 			outcome->initial = true;
 			try {
 				ai::OpenAIClient client(std::move(key), std::move(model),
-					std::move(transcription_model), std::move(instructions), &cancelled);
+					std::move(transcription_model), {}, &cancelled);
 				auto transcript = client.Transcribe(audio);
 				if (cancelled.load()) throw ai::Error("A kérés megszakítva.");
 				outcome->result = client.Review(lines, transcript);
@@ -378,16 +375,15 @@ class AIReviewDialog final : public wxDialog {
 		auto key = ApiKey();
 		auto model = Model();
 		auto transcription_model = TranscriptionModel();
-		auto instructions = Instructions();
 		auto previous = current_result;
 
 		agi::dispatch::Background().Async([this, key = std::move(key), model = std::move(model),
-			transcription_model = std::move(transcription_model), instructions = std::move(instructions),
+			transcription_model = std::move(transcription_model),
 			previous = std::move(previous), message = std::move(message)]() mutable {
 			auto outcome = std::make_shared<RequestOutcome>();
 			try {
 				ai::OpenAIClient client(std::move(key), std::move(model),
-					std::move(transcription_model), std::move(instructions), &cancelled);
+					std::move(transcription_model), {}, &cancelled);
 				outcome->result = client.Continue(previous, message);
 			}
 			catch (std::exception const& error) {

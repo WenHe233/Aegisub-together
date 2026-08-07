@@ -880,9 +880,7 @@ void VisualToolShape::OnMouseEvent(wxMouseEvent& event) {
 bool VisualToolShape::OnKeyEvent(wxKeyEvent& event) {
 	int key_code = event.GetKeyCode();
 	if (event.CmdDown() && (key_code == 'Z' || key_code == 'Y')) {
-		if (key_code == 'Y' || event.ShiftDown()) RedoHistory();
-		else UndoHistory();
-		return true;
+		return key_code == 'Y' || event.ShiftDown() ? RedoHistory() : UndoHistory();
 	}
 	if ((key_code == WXK_RETURN || key_code == WXK_NUMPAD_ENTER) && CanCreate() && !drawing) {
 		CreateShape();

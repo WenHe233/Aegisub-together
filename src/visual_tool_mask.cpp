@@ -32,18 +32,27 @@
 #include <exception>
 #include <set>
 #include <wx/base64.h>
+#include <wx/button.h>
 #include <wx/cursor.h>
+#include <wx/dialog.h>
 #include <wx/event.h>
 #include <wx/image.h>
 #include <wx/menu.h>
 #include <wx/mstream.h>
 #include <wx/msgdlg.h>
+#include <wx/sizer.h>
+#include <wx/stattext.h>
 #include <wx/textdlg.h>
 #include <wx/toolbar.h>
 
 namespace {
 	constexpr int button_id_base = 1600;
 	constexpr double image_colour_tolerance = 25.0;
+
+	ai::CloudinaryCredentials configured_cloudinary() {
+		return {OPT_GET("AI/Cloudinary/Cloud Name")->GetString(),
+			OPT_GET("AI/Cloudinary/API Key")->GetString(), ai::GetCloudinarySecret()};
+	}
 
 	bool point_in_polygon(Vector2D point, std::vector<Vector2D> const& polygon) {
 		bool inside = false;
@@ -262,7 +271,7 @@ void VisualToolMask::UpdateActionTooltip(VisualToolMaskAction action) {
 		case VisualToolMaskAction::Create:
 			parent->SetToolTip(ai_refining ? _("Accept") : _("Create mask"));
 			break;
-		case VisualToolMaskAction::RemoveText: parent->SetToolTip(_("AI background removal")); break;
+		case VisualToolMaskAction::RemoveText: parent->SetToolTip(_("AI text removal")); break;
 		case VisualToolMaskAction::GenerateText: parent->SetToolTip(_("AI custom generation")); break;
 		default:
 		parent->UnsetToolTip();
@@ -335,11 +344,11 @@ std::pair<Vector2D, Vector2D> VisualToolMask::ActionBounds(VisualToolMaskAction 
 			case VisualToolMaskAction::Create: return ai_refining ? _("Accept (ENTER)") : _("Create mask (ENTER)");
 			case VisualToolMaskAction::Clear: return _("Cancel (ESC)");
 			case VisualToolMaskAction::RemoveText:
-				return ai_refining ? _("Erase again") : _("AI background removal");
+				return ai_refining ? _("Erase again") : _("AI text removal");
 			case VisualToolMaskAction::GenerateText: return _("AI custom generation");
 			case VisualToolMaskAction::AutoFill: return _("Auto fill");
 			case VisualToolMaskAction::SelectionMode: return mode_label();
-			case VisualToolMaskAction::AISelect: return _("AI select");
+			case VisualToolMaskAction::AISelect: return _("AI recognition");
 			default: return wxString();
 		}
 	};
@@ -349,7 +358,7 @@ std::pair<Vector2D, Vector2D> VisualToolMask::ActionBounds(VisualToolMaskAction 
 		gl_text->GetExtent(from_wx(label_for(item)), text_width, text_height);
 		return static_cast<float>(text_width +
 			(item == VisualToolMaskAction::SelectionMode ? 32 :
-				item == VisualToolMaskAction::AISelect ? 32 : 48));
+				item == VisualToolMaskAction::AISelect ? 24 : 48));
 	};
 	std::vector<VisualToolMaskAction> actions;
 	if (ai_refining)
@@ -391,8 +400,11 @@ VisualToolMaskAction VisualToolMask::ActionAt(Vector2D point) {
 			VisualToolMaskAction::Create, VisualToolMaskAction::Clear}) {
 			bool pending = !mask_regions.empty() ||
 				(points.size() >= 3 && std::abs(polygon_area(points)) > .5);
-			if ((action == VisualToolMaskAction::RemoveText || action == VisualToolMaskAction::GenerateText) &&
-				(!pending || ai::GetApiKey().empty())) continue;
+			if ((action == VisualToolMaskAction::RemoveText ||
+				action == VisualToolMaskAction::GenerateText) && !pending) continue;
+			if (action == VisualToolMaskAction::Create && !CanCreateMask()) continue;
+			if (action == VisualToolMaskAction::Clear && !CanCancel()) continue;
+			if (action == VisualToolMaskAction::GenerateText && ai::GetApiKey().empty()) continue;
 			auto [top_left, bottom_right] = ActionBounds(action);
 			if (point.X() >= top_left.X() && point.X() <= bottom_right.X() &&
 				point.Y() >= top_left.Y() && point.Y() <= bottom_right.Y()) return action;
@@ -428,10 +440,8 @@ VisualToolMaskAction VisualToolMask::ActionAt(Vector2D point) {
 		if (action == VisualToolMaskAction::Clear && !CanCancel()) continue;
 		if (action == VisualToolMaskAction::AutoFill && !has_color_sample) continue;
 		if (action == VisualToolMaskAction::SelectionMode && color_stage == ColorStage::Range) continue;
-		if (action == VisualToolMaskAction::AISelect &&
-			(color_stage == ColorStage::Range || ai::GetApiKey().empty())) continue;
-		if ((action == VisualToolMaskAction::RemoveText ||
-			action == VisualToolMaskAction::GenerateText) && ai::GetApiKey().empty()) continue;
+		if (action == VisualToolMaskAction::AISelect && color_stage == ColorStage::Range) continue;
+		if (action == VisualToolMaskAction::GenerateText && ai::GetApiKey().empty()) continue;
 		if ((action == VisualToolMaskAction::Create || action == VisualToolMaskAction::RemoveText ||
 			action == VisualToolMaskAction::GenerateText) && !CanCreateMask()) continue;
 		auto [top_left, bottom_right] = ActionBounds(action);
@@ -630,15 +640,6 @@ bool VisualToolMask::EnsureColorSegmenter() {
 	catch (...) { return false; }
 }
 
-void VisualToolMask::EditSelectionPrompt() {
-	if (color_stage == ColorStage::Range || ai::GetApiKey().empty()) return;
-	wxTextEntryDialog dialog(c->parent, _("Describe the object to select inside the range."),
-		_("Custom AI selection"), to_wx(selection_prompt));
-	if (dialog.ShowModal() != wxID_OK) return;
-	selection_prompt = from_wx(dialog.GetValue());
-	if (!selection_prompt.empty()) PrepareAISelection(selection_prompt);
-}
-
 void VisualToolMask::ShowColorModeMenu() {
 	if (color_stage == ColorStage::Range) return;
 	constexpr int pipette_add_id = 17311;
@@ -665,25 +666,19 @@ void VisualToolMask::ShowColorModeMenu() {
 }
 
 void VisualToolMask::ShowAISelectionMenu() {
-	if (color_stage == ColorStage::Range || ai::GetApiKey().empty()) return;
-	constexpr int automatic_id = 17315;
-	constexpr int custom_id = 17316;
-	wxMenu menu;
-	menu.Append(automatic_id, _("Automatic"));
-	menu.Append(custom_id, _("Custom select"));
-	auto [top_left, bottom_right] = ActionBounds(VisualToolMaskAction::AISelect);
-	int selected = parent->GetPopupMenuSelectionFromUser(menu,
-		wxPoint(static_cast<int>(top_left.X()), static_cast<int>(bottom_right.Y())));
-	if (selected == automatic_id)
-		PrepareAISelection("automatic selection of the complete visible extent of the single most prominent coherent person, character, animal, or foreground object in the range");
-	else if (selected == custom_id)
-		EditSelectionPrompt();
+	if (color_stage == ColorStage::Range) return;
+	if (!configured_cloudinary().Complete()) {
+		wxMessageBox(_("Cloudinary is not configured correctly. Open AI connection settings and enter the cloud name, API key and API secret."),
+			_("AI recognition failed"), wxOK | wxICON_ERROR, c->parent);
+		return;
+	}
+	PrepareAISelection();
 	UpdateColorCursor();
 	parent->Render();
 }
 
-bool VisualToolMask::PrepareAISelection(std::string const& prompt) {
-	if (color_stage == ColorStage::Range || ai::GetApiKey().empty()) return false;
+bool VisualToolMask::PrepareAISelection() {
+	if (color_stage == ColorStage::Range || !configured_cloudinary().Complete()) return false;
 	try {
 		auto frame = c->videoController->GetFrame(frame_number, true);
 		if (!frame || frame->width <= 0 || frame->height <= 0) return false;
@@ -698,7 +693,7 @@ bool VisualToolMask::PrepareAISelection(std::string const& prompt) {
 		int right = std::clamp(static_cast<int>(std::ceil(std::max(raw_a.X(), raw_b.X()))), left + 1, frame->width);
 		int bottom = std::clamp(static_cast<int>(std::ceil(std::max(raw_a.Y(), raw_b.Y()))), top + 1, frame->height);
 		wxImage crop = GetImage(*frame).GetSubImage(wxRect(left, top, right - left, bottom - top));
-		auto contours = GenerateVisualAISelection(c->parent, crop, prompt);
+		auto contours = GenerateVisualAISelection(c->parent, crop);
 		for (auto& contour : contours) {
 			for (auto& point : contour)
 				point = point + Vector2D(static_cast<float>(left), static_cast<float>(top));
@@ -717,7 +712,7 @@ bool VisualToolMask::PrepareAISelection(std::string const& prompt) {
 		return true;
 	}
 	catch (std::exception const& error) {
-		wxMessageBox(to_wx(error.what()), _("AI selection failed"), wxOK | wxICON_ERROR, c->parent);
+		wxMessageBox(to_wx(error.what()), _("AI recognition failed"), wxOK | wxICON_ERROR, c->parent);
 		return false;
 	}
 }
@@ -1102,9 +1097,8 @@ bool VisualToolMask::OnKeyEvent(wxKeyEvent& event) {
 	}
 	if (mode == MASK_COLOR && event.CmdDown() &&
 		(event.GetKeyCode() == 'Z' || event.GetKeyCode() == 'Y')) {
-		if (event.GetKeyCode() == 'Y' || event.ShiftDown()) RedoColorHistory();
-		else UndoColorHistory();
-		return true;
+		return event.GetKeyCode() == 'Y' || event.ShiftDown() ?
+			RedoColorHistory() : UndoColorHistory();
 	}
 	int key = event.GetKeyCode();
 	bool alt_key = key == WXK_ALT;
@@ -1255,11 +1249,12 @@ void VisualToolMask::Draw() {
 			Vector2D preview = ToScriptCoords(mouse_pos);
 			preview = Vector2D(std::clamp(preview.X(), 0.f, script_res.X()),
 				std::clamp(preview.Y(), 0.f, script_res.Y()));
+			Vector2D screen_preview = FromScriptCoords(preview);
 			gl.SetLineColour(line_colour, .85f, 2);
-			gl.DrawDashedLine(screen_points.back(), FromScriptCoords(preview), 6.f);
+			gl.DrawDashedLine(screen_preview, screen_points.front(), 6.f);
+			if (screen_points.size() > 1)
+				gl.DrawDashedLine(screen_preview, screen_points.back(), 6.f);
 		}
-		if (!drawing && screen_points.size() >= 3)
-			gl.DrawDashedLine(screen_points.back(), screen_points.front(), 6.f);
 	}
 	if (mode == MASK_BRUSH && mouse_inside && mouse_pos && mouse_pos.Y() >= TopBarHeight()) {
 		gl.SetFillColour(wxColour(166, 80, 230), .32f);
@@ -1404,7 +1399,7 @@ void VisualToolMask::DrawTopBar() {
 			case VisualToolMaskAction::Create: return ai_refining ? _("Accept (ENTER)") : _("Create mask (ENTER)");
 			case VisualToolMaskAction::Clear: return _("Cancel (ESC)");
 			case VisualToolMaskAction::RemoveText:
-				return ai_refining ? _("Erase again") : _("AI background removal");
+				return ai_refining ? _("Erase again") : _("AI text removal");
 			case VisualToolMaskAction::GenerateText: return _("AI custom generation");
 			case VisualToolMaskAction::AutoFill: return _("Auto fill");
 			case VisualToolMaskAction::SelectionMode:
@@ -1414,7 +1409,7 @@ void VisualToolMask::DrawTopBar() {
 					case VisualSelectionMode::BrushAdd: return _("Mode: Brush add");
 					case VisualSelectionMode::BrushSubtract: return _("Mode: Brush subtract");
 				}
-			case VisualToolMaskAction::AISelect: return _("AI select");
+			case VisualToolMaskAction::AISelect: return _("AI recognition");
 			default: return wxString();
 		}
 	};
@@ -1440,17 +1435,19 @@ void VisualToolMask::DrawTopBar() {
 		bool enabled = (action == VisualToolMaskAction::Clear && CanCancel()) ||
 			(action == VisualToolMaskAction::AutoFill && has_color_sample) ||
 			action == VisualToolMaskAction::SelectionMode || CanCreateMask();
-		if (action == VisualToolMaskAction::RemoveText ||
-			action == VisualToolMaskAction::GenerateText)
+		if (action == VisualToolMaskAction::RemoveText)
+			enabled = ai_refining ? pending : CanCreateMask();
+		if (action == VisualToolMaskAction::GenerateText)
 			enabled = !ai::GetApiKey().empty() && (ai_refining ? pending : CanCreateMask());
 		if (action == VisualToolMaskAction::SelectionMode)
 			enabled = enabled && color_stage != ColorStage::Range;
 		if (action == VisualToolMaskAction::AISelect)
-			enabled = color_stage != ColorStage::Range && !ai::GetApiKey().empty();
+			enabled = color_stage != ColorStage::Range;
 		wxColour colour(55, 59, 64);
 		if (action == VisualToolMaskAction::Create) colour = wxColour(31, 153, 76);
 		else if (action == VisualToolMaskAction::Clear) colour = wxColour(183, 54, 61);
 		else if (action == VisualToolMaskAction::RemoveText) colour = wxColour(180, 105, 43);
+		else if (action == VisualToolMaskAction::AISelect) colour = wxColour(180, 105, 43);
 		else if (action == VisualToolMaskAction::GenerateText) colour = wxColour(35, 125, 153);
 		else if (action == VisualToolMaskAction::AutoFill && color_auto_fill) colour = wxColour(35, 125, 153);
 		if (!enabled) colour = wxColour(66, 69, 73);
@@ -1484,10 +1481,7 @@ void VisualToolMask::DrawTopBar() {
 				Vector2D(bottom_right.X() - 10.f, icon.Y() + 3.f));
 		}
 		else if (action == VisualToolMaskAction::AISelect) {
-			gl.SetFillColour(content, 1.f);
-			gl.DrawTriangle(Vector2D(bottom_right.X() - 14.f, icon.Y() - 2.f),
-				Vector2D(bottom_right.X() - 6.f, icon.Y() - 2.f),
-				Vector2D(bottom_right.X() - 10.f, icon.Y() + 3.f));
+			// Text-only action; unlike the mode selector it has no dropdown marker.
 		}
 		else {
 			gl.DrawLine(icon + Vector2D(-5.f, 0.f), icon + Vector2D(5.f, 0.f));
@@ -1503,28 +1497,53 @@ void VisualToolMask::DrawTopBar() {
 			 action == VisualToolMaskAction::SelectionMode ? 12.f : 38.f)),
 			static_cast<int>((top_left.Y() + bottom_right.Y() - text_height) * .5f));
 	}
+	if (ai_refining) {
+		auto clear_bounds = ActionBounds(VisualToolMaskAction::Clear);
+		gl_text->SetFont("Verdana", 9, false, false);
+		gl_text->SetColour(agi::Color(220, 223, 226, 255));
+		gl_text->Print(from_wx(_("You can refine the result again if you want.")),
+			static_cast<int>(clear_bounds.second.X() + 12.f),
+			static_cast<int>((clear_bounds.first.Y() + clear_bounds.second.Y() - 13.f) * .5f));
+	}
 
 }
 
 Vector2D VisualToolMask::ColourSamplePoint() const {
-	auto const& sample_points = !points.empty() ? points : mask_regions.front();
-	double area = polygon_area(sample_points);
-	Vector2D edge = sample_points[1] - sample_points[0];
+	std::vector<Vector2D> const *sample_points = nullptr;
+	if (mode == MASK_COLOR) {
+		double largest_area = 0.0;
+		for (auto const& contour : color_contours) {
+			double area = std::abs(polygon_area(contour));
+			if (contour.size() >= 2 && area > largest_area) {
+				largest_area = area;
+				sample_points = &contour;
+			}
+		}
+	}
+	else if (!points.empty())
+		sample_points = &points;
+	else if (!mask_regions.empty())
+		sample_points = &mask_regions.front();
+	if (!sample_points || sample_points->size() < 2)
+		return script_res * .5f;
+	auto const& polygon = *sample_points;
+	double area = polygon_area(polygon);
+	Vector2D edge = polygon[1] - polygon[0];
 	Vector2D inward = edge.Perpendicular().Unit();
 	if (area < 0.0)
 		inward = -inward;
-	Vector2D candidate = (sample_points[0] + sample_points[1]) * .5f + inward * 5.f;
-	if (point_in_polygon(candidate, sample_points))
+	Vector2D candidate = (polygon[0] + polygon[1]) * .5f + inward * 5.f;
+	if (point_in_polygon(candidate, polygon))
 		return candidate;
 
 	Vector2D centre(0.f, 0.f);
-	for (Vector2D point : sample_points)
+	for (Vector2D point : polygon)
 		centre = centre + point;
-	centre = centre / static_cast<float>(sample_points.size());
-	if (point_in_polygon(centre, sample_points))
+	centre = centre / static_cast<float>(polygon.size());
+	if (point_in_polygon(centre, polygon))
 		return centre;
 
-	return (sample_points[0] + sample_points[1]) * .5f;
+	return (polygon[0] + polygon[1]) * .5f;
 }
 
 agi::Color VisualToolMask::SampleColour(AssStyle const *style) const {
@@ -1573,8 +1592,7 @@ std::string VisualToolMask::EncodeDrawing() const {
 			for (size_t i = 0; i < contour.size(); ++i) {
 				if (i == 1) encoded += " l ";
 				else if (i > 1) encoded += " ";
-				encoded += agi::format("%d %d", static_cast<int>(std::lround(contour[i].X())),
-					static_cast<int>(std::lround(contour[i].Y())));
+				encoded += contour[i].Str(' ', 1);
 			}
 		}
 		return encoded;
@@ -1587,8 +1605,11 @@ std::string VisualToolMask::EncodeDrawing() const {
 		for (size_t i = 0; i < region.size(); ++i) {
 			if (i == 1) encoded += " l ";
 			else if (i > 1) encoded += " ";
-			encoded += agi::format("%d %d", static_cast<int>(std::lround(region[i].X())),
-				static_cast<int>(std::lround(region[i].Y())));
+			if (mode == MASK_BRUSH)
+				encoded += region[i].Str(' ', 1);
+			else
+				encoded += agi::format("%d %d", static_cast<int>(std::lround(region[i].X())),
+					static_cast<int>(std::lround(region[i].Y())));
 		}
 	};
 	for (auto const& region : mask_regions) append_region(region);
@@ -1813,7 +1834,8 @@ std::vector<AssDialogue *> VisualToolMask::ConvertImageToAss(wxImage image, AssD
 }
 
 std::unique_ptr<wxImage> VisualToolMask::RunAIImageEdit(wxImage const& scene,
-	wxImage const& mask, std::string const& prompt, wxString const& progress_message) {
+	wxImage const& mask, std::string const& prompt, wxString const& progress_message,
+	bool use_cloudinary) {
 	std::vector<unsigned char> image_png;
 	std::vector<unsigned char> mask_png;
 	try {
@@ -1827,23 +1849,32 @@ std::unique_ptr<wxImage> VisualToolMask::RunAIImageEdit(wxImage const& scene,
 
 	std::string encoded_result;
 	std::string error_message;
-	DialogProgress progress(c->parent, _("AI masking"), progress_message);
-	try {
-		progress.Run([&](agi::ProgressSink *sink) {
-			sink->SetIndeterminate();
-			try {
-				encoded_result = ai::EditImage(ai::GetApiKey(),
-					OPT_GET("AI/OpenAI/Image Model")->GetString(), image_png, mask_png,
-					agi::format("%dx%d", scene.GetWidth(), scene.GetHeight()), prompt,
-					[sink] { return sink->IsCancelled(); });
-			}
-			catch (std::exception const& error) {
-				error_message = error.what();
-			}
-		});
-	}
-	catch (agi::UserCancelException const&) {
-		return {};
+	{
+		// Destroy the modal progress window before showing a request error. wxWidgets
+		// can otherwise process the progress window's delayed close event after the
+		// error message closes, dereferencing its already-finished progress sink.
+		DialogProgress progress(c->parent, _("AI masking"), progress_message);
+		try {
+			progress.Run([&](agi::ProgressSink *sink) {
+				sink->SetIndeterminate();
+				try {
+					if (use_cloudinary)
+						encoded_result = ai::CloudinaryGenerativeRemove(configured_cloudinary(), image_png, "text",
+							[sink] { return sink->IsCancelled(); });
+					else
+						encoded_result = ai::EditImage(ai::GetApiKey(),
+							OPT_GET("AI/OpenAI/Image Model")->GetString(), image_png, mask_png,
+							agi::format("%dx%d", scene.GetWidth(), scene.GetHeight()), prompt,
+							[sink] { return sink->IsCancelled(); });
+				}
+				catch (std::exception const& error) {
+					error_message = error.what();
+				}
+			});
+		}
+		catch (agi::UserCancelException const&) {
+			return {};
+		}
 	}
 	if (!error_message.empty()) {
 		wxMessageBox(to_wx(error_message), _("AI masking failed"), wxOK | wxICON_ERROR, c->parent);
@@ -1914,7 +1945,12 @@ bool VisualToolMask::AcceptAIRefinement() {
 }
 
 void VisualToolMask::CreateAIMask(VisualToolMaskAction action) {
-	if (ai::GetApiKey().empty()) return;
+	if (action == VisualToolMaskAction::RemoveText && !configured_cloudinary().Complete()) {
+		wxMessageBox(_("Cloudinary is not configured correctly. Open AI connection settings and enter the cloud name, API key and API secret."),
+			_("AI text removal failed"), wxOK | wxICON_ERROR, c->parent);
+		return;
+	}
+	if (action == VisualToolMaskAction::GenerateText && ai::GetApiKey().empty()) return;
 	CommitCurrentRegion();
 	if (mask_regions.empty()) return;
 	AssDialogue *source = c->selectionController->GetActiveLine();
@@ -1922,9 +1958,22 @@ void VisualToolMask::CreateAIMask(VisualToolMaskAction action) {
 
 	std::string user_prompt;
 	if (action == VisualToolMaskAction::GenerateText) {
-		wxTextEntryDialog dialog(c->parent, _("AI prompt:"), _("AI custom generation"));
+		wxDialog dialog(c->parent, wxID_ANY, _("AI custom generation"),
+			wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+		auto sizer = new wxBoxSizer(wxVERTICAL);
+		sizer->Add(new wxStaticText(&dialog, wxID_ANY, _("AI prompt:")),
+			wxSizerFlags().Border(wxLEFT | wxRIGHT | wxTOP));
+		auto prompt_input = new wxTextCtrl(&dialog, wxID_ANY, "", wxDefaultPosition,
+			wxSize(520, 170), wxTE_MULTILINE);
+		sizer->Add(prompt_input, wxSizerFlags(1).Expand().Border(wxALL));
+		sizer->Add(dialog.CreateStdDialogButtonSizer(wxOK | wxCANCEL),
+			wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT | wxBOTTOM));
+		dialog.SetSizerAndFit(sizer);
+		dialog.SetMinSize(wxSize(560, 260));
+		dialog.CenterOnParent();
+		prompt_input->SetFocus();
 		if (dialog.ShowModal() != wxID_OK) return;
-		user_prompt = from_wx(dialog.GetValue());
+		user_prompt = from_wx(prompt_input->GetValue());
 		if (user_prompt.empty()) {
 			wxMessageBox(_("Enter an AI prompt."), _("AI custom generation"),
 				wxOK | wxICON_WARNING, c->parent);
@@ -1959,7 +2008,10 @@ void VisualToolMask::CreateAIMask(VisualToolMaskAction action) {
 	selected_bottom = std::clamp(std::max(selected_top + 1, selected_bottom), selected_top + 1, script_height);
 	int selected_width = selected_right - selected_left;
 	int selected_height = selected_bottom - selected_top;
-	int margin = std::clamp(static_cast<int>(std::lround(std::max(selected_width, selected_height) * .28)), 32, 144);
+	// Cloudinary receives only the affected local scene. A modest context band is
+	// enough for texture continuation without letting unrelated surroundings
+	// influence the generation.
+	int margin = std::clamp(static_cast<int>(std::lround(std::max(selected_width, selected_height) * .08)), 8, 32);
 	int crop_x = std::max(0, selected_left - margin);
 	int crop_y = std::max(0, selected_top - margin);
 	int crop_right = std::min(script_width, selected_right + margin);
@@ -1981,11 +2033,28 @@ void VisualToolMask::CreateAIMask(VisualToolMaskAction action) {
 	double crop_pixels = std::max(1.0, static_cast<double>(crop_width) * crop_height);
 	constexpr double minimum_request_pixels = 655360.0;
 	constexpr double maximum_request_pixels = 921600.0;
-	double scale = crop_pixels < minimum_request_pixels ?
-		std::sqrt(minimum_request_pixels / crop_pixels) :
-		crop_pixels > maximum_request_pixels ? std::sqrt(maximum_request_pixels / crop_pixels) : 1.0;
-	int target_width = std::max(16, static_cast<int>(std::ceil(crop_width * scale / 16.0)) * 16);
-	int target_height = std::max(16, static_cast<int>(std::ceil(crop_height * scale / 16.0)) * 16);
+	constexpr double cloudinary_minimum_dimension = 100.0;
+	double scale;
+	if (action == VisualToolMaskAction::RemoveText) {
+		// Cloudinary rejects very small generative requests. Upscale only those
+		// requests, preserving their aspect ratio, and scale the response back
+		// before it is composited into the full-resolution preview.
+		scale = std::max({1.0, cloudinary_minimum_dimension / crop_width,
+			cloudinary_minimum_dimension / crop_height});
+	}
+	else {
+		scale = crop_pixels < minimum_request_pixels ? std::sqrt(minimum_request_pixels / crop_pixels) :
+			crop_pixels > maximum_request_pixels ? std::sqrt(maximum_request_pixels / crop_pixels) : 1.0;
+	}
+	int target_width = action == VisualToolMaskAction::RemoveText ?
+		static_cast<int>(std::ceil(crop_width * scale)) :
+		std::max(16, static_cast<int>(std::ceil(crop_width * scale / 16.0)) * 16);
+	int target_height = action == VisualToolMaskAction::RemoveText ?
+		static_cast<int>(std::ceil(crop_height * scale)) :
+		std::max(16, static_cast<int>(std::ceil(crop_height * scale / 16.0)) * 16);
+	// During refinement, working is a copy of ai_working_image, which is the
+	// image currently visible in the preview. Each new erase therefore sends
+	// the selected crop from the latest result rather than from the video frame.
 	wxImage scene = working.GetSubImage(wxRect(crop_x, crop_y, crop_width, crop_height));
 	if (target_width != crop_width || target_height != crop_height)
 		scene = scene.Scale(target_width, target_height, wxIMAGE_QUALITY_HIGH);
@@ -2013,8 +2082,7 @@ void VisualToolMask::CreateAIMask(VisualToolMaskAction action) {
 			"Keep all opaque pixels and image registration unchanged.";
 	}
 	else {
-		prompt = "Edit only the transparent mask according to this request: " + user_prompt +
-			". Use the surrounding opaque context and preserve every opaque pixel and exact image registration.";
+		prompt = "Kiindulásnak használja a csatolt képet. " + user_prompt;
 		if (!ai_prompt_history.empty()) {
 			prompt += " Earlier requests in this same preview session were: ";
 			for (size_t i = 0; i < ai_prompt_history.size(); ++i) {
@@ -2025,7 +2093,8 @@ void VisualToolMask::CreateAIMask(VisualToolMaskAction action) {
 		}
 	}
 
-	auto result = RunAIImageEdit(scene, mask, prompt, _("Generating the edited image..."));
+	auto result = RunAIImageEdit(scene, mask, prompt, _("Generating the edited image..."),
+		action == VisualToolMaskAction::RemoveText);
 	if (!result) return;
 	if (result->GetWidth() != crop_width || result->GetHeight() != crop_height)
 		*result = result->Scale(crop_width, crop_height, wxIMAGE_QUALITY_HIGH);

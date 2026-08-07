@@ -87,4 +87,4 @@ std::vector<std::vector<Vector2D>> ApplyVectorBrushStroke(
 /// Ask the configured image model for a pixel-aligned black/white selection
 /// matte and return every contour in crop-local pixel coordinates.
 std::vector<std::vector<Vector2D>> GenerateVisualAISelection(
-	wxWindow *parent, wxImage const& crop, std::string const& subject_prompt);
+	wxWindow *parent, wxImage const& crop);

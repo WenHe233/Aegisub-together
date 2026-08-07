@@ -11,6 +11,8 @@
 
 #include <curl/curl.h>
 
+#include <wx/base64.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -18,6 +20,8 @@
 #include <mutex>
 #include <sstream>
 #include <utility>
+#include <thread>
+#include <chrono>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -32,10 +36,13 @@ constexpr size_t proofread_max_input_chars = 900000;
 constexpr size_t proofread_max_lines_per_request = 300;
 #ifdef _WIN32
 constexpr wchar_t credential_target[] = L"MutekiAegisub/AI/OpenAI/default";
+constexpr wchar_t cloudinary_credential_target[] = L"MutekiAegisub/AI/Cloudinary/default";
 #endif
 
 std::mutex session_key_mutex;
 std::string session_key;
+std::mutex cloudinary_secret_mutex;
+std::string session_cloudinary_secret;
 
 size_t append_response(char *contents, size_t size, size_t nmemb, void *target) {
 	static_cast<std::string *>(target)->append(contents, size * nmemb);
@@ -786,10 +793,25 @@ std::string read_environment_key() {
 	return value ? value : "";
 }
 
+std::string read_environment_cloudinary_secret() {
+	auto value = std::getenv("CLOUDINARY_API_SECRET");
+	return value ? value : "";
+}
+
 #ifdef _WIN32
 std::string read_credential_key() {
 	PCREDENTIALW credential = nullptr;
 	if (!CredReadW(credential_target, CRED_TYPE_GENERIC, 0, &credential))
+		return {};
+	std::string value(reinterpret_cast<char const *>(credential->CredentialBlob),
+		credential->CredentialBlobSize);
+	CredFree(credential);
+	return value;
+}
+
+std::string read_cloudinary_credential_secret() {
+	PCREDENTIALW credential = nullptr;
+	if (!CredReadW(cloudinary_credential_target, CRED_TYPE_GENERIC, 0, &credential))
 		return {};
 	std::string value(reinterpret_cast<char const *>(credential->CredentialBlob),
 		credential->CredentialBlobSize);
@@ -954,199 +976,6 @@ std::string EditImage(std::string const& api_key, std::string const& image_model
 	catch (std::exception const& error) {
 		throw Error(agi::format("A képgenerálási válasz nem értelmezhető: %s", error.what()));
 	}
-}
-
-namespace {
-
-bool contour_points_equal(ImageContourPoint const& a, ImageContourPoint const& b) {
-	return std::abs(a.x - b.x) <= 1e-6 && std::abs(a.y - b.y) <= 1e-6;
-}
-
-} // namespace
-
-std::vector<ImageContour> SelectImageContours(std::string const& api_key,
-	std::string const& vision_model, std::string const& png_data_url,
-	std::string const& subject_prompt, std::function<bool()> const& is_cancelled) {
-	if (api_key.empty()) throw Error("No OpenAI API key is configured.");
-	if (vision_model.empty()) throw Error("No AI vision model is configured.");
-	if (png_data_url.empty()) throw Error("The selected image range is empty.");
-
-	json::Object x_coordinate_schema;
-	x_coordinate_schema["type"] = "number";
-	x_coordinate_schema["minimum"] = 0;
-	x_coordinate_schema["maximum"] = 1000;
-	json::Object y_coordinate_schema;
-	y_coordinate_schema["type"] = "number";
-	y_coordinate_schema["minimum"] = 0;
-	y_coordinate_schema["maximum"] = 1000;
-	json::Object point_properties;
-	point_properties["x"] = std::move(x_coordinate_schema);
-	point_properties["y"] = std::move(y_coordinate_schema);
-	json::Array point_required;
-	point_required.emplace_back("x");
-	point_required.emplace_back("y");
-	json::Object point_schema;
-	point_schema["type"] = "object";
-	point_schema["properties"] = std::move(point_properties);
-	point_schema["required"] = std::move(point_required);
-	point_schema["additionalProperties"] = false;
-
-	json::Object points_schema;
-	points_schema["type"] = "array";
-	points_schema["items"] = std::move(point_schema);
-	points_schema["minItems"] = 3;
-	points_schema["maxItems"] = 96;
-	json::Object operation_schema;
-	operation_schema["type"] = "string";
-	json::Array operation_values;
-	operation_values.emplace_back("add");
-	operation_values.emplace_back("subtract");
-	operation_schema["enum"] = std::move(operation_values);
-	json::Object contour_properties;
-	contour_properties["label"] = type_schema("string");
-	contour_properties["operation"] = std::move(operation_schema);
-	contour_properties["points"] = std::move(points_schema);
-	json::Array contour_required;
-	contour_required.emplace_back("label");
-	contour_required.emplace_back("operation");
-	contour_required.emplace_back("points");
-	json::Object contour_schema;
-	contour_schema["type"] = "object";
-	contour_schema["properties"] = std::move(contour_properties);
-	contour_schema["required"] = std::move(contour_required);
-	contour_schema["additionalProperties"] = false;
-
-	json::Object contours_schema;
-	contours_schema["type"] = "array";
-	contours_schema["items"] = std::move(contour_schema);
-	contours_schema["minItems"] = 1;
-	contours_schema["maxItems"] = 12;
-	json::Object root_properties;
-	root_properties["regions"] = std::move(contours_schema);
-	json::Array root_required;
-	root_required.emplace_back("regions");
-	json::Object root_schema;
-	root_schema["type"] = "object";
-	root_schema["properties"] = std::move(root_properties);
-	root_schema["required"] = std::move(root_required);
-	root_schema["additionalProperties"] = false;
-
-	json::Object text_part;
-	text_part["type"] = "input_text";
-	text_part["text"] = "Requested target inside the selection range: " + subject_prompt;
-	json::Object image_part;
-	image_part["type"] = "input_image";
-	image_part["image_url"] = png_data_url;
-	// GPT-5.4 and newer preserve the supplied pixels in original detail mode.
-	// Older/custom vision models retain the broadly supported high setting.
-	auto original_detail = vision_model.rfind("gpt-5.4", 0) == 0 ||
-		vision_model.rfind("gpt-5.5", 0) == 0 ||
-		vision_model.rfind("gpt-5.6", 0) == 0 ||
-		vision_model.rfind("gpt-6", 0) == 0;
-	image_part["detail"] = original_detail ? "original" : "high";
-	json::Array content;
-	content.emplace_back(std::move(text_part));
-	content.emplace_back(std::move(image_part));
-	json::Object message;
-	message["role"] = "user";
-	message["content"] = std::move(content);
-	json::Array input;
-	input.emplace_back(std::move(message));
-
-	json::Object format;
-	format["type"] = "json_schema";
-	format["name"] = "visible_subject_regions";
-	format["strict"] = true;
-	format["schema"] = std::move(root_schema);
-	json::Object text;
-	text["format"] = std::move(format);
-	text["verbosity"] = "low";
-	json::Object reasoning;
-	reasoning["effort"] = "medium";
-	json::Object request;
-	request["model"] = vision_model;
-	std::string instructions =
-		"Perform a single-pass, Photoshop-style object selection using only the supplied crop. "
-		"First identify the one visually dominant coherent foreground subject requested by the user. "
-		"For an automatic request, prefer a complete visible person or character; otherwise choose the "
-		"largest salient animal or object near the crop centre. Do not select the background, captions, "
-		"screens, pages, shadows, or another overlapping person. For a custom request, interpret the "
-		"description in any language. Then trace the target's actual visible outer silhouette at the "
-		"foreground/background boundary. Include all connected hair, skin, clothing, limbs, fingers, "
-		"feet, worn accessories, and held items which visually belong to that target. Continue a target "
-		"cut by the crop exactly to the crop edge. Return one add region per genuinely disconnected "
-		"visible island. Walk each boundary exactly once in a consistent direction: consecutive points "
-		"must be neighbouring positions along the same outline. Never jump across the subject, double "
-		"back, cross the outline, draw a bounding box, or trace interior facial features, hair lines, "
-		"folds, highlights, shadows, seams, or printed details. Represent open background gaps as "
-		"concavities in the add outline. Return a subtract region only for a large, fully enclosed, real "
-		"background hole, and never subtract target pixels. Use ordered normalized edge coordinates with "
-		"top-left (0,0) and bottom-right (1000,1000). Preserve real tips and corners, but use only enough "
-		"points to follow the visible silhouette cleanly. Return regions only, with no explanation.";
-	request["instructions"] = std::move(instructions);
-	request["input"] = std::move(input);
-	request["text"] = std::move(text);
-	request["reasoning"] = std::move(reasoning);
-	request["store"] = false;
-	request["max_output_tokens"] = 10000;
-
-	CurlHandle curl;
-	std::string response;
-	std::function<bool()> cancel_check = is_cancelled;
-	configure_common(curl, api_key, &response, nullptr);
-	curl_easy_setopt(curl, CURLOPT_URL, (std::string(api_base) + "/responses").c_str());
-	curl_easy_setopt(curl, CURLOPT_POST, 1L);
-	auto body = write_json(request);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.data());
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(body.size()));
-	curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, function_progress_callback);
-	curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &cancel_check);
-	std::string response_text;
-	try {
-		auto headers = authenticated_headers(api_key, true);
-		response_text = perform(curl, headers, nullptr);
-	}
-	catch (...) {
-		if (cancel_check && cancel_check()) throw Error("The AI selection was cancelled.");
-		throw;
-	}
-
-	auto response_root_value = parse_json(response_text);
-	auto const& response_root = static_cast<json::Object const&>(response_root_value);
-	auto result_value = parse_json(extract_output_text(response_root));
-	auto const& result = static_cast<json::Object const&>(result_value);
-	auto contours_it = result.find("regions");
-	if (contours_it == result.end()) throw Error("The AI response contains no selection regions.");
-	auto number = [](json::UnknownElement const& value) {
-		try { return static_cast<double>(static_cast<json::Double const&>(value)); }
-		catch (json::Exception const&) {
-			return static_cast<double>(static_cast<json::Integer const&>(value));
-		}
-	};
-	std::vector<ImageContour> contours;
-	for (auto const& contour_value : static_cast<json::Array const&>(contours_it->second)) {
-		auto const& contour_object = static_cast<json::Object const&>(contour_value);
-		auto points_it = contour_object.find("points");
-		if (points_it == contour_object.end()) continue;
-		ImageContour contour;
-		contour.label = string_field(contour_object, "label");
-		contour.operation = string_field(contour_object, "operation") == "subtract" ?
-			ImageContourOperation::Subtract : ImageContourOperation::Add;
-		for (auto const& point_value : static_cast<json::Array const&>(points_it->second)) {
-			auto const& point = static_cast<json::Object const&>(point_value);
-			contour.points.push_back({std::clamp(number(point.at("x")), 0.0, 1000.0),
-				std::clamp(number(point.at("y")), 0.0, 1000.0)});
-		}
-		auto unique_end = std::unique(contour.points.begin(), contour.points.end(),
-			contour_points_equal);
-		contour.points.erase(unique_end, contour.points.end());
-		if (contour.points.size() > 1 &&
-			contour_points_equal(contour.points.front(), contour.points.back()))
-			contour.points.pop_back();
-		if (contour.points.size() >= 3) contours.push_back(std::move(contour));
-	}
-	if (contours.empty()) throw Error("The AI could not find the requested visible subject.");
-	return contours;
 }
 
 TimedTranscript OpenAIClient::TranscribeTimed(agi::fs::path const& audio_file) const {
@@ -1529,6 +1358,123 @@ bool DeleteStoredApiKey(std::string *error) {
 bool HasStoredApiKey() {
 #ifdef _WIN32
 	return !read_credential_key().empty();
+#else
+	return false;
+#endif
+}
+
+namespace {
+
+std::string cloudinary_transform(CloudinaryCredentials const& credentials,
+	std::vector<unsigned char> const& image, std::string const& transform,
+	std::function<bool()> const& cancelled) {
+	if (!credentials.Complete()) throw Error("Cloudinary is not configured.");
+	CurlHandle curl; std::string response;
+	configure_common(curl, {}, &response, nullptr);
+	std::string endpoint = std::string("https://api.cloudinary.com/v1_1/") + credentials.cloud_name + "/image/upload";
+	curl_easy_setopt(curl, CURLOPT_URL, endpoint.c_str()); curl_easy_setopt(curl, CURLOPT_USERNAME, credentials.api_key.c_str());
+	curl_easy_setopt(curl, CURLOPT_PASSWORD, credentials.api_secret.c_str()); curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_mime *mime = curl_mime_init(curl); if (!mime) throw Error("Cloudinary upload setup failed.");
+	auto part = curl_mime_addpart(mime); curl_mime_name(part, "file"); curl_mime_filename(part, "selection.png"); curl_mime_type(part, "image/png"); curl_mime_data(part, reinterpret_cast<char const*>(image.data()), image.size());
+	curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime); try { response = perform(curl, CurlHeaders{}, nullptr); } catch (...) { curl_mime_free(mime); throw; } curl_mime_free(mime);
+	auto url = string_field(static_cast<json::Object const&>(parse_json(response)), "secure_url"); auto at = url.find("/upload/"); if (at == std::string::npos) throw Error("Cloudinary upload failed."); url.insert(at + 8, transform + "/");
+	for (int i = 0; i < 30; ++i) { if (cancelled && cancelled()) throw Error("Cloudinary request cancelled."); CurlHandle get; std::string data; configure_common(get, {}, &data, nullptr); curl_easy_setopt(get, CURLOPT_URL, url.c_str()); auto rc = curl_easy_perform(get); long status = 0; curl_easy_getinfo(get, CURLINFO_RESPONSE_CODE, &status); if (rc == CURLE_OK && status / 100 == 2) return wxBase64Encode(data.data(), data.size()).ToStdString(); if (status != 420 && status != 423) throw Error(agi::format("Cloudinary HTTP %d", status)); std::this_thread::sleep_for(std::chrono::milliseconds(500)); }
+	throw Error("Cloudinary processing timed out.");
+}
+}
+std::string CloudinaryRemoveBackground(CloudinaryCredentials const& credentials,
+	std::vector<unsigned char> const& image, std::function<bool()> const& cancelled) {
+	return cloudinary_transform(credentials, image, "e_background_removal/f_png", cancelled);
+}
+
+std::string CloudinaryGenerativeRemove(CloudinaryCredentials const& credentials,
+	std::vector<unsigned char> const& image, std::string const& prompt,
+	std::function<bool()> const& cancelled) {
+	CurlHandle escape_handle;
+	char *escaped = curl_easy_escape(escape_handle, prompt.c_str(), static_cast<int>(prompt.size()));
+	if (!escaped) throw Error("Cloudinary prompt encoding failed.");
+	std::string transformation = std::string("e_gen_remove:prompt_") + escaped + "/f_png";
+	curl_free(escaped);
+	return cloudinary_transform(credentials, image, transformation, cancelled);
+}
+
+void TestCloudinaryConnection(CloudinaryCredentials const& credentials) {
+	if (!credentials.Complete()) throw Error("Cloudinary is not configured.");
+	CurlHandle curl;
+	std::string response;
+	configure_common(curl, {}, &response, nullptr);
+	std::string url = std::string("https://api.cloudinary.com/v1_1/") +
+		credentials.cloud_name + "/resources/image?max_results=1";
+	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(curl, CURLOPT_USERNAME, credentials.api_key.c_str());
+	curl_easy_setopt(curl, CURLOPT_PASSWORD, credentials.api_secret.c_str());
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	(void)perform(curl, CurlHeaders{}, nullptr);
+}
+
+std::string GetCloudinarySecret() {
+	{
+		std::lock_guard<std::mutex> lock(cloudinary_secret_mutex);
+		if (!session_cloudinary_secret.empty()) return session_cloudinary_secret;
+	}
+	auto environment = read_environment_cloudinary_secret();
+	if (!environment.empty()) return environment;
+#ifdef _WIN32
+	auto stored = read_cloudinary_credential_secret();
+	if (!stored.empty()) SetSessionCloudinarySecret(stored);
+	return stored;
+#else
+	return {};
+#endif
+}
+
+void SetSessionCloudinarySecret(std::string secret) {
+	std::lock_guard<std::mutex> lock(cloudinary_secret_mutex);
+	session_cloudinary_secret = std::move(secret);
+}
+
+void ClearSessionCloudinarySecret() {
+	std::lock_guard<std::mutex> lock(cloudinary_secret_mutex);
+	std::fill(session_cloudinary_secret.begin(), session_cloudinary_secret.end(), '\0');
+	session_cloudinary_secret.clear();
+}
+
+bool StoreCloudinarySecret(std::string const& secret, std::string *error) {
+#ifdef _WIN32
+	if (secret.empty()) { if (error) *error = "The Cloudinary API secret cannot be empty."; return false; }
+	CREDENTIALW credential{};
+	credential.Type = CRED_TYPE_GENERIC;
+	credential.TargetName = const_cast<wchar_t *>(cloudinary_credential_target);
+	credential.CredentialBlobSize = static_cast<DWORD>(secret.size());
+	credential.CredentialBlob = reinterpret_cast<LPBYTE>(const_cast<char *>(secret.data()));
+	credential.Persist = CRED_PERSIST_LOCAL_MACHINE;
+	credential.UserName = const_cast<wchar_t *>(L"Cloudinary API");
+	if (!CredWriteW(&credential, 0)) { if (error) *error = windows_error_message(GetLastError()); return false; }
+	SetSessionCloudinarySecret(secret);
+	return true;
+#else
+	if (error) *error = "Secure Cloudinary secret storage is not supported on this platform; use CLOUDINARY_API_SECRET.";
+	return false;
+#endif
+}
+
+bool DeleteStoredCloudinarySecret(std::string *error) {
+	ClearSessionCloudinarySecret();
+#ifdef _WIN32
+	if (CredDeleteW(cloudinary_credential_target, CRED_TYPE_GENERIC, 0)) return true;
+	auto code = GetLastError();
+	if (code == ERROR_NOT_FOUND) return true;
+	if (error) *error = windows_error_message(code);
+	return false;
+#else
+	(void)error;
+	return true;
+#endif
+}
+
+bool HasStoredCloudinarySecret() {
+#ifdef _WIN32
+	return !read_cloudinary_credential_secret().empty();
 #else
 	return false;
 #endif

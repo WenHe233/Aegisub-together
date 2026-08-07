@@ -57,7 +57,7 @@ struct ai_configure final : public cmd::Command {
 	CMD_NAME("ai/configure")
 	STR_MENU("Configure AI connection...")
 	STR_DISP("Configure AI connection")
-	STR_HELP("Configure the per-user OpenAI API connection")
+	STR_HELP("Configure the per-user OpenAI and Cloudinary API connections")
 
 	void operator()(agi::Context *c) override {
 		ShowAIConnectionDialog(c->parent, false);

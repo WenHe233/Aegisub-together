@@ -944,8 +944,9 @@ class AIKaraokeDialog final : public wxDialog {
 		pulse_timer.Start(120);
 		auto key = ai::GetApiKey();
 		auto model = OPT_GET("AI/OpenAI/Model")->GetString();
-		auto transcription_model = OPT_GET("AI/OpenAI/Karaoke Timing Model")->GetString();
-		auto advanced_timing = OPT_GET("AI/OpenAI/Advanced Karaoke Timing")->GetBool();
+		// Karaoke timing uses the timestamp-capable transcription model automatically.
+		auto transcription_model = std::string("whisper-1");
+		constexpr bool advanced_timing = true;
 		auto mode_copy = mode;
 		auto lines = input_lines;
 		auto audio = audio_file;
