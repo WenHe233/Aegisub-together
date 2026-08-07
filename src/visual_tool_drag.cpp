@@ -35,11 +35,83 @@
 #include <algorithm>
 #include <boost/range/algorithm/binary_search.hpp>
 
+#include <wx/dcmemory.h>
+#include <wx/menu.h>
+#include <wx/settings.h>
 #include <wx/toolbar.h>
 
 static const DraggableFeatureType DRAG_ORIGIN = DRAG_BIG_TRIANGLE;
 static const DraggableFeatureType DRAG_START = DRAG_BIG_SQUARE;
 static const DraggableFeatureType DRAG_END = DRAG_BIG_CIRCLE;
+
+namespace {
+	constexpr int center_menu_horizontal = 1200;
+	constexpr int center_menu_vertical = 1201;
+	constexpr int center_menu_both = 1202;
+
+	wxString center_mode_label(VisualToolDragCenterMode mode) {
+		switch (mode) {
+			case VisualToolDragCenterMode::Horizontal: return _("Center horizontally");
+			case VisualToolDragCenterMode::Vertical: return _("Center vertically");
+			case VisualToolDragCenterMode::Both: return _("Center horizontally and vertically");
+		}
+		return wxString();
+	}
+
+	wxBitmap center_mode_bitmap(VisualToolDragCenterMode mode, int size, bool dropdown = true) {
+		wxBitmap bitmap(size, size, 24);
+		wxMemoryDC dc(bitmap);
+		wxColour background = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
+		wxColour colour(20, 20, 20);
+		dc.SetBackground(wxBrush(background));
+		dc.Clear();
+		dc.SetBrush(*wxTRANSPARENT_BRUSH);
+		dc.SetPen(wxPen(colour, std::max(1, size / 12)));
+
+		int left = std::max(1, size / 10);
+		int right = size - left - 1;
+		int top = std::max(2, size / 5);
+		int bottom = size - top - 1;
+		dc.DrawRectangle(left, top, right - left, bottom - top);
+
+		int centre_x = size / 2;
+		int centre_y = size / 2;
+		int arrow_left = left + std::max(2, size / 8);
+		int arrow_right = right - std::max(2, size / 8);
+		int arrow_top = top + std::max(2, size / 8);
+		int arrow_bottom = bottom - std::max(2, size / 8);
+		int head = std::max(2, size / 7);
+		if (mode == VisualToolDragCenterMode::Horizontal || mode == VisualToolDragCenterMode::Both) {
+			dc.DrawLine(arrow_left, centre_y, arrow_right, centre_y);
+			dc.DrawLine(arrow_left, centre_y, arrow_left + head, centre_y - head);
+			dc.DrawLine(arrow_left, centre_y, arrow_left + head, centre_y + head);
+			dc.DrawLine(arrow_right, centre_y, arrow_right - head, centre_y - head);
+			dc.DrawLine(arrow_right, centre_y, arrow_right - head, centre_y + head);
+		}
+		if (mode == VisualToolDragCenterMode::Vertical || mode == VisualToolDragCenterMode::Both) {
+			dc.DrawLine(centre_x, arrow_top, centre_x, arrow_bottom);
+			dc.DrawLine(centre_x, arrow_top, centre_x - head, arrow_top + head);
+			dc.DrawLine(centre_x, arrow_top, centre_x + head, arrow_top + head);
+			dc.DrawLine(centre_x, arrow_bottom, centre_x - head, arrow_bottom - head);
+			dc.DrawLine(centre_x, arrow_bottom, centre_x + head, arrow_bottom - head);
+		}
+
+		if (dropdown) {
+			int corner = std::max(5, size / 4);
+			dc.SetPen(*wxTRANSPARENT_PEN);
+			dc.SetBrush(wxBrush(background));
+			dc.DrawRectangle(size - corner, size - corner, corner, corner);
+			wxPoint triangle[]{{size - corner + 1, size - corner + 1},
+				{size - 1, size - corner + 1}, {size - 1, size - 1}};
+			dc.SetBrush(wxBrush(colour));
+			dc.DrawPolygon(3, triangle);
+		}
+
+		dc.SelectObject(wxNullBitmap);
+		return bitmap;
+	}
+
+}
 
 #define COMMAND_NAME(id) ( \
 	id == DRAG_LOCK ? "video/tool/drag/change" : \
@@ -52,6 +124,13 @@ VisualToolDrag::VisualToolDrag(VideoDisplay *parent, agi::Context *context)
 	connections.push_back(c->selectionController->AddSelectionListener(&VisualToolDrag::OnSelectedSetChanged, this));
 	auto const& sel_set = c->selectionController->GetSelectedSet();
 	selection.insert(begin(selection), begin(sel_set), end(sel_set));
+}
+
+VisualToolDrag::~VisualToolDrag() {
+	parent->SetCursor(wxNullCursor);
+	if (!toolbar) return;
+	toolbar->Unbind(wxEVT_TOOL, &VisualToolDrag::OnSubTool, this);
+	toolbar->Unbind(wxEVT_TOOL_RCLICKED, &VisualToolDrag::OnSubTool, this);
 }
 
 void VisualToolDrag::AddTool(int id) {
@@ -74,10 +153,15 @@ void VisualToolDrag::SetToolbar(wxToolBar *tb) {
 	toolbar->AddSeparator();
 	toolbar->AddTool(DRAG_TOGGLE, _("Toggle between \\move and \\pos"), GETBUNDLE(visual_move_conv_move, OPT_GET("App/Toolbar Icon Size")->GetInt()));
 	AddTool(DRAG_LOCK);
+	int icon_size = OPT_GET("App/Toolbar Icon Size")->GetInt();
+	toolbar->AddTool(DRAG_CENTER, center_mode_label(center_mode),
+		wxBitmapBundle::FromBitmap(center_mode_bitmap(center_mode, icon_size)),
+		_("Center selected lines in a drawn rectangle (right-click for modes)"), wxITEM_CHECK);
 	toolbar->Realize();
 	toolbar->Show(true);
 
 	toolbar->Bind(wxEVT_TOOL, &VisualToolDrag::OnSubTool, this);
+	toolbar->Bind(wxEVT_TOOL_RCLICKED, &VisualToolDrag::OnSubTool, this);
 }
 
 void VisualToolDrag::UpdateToggleButtons() {
@@ -97,6 +181,13 @@ void VisualToolDrag::UpdateToggleButtons() {
 
 void VisualToolDrag::OnSubTool(wxCommandEvent &e) {
 	int id = e.GetId();
+	if (id == DRAG_CENTER) {
+		if (e.GetEventType() == wxEVT_TOOL_RCLICKED)
+			ShowCenterMenu(Vector2D(parent->ScreenToClient(wxGetMousePosition())));
+		else
+			SetCentering(toolbar->GetToolState(DRAG_CENTER));
+		return;
+	}
 
 	if (id == DRAG_LOCK) {
 		cmd::Command *command = cmd::get(COMMAND_NAME(id));
@@ -127,6 +218,109 @@ void VisualToolDrag::OnSubTool(wxCommandEvent &e) {
 	Commit();
 	OnFileChanged();
 	UpdateToggleButtons();
+}
+
+void VisualToolDrag::UpdateCenterButton() {
+	if (!toolbar) return;
+	int icon_size = OPT_GET("App/Toolbar Icon Size")->GetInt();
+	toolbar->SetToolNormalBitmap(DRAG_CENTER,
+		wxBitmapBundle::FromBitmap(center_mode_bitmap(center_mode, icon_size)));
+	toolbar->SetToolShortHelp(DRAG_CENTER,
+		_("Center selected lines in a drawn rectangle (right-click for modes)"));
+	toolbar->ToggleTool(DRAG_CENTER, centering);
+	toolbar->Realize();
+}
+
+void VisualToolDrag::ShowCenterMenu(Vector2D position) {
+	wxMenu menu;
+	auto append_mode = [&](int id, VisualToolDragCenterMode mode) {
+		auto item = menu.AppendRadioItem(id, center_mode_label(mode));
+		item->SetBitmap(center_mode_bitmap(mode, 20, false));
+		item->Check(center_mode == mode);
+	};
+	append_mode(center_menu_horizontal, VisualToolDragCenterMode::Horizontal);
+	append_mode(center_menu_vertical, VisualToolDragCenterMode::Vertical);
+	append_mode(center_menu_both, VisualToolDragCenterMode::Both);
+
+	int selected = parent->GetPopupMenuSelectionFromUser(menu,
+		wxPoint(static_cast<int>(position.X()), static_cast<int>(position.Y())));
+	if (selected == center_menu_horizontal)
+		center_mode = VisualToolDragCenterMode::Horizontal;
+	else if (selected == center_menu_vertical)
+		center_mode = VisualToolDragCenterMode::Vertical;
+	else if (selected == center_menu_both)
+		center_mode = VisualToolDragCenterMode::Both;
+	else
+		return;
+
+	SetCentering(true);
+	UpdateCenterButton();
+}
+
+void VisualToolDrag::SetCentering(bool enabled) {
+	centering = enabled;
+	drawing_center_rectangle = false;
+	center_rectangle_start = Vector2D();
+	center_rectangle_end = Vector2D();
+	active_feature = nullptr;
+	parent->SetCursor(enabled ? wxCursor(wxCURSOR_CROSS) : wxNullCursor);
+	UpdateCenterButton();
+	parent->Render();
+}
+
+void VisualToolDrag::ApplyCentering() {
+	Vector2D centre = ToScriptCoords((center_rectangle_start + center_rectangle_end) / 2.f);
+	bool changed = false;
+	for (auto line : c->selectionController->GetSelectedSet()) {
+		Vector2D move_start, move_end;
+		int move_start_time, move_end_time;
+		if (GetLineMove(line, move_start, move_end, move_start_time, move_end_time)) continue;
+		Vector2D current = GetLinePosition(line);
+		Vector2D target = current;
+		if (center_mode == VisualToolDragCenterMode::Horizontal || center_mode == VisualToolDragCenterMode::Both)
+			target = Vector2D(centre.X(), target.Y());
+		if (center_mode == VisualToolDragCenterMode::Vertical || center_mode == VisualToolDragCenterMode::Both)
+			target = Vector2D(target.X(), centre.Y());
+		SetOverride(line, "\\pos", target.PStr());
+		changed = true;
+	}
+	if (changed) {
+		Commit(_("positioning"));
+		OnFileChanged();
+	}
+}
+
+void VisualToolDrag::OnCenterMouseEvent(wxMouseEvent &event) {
+	shift_down = event.ShiftDown();
+	ctrl_down = event.CmdDown();
+	alt_down = event.AltDown();
+	mouse_pos = event.GetPosition();
+	if (event.Leaving() && !drawing_center_rectangle) {
+		mouse_pos = Vector2D();
+		parent->Render();
+		return;
+	}
+
+	if (event.LeftDown()) {
+		center_rectangle_start = mouse_pos;
+		center_rectangle_end = mouse_pos;
+		drawing_center_rectangle = true;
+		if (!parent->HasCapture()) parent->CaptureMouse();
+	}
+	else if (drawing_center_rectangle) {
+		center_rectangle_end = mouse_pos;
+		if (event.LeftUp() || !event.LeftIsDown()) {
+			drawing_center_rectangle = false;
+			if (parent->HasCapture()) parent->ReleaseMouse();
+			parent->SetFocus();
+			Vector2D size = center_rectangle_end - center_rectangle_start;
+			if (std::abs(size.X()) >= 2.f && std::abs(size.Y()) >= 2.f)
+				ApplyCentering();
+			center_rectangle_start = Vector2D();
+			center_rectangle_end = Vector2D();
+		}
+	}
+	parent->Render();
 }
 
 void VisualToolDrag::OnLineChanged() {
@@ -249,6 +443,21 @@ void VisualToolDrag::Draw() {
 			gl.SetLineColour(line_color, 0.5f, 2);
 			gl.DrawDashedLine(start, end, 6);
 		}
+	}
+
+	if (centering && drawing_center_rectangle) {
+		wxColour rectangle_colour = to_wx(highlight_color_primary_opt->GetColor());
+		gl.SetFillColour(rectangle_colour, .08f);
+		gl.SetLineColour(rectangle_colour, 1.f, 2);
+		gl.DrawRectangle(center_rectangle_start, center_rectangle_end);
+		Vector2D minimum = center_rectangle_start.Min(center_rectangle_end);
+		Vector2D maximum = center_rectangle_start.Max(center_rectangle_end);
+		Vector2D centre = (minimum + maximum) / 2.f;
+		gl.SetLineColour(rectangle_colour, .9f, 1);
+		if (center_mode == VisualToolDragCenterMode::Horizontal || center_mode == VisualToolDragCenterMode::Both)
+			gl.DrawDashedLine(Vector2D(centre.X(), minimum.Y()), Vector2D(centre.X(), maximum.Y()), 5);
+		if (center_mode == VisualToolDragCenterMode::Vertical || center_mode == VisualToolDragCenterMode::Both)
+			gl.DrawDashedLine(Vector2D(minimum.X(), centre.Y()), Vector2D(maximum.X(), centre.Y()), 5);
 	}
 }
 

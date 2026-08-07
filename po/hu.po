@@ -2616,6 +2616,14 @@ msgstr "Vektoros körbevágás"
 msgid "Clip subtitles to a vectorial area"
 msgstr "Felirat körbevágása vektorábrával."
 
+#: src/command/vis_tool.cpp
+msgid "Mask Editing"
+msgstr "Maszk szerkesztése"
+
+#: src/command/vis_tool.cpp
+msgid "Edit the active line's ASS drawing"
+msgstr "Az aktív sor ASS-rajzának szerkesztése"
+
 #: ../src/command/vis_tool.cpp:133
 msgid "Drag control points"
 msgstr "Vezérlőpontok mozgatása"
@@ -7089,6 +7097,9 @@ msgstr "Ellenőrzési modell:"
 msgid "AI model:"
 msgstr "AI-modell:"
 
+msgid "AI selection model:"
+msgstr "AI-kijelölési modell:"
+
 msgid "Available OpenAI models and pricing"
 msgstr "Elérhető OpenAI-modellek és árak"
 
@@ -7559,3 +7570,488 @@ msgstr "A Muteki Aegisub változáslistájának megjelenítése"
 
 msgid "Download, install and reload the Muteki Automation scripts"
 msgstr "A Muteki Automation scriptek letöltése, telepítése és újratöltése"
+
+#: src/command/vis_tool.cpp
+msgid "Masking"
+msgstr "Maszkolás"
+
+#: src/command/vis_tool.cpp
+msgid "Create masks from areas drawn on the video"
+msgstr "Maszk létrehozása a videón kijelölt területből"
+
+#: src/command/vis_tool.cpp
+msgid "Rectangle"
+msgstr "Téglalap"
+
+#: src/command/vis_tool.cpp
+msgid "Draw a rectangular mask"
+msgstr "Téglalap alakú maszk rajzolása"
+
+#: src/command/vis_tool.cpp
+msgid "Points"
+msgstr "Pontok"
+
+#: src/command/vis_tool.cpp
+msgid "Add mask points"
+msgstr "Maszkpontok hozzáadása"
+
+#: src/command/vis_tool.cpp
+msgid "Draw a freehand mask"
+msgstr "Szabadkézi maszk rajzolása"
+
+#: src/visual_tool_mask.cpp
+msgid "Create mask"
+msgstr "Maszk készítése"
+
+#: src/dialog_ai_connection.cpp
+msgid "Image model:"
+msgstr "Képmodell:"
+
+#: src/visual_tool_mask.cpp
+msgid "AI background removal"
+msgstr "AI háttér-helyreállítás"
+
+#: src/visual_tool_mask.cpp
+msgid "AI custom generation"
+msgstr "AI egyedi generálás"
+
+#: src/visual_tool_mask.cpp
+msgid "AI prompt:"
+msgstr "AI-prompt:"
+
+#: src/visual_tool_mask.cpp
+msgid "Enter an AI prompt."
+msgstr "Adj meg egy AI-promptot."
+
+#: src/visual_tool_mask.cpp
+msgid "AI masking failed"
+msgstr "Az AI-maszkolás sikertelen"
+
+#: src/visual_tool_mask.cpp
+msgid "AI masking"
+msgstr "AI-maszkolás"
+
+#: src/visual_tool_mask.cpp
+msgid "Generating the edited image..."
+msgstr "A szerkesztett kép generálása..."
+
+#: src/visual_tool_mask.cpp
+msgid "Refining the erased area..."
+msgstr "A törölt terület finomítása..."
+
+#: src/visual_tool_mask.cpp
+msgid "Erase again"
+msgstr "Törlés újra"
+
+#: src/visual_tool_mask.cpp
+msgid "The AI image response could not be decoded."
+msgstr "Az AI-kép válaszát nem sikerült dekódolni."
+
+#: src/visual_tool_mask.cpp
+msgid "The AI image result could not be converted to ASS."
+msgstr "Az AI-képet nem sikerült ASS-rajzzá alakítani."
+
+#: src/visual_tool_mask.cpp
+msgid "The AI image did not contain any pixels inside the mask."
+msgstr "Az AI-kép nem tartalmazott képpontot a maszkon belül."
+
+#: src/visual_tool_mask.cpp
+msgid "Create AI mask"
+msgstr "AI-maszk készítése"
+
+#: src/visual_tool_mask.cpp
+msgid "The raw AI image could not be saved to:"
+msgstr "A nyers AI-képet nem sikerült ide menteni:"
+
+#: src/command/vis_tool.cpp
+msgid "Add Shape"
+msgstr "Ábra hozzáadása"
+
+#: src/command/vis_tool.cpp
+msgid "Draw a shape and add it as an ASS drawing"
+msgstr "Ábra rajzolása és hozzáadása ASS-rajzként"
+
+#: src/visual_tool_shape.cpp
+msgid "Shape (right-click for list)"
+msgstr "Ábra (lista: jobb kattintás)"
+
+#: src/visual_tool_shape.cpp
+msgid "Filled"
+msgstr "Kitöltött"
+
+#: src/visual_tool_shape.cpp
+msgid "Toggle filled or outlined shape"
+msgstr "Váltás kitöltött és körvonalas ábra között"
+
+#: src/visual_tool_shape.cpp
+msgid "Stroke size"
+msgstr "Vonalvastagság"
+
+#: src/visual_tool_shape.cpp
+msgid "Square"
+msgstr "Négyzet"
+
+#: src/visual_tool_shape.cpp
+msgid "Circle"
+msgstr "Kör"
+
+#: src/visual_tool_shape.cpp
+msgid "Ellipse"
+msgstr "Ellipszis"
+
+#: src/visual_tool_shape.cpp
+msgid "Triangle"
+msgstr "Háromszög"
+
+#: src/visual_tool_shape.cpp
+msgid "Diamond"
+msgstr "Rombusz"
+
+#: src/visual_tool_shape.cpp
+msgid "Hexagon"
+msgstr "Hatszög"
+
+#: src/visual_tool_shape.cpp
+msgid "Heart"
+msgstr "Szív"
+
+#: src/visual_tool_shape.cpp
+msgid "Wide heart"
+msgstr "Széles szív"
+
+#: src/visual_tool_shape.cpp
+msgid "5-point star"
+msgstr "5 ágú csillag"
+
+#: src/visual_tool_shape.cpp
+msgid "6-point star"
+msgstr "6 ágú csillag"
+
+#: src/visual_tool_shape.cpp
+msgid "8-point star"
+msgstr "8 ágú csillag"
+
+#: src/visual_tool_shape.cpp
+msgid "Arrow"
+msgstr "Nyíl"
+
+#: src/visual_tool_shape.cpp
+msgid "Custom size..."
+msgstr "Egyéni méret..."
+
+#: src/visual_tool_shape.cpp
+msgid "Enter the stroke size in pixels:"
+msgstr "Add meg a vonalvastagságot képpontban:"
+
+#: src/visual_tool_shape.cpp
+msgid "Size:"
+msgstr "Méret:"
+
+#: src/visual_tool_shape.cpp
+msgid "Custom stroke size"
+msgstr "Egyéni vonalvastagság"
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "Shape: %s (right-click for list)"
+msgstr "Ábra: %s (lista: jobb kattintás)"
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "Stroke size: %s px"
+msgstr "Vonalvastagság: %s px"
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "%s px"
+msgstr "%s px"
+
+#: src/visual_tool_shape.cpp
+msgid "Add shape"
+msgstr "Ábra hozzáadása"
+
+#: src/visual_tool_shape.cpp
+msgid "Corner radius"
+msgstr "Saroklekerekítés"
+
+#: src/visual_tool_shape.cpp
+msgid "Custom radius..."
+msgstr "Egyéni lekerekítés..."
+
+#: src/visual_tool_shape.cpp
+msgid "Enter the corner radius in pixels:"
+msgstr "Adja meg a saroklekerekítést képpontban:"
+
+#: src/visual_tool_shape.cpp
+msgid "Radius:"
+msgstr "Sugár:"
+
+#: src/visual_tool_shape.cpp
+msgid "Custom corner radius"
+msgstr "Egyéni saroklekerekítés"
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "Corner radius: %d px"
+msgstr "Saroklekerekítés: %d px"
+
+#: src/visual_tool_shape.cpp
+msgid "Accept drawing (ENTER)"
+msgstr "Rajz elfogadása (ENTER)"
+
+#: src/visual_tool_shape.cpp
+msgid "Delete drawing (ESC)"
+msgstr "Rajz törlése (ESC)"
+
+#: src/visual_tool_shape.cpp
+msgid "Shapes will be created in a single line. Hold ALT to constrain to a regular shape."
+msgstr "Az alakzatok egy sorban fognak elkészülni, ALT-ot nyomva tartva kényszerítheted a szabályos alakzatot."
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "Blur: %.1f"
+msgstr "Blur: %.1f"
+
+#: src/visual_tool_shape.cpp
+msgid "Custom blur..."
+msgstr "Egyéni blur..."
+
+#: src/visual_tool_shape.cpp
+msgid "Enter the blur value:"
+msgstr "Adja meg a blur értékét:"
+
+#: src/visual_tool_shape.cpp
+msgid "Custom blur"
+msgstr "Egyéni blur"
+
+#: src/visual_tool_shape.cpp
+msgid "Select shape color"
+msgstr "Alakzat színének kiválasztása"
+
+#: src/visual_tool_shape.cpp
+msgid "Color"
+msgstr "Szín"
+
+#: src/visual_tool_drag.cpp
+msgid "Center horizontally"
+msgstr "Vízszintesen középre"
+
+#: src/visual_tool_drag.cpp
+msgid "Center vertically"
+msgstr "Függőlegesen középre"
+
+#: src/visual_tool_drag.cpp
+msgid "Center horizontally and vertically"
+msgstr "Vízszintesen és függőlegesen középre"
+
+#: src/visual_tool_drag.cpp
+msgid "Center selected lines in a drawn rectangle (right-click for modes)"
+msgstr "A kijelölt sorok középre rendezése rajzolt téglalapban (módok: jobb kattintás)"
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Subtract"
+msgstr "Elvétel"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add (ENTER)"
+msgstr "Hozzáadás (ENTER)"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush: Add"
+msgstr "Ecset: hozzáadás"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush: Subtract"
+msgstr "Ecset: elvétel"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette"
+msgstr "Pipetta"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush add"
+msgstr "Ecsetes hozzáadás"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush subtract"
+msgstr "Ecsetes elvétel"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette add"
+msgstr "Pipettás hozzáadás"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette subtract"
+msgstr "Pipettás elvétel"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette add"
+msgstr "Mód: pipettás hozzáadás"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette subtract"
+msgstr "Mód: pipettás elvétel"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI select"
+msgstr "AI-kijelölés"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Automatic"
+msgstr "Automatikus"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Custom select"
+msgstr "Egyedi kijelölés"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI auto select"
+msgstr "Automatikus AI-kijelölés"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI custom select"
+msgstr "Egyedi AI-kijelölés"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette"
+msgstr "Mód: pipetta"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Brush add"
+msgstr "Mód: ecsetes hozzáadás"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Brush subtract"
+msgstr "Mód: ecsetes elvétel"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: AI auto select"
+msgstr "Mód: automatikus AI-kijelölés"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: AI custom select"
+msgstr "Mód: egyedi AI-kijelölés"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush: %d px"
+msgstr "Ecset: %d px"
+
+#: src/command/vis_tool.cpp
+msgid "Brush"
+msgstr "Ecset"
+
+#: src/command/vis_tool.cpp
+msgid "Paint a mask with a brush"
+msgstr "Maszk festése ecsettel"
+
+#: src/visual_tool_mask.cpp
+msgid "Create mask (ENTER)"
+msgstr "Maszk készítése (ENTER)"
+
+#: src/command/vis_tool.cpp
+msgid "Add to or erase from the current vector clip with a brush"
+msgstr "Hozzáadás az aktuális vektoros cliphez vagy törlés belőle ecsettel"
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Apply (ENTER)"
+msgstr "Alkalmazás (ENTER)"
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Brush edit vector clip"
+msgstr "Vektoros clip ecsetes szerkesztése"
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Paint to add to or erase from the current clip."
+msgstr "Ecsettel hozzáadhatsz az aktuális cliphez, vagy törölhetsz belőle."
+
+#: src/command/vis_tool.cpp
+msgid "Brush delete"
+msgstr "Ecsetes törlés"
+
+#: src/command/vis_tool.cpp
+msgid "Add to the current vector clip with a brush"
+msgstr "Hozzáadás az aktuális vektoros cliphez ecsettel"
+
+#: src/command/vis_tool.cpp
+msgid "Delete from the current vector clip with a brush"
+msgstr "Törlés az aktuális vektoros clipből ecsettel"
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush size: %d px"
+msgstr "Ecsetméret: %d px"
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush: %s, %d px (right-click for settings)"
+msgstr "Ecset: %s, %d px (beállítások jobb kattintással)"
+
+#: src/visual_tool_mask.cpp src/visual_tool_shape.cpp src/visual_tool_vector_clip.cpp
+msgid "Accept (ENTER)"
+msgstr "Elfogadás (ENTER)"
+
+#: src/visual_tool_mask.cpp src/visual_tool_shape.cpp src/visual_tool_vector_clip.cpp
+msgid "Cancel (ESC)"
+msgstr "Mégse (ESC)"
+
+#: src/command/vis_tool.cpp
+msgid "Extract by color"
+msgstr "Kijelölés szín alapján"
+
+#: src/command/vis_tool.cpp
+msgid "Add contours from similar colors in a selected range"
+msgstr "Kontúrok hozzáadása a kijelölt tartomány hasonló színeiből"
+
+#: src/command/vis_tool.cpp
+msgid "Create mask contours from similar colors in a selected range"
+msgstr "Maszkkontúrok létrehozása a kijelölt tartomány hasonló színeiből"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Auto fill"
+msgstr "Automatikus kitöltés"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Tolerance: %.1f"
+msgstr "Tolerancia: %.1f"
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Offset: %d px"
+msgstr "Eltolás: %d px"
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Draw the search range."
+msgstr "Rajzold meg a keresési tartományt."
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Click the color to extract inside the range."
+msgstr "Kattints a tartományon belül kinyerendő színre."
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "%zu contours found. They will be added to the current clip."
+msgstr "%zu kontúr található. Ezek hozzá lesznek adva az aktuális cliphez."
+
+#: src/command/recent.cpp
+msgid "Open Recent Video"
+msgstr "Legutóbbi videó megnyitása"
+
+#: src/command/recent.cpp
+msgid "Open the most recently used video"
+msgstr "A legutóbb használt videó megnyitása"
+
+#: src/command/subtitle.cpp
+msgid "Open &MKV..."
+msgstr "&MKV megnyitása..."
+
+#: src/command/subtitle.cpp
+msgid "Open MKV"
+msgstr "MKV megnyitása"
+
+#: src/command/subtitle.cpp
+msgid "Open subtitles, video and audio from a Matroska file"
+msgstr "Felirat, videó és hangsáv megnyitása Matroska-fájlból"
+
+#: src/command/subtitle.cpp
+msgid "Open MKV File"
+msgstr "MKV-fájl megnyitása"
+
+#: src/command/subtitle.cpp
+msgid "Matroska Files"
+msgstr "Matroska-fájlok"

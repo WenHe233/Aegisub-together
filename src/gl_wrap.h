@@ -24,6 +24,7 @@
 #include <vector>
 
 class wxColour;
+class wxImage;
 
 class OpenGLWrapper {
 	float line_r, line_g, line_b, line_a;
@@ -33,10 +34,16 @@ class OpenGLWrapper {
 	bool smooth;
 
 	bool transform_pushed;
+	mutable unsigned int image_texture = 0;
+	mutable unsigned char const *image_data_key = nullptr;
+	mutable unsigned char const *image_alpha_key = nullptr;
+	mutable int image_texture_width = 0;
+	mutable int image_texture_height = 0;
 	void PrepareTransform();
 
 public:
 	OpenGLWrapper();
+	~OpenGLWrapper();
 
 	void SetLineColour(wxColour col, float alpha = 1.0f, int width = 1);
 	void SetFillColour(wxColour col, float alpha = 1.0f);
@@ -59,11 +66,13 @@ public:
 	void DrawRectangle(Vector2D p1, Vector2D p2) const;
 	void DrawRing(Vector2D center, float r1, float r2, float ar = 1.0f, float arcStart = 0.0f, float arcEnd = 0.0f) const;
 	void DrawTriangle(Vector2D p1, Vector2D p2, Vector2D p3) const;
-
+	void DrawImage(wxImage const& image, Vector2D top_left, Vector2D bottom_right) const;
+	void InvalidateImageCache() const { image_data_key = nullptr; image_alpha_key = nullptr; }
 	void DrawLines(size_t dim, std::vector<float> const& lines);
 	void DrawLines(size_t dim, std::vector<float> const& lines, size_t c_dim, std::vector<float> const& colors);
 	void DrawLines(size_t dim, const float *lines, size_t n);
 	void DrawLineStrip(size_t dim, std::vector<float> const& lines);
+	void DrawLineStrip(size_t dim, const float *lines, size_t n);
 
 	/// Draw a multipolygon serialized into a single array
 	/// @param points List of coordinates

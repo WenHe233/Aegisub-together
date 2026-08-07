@@ -4,6 +4,7 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -39,6 +40,24 @@ struct ProofreadIssue {
 struct ProofreadResult {
 	std::string message;
 	std::vector<ProofreadIssue> issues;
+};
+
+struct ImageContourPoint {
+	double x = 0.0;
+	double y = 0.0;
+};
+
+enum class ImageContourOperation {
+	Add,
+	Subtract
+};
+
+/// One semantic image region. Add regions are unioned first, then Subtract
+/// regions remove genuine background openings from that union.
+struct ImageContour {
+	ImageContourOperation operation = ImageContourOperation::Add;
+	std::string label;
+	std::vector<ImageContourPoint> points;
 };
 
 enum class KaraokeMode {
@@ -130,6 +149,19 @@ public:
 		std::string const& user_message) const;
 	ProofreadResult Proofread(std::vector<SubtitleLine> const& lines) const;
 };
+
+/// Edit an image with a transparent PNG mask and return the base64-encoded PNG.
+std::string EditImage(std::string const& api_key, std::string const& image_model,
+	std::vector<unsigned char> const& image_png,
+	std::vector<unsigned char> const& mask_png, std::string const& size,
+	std::string const& prompt, std::function<bool()> const& is_cancelled = {});
+
+/// Analyze an image crop and return visible subject contours in normalized
+/// 0-1000 coordinates. Unlike EditImage this never generates replacement pixels.
+std::vector<ImageContour> SelectImageContours(std::string const& api_key,
+	std::string const& vision_model, std::string const& png_data_url,
+	std::string const& subject_prompt,
+	std::function<bool()> const& is_cancelled = {});
 
 enum class ApiKeySource {
 	None,

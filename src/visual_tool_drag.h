@@ -32,12 +32,20 @@ public:
 
 class wxBitmapButton;
 class wxCommandEvent;
+class wxMouseEvent;
 class wxToolBar;
 
 /// Button IDs
 enum VisualToolDragMode {
 	DRAG_TOGGLE = 1,
-	DRAG_LOCK = 2
+	DRAG_LOCK = 2,
+	DRAG_CENTER = 3
+};
+
+enum class VisualToolDragCenterMode {
+	Horizontal,
+	Vertical,
+	Both
 };
 
 /// @class VisualToolDrag
@@ -56,6 +64,11 @@ class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
 	/// When the button is pressed, will it convert the line to a move (vs. from
 	/// move to pos)? Used to avoid changing the button's icon unnecessarily
 	bool button_is_move = false;
+	bool centering = false;
+	bool drawing_center_rectangle = false;
+	VisualToolDragCenterMode center_mode = VisualToolDragCenterMode::Both;
+	Vector2D center_rectangle_start;
+	Vector2D center_rectangle_end;
 
 	void AddTool(int id);
 	void UpdateTool(int id);
@@ -80,8 +93,15 @@ class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
 
 	/// Set the pos/move button to the correct icon based on the active line
 	void UpdateToggleButtons();
+	void UpdateCenterButton();
+	void ShowCenterMenu(Vector2D position);
+	void SetCentering(bool enabled);
+	void ApplyCentering();
 	void OnSubTool(wxCommandEvent &event);
 public:
 	VisualToolDrag(VideoDisplay *parent, agi::Context *context);
+	~VisualToolDrag() override;
+	bool IsCentering() const { return centering; }
+	void OnCenterMouseEvent(wxMouseEvent &event);
 	void SetToolbar(wxToolBar *toolbar) override;
 };

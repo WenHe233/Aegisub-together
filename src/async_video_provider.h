@@ -21,7 +21,9 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <set>
+#include <vector>
 #include <wx/event.h>
 
 class AssDialogue;
@@ -70,11 +72,17 @@ class AsyncVideoProvider {
 	std::shared_ptr<VideoFrame> ProcFrame(int frame, double time, bool raw = false, bool forceSub = false);
 
 	/// Produce a frame if req_version is still the current version
-	void ProcAsync(uint_fast32_t req_version, bool check_updated, bool forceSub = false);
+	void ProcAsync(uint_fast32_t req_version, bool check_updated, bool forceSub = false, bool discard_stale = true);
 
 	/// Monotonic counter used to drop frames when changes arrive faster than
 	/// they can be rendered
 	std::atomic<uint_fast32_t> version{ 0 };
+
+	/// Latest subtitle lines supplied by a live visual-tool drag. New mouse
+	/// positions replace the pending state rather than queueing stale frames.
+	std::mutex preview_mutex;
+	std::vector<std::unique_ptr<AssDialogue>> pending_preview_lines;
+	bool preview_job_queued = false;
 
 	std::vector<std::shared_ptr<VideoFrame>> buffers;
 
@@ -95,6 +103,10 @@ public:
 	/// This function only supports changes to a single existing line, and not
 	/// insertions or deletions.
 	void UpdateSubtitles(const AssDialogue *changed) throw();
+
+	/// Update all visible lines changed by a visual-tool drag. At most one
+	/// preview worker job is active, and it always consumes the newest state.
+	void UpdateSubtitlesPreview(std::vector<AssDialogue const *> const& changed) throw();
 
 	/// @brief Queue a request for a frame
 	/// @brief frame Frame number

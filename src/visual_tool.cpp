@@ -43,6 +43,8 @@
 
 #include <algorithm>
 #include <limits>
+#include <type_traits>
+#include <unordered_set>
 
 VisualToolBase::VisualToolBase(VideoDisplay *parent, agi::Context *context)
 : c(context)
@@ -180,6 +182,14 @@ VisualTool<FeatureType>::VisualTool(VideoDisplay *parent, agi::Context *context)
 
 template<class FeatureType>
 void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
+	if constexpr (std::is_same_v<FeatureType, VisualToolDragDraggableFeature>) {
+		auto drag_tool = static_cast<VisualToolDrag *>(this);
+		if (drag_tool->IsCentering()) {
+			drag_tool->OnCenterMouseEvent(event);
+			return;
+		}
+	}
+
 	bool left_click = event.LeftDown();
 	bool left_double = event.LeftDClick();
 	shift_down = event.ShiftDown();
@@ -219,14 +229,29 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 				sel->UpdateDrag(mouse_pos - drag_start, shift_down);
 			for (auto sel : sel_features)
 				UpdateDrag(sel);
-			Commit();
+			if constexpr (std::is_same_v<FeatureType, VisualToolDragDraggableFeature>) {
+				std::vector<AssDialogue const *> changed_lines;
+				changed_lines.reserve(sel_features.size());
+				std::unordered_set<AssDialogue const *> seen_lines;
+				seen_lines.reserve(sel_features.size());
+				for (auto sel : sel_features) {
+					if (!sel->line || !IsDisplayed(sel->line, false) || !seen_lines.insert(sel->line).second)
+						continue;
+					changed_lines.push_back(sel->line);
+				}
+				c->videoController->PreviewSubtitles(changed_lines);
+			}
+			else {
+				Commit();
+			}
 		}
 		// end drag
 		else {
 			dragging = false;
 
 			// mouse didn't move, fiddle with selection
-			if (active_feature && !active_feature->HasMoved()) {
+			bool feature_moved = !active_feature || active_feature->HasMoved();
+			if (!feature_moved) {
 				// Don't deselect stuff that was selected in this click's mousedown event
 				if (!sel_changed) {
 					if (ctrl_down)
@@ -237,6 +262,8 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 			} else {
 				for (auto sel : sel_features)
 					EndDrag(sel);
+				if constexpr (std::is_same_v<FeatureType, VisualToolDragDraggableFeature>)
+					Commit();
 			}
 
 			active_feature = nullptr;
@@ -315,7 +342,9 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 				} else {
 					sel_features.clear();
 
-					if (!c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip)) && !c->videoDisplay->ToolIsType(typeid(VisualToolClip)))
+					if (!c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip)) &&
+						!c->videoDisplay->ToolIsType(typeid(VisualToolMaskEdit)) &&
+						!c->videoDisplay->ToolIsType(typeid(VisualToolClip)))
 						c->selectionController->SetSelectedSet({ c->selectionController->GetActiveLine() });
 				}
 			}

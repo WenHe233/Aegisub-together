@@ -2910,6 +2910,14 @@ msgstr ""
 msgid "Clip subtitles to a vectorial area"
 msgstr ""
 
+#: src/command/vis_tool.cpp
+msgid "Mask Editing"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Edit the active line's ASS drawing"
+msgstr ""
+
 #: ../src/command/vis_tool.cpp:133
 msgid "Drag control points"
 msgstr ""
@@ -7188,3 +7196,496 @@ msgstr ""
 msgid "Download, install and reload the Muteki Automation scripts"
 msgstr ""
 
+#: src/command/vis_tool.cpp
+msgid "Masking"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Create masks from areas drawn on the video"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Rectangle"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Draw a rectangular mask"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Points"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Add mask points"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Draw a freehand mask"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "Create mask"
+msgstr ""
+
+#: src/dialog_ai_connection.cpp
+msgid "Image model:"
+msgstr ""
+
+#: src/dialog_ai_connection.cpp
+msgid "AI selection model:"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "AI background removal"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "AI custom generation"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "AI prompt:"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "Enter an AI prompt."
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "AI masking failed"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "AI masking"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "Generating the edited image..."
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "The AI image response could not be decoded."
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "The AI image result could not be converted to ASS."
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "The AI image did not contain any pixels inside the mask."
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "Create AI mask"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "The raw AI image could not be saved to:"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Add Shape"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Draw a shape and add it as an ASS drawing"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Shape (right-click for list)"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Filled"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Toggle filled or outlined shape"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Stroke size"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Square"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Circle"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Ellipse"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Triangle"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Diamond"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Hexagon"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Heart"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Wide heart"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "5-point star"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "6-point star"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "8-point star"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Arrow"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Custom size..."
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Enter the stroke size in pixels:"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Size:"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Custom stroke size"
+msgstr ""
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "Shape: %s (right-click for list)"
+msgstr ""
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "Stroke size: %s px"
+msgstr ""
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "%s px"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Add shape"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Corner radius"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Custom radius..."
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Enter the corner radius in pixels:"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Radius:"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Custom corner radius"
+msgstr ""
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "Corner radius: %d px"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Accept drawing (ENTER)"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Delete drawing (ESC)"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Shapes will be created in a single line. Hold ALT to constrain to a regular shape."
+msgstr ""
+
+#: src/visual_tool_shape.cpp, c-format
+msgid "Blur: %.1f"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Custom blur..."
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Enter the blur value:"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Custom blur"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Select shape color"
+msgstr ""
+
+#: src/visual_tool_shape.cpp
+msgid "Color"
+msgstr ""
+
+#: src/visual_tool_drag.cpp
+msgid "Center horizontally"
+msgstr ""
+
+#: src/visual_tool_drag.cpp
+msgid "Center vertically"
+msgstr ""
+
+#: src/visual_tool_drag.cpp
+msgid "Center horizontally and vertically"
+msgstr ""
+
+#: src/visual_tool_drag.cpp
+msgid "Center selected lines in a drawn rectangle (right-click for modes)"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Subtract"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add (ENTER)"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush: Add"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush: Subtract"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush add"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush subtract"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette add"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette subtract"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette add"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette subtract"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI select"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Automatic"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Custom select"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI auto select"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI custom select"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Brush add"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Brush subtract"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: AI auto select"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: AI custom select"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush: %d px"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "Refining the erased area..."
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "Erase again"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Brush"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Paint a mask with a brush"
+msgstr ""
+
+#: src/visual_tool_mask.cpp
+msgid "Create mask (ENTER)"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Add to or erase from the current vector clip with a brush"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Apply (ENTER)"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Brush edit vector clip"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Paint to add to or erase from the current clip."
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Brush delete"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Add to the current vector clip with a brush"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Delete from the current vector clip with a brush"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush size: %d px"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush: %s, %d px (right-click for settings)"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_shape.cpp src/visual_tool_vector_clip.cpp
+msgid "Accept (ENTER)"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_shape.cpp src/visual_tool_vector_clip.cpp
+msgid "Cancel (ESC)"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Extract by color"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Add contours from similar colors in a selected range"
+msgstr ""
+
+#: src/command/vis_tool.cpp
+msgid "Create mask contours from similar colors in a selected range"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Auto fill"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Tolerance: %.1f"
+msgstr ""
+
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Offset: %d px"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Draw the search range."
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+msgid "Click the color to extract inside the range."
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "%zu contours found. They will be added to the current clip."
+msgstr ""
+
+#: src/command/recent.cpp
+msgid "Open Recent Video"
+msgstr ""
+
+#: src/command/recent.cpp
+msgid "Open the most recently used video"
+msgstr ""
+
+#: src/command/subtitle.cpp
+msgid "Open &MKV..."
+msgstr ""
+
+#: src/command/subtitle.cpp
+msgid "Open MKV"
+msgstr ""
+
+#: src/command/subtitle.cpp
+msgid "Open subtitles, video and audio from a Matroska file"
+msgstr ""
+
+#: src/command/subtitle.cpp
+msgid "Open MKV File"
+msgstr ""
+
+#: src/command/subtitle.cpp
+msgid "Matroska Files"
+msgstr ""

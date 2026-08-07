@@ -266,8 +266,8 @@ void OpenGLText::Print(const std::string &text, int x, int y) {
 }
 
 void OpenGLText::DrawString(const std::string &text, int x, int y) {
-	for (char curChar : text) {
-		OpenGLTextGlyph const& glyph = GetGlyph(curChar);
+	for (wxUniChar curChar : to_wx(text)) {
+		OpenGLTextGlyph const& glyph = GetGlyph(static_cast<int>(curChar.GetValue()));
 		glyph.Draw(x, y);
 		x += glyph.w;
 	}
@@ -276,8 +276,8 @@ void OpenGLText::DrawString(const std::string &text, int x, int y) {
 void OpenGLText::GetExtent(std::string const& text, int &w, int &h) {
 	w = h = 0;
 
-	for (char curChar : text) {
-		OpenGLTextGlyph const& glyph = GetGlyph(curChar);
+	for (wxUniChar curChar : to_wx(text)) {
+		OpenGLTextGlyph const& glyph = GetGlyph(static_cast<int>(curChar.GetValue()));
 		w += glyph.w;
 		h = std::max(h, glyph.h);
 	}

@@ -28,6 +28,8 @@
 
 #include <boost/gil.hpp>
 
+#include <algorithm>
+
 enum {
 	NEW_SUBS_FILE = -1,
 	SUBS_FILE_ALREADY_LOADED = -2
@@ -188,6 +190,61 @@ void AsyncVideoProvider::UpdateSubtitles(const AssDialogue *changed) throw() {
 	});
 }
 
+void AsyncVideoProvider::UpdateSubtitlesPreview(std::vector<AssDialogue const *> const& changed) throw() {
+	if (changed.empty()) return;
+
+	std::vector<std::unique_ptr<AssDialogue>> copies;
+	copies.reserve(changed.size());
+	for (auto line : changed)
+		copies.emplace_back(std::make_unique<AssDialogue>(*line));
+
+	{
+		std::lock_guard<std::mutex> lock(preview_mutex);
+		pending_preview_lines = std::move(copies);
+		++version;
+		if (preview_job_queued) return;
+		preview_job_queued = true;
+	}
+
+	worker->Async([this] {
+		for (;;) {
+			std::vector<std::unique_ptr<AssDialogue>> updates;
+			{
+				std::lock_guard<std::mutex> lock(preview_mutex);
+				if (pending_preview_lines.empty()) {
+					preview_job_queued = false;
+					return;
+				}
+				updates.swap(pending_preview_lines);
+			}
+
+			if (!subs) continue;
+			std::sort(updates.begin(), updates.end(), [](auto const& left, auto const& right) {
+				return left->Row < right->Row;
+			});
+
+			auto current = subs->Events.begin();
+			int current_row = 0;
+			for (auto& update : updates) {
+				int target_row = update->Row;
+				if (target_row < current_row) continue;
+				std::advance(current, target_row - current_row);
+				if (current == subs->Events.end()) break;
+
+				auto old = current++;
+				subs->Events.insert(old, *update.release());
+				delete &*old;
+				current_row = target_row + 1;
+			}
+
+			single_frame = NEW_SUBS_FILE;
+			// Preview rendering must not be invalidated by a newer mouse position;
+			// the next loop iteration will immediately consume that newer state.
+			ProcAsync(version.load(), true, false, false);
+		}
+	});
+}
+
 void AsyncVideoProvider::ResetCurrentFrame(bool forceSub) throw() {
 	uint_fast32_t req_version = ++version;
 
@@ -235,9 +292,9 @@ bool AsyncVideoProvider::NeedUpdate(std::vector<AssDialogueBase const*> const& v
 	return false;
 }
 
-void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated, bool forceSub) {
+void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated, bool forceSub, bool discard_stale) {
 	// Only actually produce the frame if there's no queued changes waiting
-	if (req_version < version || frame_number < 0) return;
+	if ((discard_stale && req_version < version) || frame_number < 0) return;
 
 	std::vector<AssDialogueBase const*> visible_lines;
 	for (auto const& line : subs->Events) {

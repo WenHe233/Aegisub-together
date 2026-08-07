@@ -24,6 +24,8 @@ namespace {
 class AIConnectionDialog final : public wxDialog {
 	wxTextCtrl *key;
 	wxTextCtrl *model;
+	wxTextCtrl *selection_model;
+	wxTextCtrl *image_model;
 	wxTextCtrl *transcription_model;
 	wxTextCtrl *karaoke_timing_model;
 	wxTextCtrl *review_instructions;
@@ -72,6 +74,12 @@ class AIConnectionDialog final : public wxDialog {
 				from_wx(transcription_model->GetValue()),
 				from_wx(review_instructions->GetValue()));
 			client.TestConnection();
+			auto selection_model_name = from_wx(selection_model->GetValue());
+			if (selection_model_name != from_wx(model->GetValue())) {
+				ai::OpenAIClient selection_client(api_key, selection_model_name,
+					from_wx(transcription_model->GetValue()));
+				selection_client.TestConnection();
+			}
 			wxMessageBox(_("The OpenAI connection is working."), _("AI connection"),
 				wxOK | wxICON_INFORMATION, this);
 		}
@@ -119,6 +127,8 @@ class AIConnectionDialog final : public wxDialog {
 		}
 
 		OPT_SET("AI/OpenAI/Model")->SetString(from_wx(model->GetValue()));
+		OPT_SET("AI/OpenAI/Selection Model")->SetString(from_wx(selection_model->GetValue()));
+		OPT_SET("AI/OpenAI/Image Model")->SetString(from_wx(image_model->GetValue()));
 		OPT_SET("AI/OpenAI/Transcription Model")->SetString(from_wx(transcription_model->GetValue()));
 		OPT_SET("AI/OpenAI/Karaoke Timing Model")->SetString(from_wx(karaoke_timing_model->GetValue()));
 		OPT_SET("AI/OpenAI/Advanced Karaoke Timing")->SetBool(advanced_karaoke_timing->IsChecked());
@@ -152,6 +162,16 @@ public:
 		form->Add(new wxStaticText(this, wxID_ANY, _("AI model:")), 0, wxALIGN_CENTER_VERTICAL);
 		model = new wxTextCtrl(this, wxID_ANY, to_wx(OPT_GET("AI/OpenAI/Model")->GetString()));
 		form->Add(model, wxSizerFlags(1).Expand());
+
+		form->Add(new wxStaticText(this, wxID_ANY, _("AI selection model:")), 0, wxALIGN_CENTER_VERTICAL);
+		selection_model = new wxTextCtrl(this, wxID_ANY,
+			to_wx(OPT_GET("AI/OpenAI/Selection Model")->GetString()));
+		form->Add(selection_model, wxSizerFlags(1).Expand());
+
+		form->Add(new wxStaticText(this, wxID_ANY, _("Image model:")), 0, wxALIGN_CENTER_VERTICAL);
+		image_model = new wxTextCtrl(this, wxID_ANY,
+			to_wx(OPT_GET("AI/OpenAI/Image Model")->GetString()));
+		form->Add(image_model, wxSizerFlags(1).Expand());
 
 		form->Add(new wxStaticText(this, wxID_ANY, _("Transcription model:")), 0, wxALIGN_CENTER_VERTICAL);
 		transcription_model = new wxTextCtrl(this, wxID_ANY,

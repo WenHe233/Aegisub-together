@@ -80,6 +80,9 @@
         "video/tool/scale",
         "video/tool/clip",
         "video/tool/vector_clip",
+        "video/tool/mask_edit",
+        "video/tool/mask",
+		"video/tool/shape",
         "",
         "help/video"
     ]

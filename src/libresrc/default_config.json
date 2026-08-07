@@ -97,7 +97,9 @@
 	"AI" : {
 		"OpenAI" : {
 			"Advanced Karaoke Timing" : true,
+			"Image Model" : "gpt-image-2",
 			"Model" : "gpt-5.6-terra",
+			"Selection Model" : "gpt-5.6-sol",
 			"Transcription Model" : "gpt-transcribe",
 			"Karaoke Timing Model" : "whisper-1"
 		},
@@ -626,6 +628,7 @@
 				"Grid": false,
 				"Org Mode": 0
 			},
+			"Vector Clip Brush Add": true,
 			"Shape Handle Size": 3,
 			"Autohide": false
 		}

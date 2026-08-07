@@ -582,6 +582,8 @@ void VideoDisplay::OnRightClickTimer(wxTimerEvent&) {
 }
 
 void VideoDisplay::OnKeyDown(wxKeyEvent &event) {
+	if (tool && tool->OnKeyEvent(event))
+		return;
 	hotkey::check("Video", con, event);
 }
 

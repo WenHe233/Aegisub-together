@@ -28,6 +28,8 @@
 #include <libaegisub/color.h>
 #include <libaegisub/format.h>
 
+#include <wx/event.h>
+
 VisualToolCross::VisualToolCross(VideoDisplay *parent, agi::Context *context)
 : VisualTool<VisualDraggableFeature>(parent, context)
 , gl_text(std::make_unique<OpenGLText>())
@@ -37,6 +39,20 @@ VisualToolCross::VisualToolCross(VideoDisplay *parent, agi::Context *context)
 
 VisualToolCross::~VisualToolCross() {
 	parent->SetCursor(wxNullCursor);
+}
+
+void VisualToolCross::OnMouseEvent(wxMouseEvent &event) {
+	if (event.LeftDown() && !event.LeftDClick()) {
+		measurement_start = event.GetPosition();
+		measuring = true;
+	}
+
+	VisualTool<VisualDraggableFeature>::OnMouseEvent(event);
+
+	if (measuring && !event.LeftIsDown()) {
+		measuring = false;
+		parent->Render();
+	}
 }
 
 void VisualToolCross::OnDoubleClick() {
@@ -76,7 +92,19 @@ void VisualToolCross::Draw() {
 	gl.DrawLines(2, lines, 4);
 	gl.ClearInvert();
 
-	std::string mouse_text = Text(ToScriptCoords(shift_down ? 2 * video_pos + video_size - mouse_pos : mouse_pos));
+	std::string mouse_text;
+	if (measuring) {
+		Vector2D distance = ToScriptCoords(mouse_pos) - ToScriptCoords(measurement_start);
+		mouse_text = agi::format("%.2f px", distance.Len());
+
+		gl.SetLineColour(*wxYELLOW, .9f, 2);
+		gl.DrawCircle(measurement_start, 3.f);
+		if ((mouse_pos - measurement_start).Len() > .1f)
+			gl.DrawDashedLine(measurement_start, mouse_pos, 6.f);
+	}
+	else {
+		mouse_text = Text(ToScriptCoords(shift_down ? 2 * video_pos + video_size - mouse_pos : mouse_pos));
+	}
 
 	int tw, th;
 	gl_text->SetFont("Verdana", 12, true, false);

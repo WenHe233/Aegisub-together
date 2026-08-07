@@ -22,6 +22,7 @@
 #include "gl_wrap.h"
 
 #include <wx/colour.h>
+#include <wx/image.h>
 
 #ifdef HAVE_OPENGL_GL_H
 #include <OpenGL/gl.h>
@@ -37,6 +38,50 @@
 
 static const float deg2rad = 3.1415926536f / 180.f;
 static const float pi = 3.1415926535897932384626433832795f;
+
+void OpenGLWrapper::DrawImage(wxImage const& image, Vector2D top_left, Vector2D bottom_right) const {
+	if (!image.IsOk() || image.GetWidth() <= 0 || image.GetHeight() <= 0) return;
+	auto rgb = image.GetData();
+	auto alpha = image.HasAlpha() ? image.GetAlpha() : nullptr;
+	bool refresh = !image_texture || image_data_key != rgb || image_alpha_key != alpha ||
+		image_texture_width != image.GetWidth() || image_texture_height != image.GetHeight();
+	if (refresh) {
+		size_t pixels = static_cast<size_t>(image.GetWidth()) * image.GetHeight();
+		std::vector<unsigned char> rgba(pixels * 4);
+		for (size_t i = 0; i < pixels; ++i) {
+			rgba[i * 4] = rgb[i * 3];
+			rgba[i * 4 + 1] = rgb[i * 3 + 1];
+			rgba[i * 4 + 2] = rgb[i * 3 + 2];
+			rgba[i * 4 + 3] = alpha ? alpha[i] : 255;
+		}
+		if (!image_texture) glGenTextures(1, &image_texture);
+		glBindTexture(GL_TEXTURE_2D, image_texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.GetWidth(), image.GetHeight(), 0,
+			GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
+		image_data_key = rgb;
+		image_alpha_key = alpha;
+		image_texture_width = image.GetWidth();
+		image_texture_height = image.GetHeight();
+	}
+	glBindTexture(GL_TEXTURE_2D, image_texture);
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.f, 0.f); glVertex2f(top_left.X(), top_left.Y());
+	glTexCoord2f(1.f, 0.f); glVertex2f(bottom_right.X(), top_left.Y());
+	glTexCoord2f(1.f, 1.f); glVertex2f(bottom_right.X(), bottom_right.Y());
+	glTexCoord2f(0.f, 1.f); glVertex2f(top_left.X(), bottom_right.Y());
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+}
 
 #ifdef __WIN32__
 #define glGetProc(a) wglGetProcAddress(a)
@@ -323,10 +368,20 @@ void OpenGLWrapper::DrawLines(size_t dim, const float *lines, size_t n) {
 }
 
 void OpenGLWrapper::DrawLineStrip(size_t dim, std::vector<float> const& lines) {
+	if (lines.empty()) return;
+	DrawLineStrip(dim, lines.data(), lines.size() / dim);
+}
+
+OpenGLWrapper::~OpenGLWrapper() {
+	if (image_texture) glDeleteTextures(1, &image_texture);
+}
+
+void OpenGLWrapper::DrawLineStrip(size_t dim, const float *lines, size_t n) {
+	if (!lines || !n) return;
 	SetModeLine();
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(dim, GL_FLOAT, 0, &lines[0]);
-	glDrawArrays(GL_LINE_STRIP, 0, lines.size() / dim);
+	glVertexPointer(dim, GL_FLOAT, 0, lines);
+	glDrawArrays(GL_LINE_STRIP, 0, n);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 

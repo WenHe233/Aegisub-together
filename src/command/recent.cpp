@@ -46,6 +46,24 @@ COMMAND_GROUP(recent_subtitle,  "recent/subtitle",  "Recent", "Recent", "Open re
 COMMAND_GROUP(recent_timecodes, "recent/timecodes", "Recent", "Recent", "Open recent timecodes");
 COMMAND_GROUP(recent_video,     "recent/video",     "Recent", "Recent", "Open recent video");
 
+struct open_video_recent final : public Command {
+	CMD_NAME("open/video/recent")
+	CMD_ICON(open_video_menu)
+	STR_MENU("Open Recent Video")
+	STR_DISP("Open Recent Video")
+	STR_HELP("Open the most recently used video")
+	CMD_TYPE(COMMAND_VALIDATE)
+
+	bool Validate(const agi::Context *) override {
+		return !config::mru->Get("Video")->empty();
+	}
+
+	void operator()(agi::Context *c) override {
+		if (Validate(c))
+			c->project->LoadVideo(config::mru->GetEntry("Video", 0));
+	}
+};
+
 struct recent_audio_entry : public Command {
 	CMD_NAME("recent/audio/")
 	STR_MENU("Recent")
@@ -126,6 +144,7 @@ namespace cmd {
 		reg(std::make_unique<recent_subtitle>());
 		reg(std::make_unique<recent_timecodes>());
 		reg(std::make_unique<recent_video>());
+		reg(std::make_unique<open_video_recent>());
 
 		for (int i = 0; i < 16; ++i) {
 			reg(std::make_unique<mru_wrapper<recent_audio_entry>>(i));

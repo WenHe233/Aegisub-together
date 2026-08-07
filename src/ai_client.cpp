@@ -47,6 +47,17 @@ int progress_callback(void *data, curl_off_t, curl_off_t, curl_off_t, curl_off_t
 	return cancelled && cancelled->load() ? 1 : 0;
 }
 
+int function_progress_callback(void *data, curl_off_t, curl_off_t, curl_off_t, curl_off_t) noexcept {
+	auto callback = static_cast<std::function<bool()> *>(data);
+	if (!callback || !*callback) return 0;
+	try {
+		return (*callback)() ? 1 : 0;
+	}
+	catch (...) {
+		return 1;
+	}
+}
+
 class CurlHandle final {
 	CURL *handle = curl_easy_init();
 
@@ -870,6 +881,272 @@ std::string OpenAIClient::Transcribe(agi::fs::path const& audio_file) const {
 	catch (std::exception const& error) {
 		throw Error(agi::format("A beszédfelismerési válasz nem értelmezhető: %s", error.what()));
 	}
+}
+
+std::string EditImage(std::string const& api_key, std::string const& image_model,
+	std::vector<unsigned char> const& image_png,
+	std::vector<unsigned char> const& mask_png, std::string const& size,
+	std::string const& prompt, std::function<bool()> const& is_cancelled) {
+	if (api_key.empty()) throw Error("Nincs beállítva OpenAI API-kulcs.");
+	if (image_model.empty()) throw Error("Nincs beállítva képgenerálási modell.");
+	if (image_png.empty() || mask_png.empty()) throw Error("A jelenet vagy a maszk képe üres.");
+
+	CurlHandle curl;
+	std::string response;
+	std::function<bool()> cancel_check = is_cancelled;
+	configure_common(curl, api_key, &response, nullptr);
+	curl_easy_setopt(curl, CURLOPT_URL, (std::string(api_base) + "/images/edits").c_str());
+
+	curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, function_progress_callback);
+	curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &cancel_check);
+
+	curl_mime *mime = curl_mime_init(curl);
+	if (!mime) throw Error("A képfeltöltés előkészítése sikertelen.");
+	auto cleanup = [&] { curl_mime_free(mime); };
+	auto add_text = [&](char const *name, std::string const& value) {
+		auto part = curl_mime_addpart(mime);
+		curl_mime_name(part, name);
+		curl_mime_data(part, value.data(), value.size());
+	};
+	auto add_png = [&](char const *name, char const *filename,
+		std::vector<unsigned char> const& data) {
+		auto part = curl_mime_addpart(mime);
+		curl_mime_name(part, name);
+		curl_mime_filename(part, filename);
+		curl_mime_type(part, "image/png");
+		curl_mime_data(part, reinterpret_cast<char const *>(data.data()), data.size());
+	};
+
+	add_text("model", image_model);
+	add_text("prompt", prompt);
+	add_text("size", size);
+	add_text("quality", "high");
+	add_text("output_format", "png");
+	add_png("image[]", "scene.png", image_png);
+	add_png("mask", "mask.png", mask_png);
+	curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+
+	try {
+		auto headers = authenticated_headers(api_key, false);
+		response = perform(curl, headers, nullptr);
+		cleanup();
+	}
+	catch (...) {
+		cleanup();
+		if (cancel_check && cancel_check())
+			throw Error("A kérés megszakítva.");
+		throw;
+	}
+
+	try {
+		auto parsed = parse_json(response);
+		auto const& root = static_cast<json::Object const&>(parsed);
+		auto data_it = root.find("data");
+		if (data_it == root.end()) throw Error("A képgenerálási válaszból hiányzik az eredmény.");
+		auto const& data = static_cast<json::Array const&>(data_it->second);
+		if (data.empty()) throw Error("A képgenerálás üres eredményt adott.");
+		auto const& first = static_cast<json::Object const&>(*data.begin());
+		auto encoded = string_field(first, "b64_json");
+		if (encoded.empty()) throw Error("A képgenerálás nem adott vissza PNG-képet.");
+		return encoded;
+	}
+	catch (Error const&) { throw; }
+	catch (std::exception const& error) {
+		throw Error(agi::format("A képgenerálási válasz nem értelmezhető: %s", error.what()));
+	}
+}
+
+namespace {
+
+bool contour_points_equal(ImageContourPoint const& a, ImageContourPoint const& b) {
+	return std::abs(a.x - b.x) <= 1e-6 && std::abs(a.y - b.y) <= 1e-6;
+}
+
+} // namespace
+
+std::vector<ImageContour> SelectImageContours(std::string const& api_key,
+	std::string const& vision_model, std::string const& png_data_url,
+	std::string const& subject_prompt, std::function<bool()> const& is_cancelled) {
+	if (api_key.empty()) throw Error("No OpenAI API key is configured.");
+	if (vision_model.empty()) throw Error("No AI vision model is configured.");
+	if (png_data_url.empty()) throw Error("The selected image range is empty.");
+
+	json::Object x_coordinate_schema;
+	x_coordinate_schema["type"] = "number";
+	x_coordinate_schema["minimum"] = 0;
+	x_coordinate_schema["maximum"] = 1000;
+	json::Object y_coordinate_schema;
+	y_coordinate_schema["type"] = "number";
+	y_coordinate_schema["minimum"] = 0;
+	y_coordinate_schema["maximum"] = 1000;
+	json::Object point_properties;
+	point_properties["x"] = std::move(x_coordinate_schema);
+	point_properties["y"] = std::move(y_coordinate_schema);
+	json::Array point_required;
+	point_required.emplace_back("x");
+	point_required.emplace_back("y");
+	json::Object point_schema;
+	point_schema["type"] = "object";
+	point_schema["properties"] = std::move(point_properties);
+	point_schema["required"] = std::move(point_required);
+	point_schema["additionalProperties"] = false;
+
+	json::Object points_schema;
+	points_schema["type"] = "array";
+	points_schema["items"] = std::move(point_schema);
+	points_schema["minItems"] = 3;
+	points_schema["maxItems"] = 96;
+	json::Object operation_schema;
+	operation_schema["type"] = "string";
+	json::Array operation_values;
+	operation_values.emplace_back("add");
+	operation_values.emplace_back("subtract");
+	operation_schema["enum"] = std::move(operation_values);
+	json::Object contour_properties;
+	contour_properties["label"] = type_schema("string");
+	contour_properties["operation"] = std::move(operation_schema);
+	contour_properties["points"] = std::move(points_schema);
+	json::Array contour_required;
+	contour_required.emplace_back("label");
+	contour_required.emplace_back("operation");
+	contour_required.emplace_back("points");
+	json::Object contour_schema;
+	contour_schema["type"] = "object";
+	contour_schema["properties"] = std::move(contour_properties);
+	contour_schema["required"] = std::move(contour_required);
+	contour_schema["additionalProperties"] = false;
+
+	json::Object contours_schema;
+	contours_schema["type"] = "array";
+	contours_schema["items"] = std::move(contour_schema);
+	contours_schema["minItems"] = 1;
+	contours_schema["maxItems"] = 12;
+	json::Object root_properties;
+	root_properties["regions"] = std::move(contours_schema);
+	json::Array root_required;
+	root_required.emplace_back("regions");
+	json::Object root_schema;
+	root_schema["type"] = "object";
+	root_schema["properties"] = std::move(root_properties);
+	root_schema["required"] = std::move(root_required);
+	root_schema["additionalProperties"] = false;
+
+	json::Object text_part;
+	text_part["type"] = "input_text";
+	text_part["text"] = "Requested target inside the selection range: " + subject_prompt;
+	json::Object image_part;
+	image_part["type"] = "input_image";
+	image_part["image_url"] = png_data_url;
+	// GPT-5.4 and newer preserve the supplied pixels in original detail mode.
+	// Older/custom vision models retain the broadly supported high setting.
+	auto original_detail = vision_model.rfind("gpt-5.4", 0) == 0 ||
+		vision_model.rfind("gpt-5.5", 0) == 0 ||
+		vision_model.rfind("gpt-5.6", 0) == 0 ||
+		vision_model.rfind("gpt-6", 0) == 0;
+	image_part["detail"] = original_detail ? "original" : "high";
+	json::Array content;
+	content.emplace_back(std::move(text_part));
+	content.emplace_back(std::move(image_part));
+	json::Object message;
+	message["role"] = "user";
+	message["content"] = std::move(content);
+	json::Array input;
+	input.emplace_back(std::move(message));
+
+	json::Object format;
+	format["type"] = "json_schema";
+	format["name"] = "visible_subject_regions";
+	format["strict"] = true;
+	format["schema"] = std::move(root_schema);
+	json::Object text;
+	text["format"] = std::move(format);
+	text["verbosity"] = "low";
+	json::Object reasoning;
+	reasoning["effort"] = "medium";
+	json::Object request;
+	request["model"] = vision_model;
+	std::string instructions =
+		"Perform a single-pass, Photoshop-style object selection using only the supplied crop. "
+		"First identify the one visually dominant coherent foreground subject requested by the user. "
+		"For an automatic request, prefer a complete visible person or character; otherwise choose the "
+		"largest salient animal or object near the crop centre. Do not select the background, captions, "
+		"screens, pages, shadows, or another overlapping person. For a custom request, interpret the "
+		"description in any language. Then trace the target's actual visible outer silhouette at the "
+		"foreground/background boundary. Include all connected hair, skin, clothing, limbs, fingers, "
+		"feet, worn accessories, and held items which visually belong to that target. Continue a target "
+		"cut by the crop exactly to the crop edge. Return one add region per genuinely disconnected "
+		"visible island. Walk each boundary exactly once in a consistent direction: consecutive points "
+		"must be neighbouring positions along the same outline. Never jump across the subject, double "
+		"back, cross the outline, draw a bounding box, or trace interior facial features, hair lines, "
+		"folds, highlights, shadows, seams, or printed details. Represent open background gaps as "
+		"concavities in the add outline. Return a subtract region only for a large, fully enclosed, real "
+		"background hole, and never subtract target pixels. Use ordered normalized edge coordinates with "
+		"top-left (0,0) and bottom-right (1000,1000). Preserve real tips and corners, but use only enough "
+		"points to follow the visible silhouette cleanly. Return regions only, with no explanation.";
+	request["instructions"] = std::move(instructions);
+	request["input"] = std::move(input);
+	request["text"] = std::move(text);
+	request["reasoning"] = std::move(reasoning);
+	request["store"] = false;
+	request["max_output_tokens"] = 10000;
+
+	CurlHandle curl;
+	std::string response;
+	std::function<bool()> cancel_check = is_cancelled;
+	configure_common(curl, api_key, &response, nullptr);
+	curl_easy_setopt(curl, CURLOPT_URL, (std::string(api_base) + "/responses").c_str());
+	curl_easy_setopt(curl, CURLOPT_POST, 1L);
+	auto body = write_json(request);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.data());
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(body.size()));
+	curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, function_progress_callback);
+	curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &cancel_check);
+	std::string response_text;
+	try {
+		auto headers = authenticated_headers(api_key, true);
+		response_text = perform(curl, headers, nullptr);
+	}
+	catch (...) {
+		if (cancel_check && cancel_check()) throw Error("The AI selection was cancelled.");
+		throw;
+	}
+
+	auto response_root_value = parse_json(response_text);
+	auto const& response_root = static_cast<json::Object const&>(response_root_value);
+	auto result_value = parse_json(extract_output_text(response_root));
+	auto const& result = static_cast<json::Object const&>(result_value);
+	auto contours_it = result.find("regions");
+	if (contours_it == result.end()) throw Error("The AI response contains no selection regions.");
+	auto number = [](json::UnknownElement const& value) {
+		try { return static_cast<double>(static_cast<json::Double const&>(value)); }
+		catch (json::Exception const&) {
+			return static_cast<double>(static_cast<json::Integer const&>(value));
+		}
+	};
+	std::vector<ImageContour> contours;
+	for (auto const& contour_value : static_cast<json::Array const&>(contours_it->second)) {
+		auto const& contour_object = static_cast<json::Object const&>(contour_value);
+		auto points_it = contour_object.find("points");
+		if (points_it == contour_object.end()) continue;
+		ImageContour contour;
+		contour.label = string_field(contour_object, "label");
+		contour.operation = string_field(contour_object, "operation") == "subtract" ?
+			ImageContourOperation::Subtract : ImageContourOperation::Add;
+		for (auto const& point_value : static_cast<json::Array const&>(points_it->second)) {
+			auto const& point = static_cast<json::Object const&>(point_value);
+			contour.points.push_back({std::clamp(number(point.at("x")), 0.0, 1000.0),
+				std::clamp(number(point.at("y")), 0.0, 1000.0)});
+		}
+		auto unique_end = std::unique(contour.points.begin(), contour.points.end(),
+			contour_points_equal);
+		contour.points.erase(unique_end, contour.points.end());
+		if (contour.points.size() > 1 &&
+			contour_points_equal(contour.points.front(), contour.points.back()))
+			contour.points.pop_back();
+		if (contour.points.size() >= 3) contours.push_back(std::move(contour));
+	}
+	if (contours.empty()) throw Error("The AI could not find the requested visible subject.");
+	return contours;
 }
 
 TimedTranscript OpenAIClient::TranscribeTimed(agi::fs::path const& audio_file) const {

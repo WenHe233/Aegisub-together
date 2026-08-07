@@ -31,6 +31,8 @@ class OpenGLText;
 ///        shifts the selected lines to the clicked point
 class VisualToolCross final : public VisualTool<VisualDraggableFeature> {
 	std::unique_ptr<OpenGLText> gl_text;
+	Vector2D measurement_start;
+	bool measuring = false;
 
 	void OnDoubleClick() override;
 	void Draw() override;
@@ -38,4 +40,5 @@ class VisualToolCross final : public VisualTool<VisualDraggableFeature> {
 public:
 	VisualToolCross(VideoDisplay *parent, agi::Context *context);
 	~VisualToolCross();
+	void OnMouseEvent(wxMouseEvent &event) override;
 };

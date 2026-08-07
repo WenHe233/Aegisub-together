@@ -33,6 +33,7 @@
 
 #include "../ass_dialogue.h"
 #include "../ass_file.h"
+#include "../async_video_provider.h"
 #include "../compat.h"
 #include "../dialog_search_replace.h"
 #include "../dialogs.h"
@@ -304,6 +305,32 @@ struct subtitle_open final : public Command {
 	}
 };
 
+struct subtitle_open_mkv final : public Command {
+	CMD_NAME("subtitle/open/mkv")
+	CMD_ICON(open_video_menu)
+	STR_MENU("Open &MKV...")
+	STR_DISP("Open MKV")
+	STR_HELP("Open subtitles, video and audio from a Matroska file")
+
+	void operator()(agi::Context *c) override {
+		if (!is_okay_to_close_subtitles(c)) return;
+
+		auto filename = OpenFileSelector(_("Open MKV File"), "Path/Last/Video",
+			"", "mkv", from_wx(_("Matroska Files") + " (*.mkv)|*.mkv"), c->parent);
+		if (filename.empty()) return;
+
+		// Keep each loader's native track chooser: single tracks open directly,
+		// while multiple subtitle, video or audio tracks remain selectable.
+		c->project->LoadSubtitles(filename, "binary", false);
+		c->project->LoadVideo(filename);
+		if (c->project->VideoName() == filename
+		&& c->project->VideoProvider()
+		&& c->project->VideoProvider()->HasAudio()
+		&& c->project->AudioName() != filename)
+			c->project->LoadAudio(filename);
+	}
+};
+
 struct subtitle_open_autosave final : public Command {
 	CMD_NAME("subtitle/open/autosave")
 	STR_MENU("Open A&utosaved Subtitles...")
@@ -499,6 +526,7 @@ namespace cmd {
 		reg(std::make_unique<subtitle_new>());
 		reg(std::make_unique<subtitle_close>());
 		reg(std::make_unique<subtitle_open>());
+		reg(std::make_unique<subtitle_open_mkv>());
 		reg(std::make_unique<subtitle_open_autosave>());
 		reg(std::make_unique<subtitle_open_charset>());
 		reg(std::make_unique<subtitle_open_video>());

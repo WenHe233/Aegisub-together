@@ -23,6 +23,8 @@
 #include "../visual_tool_clip.h"
 #include "../visual_tool_cross.h"
 #include "../visual_tool_drag.h"
+#include "../visual_tool_mask.h"
+#include "../visual_tool_shape.h"
 #include "../visual_tool_perspective.h"
 #include "../visual_tool_rotatexy.h"
 #include "../visual_tool_rotatez.h"
@@ -58,11 +60,34 @@ namespace {
 		}
 
 		bool IsActive(const agi::Context *c) override {
-			return c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip)) && c->videoDisplay->GetSubTool() == M;
+			return (c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip)) ||
+				c->videoDisplay->ToolIsType(typeid(VisualToolMaskEdit))) &&
+				c->videoDisplay->GetSubTool() == M;
 		}
 
 		void operator()(agi::Context *c) override {
-			c->videoDisplay->SetTool(std::make_unique<VisualToolVectorClip>(c->videoDisplay, c));
+			if (!c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip)) &&
+				!c->videoDisplay->ToolIsType(typeid(VisualToolMaskEdit)))
+				c->videoDisplay->SetTool(std::make_unique<VisualToolVectorClip>(c->videoDisplay, c));
+			c->videoDisplay->SetSubTool(M);
+		}
+	};
+
+	template<VisualToolMaskMode M>
+	struct visual_tool_mask_command : public Command {
+		CMD_TYPE(COMMAND_VALIDATE | COMMAND_RADIO)
+
+		bool Validate(const agi::Context *c) override {
+			return !!c->project->VideoProvider();
+		}
+
+		bool IsActive(const agi::Context *c) override {
+			return c->videoDisplay->ToolIsType(typeid(VisualToolMask)) && c->videoDisplay->GetSubTool() == M;
+		}
+
+		void operator()(agi::Context *c) override {
+			if (!c->videoDisplay->ToolIsType(typeid(VisualToolMask)))
+				c->videoDisplay->SetTool(std::make_unique<VisualToolMask>(c->videoDisplay, c));
 			c->videoDisplay->SetSubTool(M);
 		}
 	};
@@ -156,6 +181,30 @@ namespace {
 		STR_MENU("Vector Clip")
 		STR_DISP("Vector Clip")
 		STR_HELP("Clip subtitles to a vectorial area")
+	};
+
+	struct visual_mode_mask_edit final : public visual_tool_command<VisualToolMaskEdit> {
+		CMD_NAME("video/tool/mask_edit")
+		CMD_ICON(visual_mask_edit)
+		STR_MENU("Mask Editing")
+		STR_DISP("Mask Editing")
+		STR_HELP("Edit the active line's ASS drawing")
+	};
+
+	struct visual_mode_mask final : public visual_tool_command<VisualToolMask> {
+		CMD_NAME("video/tool/mask")
+		CMD_ICON(visual_mask_create)
+		STR_MENU("Masking")
+		STR_DISP("Masking")
+		STR_HELP("Create masks from areas drawn on the video")
+	};
+
+	struct visual_mode_shape final : public visual_tool_command<VisualToolShape> {
+		CMD_NAME("video/tool/shape")
+		CMD_ICON(visual_shape)
+		STR_MENU("Add Shape")
+		STR_DISP("Add Shape")
+		STR_HELP("Draw a shape and add it as an ASS drawing")
 	};
 
 	// Perspective settings
@@ -289,6 +338,42 @@ namespace {
 		STR_DISP("Bicubic")
 		STR_HELP("Append a bezier bicubic curve")
 	};
+	template<VisualToolVectorClipUpdate Action>
+	struct visual_mode_vclip_brush_action : public Command {
+		CMD_TYPE(COMMAND_VALIDATE)
+
+		bool Validate(const agi::Context *c) override {
+			return !!c->project->VideoProvider();
+		}
+
+		void operator()(agi::Context *c) override {
+			if (!c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip)) &&
+				!c->videoDisplay->ToolIsType(typeid(VisualToolMaskEdit)))
+				c->videoDisplay->SetTool(std::make_unique<VisualToolVectorClip>(c->videoDisplay, c));
+			c->videoDisplay->SetSubTool(VCLIP_BRUSH);
+			c->videoDisplay->UpdateTool(Action);
+		}
+	};
+
+	struct visual_mode_vclip_brush_add final : public visual_mode_vclip_brush_action<VCLIP_BRUSH_ACTION_ADD> {
+		CMD_NAME("video/tool/vclip/brush_add")
+		wxBitmapBundle Icon(int height, wxLayoutDirection = wxLayout_LeftToRight) const override {
+			return wxBitmapBundle::FromBitmap(MakeVisualVectorClipBrushBitmap(true, height, false));
+		}
+		STR_MENU("Brush add")
+		STR_DISP("Brush add")
+		STR_HELP("Add to the current vector clip with a brush")
+	};
+
+	struct visual_mode_vclip_brush_delete final : public visual_mode_vclip_brush_action<VCLIP_BRUSH_ACTION_DELETE> {
+		CMD_NAME("video/tool/vclip/brush_delete")
+		wxBitmapBundle Icon(int height, wxLayoutDirection = wxLayout_LeftToRight) const override {
+			return wxBitmapBundle::FromBitmap(MakeVisualVectorClipBrushBitmap(false, height, false));
+		}
+		STR_MENU("Brush delete")
+		STR_DISP("Brush delete")
+		STR_HELP("Delete from the current vector clip with a brush")
+	};
 	struct visual_mode_vclip_convert final : public visual_tool_vclip_command<VCLIP_CONVERT> {
 		CMD_NAME("video/tool/vclip/convert")
 		CMD_ICON(visual_vector_clip_convert)
@@ -330,6 +415,60 @@ namespace {
 		STR_MENU("Freehand smooth")
 		STR_DISP("Freehand smooth")
 		STR_HELP("Draw a smoothed freehand shape")
+	};
+
+	struct visual_mode_vclip_color final : public visual_tool_vclip_command<VCLIP_COLOR> {
+		CMD_NAME("video/tool/vclip/color")
+		wxBitmapBundle Icon(int height, wxLayoutDirection = wxLayout_LeftToRight) const override {
+			return GETBUNDLE(eyedropper_tool, height);
+		}
+		STR_MENU("Extract by color")
+		STR_DISP("Extract by color")
+		STR_HELP("Add contours from similar colors in a selected range")
+	};
+
+	struct visual_mode_mask_rectangle final : public visual_tool_mask_command<MASK_RECTANGLE> {
+		CMD_NAME("video/tool/mask/rectangle")
+		CMD_ICON(visual_clip)
+		STR_MENU("Rectangle")
+		STR_DISP("Rectangle")
+		STR_HELP("Draw a rectangular mask")
+	};
+
+	struct visual_mode_mask_points final : public visual_tool_mask_command<MASK_POINTS> {
+		CMD_NAME("video/tool/mask/points")
+		CMD_ICON(visual_vector_clip_line)
+		STR_MENU("Points")
+		STR_DISP("Points")
+		STR_HELP("Add mask points")
+	};
+
+	struct visual_mode_mask_brush final : public visual_tool_mask_command<MASK_BRUSH> {
+		CMD_NAME("video/tool/mask/brush")
+		wxBitmapBundle Icon(int height, wxLayoutDirection = wxLayout_LeftToRight) const override {
+			return wxBitmapBundle::FromBitmap(MakeVisualVectorClipBrushBitmap(true, height, false));
+		}
+		STR_MENU("Brush")
+		STR_DISP("Brush")
+		STR_HELP("Paint a mask with a brush")
+	};
+
+	struct visual_mode_mask_freehand final : public visual_tool_mask_command<MASK_FREEHAND> {
+		CMD_NAME("video/tool/mask/freehand")
+		CMD_ICON(visual_vector_clip_freehand)
+		STR_MENU("Freehand")
+		STR_DISP("Freehand")
+		STR_HELP("Draw a freehand mask")
+	};
+
+	struct visual_mode_mask_color final : public visual_tool_mask_command<MASK_COLOR> {
+		CMD_NAME("video/tool/mask/color")
+		wxBitmapBundle Icon(int height, wxLayoutDirection = wxLayout_LeftToRight) const override {
+			return GETBUNDLE(eyedropper_tool, height);
+		}
+		STR_MENU("Extract by color")
+		STR_DISP("Extract by color")
+		STR_HELP("Create mask contours from similar colors in a selected range")
 	};
 
 	struct visual_mode_drag_change final : public Command {
@@ -398,16 +537,27 @@ namespace cmd {
 		reg(std::make_unique<visual_mode_scale>());
 		reg(std::make_unique<visual_mode_clip>());
 		reg(std::make_unique<visual_mode_vector_clip>());
+		reg(std::make_unique<visual_mode_mask_edit>());
+		reg(std::make_unique<visual_mode_mask>());
+		reg(std::make_unique<visual_mode_shape>());
 
 		reg(std::make_unique<visual_mode_vclip_drag>());
 		reg(std::make_unique<visual_mode_vclip_line>());
 		reg(std::make_unique<visual_mode_vclip_bicubic>());
+		reg(std::make_unique<visual_mode_vclip_brush_add>());
+		reg(std::make_unique<visual_mode_vclip_brush_delete>());
 		reg(std::make_unique<visual_mode_vclip_convert>());
 		reg(std::make_unique<visual_mode_vclip_insert>());
 		reg(std::make_unique<visual_mode_vclip_append>());
 		reg(std::make_unique<visual_mode_vclip_remove>());
 		reg(std::make_unique<visual_mode_vclip_freehand>());
 		reg(std::make_unique<visual_mode_vclip_freehand_smooth>());
+		reg(std::make_unique<visual_mode_vclip_color>());
+		reg(std::make_unique<visual_mode_mask_rectangle>());
+		reg(std::make_unique<visual_mode_mask_points>());
+		reg(std::make_unique<visual_mode_mask_brush>());
+		reg(std::make_unique<visual_mode_mask_freehand>());
+		reg(std::make_unique<visual_mode_mask_color>());
 
 		reg(std::make_unique<visual_mode_perspective_plane>());
 		reg(std::make_unique<visual_mode_perspective_lock_inner>());

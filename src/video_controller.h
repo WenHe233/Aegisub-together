@@ -32,6 +32,7 @@
 
 #include <chrono>
 #include <set>
+#include <vector>
 
 #include <wx/timer.h>
 
@@ -123,6 +124,10 @@ public:
 
 	/// Get the current frame number
 	int GetFrameN() const { return frame_n; }
+
+	/// Preview visible lines changed by a visual-tool drag without creating a
+	/// full subtitle-file commit.
+	void PreviewSubtitles(std::vector<AssDialogue const *> const& changed);
 
 	/// Get the actual aspect ratio from a predefined AR type
 	double GetARFromType(AspectRatio type) const;

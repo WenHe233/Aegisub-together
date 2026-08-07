@@ -16,6 +16,7 @@
     "main/file" : [
         { "command" : "subtitle/new", "text" : "New" },
         { "command" : "subtitle/open", "text" : "Open..." },
+        { "command" : "subtitle/open/mkv" },
         { "command" : "subtitle/open/charset" },
         { "command" : "subtitle/open/video" },
         { "command" : "subtitle/open/autosave" },
