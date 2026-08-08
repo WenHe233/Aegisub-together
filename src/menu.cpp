@@ -40,6 +40,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/range/algorithm_ext/push_back.hpp>
 #include <boost/locale/collator.hpp>
+#include <functional>
 #include <vector>
 #include <wx/frame.h>
 #include <wx/menu.h>
@@ -284,7 +285,43 @@ struct CommandMenu final : public wxMenu {
 /// Wrapper for wxMenuBar to add a command manager
 struct CommandMenuBar final : public wxMenuBar {
 	CommandManager cm;
+	wxMenu *muteki_menu = nullptr;
+	wxString muteki_label;
+	size_t muteki_position = 0;
+	bool muteki_attached = false;
+
 	CommandMenuBar(int id_base, agi::Context *c) : cm(id_base, c) { }
+
+	~CommandMenuBar() override {
+		if (muteki_menu && !muteki_attached)
+			delete muteki_menu;
+	}
+
+	void SetMutekiMenu(wxMenu *menu, wxString const& label, size_t position, bool visible) {
+		muteki_menu = menu;
+		muteki_label = label;
+		muteki_position = position;
+		SetMutekiVisible(visible);
+	}
+
+	void SetMutekiVisible(bool visible) {
+		if (!muteki_menu || visible == muteki_attached)
+			return;
+
+		if (visible) {
+			Insert(std::min(muteki_position, static_cast<size_t>(GetMenuCount())), muteki_menu, muteki_label);
+			muteki_attached = true;
+			return;
+		}
+
+		for (size_t i = 0; i < GetMenuCount(); ++i) {
+			if (GetMenu(i) == muteki_menu) {
+				Remove(i);
+				muteki_attached = false;
+				break;
+			}
+		}
+	}
 };
 
 /// Read a string from a json object
@@ -409,6 +446,7 @@ class AutomationMenu final : public wxMenu {
 	agi::signal::Connection global_slot;
 	agi::signal::Connection local_slot;
 	std::vector<wxMenuItem *> all_items;
+	std::function<void(bool)> availability_changed;
 
 	bool mutekiOnly = false;
 
@@ -485,6 +523,7 @@ class AutomationMenu final : public wxMenu {
 	void Regenerate() {
 		for (auto item : all_items)
 			cm->Remove(item);
+		all_items.clear();
 
 		wxMenuItemList &items = GetMenuItems();
 
@@ -497,7 +536,13 @@ class AutomationMenu final : public wxMenu {
 		auto macros = config::global_scripts->GetMacros();
 		boost::push_back(macros, c->local_scripts->GetMacros());
 		if (macros.empty()) {
-			Append(-1, mutekiOnly ? _("No Muteki macros loaded") : _("No Automation macros loaded"))->Enable(false);
+			if (mutekiOnly) {
+				if (availability_changed)
+					availability_changed(false);
+			}
+			else {
+				Append(-1, _("No Automation macros loaded"))->Enable(false);
+			}
 			return;
 		}
 
@@ -526,7 +571,15 @@ class AutomationMenu final : public wxMenu {
 			}
 		}
 		top.Sort();
+		if (mutekiOnly && top.subitems.empty()) {
+			if (availability_changed)
+				availability_changed(false);
+			return;
+		}
+
 		top.GenerateMenu(this, this);
+		if (mutekiOnly && availability_changed)
+			availability_changed(true);
 	}
 public:
 	AutomationMenu(agi::Context *c, CommandManager *cm, bool mutekiOnly = false)
@@ -543,6 +596,14 @@ public:
 		}
 
 		Regenerate();
+	}
+
+	bool HasMacros() const {
+		return !GetMenuItems().empty();
+	}
+
+	void SetAvailabilityCallback(std::function<void(bool)> callback) {
+		availability_changed = std::move(callback);
 	}
 };
 }
@@ -576,8 +637,13 @@ namespace menu {
 				read_entry(item, "special", &submenu);
 				if (submenu == "automation")
 					menu->Append(new AutomationMenu(c, &menu->cm), wxGetTranslation(to_wx(disp)));
-				else if (submenu == "muteki")
-					menu->Append(new AutomationMenu(c, &menu->cm, true), wxGetTranslation(to_wx(disp)));
+				else if (submenu == "muteki") {
+					auto muteki_menu = new AutomationMenu(c, &menu->cm, true);
+					menu->SetMutekiMenu(muteki_menu, wxGetTranslation(to_wx(disp)), menu->GetMenuCount(), muteki_menu->HasMacros());
+					muteki_menu->SetAvailabilityCallback([menu_bar = menu.get()](bool visible) {
+						menu_bar->SetMutekiVisible(visible);
+					});
+				}
 			}
 		}
 

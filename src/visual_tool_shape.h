@@ -56,6 +56,7 @@ class VisualToolShape final : public VisualTool<VisualDraggableFeature> {
 	};
 
 	wxToolBar *toolBar = nullptr;
+	int toolbar_icon_size = 16;
 	std::unique_ptr<OpenGLText> gl_text;
 	VisualShapeKind shape = VisualShapeKind::Rectangle;
 	VisualShapeKind last_geometric_shape = VisualShapeKind::Rectangle;

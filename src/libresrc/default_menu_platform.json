@@ -61,9 +61,7 @@
     "main/muteki-update" : [
         { "command" : "muteki-update/check" },
         { "command" : "muteki-update/install-version" },
-        { "command" : "muteki-update/changelog" },
-        {},
-        { "command" : "muteki-update/automation" }
+        { "command" : "muteki-update/changelog" }
     ],
     "main/subtitle" : [
         { "command" : "tool/style/manager" },

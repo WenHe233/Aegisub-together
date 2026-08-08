@@ -2137,6 +2137,57 @@ std::vector<std::vector<Vector2D>> VisualColorSegmenter::Extract(double toleranc
 	}
 
 	if (fill_holes) {
+		// Use a small morphological closing only for deciding which background
+		// reaches the crop boundary. Colour-keyed outlines commonly contain
+		// one-to-four-pixel antialias gaps; without closing, a single gap makes
+		// a visually enclosed face or object count as exterior background.
+		constexpr int close_radius = 2;
+		std::vector<unsigned char> dilated(selected.size());
+		std::vector<unsigned char> barrier(selected.size());
+		auto make_integral = [&](std::vector<unsigned char> const& mask) {
+			std::vector<uint32_t> integral(static_cast<size_t>(width + 1) * (height + 1));
+			for (int y = 0; y < height; ++y) {
+				uint32_t row = 0;
+				for (int x = 0; x < width; ++x) {
+					row += mask[static_cast<size_t>(y) * width + x] != 0;
+					integral[static_cast<size_t>(y + 1) * (width + 1) + x + 1] =
+						integral[static_cast<size_t>(y) * (width + 1) + x + 1] + row;
+				}
+			}
+			return integral;
+		};
+		auto rectangle_sum = [&](std::vector<uint32_t> const& integral,
+			int first_x, int first_y, int last_x, int last_y) {
+			first_x = std::clamp(first_x, 0, width);
+			last_x = std::clamp(last_x, 0, width);
+			first_y = std::clamp(first_y, 0, height);
+			last_y = std::clamp(last_y, 0, height);
+			size_t stride = static_cast<size_t>(width + 1);
+			return integral[static_cast<size_t>(last_y) * stride + last_x] -
+				integral[static_cast<size_t>(first_y) * stride + last_x] -
+				integral[static_cast<size_t>(last_y) * stride + first_x] +
+				integral[static_cast<size_t>(first_y) * stride + first_x];
+		};
+		auto selected_integral = make_integral(selected);
+		for (int y = 0; y < height; ++y) {
+			for (int x = 0; x < width; ++x) {
+				dilated[static_cast<size_t>(y) * width + x] = rectangle_sum(selected_integral,
+					x - close_radius, y - close_radius,
+					x + close_radius + 1, y + close_radius + 1) != 0;
+			}
+		}
+		auto dilated_integral = make_integral(dilated);
+		for (int y = 0; y < height; ++y) {
+			for (int x = 0; x < width; ++x) {
+				int first_x = std::max(0, x - close_radius);
+				int last_x = std::min(width, x + close_radius + 1);
+				int first_y = std::max(0, y - close_radius);
+				int last_y = std::min(height, y + close_radius + 1);
+				uint32_t area = static_cast<uint32_t>((last_x - first_x) * (last_y - first_y));
+				barrier[static_cast<size_t>(y) * width + x] =
+					rectangle_sum(dilated_integral, first_x, first_y, last_x, last_y) == area;
+			}
+		}
 		// Background connected to the crop boundary stays transparent. Every
 		// other background island is a hole enclosed by the selected colour and
 		// is filled, while disconnected foreground components remain separate.
@@ -2145,7 +2196,7 @@ std::vector<std::vector<Vector2D>> VisualColorSegmenter::Extract(double toleranc
 		auto enqueue_background = [&](int x, int y) {
 			if (x < 0 || y < 0 || x >= width || y >= height) return;
 			size_t index = static_cast<size_t>(y) * width + x;
-			if (selected[index] || exterior[index]) return;
+			if (barrier[index] || exterior[index]) return;
 			exterior[index] = 1;
 			queue.push_back(index);
 		};
@@ -2446,6 +2497,30 @@ std::vector<std::vector<Vector2D>> ApplyVectorBrushStroke(
 			}
 		}
 	}
+	// A winding relationship can change even when only one of two intersecting
+	// contours directly touches the brush. Expand to the complete intersecting
+	// or nested component so it is rebuilt as one stable filled region.
+	std::vector<unsigned char> affected_mask(contours.size());
+	for (size_t index : affected) affected_mask[index] = 1;
+	bool expanded = true;
+	while (expanded) {
+		expanded = false;
+		for (size_t i = 0; i < contours.size(); ++i) {
+			if (!affected_mask[i]) continue;
+			for (size_t j = 0; j < contours.size(); ++j) {
+				if (affected_mask[j] || contours[i].size() < 3 || contours[j].size() < 3) continue;
+				if (contours_intersect(contours[i], contours[j]) ||
+					polygon_contains_point(contours[i], contours[j].front()) ||
+					polygon_contains_point(contours[j], contours[i].front())) {
+					affected_mask[j] = 1;
+					expanded = true;
+				}
+			}
+		}
+	}
+	affected.clear();
+	for (size_t i = 0; i < affected_mask.size(); ++i)
+		if (affected_mask[i]) affected.push_back(i);
 
 	// A click wholly inside or outside the selection never needs a general
 	// polygon operation. This is the common correction workflow and preserves
@@ -2494,25 +2569,41 @@ std::vector<std::vector<Vector2D>> ApplyVectorBrushStroke(
 	int width = std::max(1, static_cast<int>(std::ceil(source_width * raster_scale)) + 2);
 	int height = std::max(1, static_cast<int>(std::ceil(source_height * raster_scale)) + 2);
 	std::vector<unsigned char> selected(static_cast<size_t>(width) * height);
-	std::vector<float> crossings;
+	std::vector<std::pair<float, int>> winding_events;
 	for (int y = 0; y < height; ++y) {
 		float scan_y = minimum_y + (y + .5f) / raster_scale;
-		crossings.clear();
+		winding_events.clear();
 		for (size_t index : affected) {
 			auto const& contour = contours[index];
 			for (size_t i = 0, previous = contour.size() - 1; i < contour.size(); previous = i++) {
 				auto const& a = contour[previous];
 				auto const& b = contour[i];
 				if ((a.Y() > scan_y) == (b.Y() > scan_y)) continue;
-				crossings.push_back((a.X() + (scan_y - a.Y()) *
-					(b.X() - a.X()) / (b.Y() - a.Y()) - minimum_x) * raster_scale);
+				float crossing = (a.X() + (scan_y - a.Y()) *
+					(b.X() - a.X()) / (b.Y() - a.Y()) - minimum_x) * raster_scale;
+				winding_events.emplace_back(crossing, b.Y() > a.Y() ? 1 : -1);
 			}
 		}
-		std::sort(crossings.begin(), crossings.end());
-		for (size_t i = 1; i < crossings.size(); i += 2) {
-			int first = std::max(0, static_cast<int>(std::ceil(crossings[i - 1] - .5f)));
-			int last = std::min(width - 1, static_cast<int>(std::floor(crossings[i] - .5f)));
-			for (int x = first; x <= last; ++x) selected[static_cast<size_t>(y) * width + x] = 1;
+		std::sort(winding_events.begin(), winding_events.end(),
+			[](auto const& first, auto const& second) { return first.first < second.first; });
+		int winding = 0;
+		float previous_x = 0.f;
+		for (size_t event = 0; event < winding_events.size();) {
+			float current_x = winding_events[event].first;
+			if (winding != 0) {
+				int first = std::max(0, static_cast<int>(std::ceil(previous_x - .5f)));
+				int last = std::min(width - 1, static_cast<int>(std::floor(current_x - .5f)));
+				for (int x = first; x <= last; ++x)
+					selected[static_cast<size_t>(y) * width + x] = 1;
+			}
+			size_t next = event;
+			while (next < winding_events.size() &&
+				std::abs(winding_events[next].first - current_x) < 1e-4f) {
+				winding += winding_events[next].second;
+				++next;
+			}
+			previous_x = current_x;
+			event = next;
 		}
 	}
 	float scaled_radius = radius * raster_scale;

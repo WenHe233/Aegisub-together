@@ -8103,6 +8103,20 @@ msgstr "Maszkkontúrok létrehozása a kijelölt tartomány hasonló színeiből
 msgid "Auto fill"
 msgstr "Automatikus kitöltés"
 
+#: src/visual_tool_vector_clip.cpp
+msgid "Smooth edges"
+msgstr "Élek simítása"
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Smooth tolerance: %.2f"
+msgstr "Simítási tűrés: %.2f"
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Angle threshold: %.1f deg"
+msgstr "Szögküszöb: %.1f fok"
+
 #: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
 #, c-format
 msgid "Tolerance: %.1f"

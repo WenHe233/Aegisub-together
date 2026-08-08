@@ -7639,6 +7639,20 @@ msgstr ""
 msgid "Auto fill"
 msgstr ""
 
+#: src/visual_tool_vector_clip.cpp
+msgid "Smooth edges"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Smooth tolerance: %.2f"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Angle threshold: %.1f deg"
+msgstr ""
+
 #: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
 #, c-format
 msgid "Tolerance: %.1f"

@@ -54,6 +54,12 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	VisualToolMaskMode mode = MASK_POINTS;
 	std::vector<Vector2D> points;
 	std::vector<std::vector<Vector2D>> mask_regions;
+	struct MaskHistoryState {
+		std::vector<Vector2D> points;
+		std::vector<std::vector<Vector2D>> regions;
+	};
+	std::vector<MaskHistoryState> mask_undo_history;
+	std::vector<MaskHistoryState> mask_redo_history;
 	Vector2D shape_start;
 	bool drawing = false;
 	bool mouse_inside = false;
@@ -131,6 +137,11 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	VisualToolMaskAction ActionAt(Vector2D point);
 	int PointAt(Vector2D point) const;
 	void ClearPreview();
+	MaskHistoryState CaptureMaskHistory() const;
+	void RestoreMaskHistory(MaskHistoryState state);
+	void PushMaskHistory();
+	bool UndoMaskHistory();
+	bool RedoMaskHistory();
 	void ResetColorSelection();
 	ColorHistoryState CaptureColorHistory() const;
 	ColorHistoryState CaptureColorBrushHistory() const;

@@ -443,22 +443,22 @@ VisualToolShape::~VisualToolShape() {
 
 void VisualToolShape::SetToolbar(wxToolBar *toolbar) {
 	toolBar = toolbar;
-	int icon_size = std::max(16, static_cast<int>(toolBar->GetToolBitmapSize().GetWidth()));
+	toolbar_icon_size = std::max(16, static_cast<int>(toolBar->GetToolBitmapSize().GetWidth()));
 	toolBar->AddSeparator();
 	toolBar->AddTool(shape_tool_id, shape_label(shape),
-		wxBitmapBundle::FromBitmap(shape_bitmap(last_geometric_shape, icon_size, false, true)),
+		wxBitmapBundle::FromBitmap(shape_bitmap(last_geometric_shape, toolbar_icon_size, false, true)),
 		_("Shape (right-click for list)"));
 	toolBar->AddTool(freehand_tool_id, _("Freehand"),
-		wxBitmapBundle::FromBitmap(shape_bitmap(VisualShapeKind::Freehand, icon_size)),
+		wxBitmapBundle::FromBitmap(shape_bitmap(VisualShapeKind::Freehand, toolbar_icon_size)),
 		_("Freehand"), wxITEM_CHECK);
 	toolBar->AddTool(fill_tool_id, _("Filled"),
-		wxBitmapBundle::FromBitmap(shape_bitmap(VisualShapeKind::Rectangle, icon_size, true)),
+		wxBitmapBundle::FromBitmap(shape_bitmap(VisualShapeKind::Rectangle, toolbar_icon_size, true)),
 		_("Toggle filled or outlined shape"), wxITEM_CHECK);
 	toolBar->AddTool(size_tool_id, _("Size"),
-		wxBitmapBundle::FromBitmap(shape_bitmap(VisualShapeKind::Line, icon_size, false, true)),
+		wxBitmapBundle::FromBitmap(shape_bitmap(VisualShapeKind::Line, toolbar_icon_size, false, true)),
 		_("Stroke size"));
 	toolBar->AddTool(radius_tool_id, _("Corner radius"),
-		wxBitmapBundle::FromBitmap(radius_bitmap(icon_size, corner_radius)),
+		wxBitmapBundle::FromBitmap(radius_bitmap(toolbar_icon_size, corner_radius)),
 		_("Corner radius"));
 	toolBar->ToggleTool(fill_tool_id, filled);
 	toolBar->Realize();
@@ -614,13 +614,12 @@ void VisualToolShape::ShowColourPicker() {
 
 void VisualToolShape::UpdateToolbar() {
 	if (!toolBar) return;
-	int icon_size = std::max(16, static_cast<int>(toolBar->GetToolBitmapSize().GetWidth()));
 	toolBar->SetToolNormalBitmap(shape_tool_id,
-		wxBitmapBundle::FromBitmap(shape_bitmap(last_geometric_shape, icon_size, false, true)));
+		wxBitmapBundle::FromBitmap(shape_bitmap(last_geometric_shape, toolbar_icon_size, false, true)));
 	toolBar->SetToolNormalBitmap(size_tool_id,
-		wxBitmapBundle::FromBitmap(shape_bitmap(VisualShapeKind::Line, icon_size, false, true)));
+		wxBitmapBundle::FromBitmap(shape_bitmap(VisualShapeKind::Line, toolbar_icon_size, false, true)));
 	toolBar->SetToolNormalBitmap(radius_tool_id,
-		wxBitmapBundle::FromBitmap(radius_bitmap(icon_size, corner_radius)));
+		wxBitmapBundle::FromBitmap(radius_bitmap(toolbar_icon_size, corner_radius)));
 	toolBar->SetToolShortHelp(shape_tool_id,
 		agi::wxformat(_("Shape: %s (right-click for list)"), shape_label(last_geometric_shape)));
 	toolBar->ToggleTool(freehand_tool_id, shape == VisualShapeKind::Freehand);
@@ -738,7 +737,7 @@ std::pair<Vector2D, Vector2D> VisualToolShape::ActionBounds(Action action) {
 		gl_text->GetExtent(from_wx(label), text_width, text_height);
 		if (item == Action::Blur) return static_cast<float>(text_width + 24);
 		if (item == Action::Colour) return static_cast<float>(text_width + 47);
-		return static_cast<float>(text_width + 52);
+		return static_cast<float>(text_width + 24);
 	};
 	float left = 96.f;
 	for (Action item : {Action::Blur, Action::Colour, Action::Accept, Action::Clear}) {
@@ -1006,24 +1005,12 @@ void VisualToolShape::Draw() {
 			if (hovered && enabled) fill_colour = fill_colour.ChangeLightness(118);
 			rounded_rectangle(top_left, bottom_right, 7.f, fill_colour, 1.f);
 
-			Vector2D icon(top_left.X() + 20.f, (top_left.Y() + bottom_right.Y()) * .5f);
-			wxColour content_colour = enabled ? *wxWHITE : wxColour(145, 148, 152);
-			gl.SetLineColour(content_colour, 1.f, hovered && enabled ? 4 : 3);
-			if (action == Action::Accept) {
-				gl.DrawLine(icon + Vector2D(-7.f, 0.f), icon + Vector2D(-2.f, 6.f));
-				gl.DrawLine(icon + Vector2D(-2.f, 6.f), icon + Vector2D(8.f, -7.f));
-			}
-			else {
-				gl.DrawLine(icon + Vector2D(-7.f, -7.f), icon + Vector2D(7.f, 7.f));
-				gl.DrawLine(icon + Vector2D(7.f, -7.f), icon + Vector2D(-7.f, 7.f));
-			}
-
 			gl_text->SetFont("Verdana", 9, true, false);
 			gl_text->SetColour(enabled ? agi::Color(255, 255, 255, 255) : agi::Color(145, 148, 152, 255));
 			int text_width, text_height;
 			std::string label = from_wx(translated_label);
 			gl_text->GetExtent(label, text_width, text_height);
-			gl_text->Print(label, static_cast<int>(top_left.X() + 40.f),
+			gl_text->Print(label, static_cast<int>(top_left.X() + 12.f),
 				static_cast<int>((top_left.Y() + bottom_right.Y() - text_height) * .5f));
 		};
 		draw_button(Action::Accept, _("Accept (ENTER)"),

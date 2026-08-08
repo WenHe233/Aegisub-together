@@ -192,7 +192,10 @@ int SplineCurve::GetPoints(std::vector<float> &points) const {
 				(p2 - p1).Len() +
 				(p3 - p2).Len() +
 				(p4 - p3).Len());
-			int steps = len/8;
+			// Short curves are common when the video is zoomed out. A zero step
+			// count produces 0/0 below, feeding NaN vertices to both OpenGL and
+			// vector-clip boolean operations.
+			int steps = std::max(1, static_cast<int>(std::ceil(len / 8.f)));
 
 			for (int i = 0; i <= steps; ++i) {
 				// Get t and t-1 (u)

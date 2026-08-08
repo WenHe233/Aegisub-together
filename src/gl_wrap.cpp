@@ -396,6 +396,37 @@ static void APIENTRY glMultiDrawArraysFallback(GLenum mode, const GLint *first, 
 #endif
 
 void OpenGLWrapper::DrawMultiPolygon(std::vector<float> const& points, std::vector<int> &start, std::vector<int> &count, Vector2D video_pos, Vector2D video_size, bool invert) {
+	// Broken or sub-pixel duplicate vertices can make legacy OpenGL discard an
+	// entire line loop. Sanitize each contour and collapse details which cannot
+	// affect a pixel before submitting the multi-draw call.
+	std::vector<float> clean_points;
+	std::vector<int> clean_start;
+	std::vector<int> clean_count;
+	size_t contour_count = std::min(start.size(), count.size());
+	for (size_t contour = 0; contour < contour_count; ++contour) {
+		int first = std::max(0, start[contour]);
+		int available = static_cast<int>(points.size() / 2) - first;
+		int length = std::min(std::max(0, count[contour]), std::max(0, available));
+		std::vector<Vector2D> clean;
+		clean.reserve(length);
+		for (int i = 0; i < length; ++i) {
+			Vector2D point(points[(first + i) * 2], points[(first + i) * 2 + 1]);
+			if (!std::isfinite(point.X()) || !std::isfinite(point.Y())) continue;
+			if (!clean.empty() && (point - clean.back()).SquareLen() < .0625f) continue;
+			clean.push_back(point);
+		}
+		if (clean.size() > 2 && (clean.front() - clean.back()).SquareLen() < .0625f)
+			clean.pop_back();
+		if (clean.size() < 3) continue;
+		clean_start.push_back(static_cast<int>(clean_points.size() / 2));
+		clean_count.push_back(static_cast<int>(clean.size()));
+		for (auto point : clean) {
+			clean_points.push_back(point.X());
+			clean_points.push_back(point.Y());
+		}
+	}
+	if (clean_points.empty()) return;
+
 	GL_EXT(PFNGLMULTIDRAWARRAYSPROC, glMultiDrawArrays);
 
 	float real_line_a = line_a;
@@ -421,13 +452,13 @@ void OpenGLWrapper::DrawMultiPolygon(std::vector<float> const& points, std::vect
 
 	glCullFace(GL_BACK);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2, GL_FLOAT, 0, &points[0]);
-	glMultiDrawArrays(GL_TRIANGLE_FAN, &start[0], &count[0], start.size());
+	glVertexPointer(2, GL_FLOAT, 0, clean_points.data());
+	glMultiDrawArrays(GL_TRIANGLE_FAN, clean_start.data(), clean_count.data(), clean_start.size());
 
 	// Decrement the winding number for each backfacing triangle
 	glStencilOp(GL_DECR, GL_DECR, GL_DECR);
 	glCullFace(GL_FRONT);
-	glMultiDrawArrays(GL_TRIANGLE_FAN, &start[0], &count[0], start.size());
+	glMultiDrawArrays(GL_TRIANGLE_FAN, clean_start.data(), clean_count.data(), clean_start.size());
 	glDisable(GL_CULL_FACE);
 
 	// Draw the actual rectangle
@@ -444,8 +475,8 @@ void OpenGLWrapper::DrawMultiPolygon(std::vector<float> const& points, std::vect
 	line_a = real_line_a;
 	SetModeLine();
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2, GL_FLOAT, 0, &points[0]);
-	glMultiDrawArrays(GL_LINE_LOOP, &start[0], &count[0], start.size());
+	glVertexPointer(2, GL_FLOAT, 0, clean_points.data());
+	glMultiDrawArrays(GL_LINE_LOOP, clean_start.data(), clean_count.data(), clean_start.size());
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
