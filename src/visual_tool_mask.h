@@ -10,6 +10,7 @@
 #include "visual_tool.h"
 #include "visual_color_segment.h"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -36,6 +37,7 @@ enum VisualToolMaskMode {
 
 enum class VisualToolMaskAction {
 	None,
+	RangeShape,
 	Undo,
 	Redo,
 	Create,
@@ -44,7 +46,10 @@ enum class VisualToolMaskAction {
 	GenerateText,
 	AutoFill,
 	SelectionMode,
-	AISelect
+	AISelect,
+	Templates,
+	SmoothEdges,
+	EdgeSnap
 };
 
 /// Draws a line-only polygon on the video and creates an ASS drawing mask.
@@ -71,9 +76,14 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	Vector2D mask_brush_last;
 	VisualToolMaskAction hovered_action = VisualToolMaskAction::None;
 	enum class ColorStage { Range, Sample, Ready };
+	enum class ColorRangeShape { Rectangle, Freehand };
 	ColorStage color_stage = ColorStage::Range;
 	Vector2D color_range_start;
 	Vector2D color_range_end;
+	ColorRangeShape color_range_shape = ColorRangeShape::Rectangle;
+	/// The freehand range in script coordinates; empty while the range is a
+	/// rectangle, in which case color_range_start/end describe it on their own.
+	std::vector<Vector2D> color_range_path;
 	std::vector<std::vector<Vector2D>> color_contours;
 	VisualColorSegmenter color_segmenter;
 	bool color_contours_dirty = false;
@@ -85,8 +95,18 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	int color_offset = 0;
 	bool tolerance_dragging = false;
 	bool offset_dragging = false;
+	bool smooth_tolerance_dragging = false;
+	bool smooth_angle_dragging = false;
+	bool edge_snap_radius_dragging = false;
 	bool brush_slider_dragging = false;
 	bool color_auto_fill = false;
+	bool color_smooth_edges = false;
+	double color_smooth_tolerance = 10.0;
+	double color_smooth_angle = 35.0;
+	bool color_edge_snap = false;
+	double color_edge_snap_radius = 6.0;
+	std::vector<VisualColorSampleOperation> color_sample_operations;
+	bool color_ai_base = false;
 	VisualSelectionMode color_selection_mode = VisualSelectionMode::PipetteAdd;
 	float color_brush_radius = 20.f;
 	bool color_brush_drawing = false;
@@ -101,9 +121,20 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 		int offset = 0;
 		bool has_sample = false;
 		bool auto_fill = false;
+		bool smooth_edges = false;
+		double smooth_tolerance = 10.0;
+		double smooth_angle = 35.0;
+		bool edge_snap = false;
+		double edge_snap_radius = 6.0;
 		bool contours_only = false;
 		std::vector<std::vector<Vector2D>> contours;
+		std::vector<VisualColorSampleOperation> sample_operations;
+		bool ai_base = false;
 	};
+	mutable std::vector<std::vector<Vector2D>> color_display_contours;
+	mutable bool color_display_dirty = true;
+	mutable size_t color_display_source_points = 0;
+	mutable std::map<std::string, float> text_width_cache;
 	std::vector<ColorHistoryState> color_undo_history;
 	std::vector<ColorHistoryState> color_redo_history;
 	bool ai_refining = false;
@@ -130,8 +161,14 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	bool CanOffsetSelection() const;
 	std::pair<Vector2D, Vector2D> ActionBounds(VisualToolMaskAction action) const;
 	float TopBarHeight() const;
+	float SliderLabelWidth(wxString const& label) const;
+	float MeasuredTextWidth(wxString const& label, bool bold) const;
 	std::pair<Vector2D, Vector2D> ToleranceBounds() const;
 	std::pair<Vector2D, Vector2D> OffsetBounds() const;
+	std::pair<Vector2D, Vector2D> SmoothToleranceBounds() const;
+	std::pair<Vector2D, Vector2D> SmoothAngleBounds() const;
+	std::pair<Vector2D, Vector2D> EdgeSnapBounds() const;
+	std::pair<Vector2D, Vector2D> EdgeSnapRadiusBounds() const;
 	std::pair<Vector2D, Vector2D> BrushBounds() const;
 	std::pair<Vector2D, Vector2D> MaskBrushBounds() const;
 	VisualToolMaskAction ActionAt(Vector2D point);
@@ -152,14 +189,27 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	bool RedoColorHistory();
 	void UpdateColorTolerance(Vector2D point);
 	void UpdateColorOffset(Vector2D point);
+	void UpdateSmoothTolerance(Vector2D point);
+	void UpdateSmoothAngle(Vector2D point);
+	void UpdateEdgeSnapRadius(Vector2D point);
 	void UpdateColorBrushSize(Vector2D point);
 	bool PrepareColorSelection(Vector2D sample_point);
 	bool PrepareAISelection();
 	bool EnsureColorSegmenter();
 	void ShowColorModeMenu();
+	void ShowRangeShapeMenu();
+	std::vector<Vector2D> ColorRangeBoundary() const;
+	void ShowColorTemplatesMenu();
 	void ShowAISelectionMenu();
+	bool CanCaptureColorTemplate() const;
+	VisualColorTemplate CaptureColorTemplate(std::string name) const;
+	bool LoadColorTemplate(VisualColorTemplate const& color_template);
 	void UpdateColorCursor();
 	void RefreshColorContours();
+	std::vector<std::vector<Vector2D>> SnapColorContoursToEdges(
+		std::vector<std::vector<Vector2D>> raw_contours) const;
+	std::vector<std::vector<Vector2D>> const& ColorDisplayContours() const;
+	std::vector<std::vector<SplineCurve>> BuildSmoothedColorSplines() const;
 	void PaintColorBrush(Vector2D from, Vector2D to);
 	void SyncColorSegmenterFromContours();
 	void ResetAIRefinement();

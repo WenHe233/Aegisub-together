@@ -1591,8 +1591,15 @@ namespace {
 		bool sharp = false;
 	};
 
+	/// `radius_override` caps how far a point may travel along its own normal; 0
+	/// derives it from the image size. `interactive` trades the exhaustive search
+	/// over start states for a single free pass, and widens the acceptance band:
+	/// the colour preview reruns this on every tolerance change, and there the
+	/// user asked for the snap explicitly instead of it happening behind an AI
+	/// request.
 	std::vector<Vector2D> snap_closed_contour(std::vector<BlurredPixel> const& pixels,
-		int width, int height, std::vector<Vector2D> source, bool add) {
+		int width, int height, std::vector<Vector2D> source, bool add,
+		int radius_override = 0, bool interactive = false) {
 		if (source.size() < 3) return {};
 		// Never try to make a malformed AI traversal simple with 2-opt. Reversing
 		// a long point span can remove a crossing while inventing large diagonal
@@ -1653,8 +1660,19 @@ namespace {
 			normals[i] = tangents[i].Perpendicular();
 		}
 
-		int radius = std::clamp(static_cast<int>(std::lround(
-			std::min(width, height) * .01)), 4, add ? 8 : 5);
+		int radius = radius_override > 0 ? std::clamp(radius_override, 2, 50) :
+			std::clamp(static_cast<int>(std::lround(
+				std::min(width, height) * .01)), 4, add ? 8 : 5);
+		// The prior is what holds a point near where the colour put it. Its old fixed
+		// weight suited the four-to-eight pixel radius the AI refinement derives; at
+		// the radius an explicit auto snap may ask for, a quadratic in raw pixels
+		// reaches several cost units and simply pins the outline down. Scale it to the
+		// search window, which reproduces the previous weights exactly at radius 8,
+		// and lighten it for auto snap, where travelling out to the band's far edge is
+		// the whole point rather than something to be discouraged.
+		float prior_reference = interactive ? static_cast<float>(radius) : 8.f;
+		float prior_scale = (interactive ? .35f : 1.f) /
+			(prior_reference * prior_reference);
 		constexpr float state_step = .5f;
 		int state_count = radius * 4 + 1;
 		int zero_state = radius * 2;
@@ -1681,7 +1699,7 @@ namespace {
 				if ((dense[i].crop_locked && state != zero_state) ||
 					(dense[i].sharp && std::abs(offset) > 2.f))
 					continue;
-				float prior = (dense[i].sharp ? .08f : .028f) * offset * offset;
+				float prior = (dense[i].sharp ? 5.12f : 1.792f) * offset * offset * prior_scale;
 				if (!confident) {
 					unary[i * state_count + state] = prior + std::abs(offset) * .12f;
 					continue;
@@ -1694,6 +1712,20 @@ namespace {
 					!sample_strip_median(pixels, width, height, candidate, normals[i],
 						tangents[i], candidate_distances, -1.f, outside))
 					continue;
+				if (interactive) {
+					// Auto snap has one job: the selection currently stops somewhere
+					// inside the outline band around the subject, and the whole band
+					// belongs in it. So look for the place where the background starts -
+					// everything outside the border already background, everything just
+					// inside it not yet - which is the far edge of the band, leaving the
+					// band itself enclosed. Blur only moves that place further out; it
+					// does not change what is being looked for.
+					float outside_clean = robust_colour_distance(outside, background_reference);
+					float inside_left = robust_colour_distance(inside, background_reference);
+					unary[i * state_count + state] = 2.f * outside_clean -
+						1.4f * std::min(inside_left, .55f) + prior;
+					continue;
+				}
 				float match = robust_colour_distance(inside, foreground_reference) +
 					robust_colour_distance(outside, background_reference);
 				float reversed = robust_colour_distance(inside, background_reference) +
@@ -1715,11 +1747,17 @@ namespace {
 			}
 		}
 
+		// A negative start state leaves the first point free, which gives an open
+		// chain instead of a closed loop. Used only to pick a good start cheaply.
 		auto solve = [&](int start_state, std::vector<int16_t> *backtrack,
 			int *end_state) {
 			std::vector<float> previous(state_count, infinity);
 			std::vector<float> current(state_count, infinity);
-			previous[start_state] = unary[start_state];
+			if (start_state < 0)
+				for (int state = 0; state < state_count; ++state)
+					previous[state] = unary[state];
+			else
+				previous[start_state] = unary[start_state];
 			for (size_t i = 1; i < point_count; ++i) {
 				std::fill(current.begin(), current.end(), infinity);
 				for (int state = 0; state < state_count; ++state) {
@@ -1750,8 +1788,10 @@ namespace {
 			float best = infinity;
 			int best_end = 0;
 			for (int state = 0; state < state_count; ++state) {
-				float candidate = previous[state] + transition[
-					static_cast<size_t>(state) * state_count + start_state];
+				float candidate = previous[state];
+				if (start_state >= 0)
+					candidate += transition[
+						static_cast<size_t>(state) * state_count + start_state];
 				if (candidate < best) {
 					best = candidate;
 					best_end = state;
@@ -1765,6 +1805,20 @@ namespace {
 		float best_score = infinity;
 		if (dense.front().crop_locked) {
 			best_score = solve(zero_state, nullptr, nullptr);
+		}
+		else if (interactive) {
+			// Trying every start state costs another factor of state_count, which a
+			// live preview cannot pay. Read the start off one free pass instead and
+			// then close the loop on it.
+			std::vector<int16_t> probe(point_count * state_count, 0);
+			int probe_end = zero_state;
+			if (solve(-1, &probe, &probe_end) < infinity * .5f) {
+				int state = probe_end;
+				for (size_t reverse = point_count; reverse-- > 1;)
+					state = probe[reverse * state_count + state];
+				best_start = state;
+			}
+			best_score = solve(best_start, nullptr, nullptr);
 		}
 		else {
 			for (int start = 0; start < state_count; ++start) {
@@ -1786,7 +1840,12 @@ namespace {
 			if (reverse)
 				state = backtrack[reverse * state_count + state];
 		}
-		for (int pass = 0; pass < 2; ++pass) {
+		// The states are half-pixel steps, so a lightly filtered offset run still
+		// reads as a staircase along a smooth edge. Auto snap filters it far harder:
+		// its target is a genuine picture edge, so what survives is the shape of that
+		// edge rather than the quantisation.
+		int smoothing_passes = interactive ? 8 : 2;
+		for (int pass = 0; pass < smoothing_passes; ++pass) {
 			auto before = offsets;
 			for (size_t i = 0; i < point_count; ++i) {
 				if (dense[i].crop_locked || dense[i].sharp) {
@@ -1798,23 +1857,39 @@ namespace {
 			}
 		}
 
-		std::vector<Vector2D> result;
-		result.reserve(point_count);
+		std::vector<Vector2D> displaced;
+		displaced.reserve(point_count);
 		for (size_t i = 0; i < point_count; ++i) {
 			Vector2D point = dense[i].point + normals[i] * offsets[i];
-			result.emplace_back(std::clamp(point.X(), 0.f, static_cast<float>(width)),
+			displaced.emplace_back(std::clamp(point.X(), 0.f, static_cast<float>(width)),
 				std::clamp(point.Y(), 0.f, static_cast<float>(height)));
 		}
-		result = simplify_closed(std::move(result), .65);
-		if (result.size() < 3 || contour_self_intersects(result) ||
-			(polygon_area(result) > 0.0) != wants_positive_area)
-			return source;
+		// The coarser simplification auto snap asks for keeps the half-pixel state
+		// jitter out of the outline, but around a tight corner it can fold the shape
+		// over itself. Step back through finer epsilons rather than throwing the whole
+		// snap away, which used to look to the user like the feature doing nothing.
+		std::vector<Vector2D> result;
+		for (double epsilon : {interactive ? .95 : .65, .5, .25}) {
+			result = simplify_closed(displaced, epsilon);
+			if (result.size() >= 3 && !contour_self_intersects(result) &&
+				(polygon_area(result) > 0.0) == wants_positive_area)
+				break;
+			result.clear();
+			if (!interactive) break;
+		}
+		if (result.empty()) return source;
 		double area_ratio = std::abs(polygon_area(result)) / original_area;
 		float perimeter_ratio = contour_perimeter(result) / original_perimeter;
-		double minimum_area_ratio = add ? .92 : .90;
-		double maximum_area_ratio = add ? 1.08 : 1.10;
+		// The guard is there to throw away a snap that clearly went wandering. An
+		// explicit request may legitimately move the outline further than an
+		// automatic refinement, so the band scales with the search radius.
+		double slack = interactive ? std::clamp(radius * .05, .25, .6) : .0;
+		double minimum_area_ratio = (add ? .92 : .90) - slack;
+		double maximum_area_ratio = (add ? 1.08 : 1.10) + slack;
+		float perimeter_slack = static_cast<float>(interactive ? slack : .0);
 		if (area_ratio < minimum_area_ratio || area_ratio > maximum_area_ratio ||
-			perimeter_ratio < .8f || perimeter_ratio > 1.2f)
+			perimeter_ratio < .8f - perimeter_slack ||
+			perimeter_ratio > 1.2f + perimeter_slack)
 			return source;
 		return result;
 	}
@@ -1875,6 +1950,122 @@ namespace {
 		for (auto& hole : accepted_holes) result.push_back(std::move(hole));
 		return result;
 	}
+
+	void simplify_smooth_open(std::vector<Vector2D> const& points, size_t first,
+		size_t last, double epsilon_squared, std::vector<unsigned char>& keep) {
+		if (last <= first + 1) return;
+		double maximum_distance = epsilon_squared;
+		size_t split = first;
+		Vector2D segment = points[last] - points[first];
+		float segment_length_squared = segment.SquareLen();
+		for (size_t i = first + 1; i < last; ++i) {
+			float factor = segment_length_squared <= 1e-6f ? 0.f :
+				std::clamp((points[i] - points[first]).Dot(segment) /
+					segment_length_squared, 0.f, 1.f);
+			double distance = (points[i] - (points[first] + segment * factor)).SquareLen();
+			if (distance > maximum_distance) {
+				maximum_distance = distance;
+				split = i;
+			}
+		}
+		if (split == first) return;
+		keep[split] = 1;
+		simplify_smooth_open(points, first, split, epsilon_squared, keep);
+		simplify_smooth_open(points, split, last, epsilon_squared, keep);
+	}
+
+	std::vector<Vector2D> simplify_smooth_closed(std::vector<Vector2D> points,
+		double epsilon) {
+		std::vector<Vector2D> clean;
+		for (auto point : points)
+			if (clean.empty() || (point - clean.back()).SquareLen() > .25f)
+				clean.push_back(point);
+		if (clean.size() > 2 && (clean.front() - clean.back()).SquareLen() <= .25f)
+			clean.pop_back();
+		if (clean.size() < 4) return clean;
+		size_t opposite = 1;
+		for (size_t i = 2; i < clean.size(); ++i)
+			if ((clean[i] - clean.front()).SquareLen() >
+				(clean[opposite] - clean.front()).SquareLen()) opposite = i;
+		std::vector<Vector2D> opened = clean;
+		opened.push_back(clean.front());
+		std::vector<unsigned char> keep(opened.size());
+		keep[0] = keep[opposite] = keep.back() = 1;
+		double epsilon_squared = epsilon * epsilon;
+		simplify_smooth_open(opened, 0, opposite, epsilon_squared, keep);
+		simplify_smooth_open(opened, opposite, opened.size() - 1, epsilon_squared, keep);
+		std::vector<Vector2D> result;
+		for (size_t i = 0; i + 1 < opened.size(); ++i)
+			if (keep[i]) result.push_back(opened[i]);
+		return result.size() >= 3 ? result : clean;
+	}
+
+}
+
+std::vector<VisualColorTemplate>& VisualColorTemplates() {
+	static std::vector<VisualColorTemplate> templates;
+	return templates;
+}
+
+std::vector<SplineCurve> SmoothClosedContour(std::vector<Vector2D> points,
+	double tolerance, double angle_threshold) {
+	if (points.size() < 3) return {};
+	tolerance = std::clamp(tolerance, .1, 50.0);
+	angle_threshold = std::clamp(angle_threshold, 0.0, 180.0);
+	auto vertices = simplify_smooth_closed(std::move(points),
+		std::max(.05, tolerance * .35));
+	if (vertices.size() < 3) return {};
+
+	struct RoundedVertex {
+		Vector2D entry;
+		Vector2D control_in;
+		Vector2D control_out;
+		Vector2D exit;
+		bool rounded = false;
+	};
+	std::vector<RoundedVertex> rounded(vertices.size());
+	for (size_t i = 0; i < vertices.size(); ++i) {
+		Vector2D previous = vertices[(i + vertices.size() - 1) % vertices.size()];
+		Vector2D current = vertices[i];
+		Vector2D next = vertices[(i + 1) % vertices.size()];
+		Vector2D to_previous = previous - current;
+		Vector2D to_next = next - current;
+		float previous_length = to_previous.Len();
+		float next_length = to_next.Len();
+		auto& corner = rounded[i];
+		corner.entry = corner.exit = current;
+		if (previous_length <= 1e-4f || next_length <= 1e-4f) continue;
+		double cosine = std::clamp(static_cast<double>(to_previous.Dot(to_next)) /
+			(previous_length * next_length), -1.0, 1.0);
+		double interior_angle = std::acos(cosine) * 180.0 / M_PI;
+		// Angles at or below the threshold are deliberate sharp corners.
+		// Everything above it is rounded, so a low threshold also removes
+		// one-pixel staircase corners instead of preserving every 90-degree turn.
+		if (interior_angle <= angle_threshold) continue;
+		float radius = static_cast<float>(std::min({tolerance,
+			previous_length * .45, next_length * .45}));
+		if (radius <= .05f) continue;
+		Vector2D previous_unit = to_previous / previous_length;
+		Vector2D next_unit = to_next / next_length;
+		corner.entry = current + previous_unit * radius;
+		corner.exit = current + next_unit * radius;
+		float handle = radius * .55228475f;
+		corner.control_in = corner.entry - previous_unit * handle;
+		corner.control_out = corner.exit - next_unit * handle;
+		corner.rounded = true;
+	}
+
+	std::vector<SplineCurve> result;
+	Vector2D cursor = rounded.back().exit;
+	for (auto const& corner : rounded) {
+		if ((corner.entry - cursor).SquareLen() > 1e-5f)
+			result.emplace_back(cursor, corner.entry);
+		if (corner.rounded)
+			result.emplace_back(corner.entry, corner.control_in,
+				corner.control_out, corner.exit);
+		cursor = corner.exit;
+	}
+	return result;
 }
 
 void VisualColorSegmenter::Clear() {
@@ -1884,6 +2075,7 @@ void VisualColorSegmenter::Clear() {
 	base_selected.clear();
 	painted.clear();
 	stored_contours.clear();
+	range_mask.clear();
 	contours_are_pristine = false;
 }
 
@@ -2018,6 +2210,33 @@ void VisualColorSegmenter::SetContours(std::vector<std::vector<Vector2D>> const&
 	contours_are_pristine = !stored_contours.empty();
 }
 
+void VisualColorSegmenter::SetRangeMask(std::vector<Vector2D> const& polygon) {
+	range_mask.clear();
+	if (distances.empty() || polygon.size() < 3) return;
+	range_mask.assign(distances.size(), 0);
+	// Same even/odd scanline fill as SetContours, on absolute frame coordinates.
+	std::vector<float> crossings;
+	for (int y = 0; y < height; ++y) {
+		float scan_y = top + y + .5f;
+		crossings.clear();
+		for (size_t i = 0, previous = polygon.size() - 1; i < polygon.size(); previous = i++) {
+			auto const& a = polygon[previous];
+			auto const& b = polygon[i];
+			if ((a.Y() > scan_y) == (b.Y() > scan_y)) continue;
+			crossings.push_back(a.X() + (scan_y - a.Y()) * (b.X() - a.X()) / (b.Y() - a.Y()));
+		}
+		std::sort(crossings.begin(), crossings.end());
+		for (size_t i = 1; i < crossings.size(); i += 2) {
+			int first = std::max(0, static_cast<int>(std::ceil(crossings[i - 1] - left - .5f)));
+			int last = std::min(width - 1, static_cast<int>(std::floor(crossings[i] - left - .5f)));
+			for (int x = first; x <= last; ++x)
+				range_mask[static_cast<size_t>(y) * width + x] = 1;
+		}
+	}
+	stored_contours.clear();
+	contours_are_pristine = false;
+}
+
 void VisualColorSegmenter::Paint(int frame_x, int frame_y, float radius, bool add) {
 	if (painted.empty() || radius <= 0.f) return;
 	float local_x = static_cast<float>(frame_x - left);
@@ -2051,12 +2270,14 @@ std::vector<std::vector<Vector2D>> VisualColorSegmenter::Extract(double toleranc
 	if (distances.empty()) return {};
 	if (contours_are_pristine && !fill_holes && offset_pixels == 0)
 		return stored_contours;
+	bool ranged = range_mask.size() == distances.size();
 	double channel_delta = std::clamp(tolerance, 0.0, 100.0) * 2.55;
 	uint32_t threshold = static_cast<uint32_t>(std::lround(channel_delta * channel_delta));
 	std::vector<unsigned char> selected(distances.size());
 	for (size_t i = 0; i < distances.size(); ++i) {
 		selected[i] = base_selected[i] || distances[i] <= threshold;
 		if (subtract_distances[i] <= threshold) selected[i] = 0;
+		if (ranged && !range_mask[i]) selected[i] = 0;
 	}
 
 	// A lone matching pixel is almost always compression or antialias noise.
@@ -2227,6 +2448,9 @@ std::vector<std::vector<Vector2D>> VisualColorSegmenter::Extract(double toleranc
 	for (size_t i = 0; i < selected.size(); ++i) {
 		if (painted[i] > 0) selected[i] = 1;
 		else if (painted[i] < 0) selected[i] = 0;
+		// Last word belongs to the range: growing the selection or painting into it
+		// must not carry it outside what the user marked out.
+		if (ranged && !range_mask[i]) selected[i] = 0;
 	}
 
 	return trace_binary_mask(selected, width, height, left, top, .85);
@@ -2435,6 +2659,161 @@ void ApplyVectorBrushStamp(std::vector<std::vector<Vector2D>>& contours,
 		append_ring(contours, polygon.outer());
 		for (auto const& inner : polygon.inners()) append_ring(contours, inner);
 	}
+}
+
+std::vector<std::vector<Vector2D>> SnapContoursToImageEdges(VideoFrame const& frame,
+	std::vector<std::vector<Vector2D>> contours, int crop_left, int crop_top,
+	int crop_width, int crop_height, int search_radius) {
+	if (contours.empty() || search_radius <= 0) return contours;
+	if (frame.width <= 0 || frame.height <= 0 || frame.pitch <= 0 || frame.data.empty())
+		return contours;
+	int left = std::clamp(crop_left, 0, frame.width - 1);
+	int top = std::clamp(crop_top, 0, frame.height - 1);
+	int right = std::clamp(crop_left + crop_width, left + 1, frame.width);
+	int bottom = std::clamp(crop_top + crop_height, top + 1, frame.height);
+	int width = right - left;
+	int height = bottom - top;
+	if (width < 8 || height < 8) return contours;
+
+	wxImage crop(width, height);
+	auto target = crop.GetData();
+	if (!target) return contours;
+	for (int y = 0; y < height; ++y) {
+		int source_y = top + y;
+		if (frame.flipped) source_y = frame.height - 1 - source_y;
+		for (int x = 0; x < width; ++x) {
+			size_t offset = static_cast<size_t>(source_y) * frame.pitch +
+				static_cast<size_t>(left + x) * 4;
+			size_t destination = (static_cast<size_t>(y) * width + x) * 3;
+			if (offset + 2 >= frame.data.size()) continue;
+			target[destination] = frame.data[offset + 2];
+			target[destination + 1] = frame.data[offset + 1];
+			target[destination + 2] = frame.data[offset];
+		}
+	}
+	auto pixels = blur_selection_image(crop);
+
+	for (auto& contour : contours) {
+		if (contour.size() < 3) continue;
+		double area = polygon_area(contour);
+		std::vector<Vector2D> local;
+		local.reserve(contour.size());
+		for (auto point : contour)
+			local.emplace_back(point.X() - left, point.Y() - top);
+		// Pass the existing winding along as `add`: the sign is what tells an outer
+		// ring from a hole everywhere else, and snap_closed_contour normalises the
+		// contour to it, so anything else here would silently turn holes solid.
+		auto snapped = snap_closed_contour(pixels, width, height, std::move(local),
+			area > 0.0, search_radius, true);
+		if (snapped.size() < 3) continue;
+		std::vector<Vector2D> absolute;
+		absolute.reserve(snapped.size());
+		for (auto point : snapped)
+			absolute.emplace_back(point.X() + left, point.Y() + top);
+		contour = std::move(absolute);
+	}
+	return contours;
+}
+
+void ClipVectorContoursToPolygon(std::vector<std::vector<Vector2D>>& contours,
+	std::vector<Vector2D> const& boundary) {
+	namespace geometry = boost::geometry;
+	using Point = geometry::model::d2::point_xy<double>;
+	using Polygon = geometry::model::polygon<Point>;
+	using MultiPolygon = geometry::model::multi_polygon<Polygon>;
+	if (contours.empty() || boundary.size() < 3) return;
+
+	// Nothing to do while everything is already inside, which is the common case
+	// and keeps the geometry byte-for-byte stable for repeated brush stamps.
+	bool outside = false;
+	for (auto const& contour : contours) {
+		for (auto point : contour)
+			if (!polygon_contains_point(boundary, point)) { outside = true; break; }
+		if (outside) break;
+	}
+	if (!outside) return;
+
+	// Keep each outer ring together with its holes: clipping a hole on its own
+	// would turn it into a filled island.
+	double reference_area = 0.0;
+	for (auto const& contour : contours)
+		if (std::abs(polygon_area(contour)) > std::abs(reference_area))
+			reference_area = polygon_area(contour);
+	if (reference_area == 0.0) reference_area = 1.0;
+	std::vector<size_t> outers;
+	std::vector<int> parent(contours.size(), -1);
+	for (size_t i = 0; i < contours.size(); ++i)
+		if (polygon_area(contours[i]) * reference_area > 0.0) outers.push_back(i);
+	for (size_t i = 0; i < contours.size(); ++i) {
+		if (polygon_area(contours[i]) * reference_area >= 0.0 || contours[i].empty()) continue;
+		double best_area = std::numeric_limits<double>::max();
+		for (size_t outer : outers) {
+			double area = std::abs(polygon_area(contours[outer]));
+			if (area < best_area && polygon_contains_point(contours[outer], contours[i].front())) {
+				best_area = area;
+				parent[i] = static_cast<int>(outer);
+			}
+		}
+	}
+
+	Polygon box;
+	for (auto point : boundary) box.outer().emplace_back(point.X(), point.Y());
+	box.outer().push_back(box.outer().front());
+	geometry::correct(box);
+	if (!geometry::is_valid(box)) return;
+
+	std::vector<std::vector<Vector2D>> clipped;
+	auto append_ring = [&](auto const& ring) {
+		if (ring.size() < 4) return;
+		std::vector<Vector2D> contour;
+		contour.reserve(ring.size() - 1);
+		for (size_t i = 0; i + 1 < ring.size(); ++i)
+			contour.emplace_back(static_cast<float>(ring[i].x()),
+				static_cast<float>(ring[i].y()));
+		clipped.push_back(std::move(contour));
+	};
+	for (size_t outer : outers) {
+		Polygon polygon;
+		auto& ring = polygon.outer();
+		ring.reserve(contours[outer].size() + 1);
+		for (auto point : contours[outer]) ring.emplace_back(point.X(), point.Y());
+		if (ring.empty()) continue;
+		ring.push_back(ring.front());
+		for (size_t i = 0; i < parent.size(); ++i) {
+			if (parent[i] != static_cast<int>(outer)) continue;
+			auto& inner = polygon.inners().emplace_back();
+			inner.reserve(contours[i].size() + 1);
+			for (auto point : contours[i]) inner.emplace_back(point.X(), point.Y());
+			if (!inner.empty()) inner.push_back(inner.front());
+		}
+		geometry::correct(polygon);
+		if (!geometry::is_valid(polygon)) {
+			// Leave geometry the boolean cannot digest alone rather than dropping it.
+			clipped.push_back(contours[outer]);
+			for (size_t i = 0; i < parent.size(); ++i)
+				if (parent[i] == static_cast<int>(outer)) clipped.push_back(contours[i]);
+			continue;
+		}
+		MultiPolygon result;
+		try { geometry::intersection(polygon, box, result); }
+		catch (...) { continue; }
+		for (auto const& piece : result) {
+			append_ring(piece.outer());
+			for (auto const& inner : piece.inners()) append_ring(inner);
+		}
+	}
+	contours = std::move(clipped);
+}
+
+void ClipVectorContoursToRect(std::vector<std::vector<Vector2D>>& contours,
+	Vector2D top_left, Vector2D bottom_right) {
+	float left = std::min(top_left.X(), bottom_right.X());
+	float top = std::min(top_left.Y(), bottom_right.Y());
+	float right = std::max(top_left.X(), bottom_right.X());
+	float bottom = std::max(top_left.Y(), bottom_right.Y());
+	if (!(right - left > 0.f) || !(bottom - top > 0.f)) return;
+	ClipVectorContoursToPolygon(contours, {Vector2D(left, top), Vector2D(right, top),
+		Vector2D(right, bottom), Vector2D(left, bottom)});
 }
 
 std::vector<std::vector<Vector2D>> ApplyVectorBrushStroke(
@@ -2727,6 +3106,35 @@ wxBitmap MakeVisualAISelectionBitmap(int size) {
 	int radius = std::max(3, size / 3);
 	dc.DrawCircle(centre, centre, radius);
 	dc.DrawCircle(centre, centre, std::max(1, radius / 3));
+	dc.SelectObject(wxNullBitmap);
+	return bitmap;
+}
+
+wxBitmap MakeVisualRangeShapeBitmap(bool freehand, int size) {
+	size = std::max(size, 16);
+	wxBitmap bitmap(size, size, 24);
+	wxMemoryDC dc(bitmap);
+	dc.SetBackground(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)));
+	dc.Clear();
+	int thickness = std::max(1, size / 10);
+	dc.SetBrush(*wxTRANSPARENT_BRUSH);
+	if (!freehand) {
+		dc.SetPen(wxPen(wxColour(20, 20, 20), thickness, wxPENSTYLE_SHORT_DASH));
+		int inset = std::max(2, size / 6);
+		dc.DrawRectangle(inset, inset, size - inset * 2, size - inset * 2);
+		dc.SelectObject(wxNullBitmap);
+		return bitmap;
+	}
+	// A mouse: rounded body, split top and a short cable.
+	dc.SetPen(wxPen(wxColour(20, 20, 20), thickness));
+	int width = std::max(6, size / 2);
+	int height = std::max(8, size * 2 / 3);
+	int x = (size - width) / 2;
+	int y = size - height - std::max(1, size / 10);
+	dc.DrawRoundedRectangle(x, y, width, height, width / 2.0);
+	dc.DrawLine(x, y + height / 3, x + width, y + height / 3);
+	dc.DrawLine(size / 2, y, size / 2, y + height / 3);
+	dc.DrawLine(size / 2, y, size / 2, std::max(0, y - std::max(2, size / 6)));
 	dc.SelectObject(wxNullBitmap);
 	return bitmap;
 }

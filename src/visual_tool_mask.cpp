@@ -211,8 +211,8 @@ int VisualToolMask::GetSubTool() {
 void VisualToolMask::OnCoordinateSystemsChanged() {
 	drawing = false;
 	dragged_point = -1;
-	if (mode == MASK_COLOR && !color_contours_dirty)
-		RefreshColorContours();
+	// The colour selection is held in script coordinates, so panning and zooming
+	// change only where it is drawn; there is nothing to recompute here.
 }
 
 void VisualToolMask::UpdateRectangle(Vector2D end) {
@@ -259,7 +259,7 @@ void VisualToolMask::PaintMaskBrush(Vector2D from, Vector2D to) {
 
 void VisualToolMask::UpdateMaskBrushSize(Vector2D point) {
 	auto [top_left, bottom_right] = MaskBrushBounds();
-	float left = top_left.X() + 70.f;
+	float left = top_left.X() + SliderLabelWidth(_("Size"));
 	float right = bottom_right.X() - 12.f;
 	double ratio = std::clamp((point.X() - left) / std::max(1.f, right - left), 0.f, 1.f);
 	mask_brush_radius = static_cast<float>(std::lround(2.0 + ratio * 198.0));
@@ -279,8 +279,27 @@ void VisualToolMask::UpdateActionTooltip(VisualToolMaskAction action) {
 		parent->SetToolTip(agi::wxformat(_("Tolerance: %.1f"), color_tolerance));
 		return;
 	}
-	if (offset_dragging || (CanOffsetSelection() && inside(OffsetBounds()))) {
+	if (offset_dragging || (mode == MASK_COLOR && inside(OffsetBounds()))) {
 		parent->SetToolTip(agi::wxformat(_("Offset: %d px"), color_offset));
+		return;
+	}
+	bool smoothing = mode == MASK_COLOR && color_smooth_edges;
+	if (smooth_tolerance_dragging || (smoothing && inside(SmoothToleranceBounds()))) {
+		parent->SetToolTip(agi::wxformat(_("Smooth tolerance: %.2f"), color_smooth_tolerance));
+		return;
+	}
+	if (smooth_angle_dragging || (smoothing && inside(SmoothAngleBounds()))) {
+		parent->SetToolTip(agi::wxformat(_("Angle threshold: %.1f deg"), color_smooth_angle));
+		return;
+	}
+	if (edge_snap_radius_dragging ||
+		(smoothing && color_edge_snap && inside(EdgeSnapRadiusBounds()))) {
+		parent->SetToolTip(agi::wxformat(_("Edge search: %d px"),
+			static_cast<int>(std::lround(color_edge_snap_radius))));
+		return;
+	}
+	if (smoothing && inside(EdgeSnapBounds())) {
+		parent->SetToolTip(_("Pull the outline onto the picture edge it traces, keeping the offset even along its length"));
 		return;
 	}
 	bool color_brush_mode = mode == MASK_COLOR &&
@@ -321,38 +340,131 @@ bool VisualToolMask::CanOffsetSelection() const {
 		!color_segmenter.Empty();
 }
 
+float VisualToolMask::SliderLabelWidth(wxString const& label) const {
+	// Measured rather than hardcoded: a translated label is a different width, and
+	// a guessed padding lets it run into the track. Cached because the layout is
+	// recomputed for every button on every repaint, and the font never changes.
+	return 10.f + MeasuredTextWidth(label, false) + 10.f;
+}
+
+float VisualToolMask::MeasuredTextWidth(wxString const& label, bool bold) const {
+	std::string key = (bold ? "b:" : "r:") + from_wx(label);
+	auto found = text_width_cache.find(key);
+	if (found != text_width_cache.end()) return found->second;
+	gl_text->SetFont("Verdana", 9, bold, false);
+	int text_width, text_height;
+	gl_text->GetExtent(from_wx(label), text_width, text_height);
+	float width = static_cast<float>(text_width);
+	text_width_cache.emplace(key, width);
+	return width;
+}
+
+// The colour mode's bar is laid out exactly like the vector clip's: offset on the
+// left, then the selection mode button with its own slider right behind it, then
+// the button run. Keeping the two identical is the point - it is the same tool.
 std::pair<Vector2D, Vector2D> VisualToolMask::ToleranceBounds() const {
-	return {Vector2D(96.f, 10.f), Vector2D(236.f, 44.f)};
+	auto mode_bounds = ActionBounds(VisualToolMaskAction::SelectionMode);
+	float left = mode_bounds.second.X() + 8.f;
+	float top = mode_bounds.first.Y();
+	float width = SliderLabelWidth(_("Tolerance")) + 82.f;
+	if (left + width > canvas_size.X() - 8.f) {
+		left = 12.f;
+		top = mode_bounds.second.Y() + 8.f;
+	}
+	return {Vector2D(left, top), Vector2D(left + width, top + 34.f)};
 }
 
 std::pair<Vector2D, Vector2D> VisualToolMask::OffsetBounds() const {
-	float left = has_color_sample ? 244.f : 96.f;
-	return {Vector2D(left, 10.f), Vector2D(left + 132.f, 44.f)};
+	float left = mode == MASK_COLOR && color_stage == ColorStage::Range &&
+		!ai_refining ? 146.f : 96.f;
+	return {Vector2D(left, 10.f),
+		Vector2D(left + SliderLabelWidth(_("Offset")) + 82.f, 44.f)};
 }
 
 std::pair<Vector2D, Vector2D> VisualToolMask::BrushBounds() const {
-	float left = CanOffsetSelection() ? OffsetBounds().second.X() + 8.f : 96.f;
-	return {Vector2D(left, 10.f), Vector2D(left + 140.f, 44.f)};
+	auto mode_bounds = ActionBounds(VisualToolMaskAction::SelectionMode);
+	float left = mode_bounds.second.X() + 8.f;
+	float top = mode_bounds.first.Y();
+	float width = SliderLabelWidth(_("Size")) + 102.f;
+	if (left + width > canvas_size.X() - 8.f) {
+		left = 12.f;
+		top = mode_bounds.second.Y() + 8.f;
+	}
+	return {Vector2D(left, top), Vector2D(left + width, top + 34.f)};
 }
 
 std::pair<Vector2D, Vector2D> VisualToolMask::MaskBrushBounds() const {
-	return {Vector2D(96.f, 10.f), Vector2D(236.f, 44.f)};
+	return {Vector2D(96.f, 10.f),
+		Vector2D(96.f + SliderLabelWidth(_("Size")) + 102.f, 44.f)};
+}
+
+std::pair<Vector2D, Vector2D> VisualToolMask::SmoothToleranceBounds() const {
+	float top = ActionBounds(VisualToolMaskAction::Clear).second.Y() + 8.f;
+	return {Vector2D(12.f, top),
+		Vector2D(12.f + SliderLabelWidth(_("Smooth tolerance")) + 102.f, top + 34.f)};
+}
+
+std::pair<Vector2D, Vector2D> VisualToolMask::SmoothAngleBounds() const {
+	auto tolerance = SmoothToleranceBounds();
+	float left = tolerance.second.X() + 8.f;
+	float top = tolerance.first.Y();
+	float width = SliderLabelWidth(_("Angle threshold")) + 102.f;
+	if (left + width > canvas_size.X() - 8.f) {
+		left = 12.f;
+		top = tolerance.second.Y() + 8.f;
+	}
+	return {Vector2D(left, top), Vector2D(left + width, top + 34.f)};
+}
+
+std::pair<Vector2D, Vector2D> VisualToolMask::EdgeSnapBounds() const {
+	auto angle = SmoothAngleBounds();
+	float left = angle.second.X() + 8.f;
+	float top = angle.first.Y();
+	float width = MeasuredTextWidth(_("Auto snap"), true) + 24.f;
+	if (left + width > canvas_size.X() - 8.f) {
+		left = 12.f;
+		top = angle.second.Y() + 8.f;
+	}
+	return {Vector2D(left, top), Vector2D(left + width, top + 34.f)};
+}
+
+std::pair<Vector2D, Vector2D> VisualToolMask::EdgeSnapRadiusBounds() const {
+	auto snap = EdgeSnapBounds();
+	float left = snap.second.X() + 8.f;
+	float top = snap.first.Y();
+	float width = SliderLabelWidth(_("Edge search")) + 102.f;
+	if (left + width > canvas_size.X() - 8.f) {
+		left = 12.f;
+		top = snap.second.Y() + 8.f;
+	}
+	return {Vector2D(left, top), Vector2D(left + width, top + 34.f)};
 }
 
 std::pair<Vector2D, Vector2D> VisualToolMask::ActionBounds(VisualToolMaskAction action) const {
+	// While the range is being marked out, how to mark it is the first thing on the
+	// bar; the history buttons step aside for it.
+	bool ranging = mode == MASK_COLOR && color_stage == ColorStage::Range && !ai_refining;
+	float history_left = ranging ? 62.f : 12.f;
+	if (action == VisualToolMaskAction::RangeShape)
+		return {Vector2D(12.f, 10.f), Vector2D(54.f, 44.f)};
 	if (action == VisualToolMaskAction::Undo)
-		return {Vector2D(12.f, 10.f), Vector2D(46.f, 44.f)};
+		return {Vector2D(history_left, 10.f), Vector2D(history_left + 34.f, 44.f)};
 	if (action == VisualToolMaskAction::Redo)
-		return {Vector2D(54.f, 10.f), Vector2D(88.f, 44.f)};
+		return {Vector2D(history_left + 42.f, 10.f), Vector2D(history_left + 76.f, 44.f)};
+	// Sits in the smoothing row rather than in the button run, so it is left out
+	// of the layout walk below.
+	if (action == VisualToolMaskAction::EdgeSnap) return EdgeSnapBounds();
 	float top = 10.f;
 	constexpr float height = 34.f;
 	constexpr float gap = 8.f;
-	bool brush_mode = color_selection_mode == VisualSelectionMode::BrushAdd ||
-		color_selection_mode == VisualSelectionMode::BrushSubtract;
+	bool pipette_mode = color_selection_mode == VisualSelectionMode::PipetteAdd ||
+		color_selection_mode == VisualSelectionMode::PipetteSubtract;
+	bool brush_mode = !pipette_mode;
+	// The offset slider holds its place even while it cannot be used, so the button
+	// run does not shift about as the selection progresses through its stages.
 	float left = mode == MASK_BRUSH ? MaskBrushBounds().second.X() + gap :
-		mode == MASK_COLOR && brush_mode ? BrushBounds().second.X() + gap :
-		mode == MASK_COLOR && CanOffsetSelection() ? OffsetBounds().second.X() + gap :
-		96.f;
+		mode == MASK_COLOR ? OffsetBounds().second.X() + gap :
+		ActionBounds(VisualToolMaskAction::Redo).second.X() + gap;
 	auto mode_label = [&]() -> wxString {
 		switch (color_selection_mode) {
 			case VisualSelectionMode::PipetteAdd: return _("Pipette add");
@@ -372,15 +484,16 @@ std::pair<Vector2D, Vector2D> VisualToolMask::ActionBounds(VisualToolMaskAction 
 			case VisualToolMaskAction::AutoFill: return _("Auto fill");
 			case VisualToolMaskAction::SelectionMode: return mode_label();
 			case VisualToolMaskAction::AISelect: return _("AI recognition");
+			case VisualToolMaskAction::Templates: return _("Templates");
+			case VisualToolMaskAction::SmoothEdges: return _("Smooth edges");
+			case VisualToolMaskAction::EdgeSnap: return _("Auto snap");
 			default: return wxString();
 		}
 	};
 	auto width_for = [&](VisualToolMaskAction item) {
-		gl_text->SetFont("Verdana", 9, true, false);
-		int text_width, text_height;
-		gl_text->GetExtent(from_wx(label_for(item)), text_width, text_height);
-		return static_cast<float>(text_width +
-			(item == VisualToolMaskAction::SelectionMode ? 32 : 24));
+		return MeasuredTextWidth(label_for(item), true) +
+			(item == VisualToolMaskAction::SelectionMode ||
+			 item == VisualToolMaskAction::Templates ? 32.f : 24.f);
 	};
 	std::vector<VisualToolMaskAction> actions;
 	if (ai_refining)
@@ -388,9 +501,11 @@ std::pair<Vector2D, Vector2D> VisualToolMask::ActionBounds(VisualToolMaskAction 
 			VisualToolMaskAction::Create, VisualToolMaskAction::Clear};
 	else if (mode == MASK_COLOR) {
 		actions = {VisualToolMaskAction::SelectionMode};
+		actions.push_back(VisualToolMaskAction::Templates);
 		actions.push_back(VisualToolMaskAction::AISelect);
 		if (has_color_sample)
 			actions.push_back(VisualToolMaskAction::AutoFill);
+		actions.push_back(VisualToolMaskAction::SmoothEdges);
 		actions.push_back(VisualToolMaskAction::Create);
 		actions.push_back(VisualToolMaskAction::Clear);
 	}
@@ -405,18 +520,42 @@ std::pair<Vector2D, Vector2D> VisualToolMask::ActionBounds(VisualToolMaskAction 
 		}
 		if (item == action) return {Vector2D(left, top), Vector2D(left + width, top + height)};
 		left += width + gap;
+		// The slider belonging to the selection mode sits directly behind its
+		// button, so the rest of the run starts after it.
+		if (item == VisualToolMaskAction::SelectionMode && mode == MASK_COLOR) {
+			if (pipette_mode && has_color_sample) {
+				auto bounds = ToleranceBounds();
+				left = bounds.second.X() + gap;
+				top = bounds.first.Y();
+			}
+			else if (brush_mode) {
+				auto bounds = BrushBounds();
+				left = bounds.second.X() + gap;
+				top = bounds.first.Y();
+			}
+		}
 	}
 	return {Vector2D(left, top), Vector2D(left, top + height)};
 }
 
 float VisualToolMask::TopBarHeight() const {
 	if (ai_refining) return ActionBounds(VisualToolMaskAction::Clear).second.Y() + 10.f;
+	if (mode == MASK_COLOR && color_smooth_edges)
+		return (color_edge_snap ? EdgeSnapRadiusBounds() : EdgeSnapBounds()).second.Y() + 10.f;
 	auto last = mode == MASK_COLOR ? VisualToolMaskAction::Clear :
 		VisualToolMaskAction::GenerateText;
 	return ActionBounds(last).second.Y() + 10.f;
 }
 
 VisualToolMaskAction VisualToolMask::ActionAt(Vector2D point) {
+	auto hits = [&](VisualToolMaskAction action) {
+		auto [top_left, bottom_right] = ActionBounds(action);
+		return point.X() >= top_left.X() && point.X() <= bottom_right.X() &&
+			point.Y() >= top_left.Y() && point.Y() <= bottom_right.Y();
+	};
+	if (mode == MASK_COLOR && !ai_refining && color_stage == ColorStage::Range &&
+		hits(VisualToolMaskAction::RangeShape))
+		return VisualToolMaskAction::RangeShape;
 	for (auto action : {VisualToolMaskAction::Undo, VisualToolMaskAction::Redo}) {
 		bool enabled;
 		if (mode == MASK_COLOR && !ai_refining)
@@ -452,9 +591,12 @@ VisualToolMaskAction VisualToolMask::ActionAt(Vector2D point) {
 			VisualToolMaskAction::Create, VisualToolMaskAction::Clear};
 	else if (mode == MASK_COLOR) {
 		actions = {VisualToolMaskAction::SelectionMode};
+		actions.push_back(VisualToolMaskAction::Templates);
 		actions.push_back(VisualToolMaskAction::AISelect);
 		if (has_color_sample)
 			actions.push_back(VisualToolMaskAction::AutoFill);
+		actions.push_back(VisualToolMaskAction::SmoothEdges);
+		if (color_smooth_edges) actions.push_back(VisualToolMaskAction::EdgeSnap);
 		actions.push_back(VisualToolMaskAction::Create);
 		actions.push_back(VisualToolMaskAction::Clear);
 	}
@@ -466,6 +608,10 @@ VisualToolMaskAction VisualToolMask::ActionAt(Vector2D point) {
 		if (action == VisualToolMaskAction::AutoFill && !has_color_sample) continue;
 		if (action == VisualToolMaskAction::SelectionMode && color_stage == ColorStage::Range) continue;
 		if (action == VisualToolMaskAction::AISelect && color_stage == ColorStage::Range) continue;
+		if (action == VisualToolMaskAction::Templates && color_stage == ColorStage::Range) continue;
+		if ((action == VisualToolMaskAction::SmoothEdges ||
+			action == VisualToolMaskAction::EdgeSnap) &&
+			(color_stage == ColorStage::Range || color_contours.empty())) continue;
 		if (action == VisualToolMaskAction::GenerateText && ai::GetApiKey().empty()) continue;
 		if ((action == VisualToolMaskAction::Create || action == VisualToolMaskAction::RemoveText ||
 			action == VisualToolMaskAction::GenerateText) && !CanCreateMask()) continue;
@@ -480,6 +626,7 @@ void VisualToolMask::ResetColorSelection() {
 	color_stage = ColorStage::Range;
 	color_selection_mode = VisualSelectionMode::PipetteAdd;
 	color_range_start = color_range_end = Vector2D();
+	color_range_path.clear();
 	color_contours.clear();
 	color_segmenter.Clear();
 	color_contours_dirty = false;
@@ -487,9 +634,20 @@ void VisualToolMask::ResetColorSelection() {
 	color_frame_width = color_frame_height = 0;
 	color_offset = 0;
 	color_auto_fill = false;
+	color_smooth_edges = false;
+	color_smooth_tolerance = 10.0;
+	color_smooth_angle = 35.0;
+	color_edge_snap = false;
+	color_edge_snap_radius = 6.0;
+	color_display_dirty = true;
+	color_sample_operations.clear();
+	color_ai_base = false;
 	drawing = false;
 	tolerance_dragging = false;
 	offset_dragging = false;
+	smooth_tolerance_dragging = false;
+	smooth_angle_dragging = false;
+	edge_snap_radius_dragging = false;
 	brush_slider_dragging = false;
 	color_brush_drawing = false;
 	color_brush_moved = false;
@@ -502,8 +660,22 @@ void VisualToolMask::ResetColorSelection() {
 }
 
 VisualToolMask::ColorHistoryState VisualToolMask::CaptureColorHistory() const {
-	return {color_segmenter, color_sample, color_stage, color_tolerance, color_offset,
-		has_color_sample, color_auto_fill};
+	ColorHistoryState state;
+	state.segmenter = color_segmenter;
+	state.sample = color_sample;
+	state.stage = color_stage;
+	state.tolerance = color_tolerance;
+	state.offset = color_offset;
+	state.has_sample = has_color_sample;
+	state.auto_fill = color_auto_fill;
+	state.smooth_edges = color_smooth_edges;
+	state.smooth_tolerance = color_smooth_tolerance;
+	state.smooth_angle = color_smooth_angle;
+	state.edge_snap = color_edge_snap;
+	state.edge_snap_radius = color_edge_snap_radius;
+	state.sample_operations = color_sample_operations;
+	state.ai_base = color_ai_base;
+	return state;
 }
 
 VisualToolMask::ColorHistoryState VisualToolMask::CaptureColorBrushHistory() const {
@@ -514,6 +686,13 @@ VisualToolMask::ColorHistoryState VisualToolMask::CaptureColorBrushHistory() con
 	state.offset = color_offset;
 	state.has_sample = has_color_sample;
 	state.auto_fill = color_auto_fill;
+	state.smooth_edges = color_smooth_edges;
+	state.smooth_tolerance = color_smooth_tolerance;
+	state.smooth_angle = color_smooth_angle;
+	state.edge_snap = color_edge_snap;
+	state.edge_snap_radius = color_edge_snap_radius;
+	state.sample_operations = color_sample_operations;
+	state.ai_base = color_ai_base;
 	state.contours_only = true;
 	state.contours = color_contours;
 	return state;
@@ -526,6 +705,14 @@ void VisualToolMask::RestoreColorHistory(ColorHistoryState state) {
 	color_offset = state.offset;
 	has_color_sample = state.has_sample;
 	color_auto_fill = state.auto_fill;
+	color_smooth_edges = state.smooth_edges;
+	color_smooth_tolerance = state.smooth_tolerance;
+	color_smooth_angle = state.smooth_angle;
+	color_edge_snap = state.edge_snap;
+	color_edge_snap_radius = state.edge_snap_radius;
+	color_sample_operations = std::move(state.sample_operations);
+	color_ai_base = state.ai_base;
+	color_display_dirty = true;
 	if (state.contours_only) {
 		color_contours = std::move(state.contours);
 		color_contours_dirty = true;
@@ -644,11 +831,40 @@ void VisualToolMask::ResetAIRefinement() {
 	parent->SetCursor(wxCursor(wxCURSOR_ARROW));
 }
 
+void VisualToolMask::UpdateSmoothTolerance(Vector2D point) {
+	auto [top_left, bottom_right] = SmoothToleranceBounds();
+	float left = top_left.X() + SliderLabelWidth(_("Smooth tolerance"));
+	float right = bottom_right.X() - 12.f;
+	double ratio = std::clamp((point.X() - left) / std::max(1.f, right - left), 0.f, 1.f);
+	color_smooth_tolerance = std::round((.1 + ratio * 49.9) * 100.0) / 100.0;
+	color_display_dirty = true;
+}
+
+void VisualToolMask::UpdateSmoothAngle(Vector2D point) {
+	auto [top_left, bottom_right] = SmoothAngleBounds();
+	float left = top_left.X() + SliderLabelWidth(_("Angle threshold"));
+	float right = bottom_right.X() - 12.f;
+	double ratio = std::clamp((point.X() - left) / std::max(1.f, right - left), 0.f, 1.f);
+	color_smooth_angle = std::round(ratio * 1800.0) / 10.0;
+	color_display_dirty = true;
+}
+
+void VisualToolMask::UpdateEdgeSnapRadius(Vector2D point) {
+	auto [top_left, bottom_right] = EdgeSnapRadiusBounds();
+	float left = top_left.X() + SliderLabelWidth(_("Edge search"));
+	float right = bottom_right.X() - 12.f;
+	double ratio = std::clamp((point.X() - left) / std::max(1.f, right - left), 0.f, 1.f);
+	double radius = std::round(2.0 + ratio * 48.0);
+	if (radius == color_edge_snap_radius) return;
+	color_edge_snap_radius = radius;
+	if (color_contours_dirty) SyncColorSegmenterFromContours();
+	RefreshColorContours();
+}
+
 void VisualToolMask::UpdateColorTolerance(Vector2D point) {
 	if (color_contours_dirty) SyncColorSegmenterFromContours();
 	auto [top_left, bottom_right] = ToleranceBounds();
-	constexpr float slider_left_padding = 75.f;
-	float left = top_left.X() + slider_left_padding;
+	float left = top_left.X() + SliderLabelWidth(_("Tolerance"));
 	float right = bottom_right.X() - 12.f;
 	double value = std::clamp((point.X() - left) / std::max(1.f, right - left), 0.f, 1.f) * 20.0;
 	color_tolerance = std::round(value * 10.0) / 10.0;
@@ -658,7 +874,7 @@ void VisualToolMask::UpdateColorTolerance(Vector2D point) {
 void VisualToolMask::UpdateColorOffset(Vector2D point) {
 	if (color_contours_dirty) SyncColorSegmenterFromContours();
 	auto [top_left, bottom_right] = OffsetBounds();
-	float left = top_left.X() + 58.f;
+	float left = top_left.X() + SliderLabelWidth(_("Offset"));
 	float right = bottom_right.X() - 12.f;
 	double ratio = std::clamp((point.X() - left) / std::max(1.f, right - left), 0.f, 1.f);
 	color_offset = static_cast<int>(std::lround(ratio * 50.0 - 25.0));
@@ -667,7 +883,7 @@ void VisualToolMask::UpdateColorOffset(Vector2D point) {
 
 void VisualToolMask::UpdateColorBrushSize(Vector2D point) {
 	auto [top_left, bottom_right] = BrushBounds();
-	float left = top_left.X() + 70.f;
+	float left = top_left.X() + SliderLabelWidth(_("Size"));
 	float right = bottom_right.X() - 12.f;
 	double ratio = std::clamp((point.X() - left) / std::max(1.f, right - left), 0.f, 1.f);
 	color_brush_radius = static_cast<float>(std::lround(2.0 + ratio * 198.0));
@@ -701,11 +917,50 @@ bool VisualToolMask::EnsureColorSegmenter() {
 		if (!color_segmenter.PrepareEmpty(*frame, static_cast<int>(std::floor(a.X())),
 			static_cast<int>(std::floor(a.Y())), static_cast<int>(std::ceil(b.X())),
 			static_cast<int>(std::ceil(b.Y())))) return false;
+		if (!color_range_path.empty()) {
+			std::vector<Vector2D> lasso;
+			lasso.reserve(color_range_path.size());
+			for (auto point : color_range_path) lasso.push_back(to_frame(point));
+			color_segmenter.SetRangeMask(lasso);
+		}
 		color_frame_width = frame->width;
 		color_frame_height = frame->height;
 		return true;
 	}
 	catch (...) { return false; }
+}
+
+void VisualToolMask::ShowRangeShapeMenu() {
+	constexpr int rectangle_id = 17321;
+	constexpr int freehand_id = 17322;
+	int icon_size = OPT_GET("App/Toolbar Icon Size")->GetInt();
+	wxMenu menu;
+	// Plain items rather than check items: a checked item is drawn with a tick in
+	// place of its bitmap, and both icons should stay visible. Which one is active
+	// is already shown by the button itself.
+	auto rectangle_item = menu.Append(rectangle_id, _("Rectangle range"));
+	rectangle_item->SetBitmap(MakeVisualRangeShapeBitmap(false, icon_size));
+	auto freehand_item = menu.Append(freehand_id, _("Freehand range"));
+	freehand_item->SetBitmap(MakeVisualRangeShapeBitmap(true, icon_size));
+	auto [top_left, bottom_right] = ActionBounds(VisualToolMaskAction::RangeShape);
+	int selected = parent->GetPopupMenuSelectionFromUser(menu,
+		wxPoint(static_cast<int>(top_left.X()), static_cast<int>(bottom_right.Y())));
+	if (selected == rectangle_id) color_range_shape = ColorRangeShape::Rectangle;
+	else if (selected == freehand_id) color_range_shape = ColorRangeShape::Freehand;
+	else return;
+	color_range_path.clear();
+	color_range_start = color_range_end = Vector2D();
+	drawing = false;
+	parent->Render();
+}
+
+std::vector<Vector2D> VisualToolMask::ColorRangeBoundary() const {
+	if (!color_range_path.empty()) return color_range_path;
+	Vector2D top_left = color_range_start.Min(color_range_end);
+	Vector2D bottom_right = color_range_start.Max(color_range_end);
+	if (!(bottom_right.X() > top_left.X()) || !(bottom_right.Y() > top_left.Y())) return {};
+	return {top_left, Vector2D(bottom_right.X(), top_left.Y()), bottom_right,
+		Vector2D(top_left.X(), bottom_right.Y())};
 }
 
 void VisualToolMask::ShowColorModeMenu() {
@@ -731,6 +986,174 @@ void VisualToolMask::ShowColorModeMenu() {
 	else if (selected == brush_subtract_id) color_selection_mode = VisualSelectionMode::BrushSubtract;
 	UpdateColorCursor();
 	parent->Render();
+}
+
+bool VisualToolMask::CanCaptureColorTemplate() const {
+	return mode == MASK_COLOR && color_stage == ColorStage::Ready &&
+		(color_ai_base || !color_sample_operations.empty());
+}
+
+VisualColorTemplate VisualToolMask::CaptureColorTemplate(std::string name) const {
+	VisualColorTemplate color_template;
+	color_template.name = std::move(name);
+	color_template.sample_operations = color_sample_operations;
+	color_template.ai_base = color_ai_base;
+	color_template.tolerance = color_tolerance;
+	color_template.offset = color_offset;
+	color_template.auto_fill = color_auto_fill;
+	color_template.smooth_edges = color_smooth_edges;
+	color_template.smooth_tolerance = color_smooth_tolerance;
+	color_template.smooth_angle = color_smooth_angle;
+	color_template.edge_snap = color_edge_snap;
+	color_template.edge_snap_radius = color_edge_snap_radius;
+	color_template.selection_mode = color_selection_mode == VisualSelectionMode::PipetteSubtract ?
+		VisualSelectionMode::PipetteSubtract : VisualSelectionMode::PipetteAdd;
+	return color_template;
+}
+
+bool VisualToolMask::LoadColorTemplate(VisualColorTemplate const& color_template) {
+	if (mode != MASK_COLOR || color_stage == ColorStage::Range) return false;
+	try {
+		auto frame = c->videoController->GetFrame(frame_number, true);
+		if (!frame || frame->width <= 0 || frame->height <= 0) return false;
+		auto to_frame = [&](Vector2D script) {
+			return Vector2D(script.X() * frame->width / script_res.X(),
+				script.Y() * frame->height / script_res.Y());
+		};
+		Vector2D raw_a = to_frame(color_range_start);
+		Vector2D raw_b = to_frame(color_range_end);
+		int left = std::clamp(static_cast<int>(std::floor(std::min(raw_a.X(), raw_b.X()))), 0, frame->width - 1);
+		int top = std::clamp(static_cast<int>(std::floor(std::min(raw_a.Y(), raw_b.Y()))), 0, frame->height - 1);
+		int right = std::clamp(static_cast<int>(std::ceil(std::max(raw_a.X(), raw_b.X()))), left + 1, frame->width);
+		int bottom = std::clamp(static_cast<int>(std::ceil(std::max(raw_a.Y(), raw_b.Y()))), top + 1, frame->height);
+
+		VisualColorSegmenter segmenter;
+		if (!segmenter.PrepareEmpty(*frame, left, top, right, bottom)) return false;
+		if (color_template.ai_base) {
+			wxImage crop = GetImage(*frame).GetSubImage(wxRect(left, top, right - left, bottom - top));
+			auto contours = GenerateVisualAISelection(c->parent, crop);
+			for (auto& contour : contours)
+				for (auto& point : contour)
+					point = point + Vector2D(static_cast<float>(left), static_cast<float>(top));
+			segmenter.SetContours(contours, true);
+		}
+		for (auto const& operation : color_template.sample_operations)
+			if (!segmenter.AddSample(*frame, operation.sample, operation.add)) return false;
+
+		PushColorHistory();
+		color_segmenter = std::move(segmenter);
+		color_sample_operations = color_template.sample_operations;
+		color_ai_base = color_template.ai_base;
+		if (!color_sample_operations.empty())
+			color_sample = color_sample_operations.back().sample;
+		has_color_sample = !color_sample_operations.empty();
+		color_tolerance = color_template.tolerance;
+		color_offset = color_template.offset;
+		color_auto_fill = color_template.auto_fill && has_color_sample;
+		color_smooth_edges = color_template.smooth_edges;
+		color_smooth_tolerance = color_template.smooth_tolerance;
+		color_smooth_angle = color_template.smooth_angle;
+		color_edge_snap = color_template.edge_snap;
+		color_edge_snap_radius = color_template.edge_snap_radius;
+		color_selection_mode = color_template.selection_mode;
+		color_frame_width = frame->width;
+		color_frame_height = frame->height;
+		color_stage = ColorStage::Ready;
+		color_contours_dirty = false;
+		RefreshColorContours();
+		UpdateColorCursor();
+		parent->Render();
+		return true;
+	}
+	catch (std::exception const& error) {
+		wxMessageBox(to_wx(error.what()), _("Template loading failed"),
+			wxOK | wxICON_ERROR, c->parent);
+		return false;
+	}
+}
+
+void VisualToolMask::ShowColorTemplatesMenu() {
+	enum class TemplateMenuAction { Load, Update, Delete };
+	struct TemplateMenuEntry {
+		int id;
+		TemplateMenuAction action;
+		size_t index;
+	};
+	constexpr int add_id = 17601;
+	int next_id = 17602;
+	wxMenu menu;
+	auto add_item = menu.Append(add_id, _("Add new template..."));
+	add_item->Enable(CanCaptureColorTemplate());
+
+	auto load_menu = new wxMenu;
+	auto update_menu = new wxMenu;
+	auto delete_menu = new wxMenu;
+	std::vector<TemplateMenuEntry> entries;
+	auto& templates = VisualColorTemplates();
+	for (size_t i = 0; i < templates.size(); ++i) {
+		wxString name = to_wx(templates[i].name);
+		int load_id = next_id++;
+		int update_id = next_id++;
+		int delete_id = next_id++;
+		load_menu->Append(load_id, name);
+		auto update_entry = update_menu->Append(update_id, name);
+		update_entry->Enable(CanCaptureColorTemplate());
+		delete_menu->Append(delete_id, name);
+		entries.push_back({load_id, TemplateMenuAction::Load, i});
+		entries.push_back({update_id, TemplateMenuAction::Update, i});
+		entries.push_back({delete_id, TemplateMenuAction::Delete, i});
+	}
+	auto load_item = menu.AppendSubMenu(load_menu, _("Load"));
+	auto update_item = menu.AppendSubMenu(update_menu, _("Update"));
+	auto delete_item = menu.AppendSubMenu(delete_menu, _("Delete"));
+	load_item->Enable(!templates.empty() && color_stage != ColorStage::Range);
+	update_item->Enable(!templates.empty() && CanCaptureColorTemplate());
+	delete_item->Enable(!templates.empty());
+
+	auto [top_left, bottom_right] = ActionBounds(VisualToolMaskAction::Templates);
+	int selected = parent->GetPopupMenuSelectionFromUser(menu,
+		wxPoint(static_cast<int>(top_left.X()), static_cast<int>(bottom_right.Y())));
+	if (selected == add_id) {
+		wxString default_name = agi::wxformat(_("Template %zu"), templates.size() + 1);
+		wxTextEntryDialog dialog(c->parent, _("Template name:"),
+			_("Add template"), default_name);
+		if (dialog.ShowModal() != wxID_OK) return;
+		wxString name = dialog.GetValue();
+		name.Trim(true).Trim(false);
+		if (name.empty()) return;
+		std::string utf8_name = from_wx(name);
+		if (std::any_of(templates.begin(), templates.end(),
+			[&](VisualColorTemplate const& item) { return item.name == utf8_name; })) {
+			wxMessageBox(_("A template with this name already exists."),
+				_("Add template"), wxOK | wxICON_INFORMATION, c->parent);
+			return;
+		}
+		templates.insert(templates.begin(), CaptureColorTemplate(std::move(utf8_name)));
+		parent->Render();
+		return;
+	}
+
+	auto entry = std::find_if(entries.begin(), entries.end(),
+		[&](TemplateMenuEntry const& item) { return item.id == selected; });
+	if (entry == entries.end() || entry->index >= templates.size()) return;
+	if (entry->action == TemplateMenuAction::Load) {
+		LoadColorTemplate(templates[entry->index]);
+		return;
+	}
+	if (entry->action == TemplateMenuAction::Update) {
+		std::string name = templates[entry->index].name;
+		templates.erase(templates.begin() + entry->index);
+		templates.insert(templates.begin(), CaptureColorTemplate(std::move(name)));
+		parent->Render();
+		return;
+	}
+	wxString name = to_wx(templates[entry->index].name);
+	if (wxMessageBox(agi::wxformat(_("Delete template '%s'?"), name),
+		_("Delete template"), wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION,
+		c->parent) == wxYES) {
+		templates.erase(templates.begin() + entry->index);
+		parent->Render();
+	}
 }
 
 void VisualToolMask::ShowAISelectionMenu() {
@@ -769,6 +1192,8 @@ bool VisualToolMask::PrepareAISelection() {
 		PushColorHistory();
 		color_segmenter.PrepareEmpty(*frame, left, top, right, bottom);
 		color_segmenter.SetContours(contours, true);
+		color_sample_operations.clear();
+		color_ai_base = true;
 		has_color_sample = false;
 		color_auto_fill = false;
 		color_offset = 0;
@@ -802,6 +1227,8 @@ bool VisualToolMask::PrepareColorSelection(Vector2D sample_point) {
 		bool prepared = color_segmenter.AddSample(*frame, color_sample,
 			color_selection_mode == VisualSelectionMode::PipetteAdd);
 		if (!prepared) return false;
+		color_sample_operations.push_back({color_sample,
+			color_selection_mode == VisualSelectionMode::PipetteAdd});
 		has_color_sample = true;
 		color_frame_width = frame->width;
 		color_frame_height = frame->height;
@@ -827,9 +1254,15 @@ void VisualToolMask::PaintColorBrush(Vector2D from, Vector2D to) {
 	color_contours = screen_contours;
 	for (auto& contour : color_contours)
 		for (auto& point : contour) point = ToScriptCoords(point);
+	// The pipette selection is defined inside the range the user marked out, and
+	// the cached crop is restricted to it anyway. Cut the painted result to the same
+	// boundary so the brush cannot drag the outline past it - the freehand range
+	// included, not just its bounding box.
+	ClipVectorContoursToPolygon(color_contours, ColorRangeBoundary());
 	color_offset = 0;
 	color_auto_fill = false;
 	color_contours_dirty = true;
+	color_display_dirty = true;
 }
 
 void VisualToolMask::SyncColorSegmenterFromContours() {
@@ -844,11 +1277,93 @@ void VisualToolMask::SyncColorSegmenterFromContours() {
 	color_contours_dirty = false;
 }
 
+std::vector<std::vector<Vector2D>> VisualToolMask::SnapColorContoursToEdges(
+	std::vector<std::vector<Vector2D>> raw_contours) const {
+	try {
+		auto frame = c->videoController->GetFrame(frame_number, true);
+		if (!frame || frame->width <= 0 || frame->height <= 0) return raw_contours;
+		auto to_frame = [&](Vector2D script) {
+			return Vector2D(script.X() * frame->width / script_res.X(),
+				script.Y() * frame->height / script_res.Y());
+		};
+		Vector2D a = to_frame(color_range_start), b = to_frame(color_range_end);
+		// Snap inside the marked range only: points landing on the crop border are
+		// held in place and results are clamped to it, so the outline cannot be
+		// pulled out of the range the user selected.
+		int left = static_cast<int>(std::floor(std::min(a.X(), b.X())));
+		int top = static_cast<int>(std::floor(std::min(a.Y(), b.Y())));
+		int right = static_cast<int>(std::ceil(std::max(a.X(), b.X())));
+		int bottom = static_cast<int>(std::ceil(std::max(a.Y(), b.Y())));
+		return SnapContoursToImageEdges(*frame, std::move(raw_contours), left, top,
+			right - left, bottom - top,
+			static_cast<int>(std::lround(color_edge_snap_radius)));
+	}
+	catch (...) {
+		return raw_contours;
+	}
+}
+
+std::vector<std::vector<Vector2D>> const& VisualToolMask::ColorDisplayContours() const {
+	// Rounding the corners and flattening the beziers for the preview costs about
+	// as much as extracting the contours did, and the result depends on nothing that
+	// a repaint changes. Rebuild it only when the geometry or the settings move.
+	size_t source_points = 0;
+	for (auto const& contour : color_contours) source_points += contour.size();
+	if (!color_display_dirty && source_points == color_display_source_points)
+		return color_display_contours;
+	color_display_dirty = false;
+	color_display_source_points = source_points;
+	color_display_contours.clear();
+	if (!color_smooth_edges) {
+		color_display_contours = color_contours;
+		return color_display_contours;
+	}
+	for (auto const& curves : BuildSmoothedColorSplines()) {
+		if (curves.empty()) continue;
+		auto& contour = color_display_contours.emplace_back();
+		contour.push_back(curves.front().p1);
+		for (auto const& curve : curves) {
+			if (curve.type == SplineCurve::LINE) {
+				contour.push_back(curve.p2);
+				continue;
+			}
+			float length = (curve.p2 - curve.p1).Len() +
+				(curve.p3 - curve.p2).Len() + (curve.p4 - curve.p3).Len();
+			int steps = std::clamp(static_cast<int>(std::ceil(length / 4.f)), 4, 64);
+			for (int step = 1; step <= steps; ++step)
+				contour.push_back(curve.GetPoint(static_cast<float>(step) / steps));
+		}
+		if (contour.size() > 3 && (contour.front() - contour.back()).SquareLen() < 1e-5f)
+			contour.pop_back();
+	}
+	if (color_display_contours.empty()) color_display_contours = color_contours;
+	return color_display_contours;
+}
+
+std::vector<std::vector<SplineCurve>> VisualToolMask::BuildSmoothedColorSplines() const {
+	std::vector<std::vector<SplineCurve>> result;
+	result.reserve(color_contours.size());
+	// Auto snap takes the smoothing over: it has put the outline on a real picture
+	// edge, and the tolerance that decides how far the fit may stray from it is then
+	// the snap's business, not a slider's. The angle threshold stays the user's, so
+	// deliberate corners still survive.
+	double tolerance = color_edge_snap ? snapped_smooth_tolerance :
+		color_smooth_tolerance;
+	for (auto const& contour : color_contours) {
+		auto curves = SmoothClosedContour(contour, tolerance, color_smooth_angle);
+		if (!curves.empty()) result.push_back(std::move(curves));
+	}
+	return result;
+}
+
 void VisualToolMask::RefreshColorContours() {
 	color_contours.clear();
+	color_display_dirty = true;
 	if (color_segmenter.Empty()) return;
 	auto raw_contours = color_segmenter.Extract(color_tolerance, color_auto_fill, color_offset);
 	if (color_frame_width <= 0 || color_frame_height <= 0) return;
+	if (color_smooth_edges && color_edge_snap && !raw_contours.empty())
+		raw_contours = SnapColorContoursToEdges(std::move(raw_contours));
 	for (auto& contour : raw_contours) {
 		for (auto& point : contour)
 			point = Vector2D(point.X() * script_res.X() / color_frame_width,
@@ -856,6 +1371,7 @@ void VisualToolMask::RefreshColorContours() {
 		color_contours.push_back(std::move(contour));
 	}
 	color_contours_dirty = false;
+	color_display_dirty = true;
 }
 
 int VisualToolMask::PointAt(Vector2D point) const {
@@ -928,7 +1444,8 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 	}
 
 	if (event.Leaving() && !drawing && !color_brush_drawing && dragged_point < 0 &&
-		!tolerance_dragging && !offset_dragging && !brush_slider_dragging) {
+		!tolerance_dragging && !offset_dragging && !brush_slider_dragging &&
+		!smooth_tolerance_dragging && !smooth_angle_dragging && !edge_snap_radius_dragging) {
 		hovered_point = -1;
 		UpdateActionTooltip(VisualToolMaskAction::None);
 		parent->Render();
@@ -954,6 +1471,39 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 		UpdateColorOffset(mouse_pos);
 		if (event.LeftUp()) {
 			offset_dragging = false;
+			if (parent->HasCapture()) parent->ReleaseMouse();
+			parent->SetFocus();
+		}
+		UpdateActionTooltip(VisualToolMaskAction::None);
+		parent->Render();
+		return;
+	}
+	if (smooth_tolerance_dragging && (event.Dragging() || event.LeftUp())) {
+		UpdateSmoothTolerance(mouse_pos);
+		if (event.LeftUp()) {
+			smooth_tolerance_dragging = false;
+			if (parent->HasCapture()) parent->ReleaseMouse();
+			parent->SetFocus();
+		}
+		UpdateActionTooltip(VisualToolMaskAction::None);
+		parent->Render();
+		return;
+	}
+	if (smooth_angle_dragging && (event.Dragging() || event.LeftUp())) {
+		UpdateSmoothAngle(mouse_pos);
+		if (event.LeftUp()) {
+			smooth_angle_dragging = false;
+			if (parent->HasCapture()) parent->ReleaseMouse();
+			parent->SetFocus();
+		}
+		UpdateActionTooltip(VisualToolMaskAction::None);
+		parent->Render();
+		return;
+	}
+	if (edge_snap_radius_dragging && (event.Dragging() || event.LeftUp())) {
+		UpdateEdgeSnapRadius(mouse_pos);
+		if (event.LeftUp()) {
+			edge_snap_radius_dragging = false;
 			if (parent->HasCapture()) parent->ReleaseMouse();
 			parent->SetFocus();
 		}
@@ -998,6 +1548,26 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 				return;
 			}
 		}
+		if (mode == MASK_COLOR && color_smooth_edges) {
+			auto grab = [&](std::pair<Vector2D, Vector2D> const& bounds) {
+				return mouse_pos.X() >= bounds.first.X() && mouse_pos.X() <= bounds.second.X() &&
+					mouse_pos.Y() >= bounds.first.Y() && mouse_pos.Y() <= bounds.second.Y();
+			};
+			bool *target = grab(SmoothToleranceBounds()) ? &smooth_tolerance_dragging :
+				grab(SmoothAngleBounds()) ? &smooth_angle_dragging :
+				color_edge_snap && grab(EdgeSnapRadiusBounds()) ? &edge_snap_radius_dragging :
+				nullptr;
+			if (target) {
+				PushColorHistory();
+				*target = true;
+				if (!parent->HasCapture()) parent->CaptureMouse();
+				if (target == &smooth_tolerance_dragging) UpdateSmoothTolerance(mouse_pos);
+				else if (target == &smooth_angle_dragging) UpdateSmoothAngle(mouse_pos);
+				else UpdateEdgeSnapRadius(mouse_pos);
+				UpdateActionTooltip(VisualToolMaskAction::None);
+				return;
+			}
+		}
 		if (brush_mode) {
 			auto [brush_top_left, brush_bottom_right] = BrushBounds();
 			if (mouse_pos.X() >= brush_top_left.X() && mouse_pos.X() <= brush_bottom_right.X() &&
@@ -1010,7 +1580,8 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 			}
 		}
 		if (action != VisualToolMaskAction::None) {
-			if (action == VisualToolMaskAction::Undo) {
+			if (action == VisualToolMaskAction::RangeShape) ShowRangeShapeMenu();
+			else if (action == VisualToolMaskAction::Undo) {
 				if (mode == MASK_COLOR && !ai_refining) UndoColorHistory();
 				else UndoMaskHistory();
 			}
@@ -1028,6 +1599,25 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 			}
 			else if (action == VisualToolMaskAction::SelectionMode) ShowColorModeMenu();
 			else if (action == VisualToolMaskAction::AISelect) ShowAISelectionMenu();
+			else if (action == VisualToolMaskAction::Templates) ShowColorTemplatesMenu();
+			else if (action == VisualToolMaskAction::SmoothEdges) {
+				PushColorHistory();
+				color_smooth_edges = !color_smooth_edges;
+				color_display_dirty = true;
+				// Snapping is only reachable through the smoothing row, so a preview
+				// showing snapped contours with the row gone would be unexplainable.
+				if (!color_smooth_edges && color_edge_snap) {
+					color_edge_snap = false;
+					if (color_contours_dirty) SyncColorSegmenterFromContours();
+					RefreshColorContours();
+				}
+			}
+			else if (action == VisualToolMaskAction::EdgeSnap) {
+				if (color_contours_dirty) SyncColorSegmenterFromContours();
+				PushColorHistory();
+				color_edge_snap = !color_edge_snap;
+				RefreshColorContours();
+			}
 			else CreateAIMask(action);
 			parent->Render();
 			return;
@@ -1051,6 +1641,9 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 				script_point = Vector2D(std::clamp(script_point.X(), 0.f, script_res.X()),
 					std::clamp(script_point.Y(), 0.f, script_res.Y()));
 				color_range_start = color_range_end = script_point;
+				color_range_path.clear();
+				if (color_range_shape == ColorRangeShape::Freehand)
+					color_range_path.push_back(script_point);
 				drawing = true;
 				if (!parent->HasCapture()) parent->CaptureMouse();
 			}
@@ -1121,6 +1714,13 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 			script_point = Vector2D(std::clamp(script_point.X(), 0.f, script_res.X()),
 				std::clamp(script_point.Y(), 0.f, script_res.Y()));
 			color_range_end = script_point;
+			// Drop points which cannot change the outline: a lasso sampled per mouse
+			// event otherwise carries thousands of them into the range rasteriser.
+			if (color_range_shape == ColorRangeShape::Freehand &&
+				(color_range_path.empty() ||
+				 (FromScriptCoords(color_range_end) -
+				  FromScriptCoords(color_range_path.back())).Len() >= 2.f))
+				color_range_path.push_back(color_range_end);
 		}
 		else if (mode == MASK_RECTANGLE)
 			UpdateRectangle(script_point);
@@ -1130,9 +1730,27 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 
 	if (drawing && event.LeftUp()) {
 		drawing = false;
-		if (mode == MASK_COLOR &&
-			(FromScriptCoords(color_range_end) - FromScriptCoords(color_range_start)).Len() >= 3.f)
-		{
+		bool ready = false;
+		if (mode == MASK_COLOR && color_range_shape == ColorRangeShape::Freehand) {
+			// The lasso closes itself, and its bounding box becomes the cached crop.
+			if (color_range_path.size() >= 3) {
+				Vector2D top_left = color_range_path.front();
+				Vector2D bottom_right = top_left;
+				for (auto point : color_range_path) {
+					top_left = top_left.Min(point);
+					bottom_right = bottom_right.Max(point);
+				}
+				color_range_start = top_left;
+				color_range_end = bottom_right;
+				ready = (FromScriptCoords(bottom_right) -
+					FromScriptCoords(top_left)).Len() >= 3.f;
+			}
+			if (!ready) color_range_path.clear();
+		}
+		else if (mode == MASK_COLOR)
+			ready = (FromScriptCoords(color_range_end) -
+				FromScriptCoords(color_range_start)).Len() >= 3.f;
+		if (ready) {
 			color_stage = ColorStage::Sample;
 			EnsureColorSegmenter();
 			UpdateColorCursor();
@@ -1256,10 +1874,12 @@ void VisualToolMask::Draw() {
 	};
 
 	if (mode == MASK_COLOR) {
+		// Preview what the mask will actually contain, rounded corners included.
+		auto const& display_contours = ColorDisplayContours();
 		std::vector<float> flat_points;
 		std::vector<int> starts;
 		std::vector<int> counts;
-		for (auto const& contour : color_contours) {
+		for (auto const& contour : display_contours) {
 			starts.push_back(static_cast<int>(flat_points.size() / 2));
 			counts.push_back(static_cast<int>(contour.size()));
 			for (auto point : contour) {
@@ -1274,14 +1894,25 @@ void VisualToolMask::Draw() {
 			gl.DrawMultiPolygon(flat_points, starts, counts, video_pos, video_size, false);
 		}
 		if (color_stage != ColorStage::Range || drawing) {
-			Vector2D a = FromScriptCoords(color_range_start);
-			Vector2D b = FromScriptCoords(color_range_end);
-			Vector2D top_left = a.Min(b), bottom_right = a.Max(b);
 			gl.SetLineColour(point_colour, .95f, 2);
-			gl.DrawDashedLine(top_left, Vector2D(bottom_right.X(), top_left.Y()), 6.f);
-			gl.DrawDashedLine(Vector2D(bottom_right.X(), top_left.Y()), bottom_right, 6.f);
-			gl.DrawDashedLine(bottom_right, Vector2D(top_left.X(), bottom_right.Y()), 6.f);
-			gl.DrawDashedLine(Vector2D(top_left.X(), bottom_right.Y()), top_left, 6.f);
+			if (!color_range_path.empty()) {
+				for (size_t i = 0; i + 1 < color_range_path.size(); ++i)
+					gl.DrawDashedLine(FromScriptCoords(color_range_path[i]),
+						FromScriptCoords(color_range_path[i + 1]), 6.f);
+				// Show the closing leg while the lasso is still being drawn, so it is
+				// clear what will be enclosed.
+				gl.DrawDashedLine(FromScriptCoords(color_range_path.back()),
+					FromScriptCoords(color_range_path.front()), 6.f);
+			}
+			else {
+				Vector2D a = FromScriptCoords(color_range_start);
+				Vector2D b = FromScriptCoords(color_range_end);
+				Vector2D top_left = a.Min(b), bottom_right = a.Max(b);
+				gl.DrawDashedLine(top_left, Vector2D(bottom_right.X(), top_left.Y()), 6.f);
+				gl.DrawDashedLine(Vector2D(bottom_right.X(), top_left.Y()), bottom_right, 6.f);
+				gl.DrawDashedLine(bottom_right, Vector2D(top_left.X(), bottom_right.Y()), 6.f);
+				gl.DrawDashedLine(Vector2D(top_left.X(), bottom_right.Y()), top_left, 6.f);
+			}
 		}
 		bool brush_mode = color_selection_mode == VisualSelectionMode::BrushAdd ||
 			color_selection_mode == VisualSelectionMode::BrushSubtract;
@@ -1373,12 +2004,12 @@ void VisualToolMask::DrawTopBar() {
 		rounded_rectangle(brush_top_left, brush_bottom_right, 7.f, wxColour(55, 59, 64));
 		gl_text->SetFont("Verdana", 9, false, false);
 		gl_text->SetColour(agi::Color(255, 255, 255, 255));
-		std::string brush_label = from_wx(_("Brush size"));
+		std::string brush_label = from_wx(_("Size"));
 		int text_width, text_height;
 		gl_text->GetExtent(brush_label, text_width, text_height);
 		gl_text->Print(brush_label, static_cast<int>(brush_top_left.X() + 10.f),
 			static_cast<int>((brush_top_left.Y() + brush_bottom_right.Y() - text_height) * .5f));
-		float slider_left = brush_top_left.X() + 70.f;
+		float slider_left = brush_top_left.X() + SliderLabelWidth(_("Size"));
 		float slider_right = brush_bottom_right.X() - 12.f;
 		float slider_y = (brush_top_left.Y() + brush_bottom_right.Y()) * .5f;
 		gl.SetLineColour(wxColour(130, 135, 140), 1.f, 3);
@@ -1386,6 +2017,38 @@ void VisualToolMask::DrawTopBar() {
 		float knob_x = slider_left + (mask_brush_radius - 2.f) / 198.f * (slider_right - slider_left);
 		gl.SetFillColour(wxColour(190, 115, 245), 1.f);
 		gl.DrawCircle(Vector2D(knob_x, slider_y), 5.f);
+	}
+	if (mode == MASK_COLOR && !ai_refining && color_stage == ColorStage::Range) {
+		auto [top_left, bottom_right] = ActionBounds(VisualToolMaskAction::RangeShape);
+		wxColour colour = hovered_action == VisualToolMaskAction::RangeShape ?
+			wxColour(55, 59, 64).ChangeLightness(118) : wxColour(55, 59, 64);
+		rounded_rectangle(top_left, bottom_right, 7.f, colour);
+		Vector2D centre((top_left.X() + bottom_right.X()) * .5f - 5.f,
+			(top_left.Y() + bottom_right.Y()) * .5f);
+		gl.SetLineColour(*wxWHITE, 1.f, 2);
+		gl.SetFillColour(*wxWHITE, 1.f);
+		if (color_range_shape == ColorRangeShape::Rectangle) {
+			Vector2D half(7.f, 6.f);
+			gl.DrawDashedLine(centre - half, Vector2D(centre.X() + half.X(), centre.Y() - half.Y()), 4.f);
+			gl.DrawDashedLine(Vector2D(centre.X() + half.X(), centre.Y() - half.Y()), centre + half, 4.f);
+			gl.DrawDashedLine(centre + half, Vector2D(centre.X() - half.X(), centre.Y() + half.Y()), 4.f);
+			gl.DrawDashedLine(Vector2D(centre.X() - half.X(), centre.Y() + half.Y()), centre - half, 4.f);
+		}
+		else {
+			// A mouse outline: body, split top and cable.
+			gl.DrawCircle(Vector2D(centre.X(), centre.Y() + 3.f), 5.f);
+			gl.DrawLine(Vector2D(centre.X() - 5.f, centre.Y() + 1.f),
+				Vector2D(centre.X() + 5.f, centre.Y() + 1.f));
+			gl.DrawLine(Vector2D(centre.X(), centre.Y() - 2.f),
+				Vector2D(centre.X(), centre.Y() + 1.f));
+			gl.DrawLine(Vector2D(centre.X(), centre.Y() - 2.f),
+				Vector2D(centre.X(), centre.Y() - 7.f));
+		}
+		float icon_y = (top_left.Y() + bottom_right.Y()) * .5f;
+		gl.SetFillColour(*wxWHITE, 1.f);
+		gl.DrawTriangle(Vector2D(bottom_right.X() - 12.f, icon_y - 2.f),
+			Vector2D(bottom_right.X() - 4.f, icon_y - 2.f),
+			Vector2D(bottom_right.X() - 8.f, icon_y + 3.f));
 	}
 	{
 		for (auto action : {VisualToolMaskAction::Undo, VisualToolMaskAction::Redo}) {
@@ -1413,7 +2076,9 @@ void VisualToolMask::DrawTopBar() {
 		}
 	}
 
-	if (mode == MASK_COLOR && has_color_sample) {
+	bool pipette_mode = color_selection_mode == VisualSelectionMode::PipetteAdd ||
+		color_selection_mode == VisualSelectionMode::PipetteSubtract;
+	if (mode == MASK_COLOR && pipette_mode && has_color_sample) {
 		auto [top_left, bottom_right] = ToleranceBounds();
 		rounded_rectangle(top_left, bottom_right, 7.f, wxColour(55, 59, 64));
 		gl_text->SetFont("Verdana", 9, false, false);
@@ -1423,7 +2088,7 @@ void VisualToolMask::DrawTopBar() {
 		gl_text->GetExtent(label, text_width, text_height);
 		gl_text->Print(label, static_cast<int>(top_left.X() + 10.f),
 			static_cast<int>((top_left.Y() + bottom_right.Y() - text_height) * .5f));
-		float slider_left = top_left.X() + 75.f;
+		float slider_left = top_left.X() + SliderLabelWidth(_("Tolerance"));
 		float slider_right = bottom_right.X() - 12.f;
 		float slider_y = (top_left.Y() + bottom_right.Y()) * .5f;
 		gl.SetLineColour(wxColour(130, 135, 140), 1.f, 3);
@@ -1433,25 +2098,28 @@ void VisualToolMask::DrawTopBar() {
 		gl.DrawCircle(Vector2D(knob_x, slider_y), 5.f);
 
 	}
-	if (CanOffsetSelection()) {
+	if (mode == MASK_COLOR) {
+		bool offset_enabled = CanOffsetSelection();
 		int text_width, text_height;
 		gl_text->SetFont("Verdana", 9, false, false);
-		gl_text->SetColour(agi::Color(255, 255, 255, 255));
+		gl_text->SetColour(offset_enabled ? agi::Color(255, 255, 255, 255) :
+			agi::Color(145, 148, 152, 255));
 		auto [offset_top_left, offset_bottom_right] = OffsetBounds();
-		rounded_rectangle(offset_top_left, offset_bottom_right, 7.f, wxColour(55, 59, 64));
+		rounded_rectangle(offset_top_left, offset_bottom_right, 7.f,
+			offset_enabled ? wxColour(55, 59, 64) : wxColour(66, 69, 73));
 		std::string offset_label = from_wx(_("Offset"));
 		gl_text->GetExtent(offset_label, text_width, text_height);
 		gl_text->Print(offset_label, static_cast<int>(offset_top_left.X() + 10.f),
 			static_cast<int>((offset_top_left.Y() + offset_bottom_right.Y() - text_height) * .5f));
-		float offset_slider_left = offset_top_left.X() + 58.f;
+		float offset_slider_left = offset_top_left.X() + SliderLabelWidth(_("Offset"));
 		float offset_slider_right = offset_bottom_right.X() - 12.f;
 		float offset_slider_y = (offset_top_left.Y() + offset_bottom_right.Y()) * .5f;
-		gl.SetLineColour(wxColour(130, 135, 140), 1.f, 3);
+		gl.SetLineColour(offset_enabled ? wxColour(130, 135, 140) : wxColour(96, 100, 104), 1.f, 3);
 		gl.DrawLine(Vector2D(offset_slider_left, offset_slider_y),
 			Vector2D(offset_slider_right, offset_slider_y));
 		float offset_knob_x = offset_slider_left + (color_offset + 25.f) / 50.f *
 			(offset_slider_right - offset_slider_left);
-		gl.SetFillColour(wxColour(80, 220, 255), 1.f);
+		gl.SetFillColour(offset_enabled ? wxColour(80, 220, 255) : wxColour(120, 124, 128), 1.f);
 		gl.DrawCircle(Vector2D(offset_knob_x, offset_slider_y), 5.f);
 	}
 	bool brush_mode = mode == MASK_COLOR &&
@@ -1462,12 +2130,12 @@ void VisualToolMask::DrawTopBar() {
 		rounded_rectangle(brush_top_left, brush_bottom_right, 7.f, wxColour(55, 59, 64));
 		gl_text->SetFont("Verdana", 9, false, false);
 		gl_text->SetColour(agi::Color(255, 255, 255, 255));
-		std::string brush_label = from_wx(_("Brush size"));
+		std::string brush_label = from_wx(_("Size"));
 		int text_width, text_height;
 		gl_text->GetExtent(brush_label, text_width, text_height);
 		gl_text->Print(brush_label, static_cast<int>(brush_top_left.X() + 10.f),
 			static_cast<int>((brush_top_left.Y() + brush_bottom_right.Y() - text_height) * .5f));
-		float slider_left = brush_top_left.X() + 70.f;
+		float slider_left = brush_top_left.X() + SliderLabelWidth(_("Size"));
 		float slider_right = brush_bottom_right.X() - 12.f;
 		float slider_y = (brush_top_left.Y() + brush_bottom_right.Y()) * .5f;
 		gl.SetLineColour(wxColour(130, 135, 140), 1.f, 3);
@@ -1476,6 +2144,36 @@ void VisualToolMask::DrawTopBar() {
 			(slider_right - slider_left);
 		gl.SetFillColour(wxColour(80, 220, 255), 1.f);
 		gl.DrawCircle(Vector2D(knob_x, slider_y), 5.f);
+	}
+
+	if (mode == MASK_COLOR && color_smooth_edges) {
+		auto draw_slider = [&](std::pair<Vector2D, Vector2D> bounds, wxString label,
+			double ratio) {
+			auto [top_left, bottom_right] = bounds;
+			rounded_rectangle(top_left, bottom_right, 7.f, wxColour(55, 59, 64));
+			gl_text->SetFont("Verdana", 9, false, false);
+			gl_text->SetColour(agi::Color(255, 255, 255, 255));
+			std::string text = from_wx(label);
+			int text_width, text_height;
+			gl_text->GetExtent(text, text_width, text_height);
+			gl_text->Print(text, static_cast<int>(top_left.X() + 10.f),
+				static_cast<int>((top_left.Y() + bottom_right.Y() - text_height) * .5f));
+			float slider_left = top_left.X() + SliderLabelWidth(label);
+			float slider_right = bottom_right.X() - 12.f;
+			float slider_y = (top_left.Y() + bottom_right.Y()) * .5f;
+			gl.SetLineColour(wxColour(130, 135, 140), 1.f, 3);
+			gl.DrawLine(Vector2D(slider_left, slider_y), Vector2D(slider_right, slider_y));
+			gl.SetFillColour(wxColour(80, 220, 255), 1.f);
+			gl.DrawCircle(Vector2D(slider_left + static_cast<float>(std::clamp(ratio, 0.0, 1.0)) *
+				(slider_right - slider_left), slider_y), 5.f);
+		};
+		draw_slider(SmoothToleranceBounds(), _("Smooth tolerance"),
+			(color_smooth_tolerance - .1) / 49.9);
+		draw_slider(SmoothAngleBounds(), _("Angle threshold"),
+			color_smooth_angle / 180.0);
+		if (color_edge_snap)
+			draw_slider(EdgeSnapRadiusBounds(), _("Edge search"),
+				(color_edge_snap_radius - 2.0) / 48.0);
 	}
 
 	auto label_for = [&](VisualToolMaskAction action) -> wxString {
@@ -1494,6 +2192,9 @@ void VisualToolMask::DrawTopBar() {
 					case VisualSelectionMode::BrushSubtract: return _("Brush subtract");
 				}
 			case VisualToolMaskAction::AISelect: return _("AI recognition");
+			case VisualToolMaskAction::Templates: return _("Templates");
+			case VisualToolMaskAction::SmoothEdges: return _("Smooth edges");
+			case VisualToolMaskAction::EdgeSnap: return _("Auto snap");
 			default: return wxString();
 		}
 	};
@@ -1503,9 +2204,12 @@ void VisualToolMask::DrawTopBar() {
 			VisualToolMaskAction::Create, VisualToolMaskAction::Clear};
 	else if (mode == MASK_COLOR) {
 		actions = {VisualToolMaskAction::SelectionMode};
+		actions.push_back(VisualToolMaskAction::Templates);
 		actions.push_back(VisualToolMaskAction::AISelect);
 		if (has_color_sample)
 			actions.push_back(VisualToolMaskAction::AutoFill);
+		actions.push_back(VisualToolMaskAction::SmoothEdges);
+		if (color_smooth_edges) actions.push_back(VisualToolMaskAction::EdgeSnap);
 		actions.push_back(VisualToolMaskAction::Create);
 		actions.push_back(VisualToolMaskAction::Clear);
 	}
@@ -1527,6 +2231,11 @@ void VisualToolMask::DrawTopBar() {
 			enabled = enabled && color_stage != ColorStage::Range;
 		if (action == VisualToolMaskAction::AISelect)
 			enabled = color_stage != ColorStage::Range;
+		if (action == VisualToolMaskAction::Templates)
+			enabled = color_stage != ColorStage::Range;
+		if (action == VisualToolMaskAction::SmoothEdges ||
+			action == VisualToolMaskAction::EdgeSnap)
+			enabled = color_stage != ColorStage::Range && !color_contours.empty();
 		wxColour colour(55, 59, 64);
 		if (action == VisualToolMaskAction::Create) colour = wxColour(31, 153, 76);
 		else if (action == VisualToolMaskAction::Clear) colour = wxColour(183, 54, 61);
@@ -1534,13 +2243,16 @@ void VisualToolMask::DrawTopBar() {
 		else if (action == VisualToolMaskAction::AISelect) colour = wxColour(180, 105, 43);
 		else if (action == VisualToolMaskAction::GenerateText) colour = wxColour(35, 125, 153);
 		else if (action == VisualToolMaskAction::AutoFill && color_auto_fill) colour = wxColour(35, 125, 153);
+		else if (action == VisualToolMaskAction::SmoothEdges && color_smooth_edges) colour = wxColour(35, 125, 153);
+		else if (action == VisualToolMaskAction::EdgeSnap && color_edge_snap) colour = wxColour(35, 125, 153);
 		if (!enabled) colour = wxColour(66, 69, 73);
 		else if (hovered_action == action) colour = colour.ChangeLightness(118);
 		rounded_rectangle(top_left, bottom_right, 7.f, colour);
 
 		wxColour content = enabled ? *wxWHITE : wxColour(145, 148, 152);
 		gl.SetLineColour(content, 1.f, 3);
-		if (action == VisualToolMaskAction::SelectionMode) {
+		if (action == VisualToolMaskAction::SelectionMode ||
+			action == VisualToolMaskAction::Templates) {
 			float icon_y = (top_left.Y() + bottom_right.Y()) * .5f;
 			gl.SetFillColour(content, 1.f);
 			gl.DrawTriangle(Vector2D(bottom_right.X() - 14.f, icon_y - 2.f),
@@ -1641,6 +2353,29 @@ agi::Color VisualToolMask::SampleColour(AssStyle const *style) const {
 }
 
 std::string VisualToolMask::EncodeDrawing() const {
+	if (mode == MASK_COLOR && color_smooth_edges) {
+		// Rounded corners need bezier segments, so this path cannot reuse the
+		// straight m/l writer below.
+		std::string encoded;
+		for (auto const& curves : BuildSmoothedColorSplines()) {
+			if (curves.empty()) continue;
+			if (!encoded.empty()) encoded += " ";
+			encoded += "m " + curves.front().p1.Str(' ', 1);
+			char last = 'm';
+			for (auto const& curve : curves) {
+				if (curve.type == SplineCurve::LINE) {
+					if (last != 'l') { encoded += " l"; last = 'l'; }
+					encoded += " " + curve.p2.Str(' ', 1);
+				}
+				else if (curve.type == SplineCurve::BICUBIC) {
+					if (last != 'b') { encoded += " b"; last = 'b'; }
+					encoded += " " + curve.p2.Str(' ', 1) + " " + curve.p3.Str(' ', 1) +
+						" " + curve.p4.Str(' ', 1);
+				}
+			}
+		}
+		if (!encoded.empty()) return encoded;
+	}
 	if (mode == MASK_COLOR) {
 		std::string encoded;
 		for (auto const& contour : color_contours) {
