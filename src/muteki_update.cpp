@@ -232,18 +232,22 @@ std::vector<Release> ParseChangelog(std::string const& text) {
 	while (std::getline(input, line)) {
 		if (!line.empty() && line.back() == '\r') line.pop_back();
 		auto trimmed = Trim(line);
-		// A release header is "<word for version> <number> ---". The leading word is
-		// whatever the translation of that file uses, so only the trailing marker and
-		// the number itself are relied on here.
+		// A release header carries the word for "version" and the number, in
+		// whichever order that language puts them, before a trailing "---". The
+		// version is the last word containing a digit: languages disagree about the
+		// order, and Basque came back as "3.5.2 bertsioa ---", which a rule looking
+		// only at the last word dropped silently. Keep in step with parse_changelog
+		// in tools/release/release_common.py.
 		std::string version;
 		if (trimmed.ends_with("---")) {
 			auto head = Trim(trimmed.substr(0, trimmed.size() - 3));
-			auto last_space = head.find_last_of(" \t");
-			auto candidate = last_space == std::string::npos ? head : head.substr(last_space + 1);
-			if (!candidate.empty() &&
-				std::any_of(candidate.begin(), candidate.end(),
-					[](unsigned char c) { return std::isdigit(c); }))
-				version = candidate;
+			std::istringstream words(head);
+			std::string word;
+			while (words >> word) {
+				if (std::any_of(word.begin(), word.end(),
+						[](unsigned char c) { return std::isdigit(c); }))
+					version = word;
+			}
 		}
 		if (!version.empty()) {
 			if (current) {

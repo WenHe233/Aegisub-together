@@ -6523,3 +6523,2495 @@ msgid ""
 "no warranties of any kind are given either.%n%nSee the Aegisub website for "
 "information on obtaining the source code."
 msgstr ""
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Mask Editing"
+msgstr "Edytuj maskę"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Edit the active line's ASS drawing"
+msgstr "Edytuj rysunek ASS aktywnego wiersza"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Bold"
+msgstr "Pogrubienie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Italics"
+msgstr "Kursywa"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Strikeout"
+msgstr "Przekreślenie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Underline"
+msgstr "Podkreślenie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "change text"
+msgstr "modyfikowanie tekstu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Change text"
+msgstr "Modyfikowanie tekstu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Change only text in the selected lines"
+msgstr "Przepisz tekst tylko w zaznaczonych wierszach"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy text for Translator"
+msgstr "Kopiuj tekst do tłumacza"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy text and time for Translator"
+msgstr "Kopiuj tekst do tłumacza ze znacznikami czasu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show Clip Info"
+msgstr "Pokaż informacje o klipie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show Masks"
+msgstr "Pokaż maski"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle Masks"
+msgstr "Przełącz maski"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle mask rendering in the video"
+msgstr "Przełącz wyświetlanie masek"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show Subtitle"
+msgstr "Pokaż wiersze napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle Subtitle"
+msgstr "Przełącz wiersze napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle subtitle rendering in the video"
+msgstr "Przełącz wyświetlanie wierszy napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Append"
+msgstr "Dodaj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Append a control point"
+msgstr "Dodaj punkt kontrolny"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Keep gradients"
+msgstr "Zachowaj gradienty"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Right click to reset"
+msgstr "Kliknij prawym przyciskiem, aby zresetować"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Hold CTRL, SHIFT or both to be more precise while using mouse wheel"
+msgstr "Przytrzymaj CTRL, SHIFT lub oba klawisze, aby precyzyjniej regulować kółkiem myszy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Double click to see options"
+msgstr "Kliknij dwukrotnie, aby wyświetlić opcje"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Brightness: %d%%"
+msgstr "Jasność: %d%%"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "All fonts"
+msgstr "Wszystkie czcionki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Recent fonts"
+msgstr "Ostatnie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Most used"
+msgstr "Najczęstsze"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Favorites"
+msgstr "Ulubione"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Own lists"
+msgstr "Własne listy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create new list"
+msgstr "Nowa lista"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Name cannot be empty"
+msgstr "Nazwa nie może być pusta"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "List with this name already exists"
+msgstr "Lista o tej nazwie już istnieje"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Rename"
+msgstr "Zmień nazwę"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Duplicate"
+msgstr "Duplikuj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Remove from Favorites"
+msgstr "Usuń z ulubionych"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Add to Favorites"
+msgstr "Dodaj do ulubionych"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Assign to list"
+msgstr "Przypisz do listy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Remove from current list"
+msgstr "Usuń z bieżącej listy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Font picker"
+msgstr "Wybór czcionki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Refresh"
+msgstr "Aktualizuj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Preview size"
+msgstr "Rozmiar próbki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show @ fonts"
+msgstr "Pokaż czcionki @"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Import from the subtitle"
+msgstr "Importuj z napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Collecting fonts..."
+msgstr "Zbieranie czcionek..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Temporary List"
+msgstr "Lista tymczasowa"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy font's name"
+msgstr "Kopiuj nazwę czcionki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Remove from Temporary List"
+msgstr "Usuń z listy tymczasowej"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Add to Temporary List"
+msgstr "Zapisz na liście tymczasowej"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Image Mask (%d lines)"
+msgstr "Maska obrazu (%d wierszy)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Image Mask background"
+msgstr "Tło maski obrazu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show Source"
+msgstr "Pokaż źródło"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "&Join (concatenate with typesetting)"
+msgstr "&Scal (łączenie z formatowaniem)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/edit.cpp:799
+msgid "&Concatenate (with typesetting)"
+msgstr "&Połącz (z formatowaniem)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/edit.cpp:800
+msgid "Concatenate (with typesetting)"
+msgstr "Połącz (z formatowaniem)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/edit.cpp:801
+msgid "Join selected lines in a single one, concatenating text together (with typesetting)"
+msgstr "Scali wybrane wiersze, łącząc ich zawartość (z formatowaniem)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Confirm"
+msgstr "Potwierdzenie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Recently installed"
+msgstr "Ostatnio zainstalowane"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Are you sure you want to close? You have temporary saved fonts."
+msgstr "Czy na pewno zamknąć? Tymczasowo zapisano czcionki."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Source File Paths"
+msgstr "Ścieżki plików źródłowych"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Add"
+msgstr "Dodaj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "File not found"
+msgstr "Nie znaleziono pliku"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle text comment"
+msgstr "Włącz/wyłącz komentarz"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Uncomment"
+msgstr "Cofnij komentarz"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Shift to &Current Frame (End)"
+msgstr "Przesuwa wiersze do &klatki (koniec)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Shift to Current Frame (End)"
+msgstr "Przesuwa wiersze do klatki (koniec)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Shift selection so that the active line ends at current frame"
+msgstr "Przesuwa wybrane wiersze napisów tak, aby koniec pierwszego pokrywał się z bieżącą klatką."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "shift to frame end"
+msgstr "dopasowanie do końca klatki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Load associated files"
+msgstr "Wczytaj przypisane pliki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Attempt to load associated files to the subtitle"
+msgstr "Spróbuj wczytać pliki przypisane do napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Run last script"
+msgstr "Ostatni skrypt"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Run last automation script, press twice fast to open last options"
+msgstr "Uruchamia ostatni skrypt, a dwukrotne szybkie naciśnięcie wyświetla listę opcji"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp
+#, c-format
+msgid "Selected line %d has no English source text."
+msgstr "Dla %d. wybranego wiersza nie ma angielskiego tekstu źródłowego."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI translation"
+msgstr "Tłumaczenie AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "At most 100 subtitle lines can be reviewed at once. The current selection contains %d lines. Select a smaller scene."
+msgstr "Jednocześnie można sprawdzić najwyżej 100 wierszy napisów, a bieżące zaznaczenie zawiera ich %d. Zaznacz krótszą scenę."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "The selected scene is %d:%02d long. AI subtitle review can process scenes up to 2:00. Select a shorter scene."
+msgstr "Wybrana scena ma długość %d:%02d, ale sprawdzanie napisów przez AI może przetwarzać sceny o długości najwyżej 2:00. Zaznacz krótszą scenę."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "A temporary audio file could not be created."
+msgstr "Nie udało się utworzyć tymczasowego pliku dźwiękowego."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The temporary audio file could not be prepared."
+msgstr "Nie udało się przygotować tymczasowego pliku dźwiękowego."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The audio clip could not be created"
+msgstr "Nie udało się utworzyć fragmentu dźwięku"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Configure AI connection..."
+msgstr "Konfigurowanie połączenia z AI…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Configure AI connection"
+msgstr "Konfiguracja połączenia AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Configure the per-user OpenAI and Cloudinary API connections"
+msgstr "Konfiguracja połączeń API OpenAI i Cloudinary dla poszczególnych użytkowników"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Translate selected lines with AI..."
+msgstr "Tłumaczenie zaznaczonych wierszy za pomocą AI…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Translate selected lines with AI"
+msgstr "Tłumaczenie zaznaczonych wierszy za pomocą AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Send up to two minutes of selected subtitle audio and English source lines for AI-assisted Hungarian translation"
+msgstr "Wysłanie maksymalnie dwóch minut zaznaczonego dźwięku napisów i angielskich wierszy źródłowych w celu uzyskania tłumaczenia na język polski wspomaganego przez AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_connection.cpp
+msgid "API key is available for this Aegisub session."
+msgstr "Klucz API jest dostępny w tej sesji Aegisub."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is provided by the OPENAI_API_KEY environment variable."
+msgstr "Klucz API jest określony przez zmienną środowiskową OPENAI_API_KEY."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in Windows Credential Manager."
+msgstr "Klucz API jest bezpiecznie przechowywany w Menedżerze poświadczeń systemu Windows."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No API key is configured."
+msgstr "Nie skonfigurowano klucza API."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Enter an OpenAI API key first."
+msgstr "Najpierw wprowadź klucz API OpenAI."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI connection"
+msgstr "Połączenie AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The OpenAI connection is working."
+msgstr "Połączenie z OpenAI działa."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI connection failed"
+msgstr "Połączenie AI nie powiodło się"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Delete the API key stored by Aegisub on this computer?"
+msgstr "Czy usunąć klucz API przechowywany przez Aegisub na tym komputerze?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Delete API key"
+msgstr "Usuń klucz API"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The API key could not be deleted"
+msgstr "Nie udało się usunąć klucza API"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The API key could not be saved"
+msgstr "Nie udało się zapisać klucza API"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "An OpenAI API key is required for AI translation."
+msgstr "Do tłumaczenia za pomocą AI wymagany jest klucz API OpenAI."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Each user connects with their own OpenAI API key. The key is never stored in subtitle files or Aegisub's configuration file."
+msgstr "Każdy użytkownik łączy się za pomocą własnego klucza API OpenAI. Klucz nigdy nie jest zapisywany w pliku napisów ani w pliku ustawień Aegisub."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "New API key:"
+msgstr "Nowy klucz API:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Leave empty to keep using the current key"
+msgstr "Pozostaw puste, aby nadal używać bieżącego klucza"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Translation model:"
+msgstr "Model tłumaczenia:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Transcription model:"
+msgstr "Model rozpoznawania mowy:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in Windows Credential Manager"
+msgstr "Bezpieczne przechowywanie klucza w Menedżerze poświadczeń systemu Windows"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Additional translation instructions:"
+msgstr "Dodatkowe instrukcje tłumaczenia:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Test connection"
+msgstr "Testuj połączenie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Delete stored key"
+msgstr "Usuń zapisany klucz"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_translate.cpp
+msgid "Cancel request and close"
+msgstr "Anuluj żądanie i zamknij"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Transcribing the Japanese audio..."
+msgstr "Transkrypcja japońskiego nagrania…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "You: "
+msgstr "Ty:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI is updating the suggestions..."
+msgstr "AI aktualizuje sugestie…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Line %d"
+msgstr "%d. wiersz"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "English source: "
+msgstr "Źródło angielskie:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Japanese: "
+msgstr "Japoński:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Apply this line"
+msgstr "Zastosuj wiersz"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Notes: "
+msgstr "Uwagi:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI request failed"
+msgstr "Żądanie AI nie powiodło się"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Request cancelled."
+msgstr "Żądanie anulowane."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The request failed. You can close the dialog or retry by reopening it."
+msgstr "Żądanie nie powiodło się. Możesz zamknąć okno lub spróbować ponownie, otwierając je ponownie."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI: "
+msgstr "AI:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Translation suggestions are ready."
+msgstr "Sugestie tłumaczenia są gotowe."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Suggestions updated."
+msgstr "Sugestie zostały zaktualizowane."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "apply AI translation"
+msgstr "Zastosuj tłumaczenie AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Cancelling the request..."
+msgstr "Anulowanie żądania…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI subtitle translation"
+msgstr "Tłumaczenie napisów przez AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Preparing AI request..."
+msgstr "Przygotowywanie żądania AI…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Chat about this scene"
+msgstr "Porozmawiaj o tej scenie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Send"
+msgstr "Wyślij"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Apply selected lines and close"
+msgstr "Zastosuj zaznaczone wiersze i zamknij"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI-assisted subtitle translation"
+msgstr "Tłumaczenie napisów wspomagane przez AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Selected lines: %d"
+msgstr "Zaznaczone wiersze: %d"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Japanese audio and English source text are used together for context."
+msgstr "Użyj japońskiego dźwięku i angielskiego tekstu źródłowego jako kontekstu."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Request status"
+msgstr "Stan żądania"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "English source"
+msgstr "Źródło angielskie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Japanese / Romaji"
+msgstr "Japoński / romaji"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Romaji: "
+msgstr "Romaji:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Hungarian translation"
+msgstr "Tłumaczenie na węgierski"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Alternative suggestions"
+msgstr "Alternatywne sugestie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Review selected lines with AI..."
+msgstr "Sprawdź zaznaczone wiersze za pomocą AI…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Review selected lines with AI"
+msgstr "Sprawdź zaznaczone wiersze za pomocą AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check up to 100 lines and two minutes of Hungarian subtitles against Japanese audio and English source lines"
+msgstr "Sprawdzanie maksymalnie 100 wierszy i dwóch minut węgierskich napisów na podstawie japońskiego dźwięku i angielskich wierszy źródłowych"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI subtitle review"
+msgstr "Sprawdzanie napisów przez SI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "An OpenAI API key is required for AI subtitle review."
+msgstr "Do sprawdzania napisów przez SI wymagany jest klucz API OpenAI."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Review model:"
+msgstr "Model sprawdzania:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI model:"
+msgstr "Model SI:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Available OpenAI models and pricing"
+msgstr "Dostępne modele OpenAI i ceny"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "OK - no change needed"
+msgstr "OK – nie wymaga zmian"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Minor issue"
+msgstr "Drobny problem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Major issue"
+msgstr "Poważny problem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Review result"
+msgstr "Wynik sprawdzania"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "(empty)"
+msgstr "(puste)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI review"
+msgstr "Sprawdzanie przez SI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No review returned"
+msgstr "Nie otrzymano wyniku sprawdzania"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Play this line"
+msgstr "Odtwórz dźwięk wiersza"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Current subtitle"
+msgstr "Bieżący tekst napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Assessment"
+msgstr "Ocena"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Issues found"
+msgstr "Znalezione problemy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Suggested correction"
+msgstr "Sugerowana poprawka"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Transcribing the Japanese audio and reviewing the subtitles..."
+msgstr "Transkrypcja japońskiego dźwięku i sprawdzanie napisów…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "You"
+msgstr "Ty"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI is reviewing your follow-up question..."
+msgstr "AI sprawdza Twoje dodatkowe zapytanie…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Subtitle review is ready."
+msgstr "Sprawdzanie napisów zakończone."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Follow-up review is ready."
+msgstr "Dodatkowe sprawdzanie zakończone."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI subtitle quality review"
+msgstr "Kontrola jakości napisów przez AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Read-only review; subtitle text will not be changed."
+msgstr "Sprawdzanie tylko do odczytu; tekst napisów nie zostanie zmieniony."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Play full scene"
+msgstr "Odtwórz całą scenę"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Conversation"
+msgstr "Rozmowa"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Ask a follow-up question"
+msgstr "Dodatkowe pytanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Ask about meaning, tone, wording, or a specific line..."
+msgstr "Zapytaj o znaczenie, ton, sformułowanie lub konkretną linijkę…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Stop playback"
+msgstr "Zatrzymaj odtwarzanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI"
+msgstr "AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Cancel request"
+msgstr "Anuluj zapytanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Spelling / typo"
+msgstr "Pisownia / literówki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Punctuation"
+msgstr "Interpunkcja"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Grammar"
+msgstr "Gramatyka"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Wording / style"
+msgstr "Sformułowanie / styl"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "High CPS"
+msgstr "Wysokie CPS"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Word repetition"
+msgstr "Powtórzenia słów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Subtitle consistency"
+msgstr "Spójność napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Source-line mismatch"
+msgstr "Rozbieżność względem wiersza źródłowego"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "AI analysis in progress: checking %d target lines in full-subtitle context..."
+msgstr "Analiza AI w toku: sprawdzanie %d wierszy docelowych w kontekście całego napisu…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI post-check failed"
+msgstr "Kontrola końcowa AI nie powiodła się"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI post-check failed."
+msgstr "Kontrola końcowa AI nie powiodła się."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI returned too few safe alternatives or did not preserve ASS formatting."
+msgstr "AI podała zbyt mało bezpiecznych wariantów lub nie zachowała formatowania ASS."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No subtitle text was changed. Please run the post-check again."
+msgstr "Nie zmieniono żadnego tekstu napisów. Uruchom ponownie kontrolę końcową."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No clear Hungarian spelling, style, consistency or CPS issue was found in the checked lines."
+msgstr "W sprawdzanych wierszach nie znaleziono jednoznacznych problemów z węgierską pisownią, stylem, spójnością ani CPS."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI post-check"
+msgstr "Kontrola końcowa AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Suggestion %d of %d - line %d"
+msgstr "Sugestia %d/%d – wiersz %d"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Line %d   %s - %s   Current CPS: %d"
+msgstr "Wiersz %d   %s – %s   Bieżący CPS: %d"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid " (above the 15 CPS limit)"
+msgstr "(powyżej limitu 15 CPS)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Selected version CPS: %d%s"
+msgstr "CPS wybranego wariantu: %d%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "apply AI post-check corrections"
+msgstr "Zastosuj poprawki kontroli końcowej AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Post-check complete. Applied: %d; skipped: %d."
+msgstr "Kontrola końcowa zakończona. Zastosowano: %d; pominięto: %d."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Approve or skip every remaining suggestion before closing the post-check."
+msgstr "Przed zamknięciem kontroli końcowej zaakceptuj lub pomiń wszystkie pozostałe sugestie."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Hungarian subtitle post-check"
+msgstr "Kontrola końcowa węgierskich napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Spelling, wording, CPS, repetition, consistency and source-line checks"
+msgstr "Sprawdzanie pisowni, sformułowań, CPS, powtórzeń słów, spójności i wiersza źródłowego"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Preparing AI analysis..."
+msgstr "Przygotowywanie analizy AI…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Source line"
+msgstr "Wiersz źródłowy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Choose a proposed correction"
+msgstr "Wybierz sugestię poprawki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Selected version preview:"
+msgstr "Podgląd wybranego wariantu:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Approve selected correction"
+msgstr "Zatwierdź wybraną poprawkę"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI post-check..."
+msgstr "Kontrola następcza…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check Hungarian spelling, wording, CPS and consistency, then approve corrections one by one"
+msgstr "Sprawdzanie polskiej pisowni, stylu, CPS i spójności, a następnie zatwierdzanie poprawek pojedynczo"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Selected lines (%d)"
+msgstr "Wybrane wiersze (%d)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "All Default / Default - ... lines (%d)"
+msgstr "Wszystkie wiersze Default / Default - ... (%d)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Choose which subtitle lines the AI post-check should be allowed to change."
+msgstr "Wybierz, które wiersze napisów może modyfikować kontrola następcza AI."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI post-check scope"
+msgstr "Zakres kontroli następczej AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The chosen scope contains no dialogue lines to check."
+msgstr "W wybranym zakresie nie ma wierszy dialogowych do sprawdzenia."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI response referred to an invalid or duplicate subtitle line."
+msgstr "Odpowiedź AI jest nieprawidłowa lub odwołuje się do zduplikowanego wiersza napisów."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI analysis in progress"
+msgstr "Analiza AI w toku"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Back"
+msgstr "Wstecz"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Skip"
+msgstr "Pomiń"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Cancel review"
+msgstr "Przerwij kontrolę"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Fill from audio recognition..."
+msgstr "Wypełnij rozpoznawaniem mowy…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Fill from audio recognition"
+msgstr "Wypełnij rozpoznawaniem mowy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Fill the selected lines with audio-recognized timed romaji karaoke"
+msgstr "Wypełnij wybrane wiersze zsynchronizowanym karaoke romaji utworzonym na podstawie rozpoznawania mowy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Time karaoke lines..."
+msgstr "Synchronizuj karaoke wierszy…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Time karaoke lines"
+msgstr "Synchronizuj karaoke wierszy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Add audio-aligned karaoke tags to the selected lines"
+msgstr "Dodaj do wybranych wierszy tagi sylab karaoke dopasowane do dźwięku"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create kanji lines..."
+msgstr "Utwórz wiersze kanji…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create kanji lines"
+msgstr "Tworzenie wierszy kanji"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create plain kanji lines below the selected romaji lines without karaoke timing"
+msgstr "Tworzenie niezsynchronizowanych wierszy kanji pod zaznaczonymi wierszami romaji"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI karaoke"
+msgstr "Karaoke AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The karaoke request failed."
+msgstr "Żądanie karaoke nie powiodło się."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI karaoke failed"
+msgstr "Karaoke AI nie powiodło się"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The karaoke result could not be validated."
+msgstr "Nie udało się zastosować wyniku karaoke."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "fill karaoke lines from audio recognition"
+msgstr "Wypełnianie wierszy karaoke za pomocą rozpoznawania mowy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "create kanji lines with AI"
+msgstr "Tworzenie wierszy kanji za pomocą AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "time karaoke lines with AI"
+msgstr "Synchronizowanie wierszy karaoke za pomocą AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI karaoke could not be applied"
+msgstr "Karaoke AI nie może być zastosowane"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Fill selected lines from audio recognition"
+msgstr "Wypełnianie zaznaczonych wierszy za pomocą rozpoznawania mowy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create kanji lines from selected romaji"
+msgstr "Tworzenie wierszy kanji z zaznaczonych romaji"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Time selected karaoke lines from audio"
+msgstr "Synchronizowanie karaoke zaznaczonych wierszy na podstawie dźwięku"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Recognizing the Japanese audio and calculating romaji karaoke timing..."
+msgstr "Rozpoznawanie japońskiego dźwięku i obliczanie synchronizacji karaoke romaji…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Creating kanji lines from the selected romaji..."
+msgstr "Tworzenie wierszy kanji z zaznaczonych romaji…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Output style"
+msgstr "Styl wyjściowy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Kanji style:"
+msgstr "Styl kanji:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Choose the kanji style, then create the lines."
+msgstr "Wybierz styl kanji, a następnie utwórz wiersze."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The selection contains no dialogue lines."
+msgstr "Zaznaczenie nie zawiera wiersza dialogowego."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The karaoke audio interval is invalid."
+msgstr "Nieprawidłowy przedział czasowy dźwięku karaoke."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI karaoke can process at most 10 minutes at once. Choose a shorter interval."
+msgstr "AI-karaoke może jednorazowo przetwarzać maksymalnie 10 minut. Wybierz krótszy przedział."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The generated WAV file is too large for the AI request. Choose a shorter interval."
+msgstr "Utworzony plik WAV jest zbyt duży dla żądania AI. Wybierz krótszy przedział."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "OpenAI"
+msgstr "OpenAI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary"
+msgstr "Cloudinary"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "OpenAI is used for text features and custom image generation."
+msgstr "OpenAI jest wymagane do funkcji tekstowych i generowania niestandardowych obrazów."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary is used for text removal and automatic recognition in clips."
+msgstr "Cloudinary jest wymagane do usuwania tekstu i automatycznego rozpoznawania klipów."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in Windows Credential Manager."
+msgstr "Sekret API jest bezpiecznie przechowywany w Menedżerze poświadczeń systemu Windows."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is available for this Aegisub session."
+msgstr "Sekret API jest dostępny w tej sesji Aegisub."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "No Cloudinary API secret is configured."
+msgstr "Nie skonfigurowano sekretu API Cloudinary."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Enter the Cloudinary cloud name, API key and API secret first."
+msgstr "Najpierw wprowadź nazwę chmury, klucz API i sekret API Cloudinary."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary connection"
+msgstr "Połączenie z Cloudinary"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "The Cloudinary connection is working."
+msgstr "Połączenie z Cloudinary działa."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary connection failed"
+msgstr "Połączenie z Cloudinary nie powiodło się"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Delete the OpenAI API key stored by Aegisub on this computer?"
+msgstr "Czy usunąć klucz API OpenAI przechowywany przez Aegisub na tym komputerze?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Delete the Cloudinary API secret stored by Aegisub on this computer?"
+msgstr "Czy usunąć sekret API Cloudinary przechowywany przez Aegisub na tym komputerze?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Delete API secret"
+msgstr "Usuń sekret API"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "The API secret could not be deleted"
+msgstr "Nie udało się usunąć sekretu API"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "The API secret could not be saved"
+msgstr "Nie udało się zapisać sekretu API"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloud name:"
+msgstr "Nazwa chmury:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API key:"
+msgstr "Klucz API:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret:"
+msgstr "Sekret API:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Leave empty to keep using the current secret"
+msgstr "Pozostaw puste, aby nadal używać bieżącego sekretu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Register a Cloudinary account"
+msgstr "Rejestracja konta Cloudinary"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in Windows Credential Manager"
+msgstr "Bezpieczne przechowywanie sekretu API w Menedżerze poświadczeń systemu Windows"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Test OpenAI"
+msgstr "Testowanie OpenAI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Test Cloudinary"
+msgstr "Testowanie Cloudinary"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Delete stored secret"
+msgstr "Usuwanie zapisanego sekretu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Cloudinary is not configured correctly. Open AI connection settings and enter the cloud name, API key and API secret."
+msgstr "Cloudinary nie jest prawidłowo skonfigurowane. Otwórz ustawienia połączenia AI i wprowadź cloud name, API key oraz API secret."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI recognition failed"
+msgstr "Rozpoznawanie AI nie powiodło się"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI text removal failed"
+msgstr "Usuwanie tekstu przez AI nie powiodło się"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Find in &Folder..."
+msgstr "Wyszukiwanie w &folderze..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Find in Folder"
+msgstr "Wyszukiwanie w folderze"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Find text in subtitle files under a folder"
+msgstr "Wyszukiwanie tekstu w plikach napisów w folderze"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Source Line"
+msgstr "Wiersz źródłowy"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Please select an existing folder."
+msgstr "Wybierz istniejący folder."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Please enter the text to find."
+msgstr "Wprowadź wyszukiwany tekst."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Invalid regular expression:\\n%s"
+msgstr "Nieprawidłowe wyrażenie regularne:\\n%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Searching..."
+msgstr "Wyszukiwanie..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "%zu subtitle files searched, %zu matches found"
+msgstr "Przeskanowano %zu plików napisów, znaleziono %zu wyników"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Folder search failed:\\n%s"
+msgstr "Wyszukiwanie w folderze nie powiodło się:\\n%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Search stopped: %zu subtitle files searched, %zu matches found"
+msgstr "Wyszukiwanie zatrzymane: przeszukano %zu plików napisów, znaleziono %zu wyników"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Search complete: %zu subtitle files searched, %zu matches found"
+msgstr "Wyszukiwanie zakończone: przeszukano %zu plików napisów, znaleziono %zu wyników"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a folder to search"
+msgstr "Wybierz folder wyszukiwania"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Match &whole word"
+msgstr "Szukaj jako &całego słowa"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Search"
+msgstr "&Szukaj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "S&top"
+msgstr "&Zatrzymaj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Ready."
+msgstr "Gotowe."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy to &Clipboard"
+msgstr "Kopiuj do &schowka"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Open Result"
+msgstr "&Otwórz wynik"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Folder:"
+msgstr "Folder:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Selected subtitle text:"
+msgstr "Zaznaczony tekst napisów:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Stopping search..."
+msgstr "Zatrzymywanie wyszukiwania..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Match %zu - Line %zu"
+msgstr "Wynik %zu – wiersz %zu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Include styles (comma-separated):"
+msgstr "Uwzględnione style (oddzielone przecinkami):"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Exclude styles (comma-separated):"
+msgstr "Wykluczone style (oddzielone przecinkami):"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Browse"
+msgstr "Przeglądaj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open subtitle at match"
+msgstr "Otwórz napisy w miejscu wyniku"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Muteki update"
+msgstr "Aktualizacja Muteki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Base URL"
+msgstr "Bazowy URL"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Update"
+msgstr "&Odśwież"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Update..."
+msgstr "&Aktualizuj..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Update"
+msgstr "Aktualizuj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Install a specific &version..."
+msgstr "Zainstaluj określoną &wersję..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Install a specific version"
+msgstr "Zainstaluj określoną wersję"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Changelog..."
+msgstr "&Lista zmian..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Changelog"
+msgstr "Lista zmian"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Update Muteki &Automation scripts..."
+msgstr "Aktualizuj skrypty Muteki Automation..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Update Muteki Automation scripts"
+msgstr "Aktualizuj skrypty Muteki Automation"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Downloading update package..."
+msgstr "Pobieranie pakietu aktualizacji..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Confirm update"
+msgstr "Potwierdź aktualizację"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Installed version: %s\\nSelected version: %s\\n\\nChanges:"
+msgstr "Zainstalowana wersja: %s\\nWybrana wersja: %s\\n\\nZmiany:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No change description is available."
+msgstr "Opis zmian jest niedostępny."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Do you want to download and install this version?"
+msgstr "Czy chcesz pobrać i zainstalować tę wersję?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The update was cancelled because Aegisub could not be closed."
+msgstr "Aktualizacja została przerwana, ponieważ nie udało się zamknąć Aegisub."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Muteki update error"
+msgstr "Błąd aktualizacji Muteki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "No newer version is available.\\n\\nInstalled version: %s\\nLatest published version: %s"
+msgstr "Nie jest dostępna nowsza wersja.\\n\\nZainstalowana wersja: %s\\nNajnowsza opublikowana wersja: %s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version to install:"
+msgstr "Wybierz wersję do zainstalowania:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The selected version is older than the installed version. Do you want to continue?"
+msgstr "Wybrana wersja jest starsza niż zainstalowana. Czy chcesz kontynuować?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Confirm downgrade"
+msgstr "Potwierdź przywracanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Aegisub changelog"
+msgstr "Lista zmian Aegisub"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Muteki Automation scripts were updated successfully.\\n\\nTarget folder: %s"
+msgstr "Skrypty Muteki Automation zostały pomyślnie zaktualizowane.\\n\\nFolder docelowy: %s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for and install the latest Muteki Aegisub version"
+msgstr "Wyszukaj i zainstaluj najnowszą wersję Muteki Aegisub"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select and install a Muteki Aegisub version"
+msgstr "Wybierz i zainstaluj wersję Muteki Aegisub"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show the Muteki Aegisub changelog"
+msgstr "Wyświetl listę zmian Muteki Aegisub"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Download, install and reload the Muteki Automation scripts"
+msgstr "Pobierz, zainstaluj i przeładuj skrypty Muteki Automation"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Masking"
+msgstr "Maskowanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Create masks from areas drawn on the video"
+msgstr "Utwórz maskę z zaznaczonego obszaru wideo"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Rectangle"
+msgstr "Prostokąt"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Draw a rectangular mask"
+msgstr "Narysuj prostokątną maskę"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Points"
+msgstr "Punkty"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add mask points"
+msgstr "Dodaj punkty maski"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Draw a freehand mask"
+msgstr "Narysuj maskę odręcznie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Create mask"
+msgstr "Utwórz maskę"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Image model:"
+msgstr "Model obrazu:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI text removal"
+msgstr "Usuwanie tekstu za pomocą AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI custom generation"
+msgstr "Niestandardowe generowanie AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI prompt:"
+msgstr "Prompt AI:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Enter an AI prompt."
+msgstr "Wprowadź prompt AI."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI masking failed"
+msgstr "Maskowanie AI nie powiodło się"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI masking"
+msgstr "Maskowanie AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Generating the edited image..."
+msgstr "Generowanie edytowanego obrazu..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Refining the erased area..."
+msgstr "Dopracowywanie usuniętego obszaru..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Erase again"
+msgstr "Ponów usuwanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI recognition"
+msgstr "Rozpoznawanie AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Recognizing the visible subject..."
+msgstr "Rozpoznawanie widocznego obiektu..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "You can refine the result again if you want."
+msgstr "Jeśli chcesz, możesz ponownie dopracować wynik."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "The AI image response could not be decoded."
+msgstr "Nie udało się zdekodować odpowiedzi obrazu AI."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "The AI image result could not be converted to ASS."
+msgstr "Nie udało się przekształcić obrazu AI w rysunek ASS."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "The AI image did not contain any pixels inside the mask."
+msgstr "Obraz AI nie zawierał pikseli wewnątrz maski."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Create AI mask"
+msgstr "Tworzenie maski AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "The raw AI image could not be saved to:"
+msgstr "Nie udało się zapisać nieprzetworzonego obrazu AI tutaj:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add Shape"
+msgstr "Dodaj kształt"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Draw a shape and add it as an ASS drawing"
+msgstr "Rysuj i dodaj kształt jako rysunek ASS"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Shape (right-click for list)"
+msgstr "Kształt (lista: kliknij prawym przyciskiem)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Filled"
+msgstr "Wypełniony"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Toggle filled or outlined shape"
+msgstr "Przełącz między kształtem wypełnionym a konturowym"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Stroke size"
+msgstr "Grubość linii"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Square"
+msgstr "Kwadrat"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Circle"
+msgstr "Okrąg"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Ellipse"
+msgstr "Elipsa"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Triangle"
+msgstr "Trójkąt"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Diamond"
+msgstr "Romb"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Hexagon"
+msgstr "Sześciokąt"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Heart"
+msgstr "Serce"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Wide heart"
+msgstr "Szerokie serce"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "5-point star"
+msgstr "Gwiazda 5-ramienna"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "6-point star"
+msgstr "Gwiazda 6-ramienna"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "8-point star"
+msgstr "Gwiazda 8-ramienna"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Arrow"
+msgstr "Strzałka"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom size..."
+msgstr "Niestandardowy rozmiar..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Enter the stroke size in pixels:"
+msgstr "Podaj grubość linii w pikselach:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Size:"
+msgstr "Rozmiar:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom stroke size"
+msgstr "Niestandardowa grubość linii"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "Shape: %s (right-click for list)"
+msgstr "Kształt: %s (lista: kliknij prawym przyciskiem)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "Stroke size: %s px"
+msgstr "Grubość linii: %s px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "%s px"
+msgstr "%s px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Add shape"
+msgstr "Dodaj kształt"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Corner radius"
+msgstr "Zaokrąglenie narożników"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom radius..."
+msgstr "Niestandardowe zaokrąglenie..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Enter the corner radius in pixels:"
+msgstr "Podaj zaokrąglenie narożników w pikselach:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Radius:"
+msgstr "Promień:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom corner radius"
+msgstr "Niestandardowe zaokrąglenie rogów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "Corner radius: %d px"
+msgstr "Zaokrąglenie rogów: %d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Accept drawing (ENTER)"
+msgstr "Zatwierdź rysunek (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Delete drawing (ESC)"
+msgstr "Usuń rysunek (ESC)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Shapes will be created in a single line. Hold ALT to constrain to a regular shape."
+msgstr "Kształty zostaną utworzone w jednym wierszu. Przytrzymaj ALT, aby wymusić regularny kształt."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "Blur: %.1f"
+msgstr "Rozmycie: %.1f"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom blur..."
+msgstr "Niestandardowe rozmycie..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Enter the blur value:"
+msgstr "Podaj wartość rozmycia:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom blur"
+msgstr "Niestandardowe rozmycie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Select shape color"
+msgstr "Wybierz kolor kształtu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Color"
+msgstr "Kolor"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_drag.cpp
+msgid "Center horizontally"
+msgstr "Wyśrodkuj w poziomie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_drag.cpp
+msgid "Center vertically"
+msgstr "Wyśrodkuj w pionie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_drag.cpp
+msgid "Center horizontally and vertically"
+msgstr "Wyśrodkuj w poziomie i pionie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_drag.cpp
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Subtract"
+msgstr "Odejmowanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add (ENTER)"
+msgstr "Dodaj (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush: Add"
+msgstr "Pędzel: dodawanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush: Subtract"
+msgstr "Pędzel: odejmowanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette"
+msgstr "Pipeta"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush add"
+msgstr "Dodawanie pędzlem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush subtract"
+msgstr "Odejmowanie pędzlem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette add"
+msgstr "Dodawanie pipetą"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette subtract"
+msgstr "Odejmowanie pipetą"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette add"
+msgstr "Tryb: dodawanie pipetą"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette subtract"
+msgstr "Tryb: odejmowanie pipetą"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Automatic"
+msgstr "Automatyczny"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Custom select"
+msgstr "Wybór ręczny"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI auto select"
+msgstr "Automatyczny wybór AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI custom select"
+msgstr "Ręczny wybór AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette"
+msgstr "Tryb: pipeta"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Brush add"
+msgstr "Tryb: dodawanie pędzlem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Brush subtract"
+msgstr "Tryb: odejmowanie pędzlem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: AI auto select"
+msgstr "Tryb: automatyczny wybór AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: AI custom select"
+msgstr "Tryb: ręczny wybór AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush: %d px"
+msgstr "Pędzel: %d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Brush"
+msgstr "Pędzel"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Paint a mask with a brush"
+msgstr "Malowanie maski pędzlem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Create mask (ENTER)"
+msgstr "Utwórz maskę (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add to or erase from the current vector clip with a brush"
+msgstr "Dodawanie do bieżącego wektorowego klipu lub usuwanie z niego pędzlem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Apply (ENTER)"
+msgstr "Aplikacja (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Brush edit vector clip"
+msgstr "Edycja wektorowego klipu pędzlem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Paint to add to or erase from the current clip."
+msgstr "Pędzlem możesz dodawać elementy do bieżącego klipu lub je z niego usuwać."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Brush delete"
+msgstr "Wymazywanie pędzlem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add to the current vector clip with a brush"
+msgstr "Dodaj pędzlem do bieżącego klipu wektorowego"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Delete from the current vector clip with a brush"
+msgstr "Usuń pędzlem z bieżącego klipu wektorowego"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush size: %d px"
+msgstr "Rozmiar pędzla: %d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush: %s, %d px (right-click for settings)"
+msgstr "Pędzel: %s, %d px (ustawienia dostępne po kliknięciu prawym przyciskiem)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_shape.cpp src/visual_tool_vector_clip.cpp
+msgid "Accept (ENTER)"
+msgstr "Akceptuj (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_shape.cpp src/visual_tool_vector_clip.cpp
+msgid "Cancel (ESC)"
+msgstr "Anuluj (ESC)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Extract by color"
+msgstr "Zaznacz według koloru"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add contours from similar colors in a selected range"
+msgstr "Dodaj kontury z podobnych kolorów zaznaczonego obszaru"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Create mask contours from similar colors in a selected range"
+msgstr "Utwórz kontury maski z podobnych kolorów zaznaczonego obszaru"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Auto fill"
+msgstr "Automatyczne wypełnianie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Smooth edges"
+msgstr "Wygładzanie krawędzi"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Smooth tolerance: %.2f"
+msgstr "Tolerancja wygładzania: %.2f"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Angle threshold: %.1f deg"
+msgstr "Próg kąta: %.1f stopni"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Tolerance: %.1f"
+msgstr "Tolerancja: %.1f"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Offset: %d px"
+msgstr "Przesunięcie: %d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Draw the search range."
+msgstr "Narysuj obszar wyszukiwania."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Click the color to extract inside the range."
+msgstr "Kliknij kolor, który chcesz wyodrębnić w obrębie zakresu."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "%zu contours found. They will be added to the current clip."
+msgstr "Znaleziono %zu konturów. Zostaną dodane do bieżącego klipu."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/recent.cpp
+msgid "Open Recent Video"
+msgstr "Otwórz ostatnie nagranie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/recent.cpp
+msgid "Open the most recently used video"
+msgstr "Otwórz ostatnio używane nagranie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Open &MKV..."
+msgstr "&Otwórz MKV..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Open MKV"
+msgstr "Otwórz MKV"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Open subtitles, video and audio from a Matroska file"
+msgstr "Otwórz napisy, wideo i ścieżkę audio z pliku Matroska"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Open MKV File"
+msgstr "Otwórz plik MKV"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Matroska Files"
+msgstr "Pliki Matroska"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Tolerance"
+msgstr "Tolerancja"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Offset"
+msgstr "Przesunięcie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Smooth tolerance"
+msgstr "Tolerancja wygładzania"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Angle threshold"
+msgstr "Próg kąta"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Auto snap"
+msgstr "Dopasowanie automatyczne"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Edge search"
+msgstr "Wykrywanie krawędzi"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Edge search: %d px"
+msgstr "Wykrywanie krawędzi: %d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pull the outline onto the picture edge it traces, keeping the offset even along its length"
+msgstr "Dopasuj kontur do śledzonej krawędzi obrazu, równomiernie przesuwając go na całej długości"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Templates"
+msgstr "Szablony"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add new template..."
+msgstr "Dodaj nowy szablon..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add template"
+msgstr "Dodaj szablon"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Template name:"
+msgstr "Nazwa szablonu:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Template %zu"
+msgstr "Szablon nr %zu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "A template with this name already exists."
+msgstr "Szablon o tej nazwie już istnieje."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Delete template"
+msgstr "Usuń szablon"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Delete template '%s'?"
+msgstr "Czy usunąć szablon „%s”?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Template loading failed"
+msgstr "Nie udało się wczytać szablonu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Load"
+msgstr "Wczytaj"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Add color contours"
+msgstr "Dodaj kontury kolorów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Delete contour"
+msgstr "Usuń kontur"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Accept"
+msgstr "Zatwierdź"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Draw round the search range."
+msgstr "Obrysuj obszar wyszukiwania."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Rectangle range"
+msgstr "Obszar prostokątny"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Freehand range"
+msgstr "Obszar odręczny"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/ai.cpp
+msgid "AI check language"
+msgstr "Język sprawdzania AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/ai.cpp
+msgid "Which language are the subtitles you are checking written in?\\n\\nYou can change this later in Preferences, under General."
+msgstr "W jakim języku są napisy, które chcesz sprawdzić?\\n\\nMożesz to później zmienić na karcie Ogólne w Ustawieniach."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/ai.cpp
+msgid "Check up to 100 lines and two minutes of subtitles against Japanese audio and the source lines"
+msgstr "Sprawdź maksymalnie 100 wierszy i dwie minuty napisów na podstawie japońskiego dźwięku i wierszy źródłowych"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/ai.cpp
+msgid "Check spelling, wording and consistency, then approve corrections one by one"
+msgstr "Sprawdź pisownię, dobór słów i spójność, a następnie zatwierdź poprawki pojedynczo"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/preferences.cpp
+msgid "Language checked by AI review and post-check"
+msgstr "Język sprawdzania AI i kontroli następczej"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_proofread.cpp
+msgid "Subtitle post-check"
+msgstr "Kontrola napisów"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_proofread.cpp
+#, c-format
+msgid "%s subtitle post-check"
+msgstr "Kontrola napisów %s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_proofread.cpp
+msgid "No clear spelling, style or consistency issue was found in the checked lines."
+msgstr "W sprawdzonych wierszach nie znaleziono oczywistych błędów ortograficznych, stylistycznych ani niespójności."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/preferences.cpp
+msgid "Font Picker Language Filters"
+msgstr "Filtry językowe wyboru czcionki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/preferences_base.cpp
+msgid "On by default"
+msgstr "Domyślnie włączone"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/preferences_base.cpp
+#, c-format
+msgid "A font is offered when it has every character of one group. Separate alternative groups with a slash: %s accepts a font that has either both lower case letters or both upper case ones."
+msgstr "Czcionka jest wyświetlana, jeśli zawiera wszystkie znaki z każdej grupy. Grupy do wyboru są rozdzielone ukośnikiem: %s akceptuje czcionkę, w której występują obie małe lub obie wielkie litery."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_fontpicker.cpp
+msgid "You can change the filter options in the Settings/Interface menu."
+msgstr "Ustawienia filtrowania możesz zmienić w menu Ustawienia/Interfejs."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_fontpicker.cpp
+msgid "Caching fonts..."
+msgstr "Buforowanie czcionek..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_fontpicker.cpp src/preferences.cpp
+msgid "Font Picker"
+msgstr "Wybór czcionki"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/muteki_update.cpp
+msgid "View as"
+msgstr "Wyświetlaj jako"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/muteki_update.cpp
+msgid "Hungarian (original)"
+msgstr "Węgierski (oryginał)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/muteki_update.cpp
+msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
+msgstr "Do przetłumaczenia dziennika zmian wymagane jest połączenie z AI. Możesz je skonfigurować w opcji Configure AI connection w menu AI."

@@ -6564,3 +6564,2495 @@ msgstr ""
 "GNU通用公共許可證第二版(GPLv2)，這意味著您可以將該應用程式用於任何目的而不需"
 "要支付費用，但同時也不會得到任何形式的擔保。%n%n您可以到Aegisub官網取得原始程"
 "式碼資訊。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Mask Editing"
+msgstr "Maszk szerkesztése"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Edit the active line's ASS drawing"
+msgstr "Az aktív sor ASS-rajzának szerkesztése"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Bold"
+msgstr "Félkövér"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Italics"
+msgstr "Dőlt"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Strikeout"
+msgstr "Áthúzott"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Underline"
+msgstr "Aláhúzott"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "change text"
+msgstr "szöveg módosítása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Change text"
+msgstr "Szöveg módosítása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Change only text in the selected lines"
+msgstr "Csak a szöveg átírása a kijelölt sorokban"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy text for Translator"
+msgstr "Szöveg másolása a fordítónak"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy text and time for Translator"
+msgstr "Szöveg másolása a fordítónak időbélyeggel"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show Clip Info"
+msgstr "Clip információk mutatása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show Masks"
+msgstr "Maszkok mutatása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle Masks"
+msgstr "Maszkok kapcsolása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle mask rendering in the video"
+msgstr "Maszkok megjelenítésének kapcsolása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show Subtitle"
+msgstr "Felirat sorok mutatása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle Subtitle"
+msgstr "Felirat sorok kapcsolása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle subtitle rendering in the video"
+msgstr "Felirat sorok megjelenítésének kapcsolása"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Append"
+msgstr "Hozzáad"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Append a control point"
+msgstr "Hozzáad egy vezérlőpontot"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Keep gradients"
+msgstr "保留色彩漸層"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Right click to reset"
+msgstr "按右鍵以重設"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Hold CTRL, SHIFT or both to be more precise while using mouse wheel"
+msgstr "按住 CTRL、SHIFT 或兩者，以使用滑鼠滾輪進行更精確的調整"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Double click to see options"
+msgstr "雙擊以列出選項"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Brightness: %d%%"
+msgstr "亮度：%d%%"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "All fonts"
+msgstr "所有字型"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Recent fonts"
+msgstr "最近使用"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Most used"
+msgstr "最常使用"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Favorites"
+msgstr "我的最愛"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Own lists"
+msgstr "自訂清單"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create new list"
+msgstr "新增清單"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Name cannot be empty"
+msgstr "名稱不可為空白"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "List with this name already exists"
+msgstr "已有同名清單"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Rename"
+msgstr "重新命名"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Duplicate"
+msgstr "建立副本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Remove from Favorites"
+msgstr "從我的最愛移除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Add to Favorites"
+msgstr "加入我的最愛"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Assign to list"
+msgstr "指派至清單"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Remove from current list"
+msgstr "從目前清單移除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Font picker"
+msgstr "字型選擇器"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Refresh"
+msgstr "更新"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Preview size"
+msgstr "範例大小"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show @ fonts"
+msgstr "@ 顯示字型"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Import from the subtitle"
+msgstr "從字幕匯入"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Collecting fonts..."
+msgstr "正在收集字型..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Temporary List"
+msgstr "暫存清單"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy font's name"
+msgstr "複製字型名稱"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Remove from Temporary List"
+msgstr "從暫存清單刪除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Add to Temporary List"
+msgstr "儲存至暫存清單"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Image Mask (%d lines)"
+msgstr "影像遮罩（%d 行）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Image Mask background"
+msgstr "影像遮罩背景"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show Source"
+msgstr "顯示來源"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "&Join (concatenate with typesetting)"
+msgstr "&合併（合併並保留格式）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/edit.cpp:799
+msgid "&Concatenate (with typesetting)"
+msgstr "&串接（保留格式）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/edit.cpp:800
+msgid "Concatenate (with typesetting)"
+msgstr "串接（保留格式）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/edit.cpp:801
+msgid "Join selected lines in a single one, concatenating text together (with typesetting)"
+msgstr "合併所選行的內容並保留格式"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Confirm"
+msgstr "確認"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Recently installed"
+msgstr "最近安裝"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Are you sure you want to close? You have temporary saved fonts."
+msgstr "確定要關閉嗎？有字型已暫存。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Source File Paths"
+msgstr "來源檔案路徑"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Add"
+msgstr "新增"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "File not found"
+msgstr "找不到檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Toggle text comment"
+msgstr "切換註解"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Uncomment"
+msgstr "取消註解"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Shift to &Current Frame (End)"
+msgstr "將行移至 &影格（結尾）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Shift to Current Frame (End)"
+msgstr "將行移至影格（結尾）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Shift selection so that the active line ends at current frame"
+msgstr "將選取的字幕行移動，使第一行的結尾對齊目前影格。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "shift to frame end"
+msgstr "從影格對齊結尾"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Load associated files"
+msgstr "載入關聯檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Attempt to load associated files to the subtitle"
+msgstr "嘗試載入與字幕關聯的檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Run last script"
+msgstr "上一個 script"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Run last automation script, press twice fast to open last options"
+msgstr "執行上一個 script，快速按兩下可列出選項"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp
+#, c-format
+msgid "Selected line %d has no English source text."
+msgstr "第 %d 個選取行沒有英文原文。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI translation"
+msgstr "AI 翻譯"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "At most 100 subtitle lines can be reviewed at once. The current selection contains %d lines. Select a smaller scene."
+msgstr "一次最多可檢查 100 行字幕，目前選取了 %d 行。請選取較小的場景。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "The selected scene is %d:%02d long. AI subtitle review can process scenes up to 2:00. Select a shorter scene."
+msgstr "選取的場景長度為 %d:%02d，但 AI 字幕檢查最多只能處理長度 2:00 的場景。請選取較短的場景。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "A temporary audio file could not be created."
+msgstr "無法建立暫存音訊檔案。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The temporary audio file could not be prepared."
+msgstr "無法準備暫存音訊檔案。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The audio clip could not be created"
+msgstr "無法建立音訊片段"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Configure AI connection..."
+msgstr "設定 AI 連線…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Configure AI connection"
+msgstr "設定 AI 連線"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Configure the per-user OpenAI and Cloudinary API connections"
+msgstr "設定每位使用者的 OpenAI 與 Cloudinary API 連線"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Translate selected lines with AI..."
+msgstr "使用 AI 翻譯選取的行…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Translate selected lines with AI"
+msgstr "使用 AI 翻譯選取的行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Send up to two minutes of selected subtitle audio and English source lines for AI-assisted Hungarian translation"
+msgstr "傳送最多兩分鐘的選取字幕音訊和英文來源行，以取得 AI 輔助的匈牙利文翻譯"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_connection.cpp
+msgid "API key is available for this Aegisub session."
+msgstr "此 API 金鑰可用於此 Aegisub 工作階段。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is provided by the OPENAI_API_KEY environment variable."
+msgstr "API 金鑰由 OPENAI_API_KEY 環境變數提供。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in Windows Credential Manager."
+msgstr "API 金鑰已安全地儲存在 Windows 認證管理員中。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No API key is configured."
+msgstr "未設定 API 金鑰。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Enter an OpenAI API key first."
+msgstr "請先輸入 OpenAI API 金鑰。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI connection"
+msgstr "AI 連線"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The OpenAI connection is working."
+msgstr "OpenAI 連線正常。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI connection failed"
+msgstr "AI 連線失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Delete the API key stored by Aegisub on this computer?"
+msgstr "要刪除 Aegisub 儲存在此電腦上的 API 金鑰嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Delete API key"
+msgstr "刪除 API 金鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The API key could not be deleted"
+msgstr "無法刪除 API 金鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The API key could not be saved"
+msgstr "無法儲存 API 金鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "An OpenAI API key is required for AI translation."
+msgstr "AI 翻譯需要 OpenAI API 金鑰。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Each user connects with their own OpenAI API key. The key is never stored in subtitle files or Aegisub's configuration file."
+msgstr "每位使用者都使用自己的 OpenAI API 金鑰連線。金鑰絕不會儲存到字幕檔案或 Aegisub 設定檔中。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "New API key:"
+msgstr "新的 API 金鑰："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Leave empty to keep using the current key"
+msgstr "留空以繼續使用目前的金鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Translation model:"
+msgstr "翻譯模型："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Transcription model:"
+msgstr "語音辨識模型："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in Windows Credential Manager"
+msgstr "將金鑰安全儲存於 Windows 認證管理員"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Additional translation instructions:"
+msgstr "其他翻譯指示："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Test connection"
+msgstr "測試連線"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Delete stored key"
+msgstr "刪除已儲存的金鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_translate.cpp
+msgid "Cancel request and close"
+msgstr "取消請求並關閉"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Transcribing the Japanese audio..."
+msgstr "正在轉錄日語音訊…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "You: "
+msgstr "您："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI is updating the suggestions..."
+msgstr "人工智慧正在更新建議…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Line %d"
+msgstr "第 %d 行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "English source: "
+msgstr "英文來源："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Japanese: "
+msgstr "日語："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Apply this line"
+msgstr "套用行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Notes: "
+msgstr "備註："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI request failed"
+msgstr "人工智慧請求失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Request cancelled."
+msgstr "請求已取消。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The request failed. You can close the dialog or retry by reopening it."
+msgstr "請求失敗。您可以關閉視窗，或重新開啟視窗再試一次。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI: "
+msgstr "人工智慧："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Translation suggestions are ready."
+msgstr "翻譯建議已完成。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Suggestions updated."
+msgstr "建議已更新。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "apply AI translation"
+msgstr "套用 AI 翻譯"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Cancelling the request..."
+msgstr "取消請求…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI subtitle translation"
+msgstr "AI 字幕翻譯"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Preparing AI request..."
+msgstr "準備 AI 請求…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Chat about this scene"
+msgstr "討論此場景"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Send"
+msgstr "傳送"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Apply selected lines and close"
+msgstr "套用選取的行並關閉"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI-assisted subtitle translation"
+msgstr "AI 輔助字幕翻譯"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Selected lines: %d"
+msgstr "選取的行：%d"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Japanese audio and English source text are used together for context."
+msgstr "我們會將日語音訊和英文原文一起用作上下文。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Request status"
+msgstr "請求狀態"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "English source"
+msgstr "英文原文"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Japanese / Romaji"
+msgstr "日語／羅馬字"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Romaji: "
+msgstr "羅馬字："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Hungarian translation"
+msgstr "匈牙利文翻譯"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Alternative suggestions"
+msgstr "替代建議"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Review selected lines with AI..."
+msgstr "使用 AI 檢查選取的行…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Review selected lines with AI"
+msgstr "使用 AI 檢查選取的行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check up to 100 lines and two minutes of Hungarian subtitles against Japanese audio and English source lines"
+msgstr "根據日語音訊和英文來源行，檢查最多 100 行、兩分鐘的匈牙利文字幕"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI subtitle review"
+msgstr "AI 字幕檢查"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "An OpenAI API key is required for AI subtitle review."
+msgstr "AI 字幕檢查需要 OpenAI API 金鑰。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Review model:"
+msgstr "檢查模型："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI model:"
+msgstr "AI 模型："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Available OpenAI models and pricing"
+msgstr "可用的 OpenAI 模型與價格"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "OK - no change needed"
+msgstr "沒問題 – 不需要修改"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Minor issue"
+msgstr "小問題"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Major issue"
+msgstr "重大問題"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Review result"
+msgstr "檢查結果"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "(empty)"
+msgstr "（空白）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI review"
+msgstr "AI 檢查"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No review returned"
+msgstr "未收到檢查結果"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Play this line"
+msgstr "播放該行音訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Current subtitle"
+msgstr "目前字幕文字"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Assessment"
+msgstr "評分"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Issues found"
+msgstr "發現的問題"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Suggested correction"
+msgstr "建議修正"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Transcribing the Japanese audio and reviewing the subtitles..."
+msgstr "正在轉錄日語音訊並檢查字幕…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "You"
+msgstr "您"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI is reviewing your follow-up question..."
+msgstr "人工智慧正在檢查您的附加要求…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Subtitle review is ready."
+msgstr "字幕檢查完成。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Follow-up review is ready."
+msgstr "附加檢查完成。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI subtitle quality review"
+msgstr "人工智慧字幕品質檢查"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Read-only review; subtitle text will not be changed."
+msgstr "僅供檢查；不會修改字幕文字。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Play full scene"
+msgstr "播放完整場景"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Conversation"
+msgstr "對話"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Ask a follow-up question"
+msgstr "附加問題"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Ask about meaning, tone, wording, or a specific line..."
+msgstr "詢問意義、語氣、措辭或特定行…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Stop playback"
+msgstr "停止播放"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI"
+msgstr "人工智慧"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Cancel request"
+msgstr "取消要求"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Spelling / typo"
+msgstr "拼字／錯字"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Punctuation"
+msgstr "標點符號"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Grammar"
+msgstr "文法"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Wording / style"
+msgstr "措辭／風格"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "High CPS"
+msgstr "CPS 過高"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Word repetition"
+msgstr "單字重複"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Subtitle consistency"
+msgstr "字幕一致性"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Source-line mismatch"
+msgstr "與來源行不符"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "AI analysis in progress: checking %d target lines in full-subtitle context..."
+msgstr "AI 分析進行中：在完整字幕脈絡中檢查 %d 個目標行…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI post-check failed"
+msgstr "AI 後檢查失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI post-check failed."
+msgstr "AI 後檢查失敗。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI returned too few safe alternatives or did not preserve ASS formatting."
+msgstr "AI 提供的安全變更過少，或未保留 ASS 格式。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No subtitle text was changed. Please run the post-check again."
+msgstr "沒有任何字幕文字變更。請重新執行後檢查。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No clear Hungarian spelling, style, consistency or CPS issue was found in the checked lines."
+msgstr "在檢查的行中找不到明顯的匈牙利文拼字、文體、一致性或 CPS 問題。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI post-check"
+msgstr "AI 後檢查"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Suggestion %d of %d - line %d"
+msgstr "%d/%d. 建議 – 第 %d 行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Line %d   %s - %s   Current CPS: %d"
+msgstr "第 %d 行   %s – %s   目前 CPS：%d"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid " (above the 15 CPS limit)"
+msgstr "（超過 15 CPS 上限）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Selected version CPS: %d%s"
+msgstr "選取版本的 CPS：%d%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "apply AI post-check corrections"
+msgstr "套用 AI 後檢查修正"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Post-check complete. Applied: %d; skipped: %d."
+msgstr "後檢查完成。已套用：%d；已略過：%d。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Approve or skip every remaining suggestion before closing the post-check."
+msgstr "關閉後檢查前，請核准或略過所有剩餘的建議。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Hungarian subtitle post-check"
+msgstr "匈牙利文字幕後檢查"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Spelling, wording, CPS, repetition, consistency and source-line checks"
+msgstr "檢查拼字、措辭、CPS、詞語重複、一致性和來源行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Preparing AI analysis..."
+msgstr "準備 AI 分析…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Source line"
+msgstr "來源行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Choose a proposed correction"
+msgstr "選擇修正建議"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Selected version preview:"
+msgstr "選取版本預覽："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Approve selected correction"
+msgstr "核准選取的修正"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI post-check..."
+msgstr "後續檢查…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check Hungarian spelling, wording, CPS and consistency, then approve corrections one by one"
+msgstr "檢查匈牙利文拼字、措辭、CPS 與一致性，然後逐一核准修正"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Selected lines (%d)"
+msgstr "選取的行 (%d)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "All Default / Default - ... lines (%d)"
+msgstr "所有 Default / Default - ... 行 (%d)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Choose which subtitle lines the AI post-check should be allowed to change."
+msgstr "選擇 AI 後續檢查可修改哪些字幕行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI post-check scope"
+msgstr "AI 後續檢查範圍"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The chosen scope contains no dialogue lines to check."
+msgstr "選取的範圍中沒有可檢查的對話行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The AI response referred to an invalid or duplicate subtitle line."
+msgstr "AI 回應無效，或引用了重複的字幕行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI analysis in progress"
+msgstr "AI 分析進行中"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Back"
+msgstr "返回"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Skip"
+msgstr "略過"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Cancel review"
+msgstr "中止檢查"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Fill from audio recognition..."
+msgstr "使用語音辨識填入…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Fill from audio recognition"
+msgstr "使用語音辨識填入"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Fill the selected lines with audio-recognized timed romaji karaoke"
+msgstr "使用語音辨識產生的已計時羅馬字卡拉 OK，填入選取的行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Time karaoke lines..."
+msgstr "設定行的卡拉 OK 時間…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Time karaoke lines"
+msgstr "設定行的卡拉 OK 時間"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Add audio-aligned karaoke tags to the selected lines"
+msgstr "為選取的行新增與音訊同步的卡拉 OK 音節標籤"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create kanji lines..."
+msgstr "建立漢字行…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create kanji lines"
+msgstr "建立漢字行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create plain kanji lines below the selected romaji lines without karaoke timing"
+msgstr "在選取的羅馬字行下方建立無時間軸的漢字行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI karaoke"
+msgstr "AI 卡拉 OK"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The karaoke request failed."
+msgstr "卡拉 OK 請求失敗。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI karaoke failed"
+msgstr "AI 卡拉 OK 失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The karaoke result could not be validated."
+msgstr "無法套用卡拉 OK 結果。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "fill karaoke lines from audio recognition"
+msgstr "使用語音辨識填入卡拉 OK 行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "create kanji lines with AI"
+msgstr "使用 AI 建立漢字行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "time karaoke lines with AI"
+msgstr "使用 AI 設定卡拉 OK 行時間"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI karaoke could not be applied"
+msgstr "無法套用 AI 卡拉 OK"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Fill selected lines from audio recognition"
+msgstr "使用語音辨識填入選取的行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Create kanji lines from selected romaji"
+msgstr "從選取的羅馬字建立漢字行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Time selected karaoke lines from audio"
+msgstr "根據音訊為選取的行設定卡拉 OK 時間"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Recognizing the Japanese audio and calculating romaji karaoke timing..."
+msgstr "辨識日語音訊並計算羅馬字卡拉 OK 時間…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Creating kanji lines from the selected romaji..."
+msgstr "從選取的羅馬字建立漢字行…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Output style"
+msgstr "輸出樣式"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Kanji style:"
+msgstr "漢字樣式："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Choose the kanji style, then create the lines."
+msgstr "選擇漢字樣式，然後建立行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The selection contains no dialogue lines."
+msgstr "選取範圍不包含對話行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The karaoke audio interval is invalid."
+msgstr "卡拉 OK 音訊區間無效。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "AI karaoke can process at most 10 minutes at once. Choose a shorter interval."
+msgstr "人工智慧卡拉 OK 一次最多只能處理 10 分鐘。請選擇較短的區間。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The generated WAV file is too large for the AI request. Choose a shorter interval."
+msgstr "產生的 WAV 檔案太大，無法用於人工智慧請求。請選擇較短的區間。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "OpenAI"
+msgstr "OpenAI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary"
+msgstr "Cloudinary"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "OpenAI is used for text features and custom image generation."
+msgstr "文字功能和自訂圖片生成功能需要 OpenAI。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary is used for text removal and automatic recognition in clips."
+msgstr "移除文字和自動辨識片段需要 Cloudinary。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in Windows Credential Manager."
+msgstr "API 密鑰已安全儲存於 Windows 認證管理員中。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is available for this Aegisub session."
+msgstr "API 密鑰可用於此 Aegisub 工作階段。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "No Cloudinary API secret is configured."
+msgstr "尚未設定 Cloudinary API 密鑰。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Enter the Cloudinary cloud name, API key and API secret first."
+msgstr "請先輸入 Cloudinary cloud name、API key 和 API secret。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary connection"
+msgstr "Cloudinary 連線"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "The Cloudinary connection is working."
+msgstr "Cloudinary 連線正常。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloudinary connection failed"
+msgstr "Cloudinary 連線失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Delete the OpenAI API key stored by Aegisub on this computer?"
+msgstr "要刪除 Aegisub 儲存在此電腦上的 OpenAI API 金鑰嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Delete the Cloudinary API secret stored by Aegisub on this computer?"
+msgstr "要刪除 Aegisub 儲存在此電腦上的 Cloudinary API 密鑰嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Delete API secret"
+msgstr "刪除 API 密鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "The API secret could not be deleted"
+msgstr "無法刪除 API 密鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "The API secret could not be saved"
+msgstr "無法儲存 API 密鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Cloud name:"
+msgstr "Cloud name:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API key:"
+msgstr "API key:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret:"
+msgstr "API 密鑰："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Leave empty to keep using the current secret"
+msgstr "留白以繼續使用目前的密鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Register a Cloudinary account"
+msgstr "註冊 Cloudinary 帳戶"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in Windows Credential Manager"
+msgstr "將 API 密鑰安全儲存於 Windows 認證管理員"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Test OpenAI"
+msgstr "測試 OpenAI"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Test Cloudinary"
+msgstr "測試 Cloudinary"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Delete stored secret"
+msgstr "刪除已儲存的密鑰"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Cloudinary is not configured correctly. Open AI connection settings and enter the cloud name, API key and API secret."
+msgstr "Cloudinary 設定不正確。請開啟 AI 連線設定，並輸入 cloud name、API key 和 API secret。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI recognition failed"
+msgstr "AI 辨識失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI text removal failed"
+msgstr "AI 文字移除失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Find in &Folder..."
+msgstr "搜尋&資料夾..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Find in Folder"
+msgstr "在資料夾中搜尋"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Find text in subtitle files under a folder"
+msgstr "在資料夾的字幕檔案中搜尋文字"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Source Line"
+msgstr "來源行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Please select an existing folder."
+msgstr "請選取現有的資料夾。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Please enter the text to find."
+msgstr "請輸入要搜尋的文字。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Invalid regular expression:\\n%s"
+msgstr "無效的正規表示式：\\n%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Searching..."
+msgstr "搜尋中..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "%zu subtitle files searched, %zu matches found"
+msgstr "已掃描 %zu 個字幕檔案，找到 %zu 個結果"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Folder search failed:\\n%s"
+msgstr "資料夾搜尋失敗：\\n%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Search stopped: %zu subtitle files searched, %zu matches found"
+msgstr "搜尋已停止：已掃描 %zu 個字幕檔案，%zu 個結果"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Search complete: %zu subtitle files searched, %zu matches found"
+msgstr "搜尋完成：已掃描 %zu 個字幕檔案，%zu 個結果"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a folder to search"
+msgstr "選擇搜尋資料夾"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Match &whole word"
+msgstr "以&完整單字搜尋"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Search"
+msgstr "&搜尋"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "S&top"
+msgstr "&停止"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Ready."
+msgstr "完成。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy to &Clipboard"
+msgstr "複製到&剪貼簿"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Open Result"
+msgstr "開啟&結果"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Folder:"
+msgstr "資料夾："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Selected subtitle text:"
+msgstr "選取的字幕文字："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Stopping search..."
+msgstr "正在停止搜尋..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Match %zu - Line %zu"
+msgstr "第 %zu 個結果 – 第 %zu 行"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Include styles (comma-separated):"
+msgstr "包含的樣式（以逗號分隔）："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Exclude styles (comma-separated):"
+msgstr "排除的樣式（以逗號分隔）："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Browse"
+msgstr "瀏覽"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open subtitle at match"
+msgstr "在結果位置開啟字幕"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Muteki update"
+msgstr "Muteki 更新"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Base URL"
+msgstr "基本 URL"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Update"
+msgstr "&更新"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Update..."
+msgstr "&更新..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Update"
+msgstr "更新"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Install a specific &version..."
+msgstr "安裝特定&版本..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Install a specific version"
+msgstr "安裝特定版本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "&Changelog..."
+msgstr "&變更記錄..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Changelog"
+msgstr "變更記錄"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Update Muteki &Automation scripts..."
+msgstr "更新 Muteki &Automation 指令碼..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Update Muteki Automation scripts"
+msgstr "更新 Muteki Automation 指令碼"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Downloading update package..."
+msgstr "正在下載更新套件..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Confirm update"
+msgstr "確認更新"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Installed version: %s\\nSelected version: %s\\n\\nChanges:"
+msgstr "已安裝版本：%s\\n選取版本：%s\\n\\n變更："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "No change description is available."
+msgstr "沒有可用的變更說明。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Do you want to download and install this version?"
+msgstr "要下載並安裝此版本嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The update was cancelled because Aegisub could not be closed."
+msgstr "無法關閉 Aegisub，更新已中止。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Muteki update error"
+msgstr "Muteki 更新錯誤"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "No newer version is available.\\n\\nInstalled version: %s\\nLatest published version: %s"
+msgstr "沒有較新的版本可用。\\n\\n已安裝版本：%s\\n最新發佈版本：%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version to install:"
+msgstr "選取要安裝的版本："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "The selected version is older than the installed version. Do you want to continue?"
+msgstr "選取的版本早於已安裝版本。要繼續嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Confirm downgrade"
+msgstr "確認回復"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Aegisub changelog"
+msgstr "Aegisub 變更記錄"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Muteki Automation scripts were updated successfully.\\n\\nTarget folder: %s"
+msgstr "Muteki Automation 指令碼已成功更新。\\n\\n目標資料夾：%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for and install the latest Muteki Aegisub version"
+msgstr "尋找並安裝最新的 Muteki Aegisub 版本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select and install a Muteki Aegisub version"
+msgstr "選擇並安裝 Muteki Aegisub 版本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Show the Muteki Aegisub changelog"
+msgstr "顯示 Muteki Aegisub 變更記錄"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Download, install and reload the Muteki Automation scripts"
+msgstr "下載、安裝並重新載入 Muteki Automation 指令碼"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Masking"
+msgstr "遮罩"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Create masks from areas drawn on the video"
+msgstr "從影片中選取的區域建立遮罩"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Rectangle"
+msgstr "矩形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Draw a rectangular mask"
+msgstr "繪製矩形遮罩"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Points"
+msgstr "點"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add mask points"
+msgstr "新增遮罩點"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Draw a freehand mask"
+msgstr "繪製自由手繪遮罩"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Create mask"
+msgstr "建立遮罩"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Image model:"
+msgstr "影像模型："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI text removal"
+msgstr "人工智慧文字移除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI custom generation"
+msgstr "人工智慧自訂生成"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI prompt:"
+msgstr "人工智慧提示詞："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Enter an AI prompt."
+msgstr "請輸入人工智慧提示詞。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI masking failed"
+msgstr "人工智慧遮罩失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "AI masking"
+msgstr "人工智慧遮罩"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Generating the edited image..."
+msgstr "正在產生編輯後的影像…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Refining the erased area..."
+msgstr "正在精修已刪除的區域…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Erase again"
+msgstr "再次刪除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI recognition"
+msgstr "AI 辨識"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Recognizing the visible subject..."
+msgstr "正在辨識可見物件…"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "You can refine the result again if you want."
+msgstr "如果您想再次精修結果。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "The AI image response could not be decoded."
+msgstr "無法解碼 AI 影像回應。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "The AI image result could not be converted to ASS."
+msgstr "無法將 AI 影像轉換為 ASS 繪圖。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "The AI image did not contain any pixels inside the mask."
+msgstr "AI 影像在遮罩內不包含任何像素。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Create AI mask"
+msgstr "建立 AI 遮罩"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "The raw AI image could not be saved to:"
+msgstr "無法將原始 AI 影像儲存至此處："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add Shape"
+msgstr "新增圖形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Draw a shape and add it as an ASS drawing"
+msgstr "繪製圖形並以 ASS 繪圖新增"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Shape (right-click for list)"
+msgstr "圖形（清單：按右鍵）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Filled"
+msgstr "已填滿"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Toggle filled or outlined shape"
+msgstr "在填滿與輪廓圖形間切換"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Stroke size"
+msgstr "線條粗細"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Square"
+msgstr "正方形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Circle"
+msgstr "圓形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Ellipse"
+msgstr "橢圓形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Triangle"
+msgstr "三角形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Diamond"
+msgstr "菱形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Hexagon"
+msgstr "六邊形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Heart"
+msgstr "愛心"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Wide heart"
+msgstr "寬愛心"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "5-point star"
+msgstr "五角星"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "6-point star"
+msgstr "六角星"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "8-point star"
+msgstr "八角星"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Arrow"
+msgstr "箭頭"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom size..."
+msgstr "自訂大小..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Enter the stroke size in pixels:"
+msgstr "輸入線條粗細（像素）："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Size:"
+msgstr "大小："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom stroke size"
+msgstr "自訂線條粗細"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "Shape: %s (right-click for list)"
+msgstr "圖形：%s（清單：按右鍵）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "Stroke size: %s px"
+msgstr "線條粗細：%s px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "%s px"
+msgstr "%s px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Add shape"
+msgstr "新增圖形"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Corner radius"
+msgstr "圓角"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom radius..."
+msgstr "自訂圓角..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Enter the corner radius in pixels:"
+msgstr "輸入圓角大小（像素）："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Radius:"
+msgstr "半徑："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom corner radius"
+msgstr "自訂圓角"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "Corner radius: %d px"
+msgstr "圓角：%d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Accept drawing (ENTER)"
+msgstr "接受繪圖 (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Delete drawing (ESC)"
+msgstr "清除繪圖 (ESC)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Shapes will be created in a single line. Hold ALT to constrain to a regular shape."
+msgstr "圖形將排成一列，按住 ALT 可強制建立正規圖形。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp, c-format
+#, c-format
+msgid "Blur: %.1f"
+msgstr "模糊：%.1f"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom blur..."
+msgstr "自訂模糊..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Enter the blur value:"
+msgstr "輸入模糊值："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Custom blur"
+msgstr "自訂模糊"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Select shape color"
+msgstr "選擇圖形顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_shape.cpp
+msgid "Color"
+msgstr "顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_drag.cpp
+msgid "Center horizontally"
+msgstr "水平置中"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_drag.cpp
+msgid "Center vertically"
+msgstr "垂直置中"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_drag.cpp
+msgid "Center horizontally and vertically"
+msgstr "水平及垂直置中"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_drag.cpp
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Subtract"
+msgstr "減去"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add (ENTER)"
+msgstr "新增 (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush: Add"
+msgstr "筆刷：新增"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush: Subtract"
+msgstr "筆刷：減去"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette"
+msgstr "滴管"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush add"
+msgstr "筆刷新增"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Brush subtract"
+msgstr "筆刷移除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette add"
+msgstr "滴管新增"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pipette subtract"
+msgstr "滴管移除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette add"
+msgstr "模式：滴管新增"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette subtract"
+msgstr "模式：滴管移除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Automatic"
+msgstr "自動"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Custom select"
+msgstr "自訂選取"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI auto select"
+msgstr "自動人工智慧選取"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "AI custom select"
+msgstr "自訂人工智慧選取"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Pipette"
+msgstr "模式：滴管"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Brush add"
+msgstr "模式：筆刷新增"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: Brush subtract"
+msgstr "模式：筆刷移除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: AI auto select"
+msgstr "模式：自動人工智慧選取"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Mode: AI custom select"
+msgstr "模式：自訂人工智慧選取"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush: %d px"
+msgstr "筆刷：%d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Brush"
+msgstr "筆刷"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Paint a mask with a brush"
+msgstr "使用筆刷繪製遮罩"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp
+msgid "Create mask (ENTER)"
+msgstr "建立遮罩 (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add to or erase from the current vector clip with a brush"
+msgstr "使用筆刷新增至目前的向量裁剪區或從中移除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Apply (ENTER)"
+msgstr "套用 (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Brush edit vector clip"
+msgstr "以筆刷編輯向量剪裁區域"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Paint to add to or erase from the current clip."
+msgstr "使用筆刷新增至目前的剪裁區域，或從中刪除。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Brush delete"
+msgstr "筆刷擦除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add to the current vector clip with a brush"
+msgstr "使用筆刷新增至目前的向量剪裁區域"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Delete from the current vector clip with a brush"
+msgstr "使用筆刷從目前的向量剪裁區域刪除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush size: %d px"
+msgstr "筆刷大小：%d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Brush: %s, %d px (right-click for settings)"
+msgstr "筆刷：%s，%d px（按右鍵設定）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_shape.cpp src/visual_tool_vector_clip.cpp
+msgid "Accept (ENTER)"
+msgstr "確定 (ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_shape.cpp src/visual_tool_vector_clip.cpp
+msgid "Cancel (ESC)"
+msgstr "取消 (ESC)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Extract by color"
+msgstr "依顏色選取"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Add contours from similar colors in a selected range"
+msgstr "從選取範圍的相似顏色新增輪廓"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/vis_tool.cpp
+msgid "Create mask contours from similar colors in a selected range"
+msgstr "從選取範圍的相似顏色建立遮罩輪廓"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Auto fill"
+msgstr "自動填滿"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Smooth edges"
+msgstr "平滑邊緣"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Smooth tolerance: %.2f"
+msgstr "平滑容差：%.2f"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Angle threshold: %.1f deg"
+msgstr "角度閾值：%.1f 度"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Tolerance: %.1f"
+msgstr "容差：%.1f"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Offset: %d px"
+msgstr "偏移：%d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Draw the search range."
+msgstr "繪製搜尋範圍。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Click the color to extract inside the range."
+msgstr "點擊範圍內要擷取的顏色。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "%zu contours found. They will be added to the current clip."
+msgstr "找到 %zu 個輪廓。這些輪廓將新增至目前的剪輯。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/recent.cpp
+msgid "Open Recent Video"
+msgstr "開啟最近的影片"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/recent.cpp
+msgid "Open the most recently used video"
+msgstr "開啟最近使用的影片"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Open &MKV..."
+msgstr "&開啟 MKV..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Open MKV"
+msgstr "開啟 MKV"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Open subtitles, video and audio from a Matroska file"
+msgstr "從 Matroska 檔案開啟字幕、影片和音軌"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Open MKV File"
+msgstr "開啟 MKV 檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/subtitle.cpp
+msgid "Matroska Files"
+msgstr "Matroska 檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Tolerance"
+msgstr "容差"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Offset"
+msgstr "偏移"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Smooth tolerance"
+msgstr "平滑容差"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Angle threshold"
+msgstr "角度閾值"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Auto snap"
+msgstr "自動貼合"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Edge search"
+msgstr "邊緣搜尋"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Edge search: %d px"
+msgstr "邊緣搜尋：%d px"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Pull the outline onto the picture edge it traces, keeping the offset even along its length"
+msgstr "將輪廓貼合至影像中追蹤的邊緣，並沿其全長保持均勻偏移"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Templates"
+msgstr "範本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add new template..."
+msgstr "新增範本..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Add template"
+msgstr "新增範本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Template name:"
+msgstr "範本名稱："
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Template %zu"
+msgstr "%zu. 範本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "A template with this name already exists."
+msgstr "已有相同名稱的範本。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Delete template"
+msgstr "刪除範本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+#, c-format
+msgid "Delete template '%s'?"
+msgstr "要刪除「%s」範本嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Template loading failed"
+msgstr "載入範本失敗"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Load"
+msgstr "載入"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Add color contours"
+msgstr "新增色彩輪廓"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Delete contour"
+msgstr "刪除輪廓"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Accept"
+msgstr "接受"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Draw round the search range."
+msgstr "框選搜尋範圍。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Rectangle range"
+msgstr "矩形範圍"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
+msgid "Freehand range"
+msgstr "自由手繪範圍"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/ai.cpp
+msgid "AI check language"
+msgstr "人工智慧檢查語言"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/ai.cpp
+msgid "Which language are the subtitles you are checking written in?\\n\\nYou can change this later in Preferences, under General."
+msgstr "要檢查的字幕是以哪種語言製作？\\n\\n之後可在「設定」的「一般」頁面中變更。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/ai.cpp
+msgid "Check up to 100 lines and two minutes of subtitles against Japanese audio and the source lines"
+msgstr "根據日語音訊和來源行檢查最多 100 行、兩分鐘的字幕"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/command/ai.cpp
+msgid "Check spelling, wording and consistency, then approve corrections one by one"
+msgstr "檢查拼字、用詞和一致性，然後逐項核准修正內容"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/preferences.cpp
+msgid "Language checked by AI review and post-check"
+msgstr "人工智慧檢查與複查語言"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_proofread.cpp
+msgid "Subtitle post-check"
+msgstr "字幕複查"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_proofread.cpp
+#, c-format
+msgid "%s subtitle post-check"
+msgstr "%s 字幕複查"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_proofread.cpp
+msgid "No clear spelling, style or consistency issue was found in the checked lines."
+msgstr "已檢查的行中沒有明顯的拼字、風格或一致性錯誤。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/preferences.cpp
+msgid "Font Picker Language Filters"
+msgstr "字型選擇器語言篩選器"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/preferences_base.cpp
+msgid "On by default"
+msgstr "預設開啟"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/preferences_base.cpp
+#, c-format
+msgid "A font is offered when it has every character of one group. Separate alternative groups with a slash: %s accepts a font that has either both lower case letters or both upper case ones."
+msgstr "只有在字型包含某個群組中的所有字元時，才會顯示該字型。可選取的群組以斜線分隔：%s 接受包含兩個小寫字母或兩個大寫字母的字型。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_fontpicker.cpp
+msgid "You can change the filter options in the Settings/Interface menu."
+msgstr "您可以在「設定／介面」選單中修改篩選設定。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_fontpicker.cpp
+msgid "Caching fonts..."
+msgstr "正在快取字型..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_fontpicker.cpp src/preferences.cpp
+msgid "Font Picker"
+msgstr "字型選擇器"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/muteki_update.cpp
+msgid "View as"
+msgstr "顯示為"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/muteki_update.cpp
+msgid "Hungarian (original)"
+msgstr "匈牙利文（原文）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/muteki_update.cpp
+msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
+msgstr "翻譯變更記錄需要連線至 AI。您可以在 AI 選單的 Configure AI connection 中設定。"

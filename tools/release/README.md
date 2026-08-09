@@ -39,3 +39,13 @@ variable. Translation is incremental in both directions:
   them.
 - `changelog/<lang>.txt` only receive releases that the file does not have yet,
   so an already translated release is never paid for twice.
+
+## Building
+
+`release.cmd` builds only when it would change what gets packed, because every
+build relinks an 85 MB executable — the version header is regenerated on every
+run. It builds when a catalogue was translated, when there is no executable yet,
+or when something under `src/`, `libaegisub/` or `po/` is newer than the one
+that is there; otherwise it says so and goes straight to packing. Translating
+the changelog never triggers a build: the changelog is neither compiled nor
+packed.

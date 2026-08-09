@@ -143,6 +143,49 @@ def parse_po(path):
     return header, entries
 
 
+def parse_obsolete_po(path):
+    """Return [(msgid, msgstr)] for the entries the catalogue keeps under '#~'.
+
+    gettext counts obsolete entries towards duplicate detection, so a msgid that
+    only appears here is still taken: translating it again produces a second
+    definition and msgfmt rejects the whole catalogue. Anything reading a
+    catalogue to decide what is missing has to look at these too.
+    """
+    with io.open(path, encoding='utf-8') as handle:
+        text = handle.read()
+    entries = []
+    for block in ENTRY_SPLIT.split(text):
+        msgid = None
+        msgstr = None
+        target = None
+        for line in block.split('\n'):
+            if not line.startswith('#~'):
+                continue
+            line = line[2:].lstrip()
+            if line.startswith('msgid '):
+                msgid = unquote_po(line[len('msgid '):])
+                target = 'id'
+            elif line.startswith('msgstr '):
+                msgstr = unquote_po(line[len('msgstr '):])
+                target = 'str'
+            elif line.startswith('"'):
+                if target == 'id':
+                    msgid += unquote_po(line)
+                elif target == 'str':
+                    msgstr += unquote_po(line)
+        if msgid is not None and msgstr is not None:
+            entries.append((msgid, msgstr))
+    return entries
+
+
+def taken_msgids(path):
+    """Every msgid the catalogue already spends, live or obsolete."""
+    _, entries = parse_po(path)
+    taken = set(msgid for _, msgid, _ in entries if msgid)
+    taken.update(msgid for msgid, _ in parse_obsolete_po(path))
+    return taken
+
+
 def unquote_po(value):
     value = value.strip()
     if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
@@ -167,24 +210,32 @@ def append_po_entries(path, blocks):
 
 # -------------------------------------------------------------------- changelog
 
+def header_version(line):
+    """The version a release header announces, or '' if it is not a header."""
+    stripped = line.strip()
+    if not stripped.endswith('---'):
+        return ''
+    numbered = [word for word in stripped[:-3].strip().split()
+                if any(character.isdigit() for character in word)]
+    return numbered[-1] if numbered else ''
+
+
 def parse_changelog(path):
     """Return [(version, header_line, body_lines)] in file order.
 
-    A release header is any line ending in '---' whose last word before the
-    marker contains a digit, which is what the program's own parser accepts.
+    A release header is any line ending in '---' with a word containing a digit
+    before the marker; the last such word is the version. Any word rather than
+    the last one, because languages do not agree on where the word for "version"
+    goes: Basque came back as "3.5.2 bertsioa ---" and a stricter rule silently
+    dropped the release, which then looked missing and got translated twice.
+    Keep in step with ParseChangelog in muteki_update.cpp.
     """
     with io.open(path, encoding='utf-8') as handle:
         lines = handle.read().split('\n')
     releases = []
     current = None
     for line in lines:
-        stripped = line.strip()
-        version = ''
-        if stripped.endswith('---'):
-            head = stripped[:-3].strip()
-            words = head.split()
-            if words and any(character.isdigit() for character in words[-1]):
-                version = words[-1]
+        version = header_version(line)
         if version:
             if current:
                 releases.append(current)
