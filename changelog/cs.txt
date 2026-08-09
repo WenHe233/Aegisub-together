@@ -1,5 +1,5 @@
 Verze 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Výběr písem podporuje více jazyků a díky změněné logice cache je mnohem rychlejší, načítá se pouze jednou
 - AI kontrola a review podporují více jazyků
 - Změny jsou v našem vlastním jazyce, s výběrem jazyka, změny jsou přeloženy do 30 jazyků

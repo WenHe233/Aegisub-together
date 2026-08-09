@@ -1,5 +1,5 @@
 Bertsioa 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Letra-tipoen hautatzaileak hainbat hizkuntza onartzen ditu eta, cachearen logika aldatuari esker, askoz azkarragoa da; karga bakarra egiten da
 - AI egiaztapenak eta berrikuspenak hainbat hizkuntza onartzen dituzte
 - Aldaketen erregistroa gure hizkuntzan, hizkuntza-hautatzailearekin; aldaketak 30 hizkuntzatara itzulita

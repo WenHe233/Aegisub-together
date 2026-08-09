@@ -1,5 +1,5 @@
 Versión 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - El selector de fuentes admite varios idiomas y, gracias a la lógica de caché modificada, ahora es mucho más rápido; solo se carga una vez
 - La comprobación y la revisión mediante IA admiten varios idiomas
 - Registro de cambios en nuestro propio idioma, con selector de idioma y los cambios traducidos a 30 idiomas

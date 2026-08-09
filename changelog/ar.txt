@@ -1,5 +1,5 @@
 الإصدار 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - يدعم محدد الخطوط عدة لغات، وأصبح أسرع بكثير بفضل منطق التخزين المؤقت المُغيّر، إذ يحمّل مرة واحدة فقط
 - يدعم فحص AI والمراجعة عدة لغات
 - سجل التغييرات بلغتنا الخاصة، مع محدد للغة، وترجمة التغييرات إلى 30 لغة

@@ -1,5 +1,5 @@
 Sürüm 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Yazı tipi seçici artık birden fazla dili destekliyor ve değiştirilen önbellek mantığı sayesinde çok daha hızlı; yalnızca bir kez yükleme yapılıyor
 - AI kontrolü ve inceleme artık birden fazla dili destekliyor
 - Değişiklik günlüğü kendi dilimizde, dil seçiciyle birlikte; değişiklikler 30 dile çevrildi

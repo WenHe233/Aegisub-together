@@ -1,5 +1,5 @@
 Wersja 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Selektor czcionek obsługuje wiele języków i dzięki zmienionej logice cache stał się znacznie szybszy, ładowanie odbywa się tylko raz
 - Kontrola AI i review obsługują wiele języków
 - Dziennik zmian we własnym języku, z wyborem języka, zmiany przetłumaczone na 30 języków

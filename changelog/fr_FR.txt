@@ -1,5 +1,5 @@
 Version 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Le sélecteur de polices prend en charge plusieurs langues et est devenu beaucoup plus rapide grâce à la logique de cache modifiée, il n’y a qu’un seul chargement
 - La vérification et la review par IA prennent en charge plusieurs langues
 - Journal des modifications dans notre propre langue, avec un sélecteur de langue, les modifications traduites en 30 langues

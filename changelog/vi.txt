@@ -1,5 +1,5 @@
 Phiên bản 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Bộ chọn phông chữ hỗ trợ nhiều ngôn ngữ và nhờ logic bộ nhớ đệm được thay đổi nên nhanh hơn nhiều, chỉ cần tải một lần
 - Kiểm tra và đánh giá bằng AI hỗ trợ nhiều ngôn ngữ
 - Nhật ký thay đổi bằng ngôn ngữ của chúng ta, có bộ chọn ngôn ngữ, các thay đổi được dịch sang 30 ngôn ngữ

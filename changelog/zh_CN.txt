@@ -1,5 +1,5 @@
 版本 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - 字体选择器支持多种语言，并且得益于改进后的缓存逻辑，速度大幅提升，仅需加载一次
 - AI 检查和审阅支持多种语言
 - 使用我们自己的语言显示变更日志，并提供语言选择器，变更内容已翻译成 30 种语言

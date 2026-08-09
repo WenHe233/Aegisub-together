@@ -1,5 +1,5 @@
 Versie 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - De lettertypekiezer ondersteunt meerdere talen en is dankzij de gewijzigde cachelogica veel sneller geworden; er is slechts één keer laden
 - AI-controle en review ondersteunen meerdere talen
 - Wijzigingslogboek in onze eigen taal, met taalkeuze, de wijzigingen vertaald naar 30 talen

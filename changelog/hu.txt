@@ -1,5 +1,5 @@
 Verzió 4.3 ---
-https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Betűtípus választó támogatja a több nyelvet és a megváltozott cache logikának hála sokkal gyorsabb lett, egyszeri betöltés van csupán
 - AI ellenőrzés és review támogatja a több nyelvet
 - Változásnapló a saját nyelvünkön, nyelvválasztóval, a változtatások 30 nyelvre lefordítva
