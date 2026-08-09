@@ -22,6 +22,7 @@
 #include "audio_provider_factory.h"
 #include "audio_renderer_waveform.h"
 #include "command/command.h"
+#include "ai_client.h"
 #include "compat.h"
 #include "help_button.h"
 #include "hotkey_data_view_model.h"
@@ -74,6 +75,13 @@ void General(wxTreebook *book, Preferences *parent) {
 	wxArrayString autoload_modes_arr(3, autoload_modes);
 	p->OptionChoice(general, _("Automatically load linked files"), autoload_modes_arr, "App/Auto/Load Linked Files");
 	p->OptionAdd(general, _("Undo Levels"), "Limits/Undo Levels", 2, 10000);
+
+	auto ai_general = p->PageSizer(_("AI"));
+	wxArrayString check_languages;
+	for (auto const& language : ai::CheckLanguageChoices())
+		check_languages.push_back(to_wx(language));
+	p->OptionChoice(ai_general, _("Language checked by AI review and post-check"),
+		check_languages, "AI/Check Language");
 
 	auto recent = p->PageSizer(_("Recently Used Lists"));
 	p->OptionAdd(recent, _("Files"), "Limits/MRU", 0, 16);
@@ -250,6 +258,9 @@ void Interface(wxTreebook *book, Preferences *parent) {
 	auto font_picker = p->PageSizer(_("Font Picker"));
 	p->OptionAddMultiline(font_picker, "Tool/Font Picker/Preview");
 	p->OptionAddMultiline(font_picker, "Tool/Font Picker/Sample");
+
+	auto font_filters = p->PageSizer(_("Font Picker Language Filters"));
+	p->OptionLanguageFilterList(font_filters, "Tool/Font Picker/Language Filters");
 
 #if defined(__WXMSW__) && wxVERSION_NUMBER >= 3300
 	auto dark_mode = p->PageSizer(_("Dark Mode"));

@@ -20,6 +20,7 @@
 
 #include "colour_button.h"
 #include "compat.h"
+#include "format.h"
 #include "options.h"
 #include "preferences.h"
 
@@ -321,6 +322,118 @@ static std::vector<std::string> source_rows_to_vector(std::vector<wxTextCtrl *> 
 		values.emplace_back("");
 
 	return values;
+}
+
+void OptionPage::OptionLanguageFilterList(PageSection section, const char *opt_name) {
+	parent->AddChangeableOption(opt_name);
+	const auto opt = OPT_GET(opt_name);
+
+	if (opt->GetType() != agi::OptionType::ListString)
+		throw agi::InternalError("Option must be agi::OptionType::ListString for LanguageFilterList.");
+
+	auto panel = new wxPanel(section.box);
+	auto outer = new wxBoxSizer(wxVERTICAL);
+	auto rows_sizer = new wxBoxSizer(wxVERTICAL);
+	auto add_button = new wxButton(panel, -1, _("Add"));
+	panel->SetSizer(outer);
+
+	// The example characters are injected rather than written into the msgid: a
+	// non-ASCII msgid is looked up through a narrow-to-wide conversion in the
+	// current locale, which both breaks the lookup and mangles the fallback text.
+	auto help = new wxStaticText(panel, -1, agi::wxformat(
+		_("A font is offered when it has every character of one group. Separate alternative groups with a slash: %s accepts a font that has either both lower case letters or both upper case ones."),
+		wxString::FromUTF8("őű/ŐŰ")));
+	help->Wrap(430);
+	help->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
+
+	struct FilterRow {
+		wxTextCtrl *label;
+		wxTextCtrl *condition;
+		wxCheckBox *filtered;
+	};
+	auto rows = std::make_shared<std::vector<FilterRow>>();
+
+	auto relayout = [=] {
+		rows_sizer->Layout();
+		outer->Layout();
+		panel->Layout();
+		section.box->Layout();
+		this->Layout();
+		this->FitInside();
+	};
+
+	auto save = [=] {
+		std::vector<std::string> values;
+		for (auto const& row : *rows) {
+			wxString label = row.label->GetValue();
+			label.Trim(true).Trim(false);
+			wxString condition = row.condition->GetValue();
+			condition.Trim(true).Trim(false);
+			if (label.empty() || condition.empty()) continue;
+			values.push_back(from_wx(label + "|" + condition +
+				(row.filtered->GetValue() ? "|1" : "|0")));
+		}
+		parent->SetOption(std::make_unique<agi::OptionValueListString>(opt_name, values));
+	};
+
+	auto add_row = std::make_shared<std::function<void(wxString, wxString, bool)>>();
+	*add_row = [=](wxString label, wxString condition, bool filtered) {
+		auto row = new wxBoxSizer(wxHORIZONTAL);
+		auto label_ctrl = new wxTextCtrl(panel, -1, label);
+		label_ctrl->SetMinSize(wxSize(110, -1));
+		auto condition_ctrl = new wxTextCtrl(panel, -1, condition);
+		condition_ctrl->SetMinSize(wxSize(150, -1));
+		auto filtered_ctrl = new wxCheckBox(panel, -1, _("On by default"));
+		filtered_ctrl->SetValue(filtered);
+		auto remove = new wxButton(panel, -1, _("Remove"));
+
+		row->Add(label_ctrl, wxSizerFlags(2).Expand());
+		row->Add(condition_ctrl, wxSizerFlags(3).Expand().Border(wxLEFT, 5));
+		row->Add(filtered_ctrl, wxSizerFlags().Center().Border(wxLEFT, 5));
+		row->Add(remove, wxSizerFlags().Center().Border(wxLEFT, 5));
+
+		rows->push_back({label_ctrl, condition_ctrl, filtered_ctrl});
+
+		remove->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+			rows->erase(std::remove_if(rows->begin(), rows->end(),
+				[&](FilterRow const& item) { return item.label == label_ctrl; }), rows->end());
+			rows_sizer->Detach(row);
+			label_ctrl->Destroy();
+			condition_ctrl->Destroy();
+			filtered_ctrl->Destroy();
+			remove->Destroy();
+			delete row;
+			save();
+			relayout();
+		});
+		auto on_change = [=](wxCommandEvent& evt) { evt.Skip(); save(); };
+		label_ctrl->Bind(wxEVT_TEXT, on_change);
+		condition_ctrl->Bind(wxEVT_TEXT, on_change);
+		filtered_ctrl->Bind(wxEVT_CHECKBOX, on_change);
+
+		rows_sizer->Add(row, wxSizerFlags().Expand().Border(wxBOTTOM, 4));
+	};
+
+	for (auto const& definition : opt->GetListString()) {
+		wxString value = to_wx(definition);
+		wxString label = value.BeforeFirst('|');
+		wxString rest = value.AfterFirst('|');
+		wxString condition = rest.BeforeFirst('|');
+		if (label.empty() && condition.empty()) continue;
+		(*add_row)(label, condition, rest.AfterFirst('|') == "1");
+	}
+
+	add_button->Bind(wxEVT_BUTTON, [=](wxCommandEvent&) {
+		(*add_row)("", "", false);
+		save();
+		relayout();
+	});
+
+	outer->Add(help, wxSizerFlags().Expand().Border(wxBOTTOM, 6));
+	outer->Add(rows_sizer, wxSizerFlags().Expand());
+	outer->Add(add_button, wxSizerFlags().Border(wxTOP, 4));
+	section.sizer->Add(panel, wxSizerFlags(1).Expand());
+	relayout();
 }
 
 void OptionPage::OptionBrowseList(PageSection section, const char *opt_name) {

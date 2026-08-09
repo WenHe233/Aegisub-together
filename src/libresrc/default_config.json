@@ -95,6 +95,7 @@
 
 
 	"AI" : {
+		"Check Language" : "",
 		"Cloudinary" : {
 			"API Key" : "",
 			"Cloud Name" : ""
@@ -489,6 +490,10 @@
 			"Action" : 0
 		},
 		"Font Picker" : {
+			"Language Filters" : [
+				{ "string" : "Magyar|őű/ŐŰ|1" },
+				{ "string" : "Kanji|漢|0" }
+			],
 			"Sample" : "Sample áéóöőúüű 日本語",
 			"Preview" : "abcdefghijklmnopqrstuvwz áéóöőúüű \n ABCDEFGHIJKLMNOPQRSTUVWZ ÁÉÓÖŐÚÜŰ",
 			"Preview Size" : 25,

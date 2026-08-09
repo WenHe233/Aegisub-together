@@ -46,8 +46,18 @@ namespace {
 
 namespace fs = std::filesystem;
 
-constexpr char CHANGELOG_NAME[] = "aegisub-changelog.txt";
 constexpr char AUTOMATION_ENDPOINT[] = "muteki-update.php";
+constexpr char CHANGELOG_FALLBACK_LANGUAGE[] = "en";
+/// What the "View as" chooser starts on: the language the changelog is written in.
+constexpr char CHANGELOG_DEFAULT_LANGUAGE[] = "hu";
+
+/// Changelogs are published per language under changelog/, so the text is
+/// translated once and shipped rather than translated on every view.
+std::string ChangelogName(std::string const& language) {
+	return "changelog/" + language + ".txt";
+}
+
+std::string FetchChangelog(std::string const& language);
 
 class UpdateError final : public std::runtime_error {
 public:
@@ -222,14 +232,25 @@ std::vector<Release> ParseChangelog(std::string const& text) {
 	while (std::getline(input, line)) {
 		if (!line.empty() && line.back() == '\r') line.pop_back();
 		auto trimmed = Trim(line);
-		if (trimmed.starts_with("Verzió ") && trimmed.ends_with("---")) {
+		// A release header is "<word for version> <number> ---". The leading word is
+		// whatever the translation of that file uses, so only the trailing marker and
+		// the number itself are relied on here.
+		std::string version;
+		if (trimmed.ends_with("---")) {
+			auto head = Trim(trimmed.substr(0, trimmed.size() - 3));
+			auto last_space = head.find_last_of(" \t");
+			auto candidate = last_space == std::string::npos ? head : head.substr(last_space + 1);
+			if (!candidate.empty() &&
+				std::any_of(candidate.begin(), candidate.end(),
+					[](unsigned char c) { return std::isdigit(c); }))
+				version = candidate;
+		}
+		if (!version.empty()) {
 			if (current) {
 				current->package = PackageName(current->package, current->version);
 				current->changes = Trim(current->changes);
 				releases.push_back(std::move(*current));
 			}
-			auto version = Trim(trimmed.substr(8, trimmed.size() - 11));
-			if (version.empty()) throw UpdateError("A changelog üres verziószámot tartalmaz.");
 			current = Release{version, {}, {}};
 			need_package = true;
 			continue;
@@ -279,6 +300,78 @@ std::string ChangesBetween(std::vector<Release> const& releases, std::string con
 	return changes;
 }
 
+/// Fetch the changelog for `language`, falling back to English when there is no
+/// translation published for it.
+std::string FetchChangelog(std::string const& language) {
+	if (language != CHANGELOG_FALLBACK_LANGUAGE) {
+		try { return FetchText(UrlFor(ChangelogName(language))); }
+		catch (std::exception const&) { }
+	}
+	return FetchText(UrlFor(ChangelogName(CHANGELOG_FALLBACK_LANGUAGE)));
+}
+
+/// Languages the changelog is published in. Anything missing on the server falls
+/// back to English, so listing one that has no file yet is harmless.
+std::vector<std::pair<std::string, wxString>> ChangelogLanguages() {
+	// The native names have to go through FromUTF8: building a wxString straight
+	// from a narrow literal decodes it in the current locale, which turns every
+	// non-Latin name into mojibake.
+	auto native = [](char const *utf8) { return wxString::FromUTF8(utf8); };
+	return {
+		{"en", native("English")}, {"hu", native("Magyar")},
+		{"ar", native("العربية")}, {"be", native("Беларуская")},
+		{"bg", native("Български")}, {"ca", native("Català")},
+		{"cs", native("Čeština")}, {"da", native("Dansk")},
+		{"de", native("Deutsch")}, {"el", native("Ελληνικά")},
+		{"es", native("Español")}, {"eu", native("Euskara")},
+		{"fa", native("فارسی")}, {"fi", native("Suomi")},
+		{"fr_FR", native("Français")}, {"gl", native("Galego")},
+		{"id", native("Bahasa Indonesia")}, {"it", native("Italiano")},
+		{"ja", native("日本語")}, {"ko", native("한국어")},
+		{"nl", native("Nederlands")}, {"pl", native("Polski")},
+		{"pt_BR", native("Português (BR)")}, {"pt_PT", native("Português (PT)")},
+		{"ru", native("Русский")}, {"sr_RS", native("Српски")},
+		{"sr_RS@latin", native("Srpski")}, {"tr", native("Türkçe")},
+		{"uk_UA", native("Українська")}, {"vi", native("Tiếng Việt")},
+		{"zh_CN", native("简体中文")}, {"zh_TW", native("繁體中文")},
+	};
+}
+
+/// A "View as ..." chooser for a changelog view. Each language is a published
+/// file rather than a translation made on the spot, so switching is a download
+/// instead of a wait on a model.
+wxSizer *MakeChangelogLanguageRow(wxDialog *dialog, wxTextCtrl *target,
+	std::string shown_language) {
+	auto row = new wxBoxSizer(wxHORIZONTAL);
+	row->Add(new wxStaticText(dialog, -1, _("View as")), 0,
+		wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+
+	auto languages = std::make_shared<std::vector<std::pair<std::string, wxString>>>(
+		ChangelogLanguages());
+	wxArrayString choices;
+	for (auto const& [code, label] : *languages) choices.Add(label);
+	auto choice = new wxChoice(dialog, -1, wxDefaultPosition, wxDefaultSize, choices);
+
+	int selection = 0;
+	for (size_t i = 0; i < languages->size(); ++i)
+		if ((*languages)[i].first == shown_language) selection = static_cast<int>(i);
+	choice->SetSelection(selection);
+	row->Add(choice, 0, wxALIGN_CENTER_VERTICAL);
+
+	choice->Bind(wxEVT_CHOICE, [dialog, target, choice, languages](wxCommandEvent&) {
+		int selected = choice->GetSelection();
+		if (selected < 0 || selected >= static_cast<int>(languages->size())) return;
+		wxBusyCursor busy;
+		try {
+			target->SetValue(to_wx(FetchChangelog((*languages)[selected].first)));
+		}
+		catch (std::exception const& error) {
+			wxMessageBox(to_wx(error.what()), _("Muteki update error"), wxOK | wxICON_ERROR, dialog);
+		}
+	});
+	return row;
+}
+
 bool ConfirmInstall(wxWindow *parent, Release const& release, std::string const& all_changes) {
 	wxDialog dialog(parent, -1, _("Confirm update"), wxDefaultPosition, wxDefaultSize,
 		wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
@@ -292,8 +385,12 @@ bool ConfirmInstall(wxWindow *parent, Release const& release, std::string const&
 	outer->Add(changes, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 	outer->Add(new wxStaticText(&dialog, -1, _("Do you want to download and install this version?")),
 		0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
-	outer->Add(dialog.CreateStdDialogButtonSizer(wxYES | wxNO), 0,
-		wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+	auto buttons = new wxBoxSizer(wxHORIZONTAL);
+	buttons->Add(MakeChangelogLanguageRow(&dialog, changes, CHANGELOG_DEFAULT_LANGUAGE), 0,
+		wxALIGN_CENTER_VERTICAL);
+	buttons->AddStretchSpacer();
+	buttons->Add(dialog.CreateStdDialogButtonSizer(wxYES | wxNO), 0, wxALIGN_CENTER_VERTICAL);
+	outer->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 	dialog.SetSizerAndFit(outer);
 	dialog.SetMinSize(wxSize(620, 430));
 	dialog.CentreOnParent();
@@ -543,8 +640,13 @@ void InstallRelease(agi::Context *context, Release const& release, std::string c
 }
 
 std::pair<std::string, std::vector<Release>> LoadReleases() {
-	auto text = FetchText(UrlFor(CHANGELOG_NAME));
-	return {text, ParseChangelog(text)};
+	// Version numbers and package URLs have to survive translation; if a localised
+	// file cannot be parsed, English decides what is installable.
+	auto text = FetchChangelog(CHANGELOG_DEFAULT_LANGUAGE);
+	try { return {text, ParseChangelog(text)}; }
+	catch (std::exception const&) { }
+	auto fallback = FetchText(UrlFor(ChangelogName(CHANGELOG_FALLBACK_LANGUAGE)));
+	return {fallback, ParseChangelog(fallback)};
 }
 
 void ShowError(wxWindow *parent, std::exception const& error) {
@@ -643,13 +745,18 @@ void InstallSelectedVersion(agi::Context *context) {
 
 void ShowChangelog(agi::Context *context) {
 	try {
-		auto text = FetchText(UrlFor(CHANGELOG_NAME));
+		auto text = FetchChangelog(CHANGELOG_DEFAULT_LANGUAGE);
 		wxDialog dialog(context->parent, -1, _("Aegisub changelog"), wxDefaultPosition, wxSize(720, 560),
 			wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
 		auto sizer = new wxBoxSizer(wxVERTICAL);
-		sizer->Add(new wxTextCtrl(&dialog, -1, to_wx(text), wxDefaultPosition, wxDefaultSize,
-			wxTE_MULTILINE | wxTE_READONLY), 1, wxEXPAND | wxALL, 8);
-		sizer->Add(dialog.CreateStdDialogButtonSizer(wxOK), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+		auto view = new wxTextCtrl(&dialog, -1, to_wx(text), wxDefaultPosition, wxDefaultSize,
+			wxTE_MULTILINE | wxTE_READONLY);
+		sizer->Add(view, 1, wxEXPAND | wxALL, 8);
+		auto buttons = new wxBoxSizer(wxHORIZONTAL);
+		buttons->Add(MakeChangelogLanguageRow(&dialog, view, CHANGELOG_DEFAULT_LANGUAGE), 0, wxALIGN_CENTER_VERTICAL);
+		buttons->AddStretchSpacer();
+		buttons->Add(dialog.CreateStdDialogButtonSizer(wxOK), 0, wxALIGN_CENTER_VERTICAL);
+		sizer->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 		dialog.SetSizer(sizer);
 		dialog.CentreOnParent();
 		dialog.ShowModal();

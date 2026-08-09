@@ -1,0 +1,272 @@
+"""Shared bits for the release helpers: settings, paths, po and changelog parsing."""
+
+import io
+import json
+import os
+import re
+import subprocess
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
+CONFIG_PATH = os.path.join(HERE, 'release.config.json')
+
+DEFAULT_CONFIG = {
+    'build_dir': 'build-codex',
+    'portable_dir': r'C:\aegisub-portable',
+    'release_dir': r'C:\aegisub-portable\_release',
+    'changelog_dir': r'C:\aegisub-portable\_release\changelog',
+    'source_language': 'hu',
+    'fallback_language': 'en',
+    # Where upload.cmd publishes to. A local path, a UNC share, or an
+    # sftp://user@host/path, ftp://... or ftps://... URL.
+    'upload_destination': r'\\CHANGE-ME\aegisub',
+    'upload_user': '',
+    'openai_model': 'gpt-5.6-terra',
+    'vcvars': r'D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat',
+}
+
+
+def load_config():
+    config = dict(DEFAULT_CONFIG)
+    if os.path.exists(CONFIG_PATH):
+        with io.open(CONFIG_PATH, encoding='utf-8') as handle:
+            config.update(json.load(handle))
+    else:
+        save_config(config)
+        print('Created %s - check the paths in it before publishing.' % CONFIG_PATH)
+    return config
+
+
+def save_config(config):
+    with io.open(CONFIG_PATH, 'w', encoding='utf-8', newline='\n') as handle:
+        json.dump(config, handle, indent=2, ensure_ascii=False)
+        handle.write('\n')
+
+
+def fail(message):
+    print('\nERROR: %s' % message)
+    sys.exit(1)
+
+
+def ask_yes_no(question):
+    while True:
+        answer = input('%s [y/n] ' % question).strip().lower()
+        if answer in ('y', 'yes'):
+            return True
+        if answer in ('n', 'no'):
+            return False
+
+
+# ---------------------------------------------------------------- process state
+
+def running_executables(path):
+    """PIDs of processes running the given executable, via tasklist."""
+    name = os.path.basename(path)
+    try:
+        output = subprocess.run(['tasklist', '/fi', 'imagename eq %s' % name, '/fo', 'csv', '/nh'],
+                                capture_output=True, text=True, check=False).stdout
+    except OSError:
+        return []
+    return [line for line in output.splitlines() if line.strip().startswith('"%s"' % name)]
+
+
+def require_not_running(path):
+    """tasklist matches on the image name, so this catches any copy of it."""
+    if running_executables(path):
+        fail('%s is running (any copy counts). Close it and start this script again.'
+             % os.path.basename(path))
+
+
+# ------------------------------------------------------------------- catalogues
+
+def po_languages(repo=REPO):
+    directory = os.path.join(repo, 'po')
+    return sorted(name[:-3] for name in os.listdir(directory) if name.endswith('.po'))
+
+
+ENTRY_SPLIT = re.compile(r'\n\s*\n')
+
+
+def parse_po(path):
+    """Return (header_text, [(comment_lines, msgid, msgstr)]) keeping order."""
+    with io.open(path, encoding='utf-8') as handle:
+        text = handle.read()
+    blocks = ENTRY_SPLIT.split(text)
+    header = blocks[0] if blocks else ''
+    entries = []
+    for block in blocks[1:]:
+        lines = block.split('\n')
+        comments = [line for line in lines if line.startswith('#')]
+        msgid = None
+        msgstr = None
+        target = None
+        for line in lines:
+            if line.startswith('msgid '):
+                msgid = unquote_po(line[len('msgid '):])
+                target = 'id'
+            elif line.startswith('msgstr '):
+                msgstr = unquote_po(line[len('msgstr '):])
+                target = 'str'
+            elif line.startswith('"'):
+                if target == 'id':
+                    msgid += unquote_po(line)
+                elif target == 'str':
+                    msgstr += unquote_po(line)
+        if msgid is not None and msgstr is not None:
+            entries.append((comments, msgid, msgstr))
+    return header, entries
+
+
+def unquote_po(value):
+    value = value.strip()
+    if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+        value = value[1:-1]
+    return value.replace('\\"', '"').replace('\\\\', '\\')
+
+
+def quote_po(value):
+    return '"%s"' % value.replace('\\', '\\\\').replace('"', '\\"')
+
+
+def append_po_entries(path, blocks):
+    """Append already formatted entry blocks to a catalogue."""
+    with io.open(path, encoding='utf-8') as handle:
+        text = handle.read()
+    if not text.endswith('\n'):
+        text += '\n'
+    text += '\n' + '\n'.join(blocks)
+    with io.open(path, 'w', encoding='utf-8', newline='\n') as handle:
+        handle.write(text)
+
+
+# -------------------------------------------------------------------- changelog
+
+def parse_changelog(path):
+    """Return [(version, header_line, body_lines)] in file order.
+
+    A release header is any line ending in '---' whose last word before the
+    marker contains a digit, which is what the program's own parser accepts.
+    """
+    with io.open(path, encoding='utf-8') as handle:
+        lines = handle.read().split('\n')
+    releases = []
+    current = None
+    for line in lines:
+        stripped = line.strip()
+        version = ''
+        if stripped.endswith('---'):
+            head = stripped[:-3].strip()
+            words = head.split()
+            if words and any(character.isdigit() for character in words[-1]):
+                version = words[-1]
+        if version:
+            if current:
+                releases.append(current)
+            current = (version, line, [])
+            continue
+        if current:
+            current[2].append(line)
+    if current:
+        releases.append(current)
+    return releases
+
+
+def changelog_versions(path):
+    if not os.path.exists(path):
+        return []
+    return [version for version, _, _ in parse_changelog(path)]
+
+
+def write_changelog(path, releases):
+    parts = []
+    for _, header, body in releases:
+        block = [header] + body
+        while block and not block[-1].strip():
+            block.pop()
+        parts.append('\n'.join(block))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with io.open(path, 'w', encoding='utf-8', newline='\n') as handle:
+        handle.write('\n\n'.join(parts) + '\n')
+
+
+# ----------------------------------------------------------------------- OpenAI
+
+def openai_key():
+    key = os.environ.get('OPENAI_API_KEY', '').strip()
+    if key:
+        return key
+    print('OPENAI_API_KEY is not set.')
+    key = input('Paste an OpenAI API key (used for this run only): ').strip()
+    if not key:
+        fail('No API key, nothing to translate with.')
+    return key
+
+
+def openai_text(key, model, instructions, user_text):
+    """One plain-text Responses call. Returns the model's text."""
+    import urllib.error
+    import urllib.request
+
+    body = json.dumps({
+        'model': model,
+        'instructions': instructions,
+        'input': [{'role': 'user', 'content': user_text}],
+        'store': False,
+        'max_output_tokens': 16000,
+    }).encode('utf-8')
+    request = urllib.request.Request('https://api.openai.com/v1/responses', data=body,
+                                     headers={'Authorization': 'Bearer %s' % key,
+                                              'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(request, timeout=600) as response:
+            payload = json.load(response)
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode('utf-8', 'replace')
+        raise RuntimeError('OpenAI HTTP %d: %s' % (error.code, detail[:400]))
+
+    chunks = []
+    for item in payload.get('output', []):
+        for piece in item.get('content', []):
+            if piece.get('type') in ('output_text', 'text') and piece.get('text'):
+                chunks.append(piece['text'])
+    text = ''.join(chunks).strip()
+    if not text:
+        raise RuntimeError('OpenAI returned no text.')
+    return text
+
+
+# ------------------------------------------------------------------------ build
+
+def run_build(config):
+    build_dir = config['build_dir']
+    vcvars = config['vcvars']
+    if not os.path.exists(vcvars):
+        fail('Visual Studio environment script not found: %s (fix vcvars in release.config.json)' % vcvars)
+    command = '"%s" >nul 2>&1 && cd /d "%s" && ninja -C "%s"' % (vcvars, REPO, build_dir)
+    print('Building (%s)...' % build_dir)
+    # shell=True hands the string to cmd untouched; passing it as an argv element
+    # lets Python re-quote it and cmd then misreads the inner quotes.
+    result = subprocess.run(command, shell=True)
+    if result.returncode != 0:
+        fail('The build failed.')
+
+
+def build_catalogue(config, language):
+    """Compile one .po into the build tree and return the .mo path."""
+    target = 'po/%s/LC_MESSAGES/aegisub.mo' % language
+    command = '"%s" >nul 2>&1 && cd /d "%s" && ninja -C "%s" %s' % (
+        config['vcvars'], REPO, config['build_dir'], target)
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    path = os.path.join(REPO, config['build_dir'], 'po', language, 'LC_MESSAGES', 'aegisub.mo')
+    if result.returncode != 0 or not os.path.exists(path):
+        return None
+    return path
+
+
+def newest_changelog_version(path):
+    """The version the zip is named after: the first release in the changelog."""
+    versions = changelog_versions(path)
+    if not versions:
+        fail('No release found in %s' % path)
+    return versions[0]

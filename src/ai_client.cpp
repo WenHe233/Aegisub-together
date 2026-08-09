@@ -4,6 +4,7 @@
 #include "ai_client.h"
 
 #include "format.h"
+#include "options.h"
 
 #include <libaegisub/cajun/elements.h>
 #include <libaegisub/cajun/reader.h>
@@ -479,54 +480,62 @@ std::string karaoke_instructions(KaraokeMode mode, bool advanced_timing) {
 		"chunks. Do not rewrite the line.";
 }
 
+std::string checked_language() {
+	auto language = GetCheckLanguage();
+	return language.empty() ? "Hungarian" : language;
+}
+
 std::string instructions(std::string const& custom) {
+	std::string language = checked_language();
 	std::string prompt =
 		"You are a professional audiovisual subtitle quality reviewer. Audit the "
-		"supplied existing Hungarian subtitle text; do not translate from scratch "
-		"when the current subtitle is already correct. Compare current_hu against "
-		"the authoritative Japanese transcript and use source_en as a secondary aid. "
-		"Check meaning, omissions, additions, tone, natural Hungarian wording, grammar, "
+		"supplied existing " + language + " subtitle text; do not translate from scratch "
+		"when the current subtitle is already correct. Compare current_text against "
+		"the authoritative Japanese transcript and use source_reference as a secondary aid. "
+		"Check meaning, omissions, additions, tone, natural " + language + " wording, grammar, "
 		"and continuity across the scene. The input lines are ordered and belong to "
 		"one continuous scene. Input lines are compact arrays in the exact order declared "
 		"by columns. Return exactly one record for every supplied line_id "
 		"in the same order. verdict must be ok, minor_issue, or major_issue. assessment "
-		"must be one short Hungarian sentence and issues must contain at most three short "
-		"Hungarian items. suggested_text must be "
+		"must be one short " + language + " sentence and issues must contain at most three short "
+		+ language + " items. suggested_text must be "
 		"empty when no change is needed; otherwise it must contain one corrected, plain "
-		"Hungarian subtitle without ASS tags or literal newlines. japanese should contain "
+		+ language + " subtitle without ASS tags or literal newlines. japanese should contain "
 		"the Japanese words assigned to the line, and romaji an easy-to-read Hepburn "
 		"romanization. During follow-up chat, answer only the user's new question in "
-		"Hungarian. Do not repeat the per-line review unless explicitly asked.";
+		+ language + ". Do not repeat the per-line review unless explicitly asked.";
 	if (!custom.empty())
 		prompt += " Additional user review rules: " + custom;
 	return prompt;
 }
 
 std::string proofread_instructions(std::string const& custom) {
+	std::string language = checked_language();
 	std::string prompt =
-		"You are a meticulous Hungarian subtitle proofreader. Review only input lines "
+		"You are a meticulous " + language + " subtitle proofreader. Review only input lines "
 		"where target is 1, and use every supplied line in the chronologically ordered "
 		"batch as context. Return one combined issue object per flawed "
 		"target line and no object for correct lines. Keep false positives very low for "
-		"spelling claims. Check Hungarian spelling and typos, unambiguous comma and other "
+		"spelling claims. Check " + language + " spelling and typos, unambiguous comma and other "
 		"punctuation errors, grammar, awkward or unclear wording in context, repeated words "
 		"or phrases, and terminology/name/spelling consistency across the entire subtitle. "
 		"Do not flag high CPS, reading speed, line length or subtitle duration issues. "
 		"Treat source_line as a semantic reference: flag a contextually wrong but correctly "
-		"spelled Hungarian word (for example bab instead of báb) when the source makes the "
+		"spelled word of the target language when the source makes the "
 		"mistake clear. Never propose a fresh translation merely because source_line differs. "
 		"Editorial notes intentionally left in the subtitle are allowed. Never flag the presence, "
 		"wording, formatting or retention of an editor/editorial note, and never suggest removing it. "
 		"Input lines are compact arrays in the exact order declared by columns. Merge all findings "
 		"for the same line into its categories, explanation and alternatives. explanation must be "
-		"one short Hungarian sentence. Each suggestion is the complete "
+		"one short " + language + " sentence. Each suggestion is the complete "
 		"replacement ASS text for that line, not merely a changed word. Preserve every existing "
 		"ASS override block such as {\\i1} and {\\i0} verbatim in every suggestion and preserve "
 		"explicit \\N, \\n and \\h controls unless reflow is necessary. Never add literal newlines. "
 		"If categories is exactly [spelling] and the issue is only a clear typo, one strong "
 		"suggestion is sufficient. For every other issue return exactly three genuinely useful, "
 		"meaning-preserving alternatives, ordered best first. Do not return duplicate alternatives. "
-		"If there are no findings, return an empty issues array and a short Hungarian message.";
+		"If there are no findings, return an empty issues array and a short "
+		+ language + " message.";
 	if (!custom.empty())
 		prompt += " Additional user review rules: " + custom;
 	return prompt;
@@ -761,7 +770,7 @@ ProofreadResult proofread_request(std::string const& key,
 
 	json::Object format;
 	format["type"] = "json_schema";
-	format["name"] = "hungarian_subtitle_proofread";
+	format["name"] = "subtitle_proofread";
 	format["strict"] = true;
 	format["schema"] = proofread_response_schema();
 
@@ -1193,10 +1202,10 @@ ReviewResult OpenAIClient::Review(std::vector<SubtitleLine> const& lines,
 
 	json::Object context;
 	context["japanese_transcript"] = japanese_transcript;
-	context["review_language"] = "hu";
+	context["review_language"] = checked_language();
 	context["task"] = "quality_review_existing_subtitles";
 	json::Array columns;
-	for (auto name : {"line_id", "source_en", "current_hu", "actor"})
+	for (auto name : {"line_id", "source_reference", "current_text", "actor"})
 		columns.emplace_back(name);
 	context["columns"] = std::move(columns);
 	context["lines"] = std::move(input_lines);
@@ -1227,8 +1236,8 @@ ProofreadResult OpenAIClient::Proofread(std::vector<SubtitleLine> const& lines) 
 		}
 
 		json::Object context;
-		context["language"] = "hu";
-		context["task"] = "hungarian_subtitle_proofread";
+		context["language"] = checked_language();
+		context["task"] = "subtitle_proofread";
 		json::Array columns;
 		for (auto name : {"line_id", "target", "source_line", "ass_text", "actor"})
 			columns.emplace_back(name);
@@ -1277,6 +1286,26 @@ ProofreadResult OpenAIClient::Proofread(std::vector<SubtitleLine> const& lines) 
 	if (request_count > 1)
 		combined.message.clear();
 	return combined;
+}
+
+std::string GetCheckLanguage() {
+	return OPT_GET("AI/Check Language")->GetString();
+}
+
+void SetCheckLanguage(std::string language) {
+	OPT_SET("AI/Check Language")->SetString(std::move(language));
+}
+
+std::vector<std::string> CheckLanguageChoices() {
+	// English names on purpose: the review and proofread prompts name the language
+	// to the model, and an English name is what it reliably understands.
+	return {"Arabic", "Bulgarian", "Chinese (Simplified)", "Chinese (Traditional)",
+		"Croatian", "Czech", "Danish", "Dutch", "English", "Estonian", "Finnish",
+		"French", "German", "Greek", "Hebrew", "Hindi", "Hungarian", "Indonesian",
+		"Italian", "Japanese", "Korean", "Latvian", "Lithuanian", "Norwegian",
+		"Polish", "Portuguese", "Portuguese (Brazilian)", "Romanian", "Russian",
+		"Serbian", "Slovak", "Slovenian", "Spanish", "Spanish (Latin American)",
+		"Swedish", "Thai", "Turkish", "Ukrainian", "Vietnamese"};
 }
 
 std::string GetApiKey() {

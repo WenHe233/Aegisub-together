@@ -177,4 +177,11 @@ bool StoreApiKey(std::string const& key, std::string *error = nullptr);
 bool DeleteStoredApiKey(std::string *error = nullptr);
 bool HasStoredApiKey();
 
+/// The language the review and the post-check work in, as an English language
+/// name because the prompts embed it verbatim. Empty until one has been chosen.
+std::string GetCheckLanguage();
+void SetCheckLanguage(std::string language);
+/// Languages offered when asking for one, English names in the same form.
+std::vector<std::string> CheckLanguageChoices();
+
 } // namespace ai

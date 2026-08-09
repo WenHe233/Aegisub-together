@@ -57,6 +57,7 @@
 #include <libaegisub/character_count.h>
 #include <libaegisub/util.h>
 
+#include <algorithm>
 #include <functional>
 #include <unordered_set>
 
@@ -120,6 +121,14 @@ SubsEditBox::SubsEditBox(wxWindow *parent, agi::Context *context)
 	top_sizer->Add(comment_box, 0, wxRIGHT | wxALIGN_CENTER, 5);
 
 	style_box = MakeComboBox("Default", wxCB_READONLY, &SubsEditBox::OnStyleChange, _("Style for this line"));
+	// A combobox window on MSW is created tall enough to hold its drop-down list,
+	// and the closed control is only meant to be drawn at field height. Once the
+	// video box squeezes the edit box, that full height ends up laid out instead and
+	// the closed control covers the text editor. Pin the height to the field so no
+	// reflow can stretch it; the width is left to the sizer.
+	int style_box_height = style_box->GetBestSize().GetHeight();
+	style_box->SetMinSize(wxSize(110, style_box_height));
+	style_box->SetMaxSize(wxSize(-1, style_box_height));
 
 	style_edit_button = new wxButton(this, -1, _("Edit"), wxDefaultPosition,
 		wxSize(GetTextExtent(_("Edit")).GetWidth() + 20, -1));

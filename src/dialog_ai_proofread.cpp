@@ -6,6 +6,7 @@
 #include "ass_dialogue.h"
 #include "ass_file.h"
 #include "base_grid.h"
+#include "ai_client.h"
 #include "compat.h"
 #include "format.h"
 #include "include/aegisub/context.h"
@@ -362,7 +363,7 @@ class AIProofreadDialog final : public wxDialog {
 			progress->SetRange(1);
 			progress->SetValue(1);
 			wxMessageBox(result.message.empty()
-			? _("No clear Hungarian spelling, style or consistency issue was found in the checked lines.")
+			? _("No clear spelling, style or consistency issue was found in the checked lines.")
 				: to_wx(result.message),
 				_("AI post-check"), wxOK | wxICON_INFORMATION, this);
 			EndModal(wxID_OK);
@@ -536,7 +537,11 @@ public:
 
 		auto main = new wxBoxSizer(wxVERTICAL);
 		auto analysis = new wxBoxSizer(wxVERTICAL);
-		auto title = new wxStaticText(this, wxID_ANY, _("Hungarian subtitle post-check"));
+		// Name the language being checked, since it is now configurable.
+		auto language = ai::GetCheckLanguage();
+		auto title = new wxStaticText(this, wxID_ANY, language.empty() ?
+			_("Subtitle post-check") :
+			agi::wxformat(_("%s subtitle post-check"), to_wx(language)));
 		auto title_font = title->GetFont();
 		title_font.SetWeight(wxFONTWEIGHT_BOLD);
 		title_font.SetPointSize(title_font.GetPointSize() + 2);

@@ -8266,3 +8266,73 @@ msgstr "Téglalap tartomány"
 #: src/visual_tool_mask.cpp src/visual_tool_vector_clip.cpp
 msgid "Freehand range"
 msgstr "Szabadkezű tartomány"
+
+#: src/command/ai.cpp
+msgid "AI check language"
+msgstr "AI ellenőrzés nyelve"
+
+#: src/command/ai.cpp
+msgid "Which language are the subtitles you are checking written in?\n\nYou can change this later in Preferences, under General."
+msgstr "Milyen nyelven készültek az ellenőrizni kívánt feliratok?\n\nEzt később a Beállítások Általános lapján módosíthatod."
+
+#: src/command/ai.cpp
+msgid "Check up to 100 lines and two minutes of subtitles against Japanese audio and the source lines"
+msgstr "Legfeljebb 100 sor és két perc felirat ellenőrzése a japán hang és a forrássorok alapján"
+
+#: src/command/ai.cpp
+msgid "Check spelling, wording and consistency, then approve corrections one by one"
+msgstr "Helyesírás, szóhasználat és következetesség ellenőrzése, majd a javítások egyenkénti jóváhagyása"
+
+#: src/preferences.cpp
+msgid "Language checked by AI review and post-check"
+msgstr "Az AI ellenőrzés és utóellenőrzés nyelve"
+
+#: src/dialog_ai_proofread.cpp
+msgid "Subtitle post-check"
+msgstr "Felirat utóellenőrzés"
+
+#: src/dialog_ai_proofread.cpp
+#, c-format
+msgid "%s subtitle post-check"
+msgstr "%s felirat utóellenőrzés"
+
+#: src/dialog_ai_proofread.cpp
+msgid "No clear spelling, style or consistency issue was found in the checked lines."
+msgstr "Az ellenőrzött sorokban nem található egyértelmű helyesírási, stílusbeli vagy következetességi hiba."
+
+#: src/preferences.cpp
+msgid "Font Picker Language Filters"
+msgstr "Betűtípus-választó nyelvi szűrők"
+
+#: src/preferences_base.cpp
+msgid "On by default"
+msgstr "Alapból bekapcsolva"
+
+#: src/preferences_base.cpp
+#, c-format
+msgid "A font is offered when it has every character of one group. Separate alternative groups with a slash: %s accepts a font that has either both lower case letters or both upper case ones."
+msgstr "Egy betűtípus akkor jelenik meg, ha egy csoport minden karakterét tartalmazza. A választható csoportokat perjel választja el: a %s elfogadja azt a betűtípust, amelyben vagy mindkét kisbetű, vagy mindkét nagybetű megvan."
+
+#: src/dialog_fontpicker.cpp
+msgid "You can change the filter options in the Settings/Interface menu."
+msgstr "A szűrési beállításokat a Beállítások/Felület menüben módosíthatod."
+
+#: src/dialog_fontpicker.cpp
+msgid "Caching fonts..."
+msgstr "Betűtípusok gyorsítótárazása..."
+
+#: src/dialog_fontpicker.cpp src/preferences.cpp
+msgid "Font Picker"
+msgstr "Betűtípus-választó"
+
+#: src/muteki_update.cpp
+msgid "View as"
+msgstr "Megjelenítés így"
+
+#: src/muteki_update.cpp
+msgid "Hungarian (original)"
+msgstr "Magyar (eredeti)"
+
+#: src/muteki_update.cpp
+msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
+msgstr "A változásnapló fordításához AI összekötés szükséges. Az AI menü Configure AI connection pontjában állíthatod be."

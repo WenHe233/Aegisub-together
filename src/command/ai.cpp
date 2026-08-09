@@ -29,6 +29,7 @@
 
 #include <wx/filefn.h>
 #include <wx/filename.h>
+#include <wx/choicdlg.h>
 #include <wx/msgdlg.h>
 
 namespace {
@@ -53,6 +54,28 @@ struct TemporaryFile final {
 	}
 };
 
+/// Ask which language the review and the post-check should work in, once, and
+/// remember the answer. Both commands need it before they can build their prompts.
+bool EnsureCheckLanguage(wxWindow *parent) {
+	if (!ai::GetCheckLanguage().empty()) return true;
+	auto languages = ai::CheckLanguageChoices();
+	wxArrayString choices;
+	choices.reserve(languages.size());
+	for (auto const& language : languages) choices.push_back(to_wx(language));
+	auto found = std::find(languages.begin(), languages.end(), std::string("English"));
+	int preselect = found == languages.end() ? 0 :
+		static_cast<int>(std::distance(languages.begin(), found));
+	wxSingleChoiceDialog dialog(parent,
+		_("Which language are the subtitles you are checking written in?\n\nYou can change this later in Preferences, under General."),
+		_("AI check language"), choices);
+	dialog.SetSelection(preselect);
+	if (dialog.ShowModal() != wxID_OK) return false;
+	int selected = dialog.GetSelection();
+	if (selected < 0 || selected >= static_cast<int>(languages.size())) return false;
+	ai::SetCheckLanguage(languages[selected]);
+	return true;
+}
+
 struct ai_configure final : public cmd::Command {
 	CMD_NAME("ai/configure")
 	STR_MENU("Configure AI connection...")
@@ -68,7 +91,7 @@ struct ai_review final : public cmd::Command {
 	CMD_NAME("ai/review")
 	STR_MENU("Review selected lines with AI...")
 	STR_DISP("Review selected lines with AI")
-	STR_HELP("Check up to 100 lines and two minutes of Hungarian subtitles against Japanese audio and English source lines")
+	STR_HELP("Check up to 100 lines and two minutes of subtitles against Japanese audio and the source lines")
 	CMD_TYPE(cmd::COMMAND_VALIDATE)
 
 	bool Validate(agi::Context const *c) override {
@@ -78,6 +101,7 @@ struct ai_review final : public cmd::Command {
 	void operator()(agi::Context *c) override {
 		if (ai::GetApiKey().empty() && !ShowAIConnectionDialog(c->parent, true))
 			return;
+		if (!EnsureCheckLanguage(c->parent)) return;
 
 		auto lines = c->selectionController->GetSortedSelection();
 		if (lines.empty() || !c->project->AudioProvider()) return;
@@ -163,7 +187,7 @@ struct ai_proofread final : public cmd::Command {
 	CMD_NAME("ai/proofread")
 	STR_MENU("AI post-check...")
 	STR_DISP("AI post-check")
-	STR_HELP("Check Hungarian spelling, wording and consistency, then approve corrections one by one")
+	STR_HELP("Check spelling, wording and consistency, then approve corrections one by one")
 	CMD_TYPE(cmd::COMMAND_VALIDATE)
 
 	bool Validate(agi::Context const *c) override {
@@ -182,6 +206,7 @@ struct ai_proofread final : public cmd::Command {
 	void operator()(agi::Context *c) override {
 		if (ai::GetApiKey().empty() && !ShowAIConnectionDialog(c->parent, true))
 			return;
+		if (!EnsureCheckLanguage(c->parent)) return;
 
 		auto selected = c->selectionController->GetSortedSelection();
 		bool use_selection = selected.size() >= 100;

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <commctrl.h>
 #include <ctime>
+#include <cwctype>
 #include <functional>
 #include <regex>
 #include <unordered_map>
@@ -23,11 +24,13 @@
 #include "ass_dialogue.h"
 #include "ass_style.h"
 #include "compat.h"
+#include "dialog_progress.h"
 #include "font_size_object.h"
 #include "line_change_flags.h"
 #include "options.h"
 #include "ui_numeric_slider.cpp"
 
+#include <libaegisub/background_runner.h>
 #include <libaegisub/path.h>
 #include <libaegisub/cajun/elements.h>
 #include <libaegisub/cajun/reader.h>
@@ -55,11 +58,23 @@ struct FontListData {
 };
 
 static bool show_at_fonts = false;
-static bool filter_hungarian = true;
-static bool filter_kanji = false;
 
-static std::unordered_map<std::string, bool> g_kanji_cache;
-static std::unordered_map<std::string, bool> g_hungarian_cache;
+/// One configured language filter. `groups` is the condition in disjunctive form:
+/// the font matches when every character of at least one group exists in it, which
+/// is what "these characters, or those" needs.
+struct LanguageFilter {
+    wxString label;
+    wxString condition;
+    std::vector<std::wstring> groups;
+    bool enabled = false;
+};
+
+static std::vector<LanguageFilter> g_language_filters;
+static bool g_language_filters_loaded = false;
+
+/// Keyed by condition and then by face name, so editing a filter cannot make a
+/// stale answer from a different condition apply to it.
+static std::unordered_map<std::string, std::unordered_map<std::string, bool>> g_glyph_cache;
 static std::unordered_map<std::string, json::Integer> g_usage_cache;
 static std::unordered_map<std::string, json::Integer> g_installed_cache;
 static std::vector<FontListData> g_custom_lists;
@@ -69,6 +84,50 @@ static std::vector<wxString> g_recent;
 
 static bool g_font_cache_loaded = false;
 static bool g_font_cache_dirty = false;
+
+/// "Label|characters/other characters|1": label, the condition, and whether the
+/// filter starts switched on. Groups are separated by '/' and are ANDed within.
+static LanguageFilter ParseLanguageFilter(std::string const& definition)
+{
+    LanguageFilter filter;
+    wxString value = wxString::FromUTF8(definition);
+    wxString label = value.BeforeFirst('|');
+    wxString rest = value.AfterFirst('|');
+    wxString condition = rest.BeforeFirst('|');
+    wxString flag = rest.AfterFirst('|');
+    filter.label = label.Trim(true).Trim(false);
+    filter.condition = condition.Trim(true).Trim(false);
+    filter.enabled = flag.Trim(true).Trim(false) == "1";
+    for (auto const& group : wxSplit(filter.condition, '/', 0)) {
+        std::wstring characters;
+        for (auto ch : group.ToStdWstring())
+            if (!std::iswspace(ch)) characters.push_back(ch);
+        if (!characters.empty()) filter.groups.push_back(std::move(characters));
+    }
+    return filter;
+}
+
+/// Re-read the configured filters every time the dialog opens, so a filter added
+/// in the preferences shows up without a restart. Whether a filter is ticked is
+/// remembered for the session and matched up by label and condition; anything new
+/// starts from its configured default.
+static void LoadLanguageFilters()
+{
+    std::vector<LanguageFilter> previous = std::move(g_language_filters);
+    g_language_filters.clear();
+    g_language_filters_loaded = true;
+    for (auto const& definition : OPT_GET("Tool/Font Picker/Language Filters")->GetListString()) {
+        auto filter = ParseLanguageFilter(definition);
+        if (filter.label.empty() || filter.groups.empty()) continue;
+        auto found = std::find_if(previous.begin(), previous.end(),
+            [&](LanguageFilter const& old_filter) {
+                return old_filter.label == filter.label &&
+                    old_filter.condition == filter.condition;
+            });
+        if (found != previous.end()) filter.enabled = found->enabled;
+        g_language_filters.push_back(std::move(filter));
+    }
+}
 
 static json::Integer NowTimestamp()
 {
@@ -107,19 +166,16 @@ static void LoadFontCache()
             try {
                 json::Object& entry = it->second;
 
-                if (entry.count("kanji")) {
+                // Keyed by the filter condition, so an edited filter is simply a
+                // different key rather than a stale answer under an old name.
+                if (entry.count("glyphs")) {
                     try {
-                        g_kanji_cache[name] = entry["kanji"];
-                    }
-                    catch (...) {}
-                }
-
-                if (entry.count("custom")) {
-                    try {
-                        json::Object& custom = entry["custom"];
-
-                        if (custom.count("hungarian")) {
-                            g_hungarian_cache[name] = custom["hungarian"];
+                        json::Object& glyphs = entry["glyphs"];
+                        for (auto glyph = glyphs.begin(); glyph != glyphs.end(); ++glyph) {
+                            try {
+                                g_glyph_cache[glyph->first][name] = (bool)(json::Boolean&)glyph->second;
+                            }
+                            catch (...) {}
                         }
                     }
                     catch (...) {}
@@ -158,16 +214,18 @@ static void SaveFontCache()
     agi::fs::path path = GetFontCachePath();
     json::Object root;
 
-    for (auto& [font, k] : g_kanji_cache) {
+    for (auto& [font, timestamp] : g_installed_cache) {
         json::Object entry;
 
-        json::Object custom;
-        custom["hungarian"] = g_hungarian_cache[font];
+        json::Object glyphs;
+        for (auto& [condition, faces] : g_glyph_cache) {
+            auto found = faces.find(font);
+            if (found != faces.end()) glyphs[condition] = found->second;
+        }
 
-        entry["kanji"] = k;
-        entry["custom"] = std::move(custom);
+        entry["glyphs"] = std::move(glyphs);
         entry["usage"] = g_usage_cache[font];
-        entry["installed_at"] = g_installed_cache[font];
+        entry["installed_at"] = timestamp;
 
         root[font] = std::move(entry);
     }
@@ -687,10 +745,7 @@ public:
                 return a.CmpNoCase(b) < 0;
             });
 
-        for (auto const& f : fonts) {
-            FontHasKanji(f);
-            FontHasHungarian(f);
-        }
+        WarmGlyphCache();
 
         lower_cache.clear();
         for (auto const& f : fonts)
@@ -711,6 +766,44 @@ public:
         }
 
         filtered = fonts;
+    }
+
+    /// Ask every filter about every face, so the list can be filtered without a
+    /// stall later. Each answer costs a GDI probe, so the first run over a few
+    /// hundred faces is slow enough to need telling the user about.
+    void WarmGlyphCache()
+    {
+        if (g_language_filters.empty()) return;
+
+        std::vector<wxString> pending;
+        for (auto const& f : fonts) {
+            for (auto const& filter : g_language_filters) {
+                auto const& cache = g_glyph_cache[filter.condition.ToStdString(wxConvUTF8)];
+                if (!cache.count(f.ToStdString())) { pending.push_back(f); break; }
+            }
+        }
+        if (pending.empty()) return;
+
+        // Only worth a dialog when there is a real wait; a handful of new fonts is
+        // faster to just measure.
+        if (pending.size() < 25) {
+            for (auto const& f : pending)
+                for (auto const& filter : g_language_filters)
+                    FontMatchesFilter(filter, f);
+            return;
+        }
+
+        DialogProgress progress(nullptr, _("Font Picker"), _("Caching fonts..."));
+        progress.Run([&](agi::ProgressSink *ps) {
+            ps->SetIndeterminate();
+            ps->SetMessage(from_wx(_("Caching fonts...")));
+            for (size_t i = 0; i < pending.size(); ++i) {
+                if (ps->IsCancelled()) return;
+                ps->SetProgress(static_cast<int64_t>(i), static_cast<int64_t>(pending.size()));
+                for (auto const& filter : g_language_filters)
+                    FontMatchesFilter(filter, pending[i]);
+            }
+        });
     }
 
     void CleanInvalidFonts()
@@ -874,10 +967,14 @@ public:
             if (!show_at_fonts && f.StartsWith("@"))
                 continue;
 
-            if (filter_hungarian && !FontHasHungarian(f))
-                continue;
-
-            if (filter_kanji && !FontHasKanji(f))
+            bool rejected = false;
+            for (auto const& filter : g_language_filters) {
+                if (filter.enabled && !FontMatchesFilter(filter, f)) {
+                    rejected = true;
+                    break;
+                }
+            }
+            if (rejected)
                 continue;
 
             if (t.empty() || lower_cache[f].Contains(t))
@@ -890,52 +987,26 @@ public:
         return font_set.count(name) > 0;
     }
 
-    bool FontHasKanji(wxString const& face)
+    /// True when the face satisfies the filter: every character of at least one
+    /// of its groups has a glyph. Answers are cached per condition, since probing
+    /// a face costs a device context and a glyph lookup.
+    bool FontMatchesFilter(LanguageFilter const& filter, wxString const& face)
     {
-        auto it = g_kanji_cache.find(face.ToStdString());
-        if (it != g_kanji_cache.end())
+        if (filter.groups.empty()) return true;
+        std::string condition = filter.condition.ToStdString(wxConvUTF8);
+        auto& cache = g_glyph_cache[condition];
+        std::string key = face.ToStdString();
+        auto it = cache.find(key);
+        if (it != cache.end())
             return it->second;
 
         HDC hdc = GetDC(NULL);
 
         LOGFONTW lf{};
         wcsncpy_s(lf.lfFaceName, face.wc_str(), LF_FACESIZE - 1);
-        lf.lfFaceName[LF_FACESIZE - 1] = L'\0';
 
         HFONT font = CreateFontIndirectW(&lf);
-        HFONT old = (HFONT)SelectObject(hdc, font);
-
-        wchar_t ch = L'漢';
-        WORD glyph;
-
-        GetGlyphIndicesW(hdc, &ch, 1, &glyph, GGI_MARK_NONEXISTING_GLYPHS);
-
-        bool ok = glyph != 0xFFFF;
-
-        SelectObject(hdc, old);
-        DeleteObject(font);
-        ReleaseDC(NULL, hdc);
-
-        g_kanji_cache[face.ToStdString()] = ok;
-        g_font_cache_dirty = true;
-
-        return ok;
-    }
-
-    bool FontHasHungarian(wxString const& face)
-    {
-        auto it = g_hungarian_cache.find(face.ToStdString());
-        if (it != g_hungarian_cache.end())
-            return it->second;
-
-        HDC hdc = GetDC(NULL);
-
-        LOGFONTW lf{};
-        wcsncpy_s(lf.lfFaceName, face.wc_str(), LF_FACESIZE - 1);
-        lf.lfFaceName[LF_FACESIZE - 1] = L'\0';
-
-        HFONT font = CreateFontIndirectW(&lf);
-        HFONT old = (HFONT)SelectObject(hdc, font);
+        HFONT old_font = (HFONT)SelectObject(hdc, font);
 
         auto has_char = [&](wchar_t ch)
         {
@@ -944,15 +1015,19 @@ public:
             return glyph != 0xFFFF;
         };
 
-        bool lower_ok = has_char(L'ő') && has_char(L'ű');
-        bool upper_ok = has_char(L'Ő') && has_char(L'Ű');
-        bool ok = lower_ok || upper_ok;
+        bool ok = false;
+        for (auto const& group : filter.groups) {
+            bool all = true;
+            for (auto ch : group)
+                if (!has_char(ch)) { all = false; break; }
+            if (all) { ok = true; break; }
+        }
 
-        SelectObject(hdc, old);
+        SelectObject(hdc, old_font);
         DeleteObject(font);
         ReleaseDC(NULL, hdc);
 
-        g_hungarian_cache[face.ToStdString()] = ok;
+        cache[key] = ok;
         g_font_cache_dirty = true;
 
         return ok;
@@ -1327,8 +1402,8 @@ class DialogFontPicker : public wxDialog {
     wxCheckBox* underline_cb;
     wxCheckBox* strike_cb;
     wxCheckBox* show_at_cb;
-    wxCheckBox* hungarian_cb;
-    wxCheckBox* kanji_cb;
+    std::vector<wxCheckBox*> language_cbs;
+    wxStaticText* filter_hint = nullptr;
     wxStaticText* preview;
     int preview_size;
 
@@ -1374,6 +1449,7 @@ public:
     {
         LoadFontCache();
         LoadLists();
+        LoadLanguageFilters();
 
         preview_size = OPT_GET("Tool/Font Picker/Preview Size")->GetInt();
 
@@ -1463,23 +1539,34 @@ private:
         show_at_cb = new wxCheckBox(this, wxID_ANY, _("Show @ fonts"));
         show_at_cb->SetValue(show_at_fonts);
 
-        hungarian_cb = new wxCheckBox(this, wxID_ANY, "Magyar");
-        hungarian_cb->SetValue(filter_hungarian);
-
-        kanji_cb = new wxCheckBox(this, wxID_ANY, _("Kanji"));
-        kanji_cb->SetValue(filter_kanji);
-
         auto* style_row = new wxBoxSizer(wxHORIZONTAL);
         style_row->Add(bold_cb, 0, wxRIGHT, 10);
         style_row->Add(italic_cb, 0, wxRIGHT, 10);
         style_row->Add(underline_cb, 0, wxRIGHT, 10);
         style_row->Add(strike_cb, 0);
 
-        style_row->Add(hungarian_cb, 0, wxLEFT, 10);
-        style_row->Add(kanji_cb, 0, wxLEFT, 10);
+        // One checkbox per configured language filter, in the configured order.
+        for (size_t i = 0; i < g_language_filters.size(); ++i) {
+            auto* cb = new wxCheckBox(this, wxID_ANY, g_language_filters[i].label);
+            cb->SetValue(g_language_filters[i].enabled);
+            cb->Bind(wxEVT_CHECKBOX, [this, i](wxCommandEvent& evt) {
+                g_language_filters[i].enabled = evt.IsChecked();
+                model.Filter(search->GetValue());
+                font_list->RefreshModel();
+            });
+            language_cbs.push_back(cb);
+            style_row->Add(cb, 0, wxLEFT, 10);
+        }
         style_row->Add(show_at_cb, 0, wxLEFT, 15);
 
-        right->Add(style_row, 0, wxALIGN_CENTER | wxBOTTOM, 15);
+        right->Add(style_row, 0, wxALIGN_CENTER | wxTOP, 4);
+
+        filter_hint = new wxStaticText(this, wxID_ANY,
+            _("You can change the filter options in the Settings/Interface menu."));
+        filter_hint->SetForegroundColour(
+            wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
+        right->Add(filter_hint, 0, wxALIGN_CENTER | wxTOP, 5);
+        right->AddSpacer(12);
 
         preview = new wxStaticText(this, wxID_ANY, wxString::FromUTF8(OPT_GET("Tool/Font Picker/Preview")->GetString()), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
         preview->SetMinSize(wxSize(-1, 130));
@@ -1515,8 +1602,8 @@ private:
             ApplyFilter();
 
             bool is_all = (cat == FontCategory::All);
-            hungarian_cb->Show(is_all);
-            kanji_cb->Show(is_all);
+            for (auto* cb : language_cbs) cb->Show(is_all);
+            filter_hint->Show(is_all && !language_cbs.empty());
             show_at_cb->Show(is_all);
 
             Layout();
@@ -1553,8 +1640,6 @@ private:
         underline_cb->Bind(wxEVT_CHECKBOX, &DialogFontPicker::OnStyleChanged, this);
         strike_cb->Bind(wxEVT_CHECKBOX, &DialogFontPicker::OnStyleChanged, this);
         show_at_cb->Bind(wxEVT_CHECKBOX, &DialogFontPicker::OnToggleAtFonts, this);
-        hungarian_cb->Bind(wxEVT_CHECKBOX, &DialogFontPicker::OnHungarianFilter, this);
-        kanji_cb->Bind(wxEVT_CHECKBOX, &DialogFontPicker::OnKanjiFilter, this);
 
         Bind(wxEVT_BUTTON, &DialogFontPicker::OnOK, this, wxID_OK);
         Bind(wxEVT_BUTTON, &DialogFontPicker::OnCancel, this, wxID_CANCEL);
@@ -1571,8 +1656,7 @@ private:
 
     void OnClearCache(wxCommandEvent&)
     {
-        g_kanji_cache.clear();
-        g_hungarian_cache.clear();
+        g_glyph_cache.clear();
         g_font_cache_dirty = true;
 
         model.LoadFonts();
@@ -1643,22 +1727,6 @@ private:
     void OnToggleAtFonts(wxCommandEvent&)
     {
         show_at_fonts = show_at_cb->GetValue();
-
-        model.Filter(search->GetValue());
-        font_list->RefreshModel();
-    }
-
-    void OnHungarianFilter(wxCommandEvent&)
-    {
-        filter_hungarian = hungarian_cb->GetValue();
-
-        model.Filter(search->GetValue());
-        font_list->RefreshModel();
-    }
-
-    void OnKanjiFilter(wxCommandEvent&)
-    {
-        filter_kanji = kanji_cb->GetValue();
 
         model.Filter(search->GetValue());
         font_list->RefreshModel();
