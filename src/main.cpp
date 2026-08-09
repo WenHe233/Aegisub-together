@@ -325,6 +325,40 @@ bool AegisubApp::OnInit() {
 		PerformVersionCheck(false);
 #endif
 
+		// The video colour pick is deliberately left unbound, so nothing the user
+		// does would ever lead them to it. Hence a notice, once, at startup - the
+		// only place where a feature nobody can reach yet can announce itself.
+		if (!OPT_GET("Video/Color Pick/Intro Shown")->GetBool()) {
+			OPT_SET("Video/Color Pick/Intro Shown")->SetBool(true);
+			// The break after the first sentence is a single newline on purpose. When
+			// a message box is given one message whose first line is followed by a
+			// blank one, wxWidgets splits it and promotes that first line to the
+			// dialog's main instruction, which Windows then draws large and blue.
+			// One message with no such split is drawn entirely as content, which is
+			// what this wants. Turning that first "\n" into "\n\n" brings the blue
+			// line back.
+			wxMessageBox(
+				_("A new color picking feature has been added, and on purpose it is not "
+				  "bound to any key.\n"
+				  "It lets you pick the color for the selected lines from the video at "
+				  "the mouse position with a single keypress.\n\n"
+				  "Pressed twice quickly it magnifies that part of the video around the "
+				  "pointer, and lets you write the color in the dynamic "
+				  "\\t(<current millisecond>,<current millisecond>,\\c...) form as well.\n\n"
+				  "From that magnified view you can also read the color along a Mocha "
+				  "motion track held on the clipboard, which writes the color the "
+				  "tracked point passes over as a sequence of \\t() tags.\n\n"
+				  "To use it, assign the \"video/colorpick/primary|outline|shadow\" "
+				  "commands to hotkeys (one key each is recommended)."),
+				_("Important notice"), wxOK | wxICON_INFORMATION);
+			try {
+				config::opt->Flush();
+			}
+			catch (agi::fs::FileSystemError const& e) {
+				wxMessageBox(to_wx(e.GetMessage()), _("Error saving config file"), wxOK | wxICON_ERROR | wxCENTER);
+			}
+		}
+
 		// Get parameter subs
 		StartupLog("Parse command line");
 		auto const& args = argv.GetArguments();

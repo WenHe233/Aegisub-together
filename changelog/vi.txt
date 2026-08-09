@@ -1,15 +1,10 @@
 Phiên bản 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Bộ chọn phông chữ
-    - các mẫu được tạo sẵn và lưu trên ổ đĩa, nhờ đó việc cuộn danh sách không bị giật
-    - bộ nhớ đệm vẫn tồn tại sau khi đóng chương trình và chỉ xử lý các phông chữ mới
-    - việc thay đổi kích thước mẫu có hiệu lực ngay lập tức
-    - nút Refresh để xây dựng lại toàn bộ
-- Hộp kiểu của thanh chỉnh sửa không mở rộng trên trình soạn thảo văn bản
-- Có thể thiết lập ngôn ngữ kiểm tra AI
-- Có thể chỉnh sửa các bộ lọc ngôn ngữ của bộ chọn phông chữ trong phần cài đặt
-- Nhật ký thay đổi bằng ngôn ngữ của chúng ta, với bộ chọn ngôn ngữ
-- Chương trình đã được dịch sang 30 ngôn ngữ
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Bộ chọn phông chữ hỗ trợ nhiều ngôn ngữ và nhờ logic bộ nhớ đệm được thay đổi nên nhanh hơn nhiều, chỉ cần tải một lần
+- Kiểm tra và đánh giá bằng AI hỗ trợ nhiều ngôn ngữ
+- Nhật ký thay đổi bằng ngôn ngữ của chúng ta, có bộ chọn ngôn ngữ, các thay đổi được dịch sang 30 ngôn ngữ
+- Bộ chọn màu tích hợp, hỗ trợ cả chuyển động và thu phóng bằng cách nhấp đúp
+- Có thể chuyển đổi hình dạng vector clip bằng cách nhấp đúp để không làm hỏng vùng chọn
 
 Phiên bản 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

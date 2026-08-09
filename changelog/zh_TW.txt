@@ -1,15 +1,10 @@
 版本 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- 字型選擇器
-    - 範例會預先建立並保留在磁碟上，因此捲動清單時不會卡頓
-    - 快取會在程式關閉後保留，且只會處理新的字型
-    - 可立即調整範例大小
-    - 用於完整重建的 Refresh 按鈕
-- 編輯列的樣式方塊不會在文字編輯器上展開
-- 可設定 AI 檢查的語言
-- 可在設定中編輯字型選擇器的語言篩選器
-- 以自己的語言顯示的變更日誌，附語言選擇器
-- 程式已翻譯成 30 種語言
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- 字型選擇器支援多種語言，並且得益於變更後的 cache 邏輯，速度快了許多，僅需載入一次
+- AI 檢查與 review 支援多種語言
+- 以我們自己的語言顯示變更日誌，附有語言選擇器，變更內容已翻譯成 30 種語言
+- 內建的 color picker 支援 motion 與雙擊縮放
+- 可透過雙擊切換 Vector clip 形狀，以免破壞選取範圍
 
 版本 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

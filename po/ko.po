@@ -9772,3 +9772,99 @@ msgstr "변경 로그를 번역하려면 AI 연결이 필요합니다. AI 메뉴
 #: ../src/dialog_fontpicker.cpp:1948
 msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
 msgstr "설치된 모든 글꼴의 미리 보기 캐시를 다시 생성하시겠습니까?\\n\\n마지막 생성 이후 설치된 글꼴은 프로그램이 자동으로 인식하므로, 글꼴 이름을 변경하지 않고 교체한 경우에만 이 작업이 필요합니다. 시간이 다소 걸릴 수 있습니다."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "Important notice"
+msgstr "중요 안내"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Primary Color from Video"
+msgstr "비디오에서 기본 색상 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Outline Color from Video"
+msgstr "비디오에서 윤곽선 색상 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Shadow Color from Video"
+msgstr "비디오에서 그림자 색상 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the primary fill color (\\c) from the video pixel under the pointer"
+msgstr "마우스 아래 비디오 픽셀에서 기본 채우기 색상 (\\c) 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the outline color (\\3c) from the video pixel under the pointer"
+msgstr "마우스 아래 비디오 픽셀에서 윤곽선 색상 (\\3c) 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the shadow color (\\4c) from the video pixel under the pointer"
+msgstr "마우스 아래 비디오 픽셀에서 그림자 색상 (\\4c) 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "pick color from video"
+msgstr "비디오에서 색상 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "remember for future use"
+msgstr "기본값으로 설정"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+#, c-format
+msgid "add with \\t(%d,%d,%s...)"
+msgstr "\\t(%d,%d,%s...) 형식으로 추가"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "also add for:"
+msgstr "다음에도 추가:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "import from motion"
+msgstr "motion track에서 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Import from motion"
+msgstr "motion track에서 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Reading the colour along the track..."
+msgstr "추적 경로를 따라 색상 읽는 중..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "There is no valid motion track on the clipboard."
+msgstr "클립보드에 유효한 motion track이 없습니다."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "import colors from motion"
+msgstr "motion track에서 색상 가져오기"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "This line already has timed colors for that tag, from an earlier import or from a pick made with the transition option on.\\nImporting replaces them. Do you want to continue?"
+msgstr "이 줄에는 이미 이 태그에 대한 시간 지정 색상이 있습니다. 이전 가져오기 또는 전환으로 만든 색상 추출로 추가된 것입니다.\\n가져오기를 실행하면 기존 색상이 덮어써집니다. 계속하시겠습니까?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\\n\\nPressed twice quickly it magnifies that part of the video around the pointer, and lets you write the color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form as well.\\n\\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, which writes the color the tracked point passes over as a sequence of \\t() tags.\\n\\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "새 색상 선택 기능이 추가되었으며, 의도적으로 어떤 버튼에도 자동 할당되지 않았습니다.\\n이 기능을 사용하면 한 번의 키 입력으로 선택한 줄의 색상을 비디오에서 마우스 위치를 기준으로 직접 가져올 수 있습니다.\\n\\n빠르게 두 번 누르면 마우스 주변의 비디오 영역이 확대되고, \\t(<현재 milisecond>,<현재 milisecond>,\\c...) 형식으로 색상을 동적으로 입력할 수도 있습니다.\\n\\n확대된 보기에서 클립보드에 있는 mocha motion track을 따라 색상을 읽을 수도 있습니다. 이 경우 프로그램은 추적된 지점 아래의 색상을 \\t() 태그 시퀀스로 입력합니다.\\n\\n사용하려면 \"video/colorpick/primary|outline|shadow\" command를 단축키에 할당하세요(하나의 키에 할당하는 것을 권장합니다)."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "accept color by doubleclick"
+msgstr "두 번 클릭하여 색상 적용"

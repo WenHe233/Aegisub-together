@@ -7761,10 +7761,6 @@ msgstr "Az AI-kép nem tartalmazott képpontot a maszkon belül."
 msgid "Create AI mask"
 msgstr "AI-maszk készítése"
 
-#: src/visual_tool_mask.cpp
-msgid "The raw AI image could not be saved to:"
-msgstr "A nyers AI-képet nem sikerült ide menteni:"
-
 #: src/command/vis_tool.cpp
 msgid "Add Shape"
 msgstr "Ábra hozzáadása"
@@ -8340,3 +8336,80 @@ msgstr "A változásnapló fordításához AI összekötés szükséges. Az AI m
 #: ../src/dialog_fontpicker.cpp:1948
 msgid "Rebuild the preview cache for every installed font?\n\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
 msgstr "Újraépítsem az előnézeti gyorsítótárat az összes telepített betűtípusra?\n\nA legutóbbi alkalom óta telepített betűtípusokat a program magától felismeri, ezért erre csak akkor van szükség, ha egy betűtípust a neve változása nélkül cseréltek le. Eltart egy ideig."
+
+#: ../src/main.cpp
+msgid "Important notice"
+msgstr "Fontos tudnivaló"
+
+#: ../src/command/video.cpp
+msgid "Pick Primary Color from Video"
+msgstr "Elsődleges szín felvétele a videóról"
+
+#: ../src/command/video.cpp
+msgid "Pick Outline Color from Video"
+msgstr "Körvonal színének felvétele a videóról"
+
+#: ../src/command/video.cpp
+msgid "Pick Shadow Color from Video"
+msgstr "Árnyék színének felvétele a videóról"
+
+#: ../src/command/video.cpp
+msgid "Set the primary fill color (\\c) from the video pixel under the pointer"
+msgstr "Az elsődleges kitöltés színe (\\c) az egér alatti videópixelből"
+
+#: ../src/command/video.cpp
+msgid "Set the outline color (\\3c) from the video pixel under the pointer"
+msgstr "A körvonal színe (\\3c) az egér alatti videópixelből"
+
+#: ../src/command/video.cpp
+msgid "Set the shadow color (\\4c) from the video pixel under the pointer"
+msgstr "Az árnyék színe (\\4c) az egér alatti videópixelből"
+
+#: ../src/video_color_pick.cpp
+msgid "pick color from video"
+msgstr "szín felvétele a videóról"
+
+#: ../src/video_color_pick.cpp
+msgid "remember for future use"
+msgstr "legyen ez az alapértelmezett"
+
+#: ../src/video_color_pick.cpp
+#, c-format
+msgid "add with \\t(%d,%d,%s...)"
+msgstr "hozzáadás \\t(%d,%d,%s...) formában"
+
+#: ../src/video_color_pick.cpp
+msgid "also add for:"
+msgstr "hozzáadás ehhez is:"
+
+#: ../src/video_color_pick.cpp
+msgid "import from motion"
+msgstr "importálás motion trackből"
+
+#: ../src/video_color_pick.cpp
+msgid "Import from motion"
+msgstr "Importálás motion trackből"
+
+#: ../src/video_color_pick.cpp
+msgid "Reading the colour along the track..."
+msgstr "Szín beolvasása a követési útvonal mentén..."
+
+#: ../src/video_color_pick.cpp
+msgid "There is no valid motion track on the clipboard."
+msgstr "Nincs a vágólapon érvényes motion track."
+
+#: ../src/video_color_pick.cpp
+msgid "import colors from motion"
+msgstr "színek importálása motion trackből"
+
+#: ../src/video_color_pick.cpp
+msgid "This line already has timed colors for that tag, from an earlier import or from a pick made with the transition option on.\nImporting replaces them. Do you want to continue?"
+msgstr "Ezen a soron már vannak időzített színek ehhez a taghoz, egy korábbi importból vagy egy átmenettel készült színvételből.\nAz import felülírja őket. Folytatod?"
+
+#: ../src/main.cpp
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\n\nPressed twice quickly it magnifies that part of the video around the pointer, and lets you write the color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form as well.\n\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, which writes the color the tracked point passes over as a sequence of \\t() tags.\n\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "Új színválasztó funkció került bevezetésre, mely szándékosan nem lett automatikusan hozzárendelve semmilyen gombhoz.\nSegítségével lehetőséged van, hogy a kijelölt sorok színe a videóból közvetlenül az egér pozíciójából származzon egyetlen gombnyomással.\n\nKétszer gyorsan nyomva pedig az egér körül felnagyítja a videó azon részét és lehetőséged van dinamikusan \\t(<aktuális milisecond>,<aktuális milisecond>,\\c...) formátumban is beírni a színt.\n\nA felnagyított nézetből a vágólapon lévő mocha motion track mentén is beolvashatod a színt: ilyenkor a program a követett pont alatti színt \\t() tagek sorozataként írja be.\n\nA használatához társítsd a \"video/colorpick/primary|outline|shadow\" commandot gyorsgombokhoz (javasolt egy gombhoz)."
+
+#: ../src/video_color_pick.cpp
+msgid "accept color by doubleclick"
+msgstr "szín elfogadása dupla kattintással"

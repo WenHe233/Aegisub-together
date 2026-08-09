@@ -1,15 +1,10 @@
 Version 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Font selector
-    - samples are prepared in advance and remain on disk, so scrolling the list does not get stuck
-    - the cache survives closing the program and only processes new fonts
-    - changing the sample size is immediate
-    - Refresh button for a complete rebuild
-- The style box in the editing bar does not expand over the text editor
-- The language of the AI check can be configured
-- The font selector's language filters can be edited in the settings
-- Changelog in our own language, with a language selector
-- The program has been translated into 30 languages
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Font chooser supports multiple languages and, thanks to the changed cache logic, has become much faster; it only loads once
+- AI check and review support multiple languages
+- Changelog in our own language, with a language selector, the changes translated into 30 languages
+- Built-in color picker that also supports motion and zoom with double-click
+- The vector clip shape can be toggled with a double-click so that it does not disrupt the selection
 
 Version 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

@@ -1,8 +1,10 @@
 Verzió 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
 - Betűtípus választó támogatja a több nyelvet és a megváltozott cache logikának hála sokkal gyorsabb lett, egyszeri betöltés van csupán
 - AI ellenőrzés és review támogatja a több nyelvet
 - Változásnapló a saját nyelvünkön, nyelvválasztóval, a változtatások 30 nyelvre lefordítva
+- Beépített color picker, ami motiont és duplakattal zoomot is támogat
+- Vector clip alakzatot dupla kattintással lehet váltani, hogy a kijelölést ne rontsa el
 
 Verzió 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

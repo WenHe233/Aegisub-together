@@ -9098,3 +9098,99 @@ msgstr "K překladu protokolu změn je nutné připojení AI. Nastavit ho může
 #: ../src/dialog_fontpicker.cpp:1948
 msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
 msgstr "Přebudovat mezipaměť náhledu pro všechna nainstalovaná písma?\\n\\nPísma nainstalovaná od posledního použití program rozpozná automaticky, takže je to nutné jen tehdy, pokud bylo písmo nahrazeno, aniž se změnil jeho název. Chvíli to potrvá."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "Important notice"
+msgstr "Důležitá informace"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Primary Color from Video"
+msgstr "Nabrat primární barvu z videa"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Outline Color from Video"
+msgstr "Nabrat barvu obrysu z videa"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Shadow Color from Video"
+msgstr "Nabrat barvu stínu z videa"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the primary fill color (\\c) from the video pixel under the pointer"
+msgstr "Barva primární výplně (\\c) z pixelu videa pod kurzorem"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the outline color (\\3c) from the video pixel under the pointer"
+msgstr "Barva obrysu (\\3c) z pixelu videa pod kurzorem"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the shadow color (\\4c) from the video pixel under the pointer"
+msgstr "Barva stínu (\\4c) z pixelu videa pod kurzorem"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "pick color from video"
+msgstr "nabrat barvu z videa"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "remember for future use"
+msgstr "nastavit jako výchozí"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+#, c-format
+msgid "add with \\t(%d,%d,%s...)"
+msgstr "přidat ve formátu \\t(%d,%d,%s...)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "also add for:"
+msgstr "přidat také k:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "import from motion"
+msgstr "importovat z motion tracku"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Import from motion"
+msgstr "Importovat z motion tracku"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Reading the colour along the track..."
+msgstr "Načítání barvy podél dráhy sledování..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "There is no valid motion track on the clipboard."
+msgstr "Ve schránce není platný motion track."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "import colors from motion"
+msgstr "importovat barvy z motion tracku"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "This line already has timed colors for that tag, from an earlier import or from a pick made with the transition option on.\\nImporting replaces them. Do you want to continue?"
+msgstr "Tento řádek již obsahuje časované barvy pro tento tag, buď z předchozího importu, nebo z nabírání barev pomocí přechodu.\\nImport je přepíše. Pokračovat?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\\n\\nPressed twice quickly it magnifies that part of the video around the pointer, and lets you write the color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form as well.\\n\\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, which writes the color the tracked point passes over as a sequence of \\t() tags.\\n\\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "Byla přidána nová funkce výběru barvy, která záměrně nebyla automaticky přiřazena k žádnému tlačítku.\\nUmožňuje jediným stisknutím tlačítka nastavit barvu vybraných řádků přímo z videa v místě kurzoru.\\n\\nDvojím rychlým stisknutím zvětší část videa kolem kurzoru a umožní také dynamicky zadat barvu ve formátu \\t(<aktuální milisecond>,<aktuální milisecond>,\\c...).\\n\\nZe zvětšeného náhledu lze barvu načíst také podél mocha motion tracku ze schránky: program v takovém případě zadá barvu pod sledovaným bodem jako posloupnost \\t() tagů.\\n\\nChcete-li funkci používat, přiřaďte command \"video/colorpick/primary|outline|shadow\" klávesovým zkratkám (doporučuje se jedna klávesa)."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "accept color by doubleclick"
+msgstr "přijmout barvu dvojím kliknutím"

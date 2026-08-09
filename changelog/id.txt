@@ -1,15 +1,10 @@
 Versi 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Pemilih font
-    - sampel dibuat sebelumnya dan tetap berada di disk, sehingga pengguliran daftar tidak tersendat
-    - cache tetap bertahan setelah program ditutup, dan hanya memproses font baru
-    - pengaturan ukuran sampel langsung diterapkan
-    - tombol Refresh untuk pembangunan ulang secara menyeluruh
-- Kotak gaya bilah penyuntingan tidak terbuka di atas penyunting teks
-- Bahasa pemeriksaan AI dapat diatur
-- Filter bahasa pemilih font dapat diedit di pengaturan
-- Catatan perubahan dalam bahasa kita sendiri, dengan pemilih bahasa
-- Program telah diterjemahkan ke dalam 30 bahasa
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Pemilih font mendukung banyak bahasa dan berkat logika cache yang diubah menjadi jauh lebih cepat, hanya ada satu kali pemuatan
+- Pemeriksaan AI dan review mendukung banyak bahasa
+- Changelog dalam bahasa kita sendiri, dengan pemilih bahasa, perubahan diterjemahkan ke dalam 30 bahasa
+- Color picker bawaan, yang juga mendukung motion dan zoom dengan klik ganda
+- Bentuk vector clip dapat diubah dengan klik ganda, agar seleksi tidak rusak
 
 Versi 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

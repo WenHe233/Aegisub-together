@@ -1,15 +1,10 @@
 Verzija 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Birač fontova
-    - uzorci se unapred pripremaju i ostaju na disku, tako da pomeranje liste više ne zastajkuje
-    - keš preživljava zatvaranje programa i obrađuje samo nove fontove
-    - promena veličine uzorka je trenutna
-    - dugme Refresh za potpunu ponovnu izgradnju
-- Okvir za stil trake za uređivanje ne otvara se preko uređivača teksta
-- Jezik AI provere može da se podesi
-- Jezički filteri birača fontova mogu da se uređuju u podešavanjima
-- Dnevnik promena na našem jeziku, sa biračem jezika
-- Program je preveden na 30 jezika
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Birač fontova podržava više jezika i zahvaljujući izmenjenoj logici keširanja postao je mnogo brži, učitavanje se obavlja samo jednom
+- AI provera i review podržavaju više jezika
+- Dnevnik promena na sopstvenom jeziku, sa biračem jezika, promene su prevedene na 30 jezika
+- Ugrađeni color picker, koji podržava motion i zumiranje dvostrukim klikom
+- Oblik Vector clip-a može se promeniti dvostrukim klikom, kako se ne bi pokvario odabir
 
 Verzija 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

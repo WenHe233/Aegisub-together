@@ -9061,3 +9061,99 @@ msgstr "翻譯變更記錄需要連線至 AI。您可以在 AI 選單的 Configu
 #: ../src/dialog_fontpicker.cpp:1948
 msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
 msgstr "要重建所有已安裝字型的預覽快取嗎？\\n\\n程式會自動辨識上次操作後安裝的字型，因此只有在字型被替換但名稱未變更時才需要執行此操作。這需要一點時間。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "Important notice"
+msgstr "重要須知"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Primary Color from Video"
+msgstr "從影片擷取主要顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Outline Color from Video"
+msgstr "從影片擷取輪廓顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Shadow Color from Video"
+msgstr "從影片擷取陰影顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the primary fill color (\\c) from the video pixel under the pointer"
+msgstr "從滑鼠下方的影片像素取得主要填充色 (\\c)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the outline color (\\3c) from the video pixel under the pointer"
+msgstr "從滑鼠下方的影片像素取得輪廓色 (\\3c)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the shadow color (\\4c) from the video pixel under the pointer"
+msgstr "從滑鼠下方的影片像素取得陰影色 (\\4c)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "pick color from video"
+msgstr "從影片擷取顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "remember for future use"
+msgstr "設為預設值"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+#, c-format
+msgid "add with \\t(%d,%d,%s...)"
+msgstr "以 \\t(%d,%d,%s...) 格式加入"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "also add for:"
+msgstr "也加入至："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "import from motion"
+msgstr "從 motion track 匯入"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Import from motion"
+msgstr "從 motion track 匯入"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Reading the colour along the track..."
+msgstr "沿追蹤路徑讀取顏色..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "There is no valid motion track on the clipboard."
+msgstr "剪貼簿中沒有有效的 motion track。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "import colors from motion"
+msgstr "從 motion track 匯入顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "This line already has timed colors for that tag, from an earlier import or from a pick made with the transition option on.\\nImporting replaces them. Do you want to continue?"
+msgstr "此行已有此標籤的計時顏色，可能來自先前的匯入或使用過渡效果完成的取色。\\n匯入會覆寫這些顏色。要繼續嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\\n\\nPressed twice quickly it magnifies that part of the video around the pointer, and lets you write the color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form as well.\\n\\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, which writes the color the tracked point passes over as a sequence of \\t() tags.\\n\\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "新增了顏色選取功能，特意未自動指派至任何按鈕。\\n您可以只按一下按鈕，讓選取行的顏色直接取自影片中的滑鼠位置。\\n\\n快速按兩下時，會放大滑鼠周圍的影片區域，並可使用 \\t(<aktuális milisecond>,<aktuális milisecond>,\\c...) 格式動態輸入顏色。\\n\\n在放大檢視中，也可以沿剪貼簿中的 mocha motion track 讀取顏色：此時程式會將追蹤點下方的顏色以一系列 \\t() 標籤寫入。\\n\\n若要使用，請將 \"video/colorpick/primary|outline|shadow\" command 指派至快速鍵（建議指派至同一個按鍵）。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "accept color by doubleclick"
+msgstr "按兩下接受顏色"

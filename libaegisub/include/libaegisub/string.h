@@ -12,6 +12,10 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+// This header had no include guard either, for the same reason as
+// of_type_adaptor.h: every user happened to include it exactly once.
+#pragma once
+
 #include <string>
 
 namespace agi {

@@ -1,15 +1,10 @@
 Versión 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Selector de fontes
-    - as mostras prepáranse previamente e permanecen no disco, polo que o desprazamento pola lista non se interrompe
-    - a caché sobrevive ao peche do programa e só procesa as fontes novas
-    - o axuste do tamaño da mostra é inmediato
-    - botón Refresh para reconstruír todo
-- A caixa de estilo da barra de edición non se abre sobre o editor de texto
-- Pódese configurar o idioma da comprobación de AI
-- Os filtros de idioma do selector de fontes pódense editar nas preferencias
-- Rexistro de cambios no noso propio idioma, cun selector de idioma
-- O programa está traducido a 30 idiomas
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- O selector de fontes admite varios idiomas e, grazas á lóxica de caché modificada, agora é moito máis rápido; só se carga unha vez
+- A comprobación e a revisión mediante IA admiten varios idiomas
+- Rexistro de cambios no noso propio idioma, cun selector de idioma, cos cambios traducidos a 30 idiomas
+- Selector de cores integrado, que tamén admite motion e zoom facendo dobre clic
+- A forma de Vector clip pódese cambiar facendo dobre clic, para non estragar a selección
 
 Versión 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

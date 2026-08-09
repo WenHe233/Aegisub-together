@@ -1,15 +1,10 @@
 Verze 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Výběr fontu
-    - vzorky se připraví předem a zůstanou na disku, takže se posouvání seznamu nezasekává
-    - mezipaměť přežije ukončení programu a zpracují se pouze nové fonty
-    - změna velikosti vzorku je okamžitá
-    - tlačítko Refresh pro kompletní znovuvytvoření
-- Panel stylu v editační liště se neotevírá přes textový editor
-- Jazyk kontroly AI lze nastavit
-- Jazykové filtry výběru fontu lze upravovat v nastavení
-- Změny ve vlastním jazyce s výběrem jazyka
-- Program je přeložen do 30 jazyků
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Výběr písem podporuje více jazyků a díky změněné logice cache je mnohem rychlejší, načítá se pouze jednou
+- AI kontrola a review podporují více jazyků
+- Změny jsou v našem vlastním jazyce, s výběrem jazyka, změny jsou přeloženy do 30 jazyků
+- Vestavěný výběr barvy, který podporuje motion a zoom dvojitým kliknutím
+- Tvar vector clipu lze dvojitým kliknutím přepínat, aby se výběr nepoškodil
 
 Verze 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

@@ -1,15 +1,10 @@
 Sürüm 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Yazı tipi seçici
-    - örnekler önceden oluşturulur ve diskte tutulur, böylece listeyi kaydırırken takılma olmaz
-    - önbellek program kapatıldıktan sonra da korunur ve yalnızca yeni yazı tiplerini işler
-    - örnek boyutunun ayarlanması anlıktır
-    - tam yeniden oluşturma için Refresh düğmesi
-- Düzenleme çubuğunun stil kutusu metin düzenleyicinin üzerine açılmaz
-- AI denetiminin dili ayarlanabilir
-- Yazı tipi seçicinin dil filtreleri ayarlardan düzenlenebilir
-- Kendi dilimizde, dil seçicili değişiklik günlüğü
-- Program 30 dile çevrildi
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Yazı tipi seçici artık birden fazla dili destekliyor ve değiştirilen önbellek mantığı sayesinde çok daha hızlı; yalnızca bir kez yükleme yapılıyor
+- AI kontrolü ve inceleme artık birden fazla dili destekliyor
+- Değişiklik günlüğü kendi dilimizde, dil seçiciyle birlikte; değişiklikler 30 dile çevrildi
+- Motion ve çift tıklamayla yakınlaştırmayı da destekleyen yerleşik renk seçici
+- Seçimi bozmaması için vector clip şekli çift tıklamayla değiştirilebilir
 
 Sürüm 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

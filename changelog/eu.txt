@@ -1,15 +1,10 @@
 Bertsioa 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Letra-tipoen hautatzailea
-    - laginak aldez aurretik prestatzen dira eta diskoan gordetzen dira, zerrendan barrena korritzea eten ez dadin
-    - cache-ak programaren itxiera gainditzen du, eta letra-tipo berriak soilik prozesatzen ditu
-    - laginaren tamaina berehala alda daiteke
-    - Refresh botoia erabateko berreraikuntzarako
-- Edizio-barrako estilo-koadroa ez da testu-editorean zabaltzen
-- AI egiaztapenaren hizkuntza konfigura daiteke
-- Letra-tipoen hautatzailearen hizkuntza-iragazkiak ezarpenetan edita daitezke
-- Aldaketen erregistroa gure hizkuntzan, hizkuntza-hautatzailearekin
-- Programa 30 hizkuntzatara itzulita dago
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Letra-tipoen hautatzaileak hainbat hizkuntza onartzen ditu eta, cachearen logika aldatuari esker, askoz azkarragoa da; karga bakarra egiten da
+- AI egiaztapenak eta berrikuspenak hainbat hizkuntza onartzen dituzte
+- Aldaketen erregistroa gure hizkuntzan, hizkuntza-hautatzailearekin; aldaketak 30 hizkuntzatara itzulita
+- Color picker integratuak motion eta klik bikoitz bidezko zooma onartzen ditu
+- Vector clip forma klik bikoitzarekin alda daiteke, hautapena hondatu ez dadin
 
 Bertsioa 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

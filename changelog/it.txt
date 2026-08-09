@@ -1,15 +1,10 @@
 Versione 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Selettore dei caratteri
-    - i campioni vengono preparati in anticipo e rimangono sul disco, così lo scorrimento dell’elenco non si blocca
-    - la cache sopravvive alla chiusura del programma ed elabora solo i nuovi caratteri
-    - la modifica delle dimensioni del campione è immediata
-    - pulsante Refresh per la ricostruzione completa
-- Il riquadro dello stile della barra di modifica non si apre sull’editor di testo
-- È possibile impostare la lingua del controllo AI
-- I filtri linguistici del selettore dei caratteri sono modificabili nelle impostazioni
-- Registro delle modifiche nella nostra lingua, con selettore della lingua
-- Il programma è tradotto in 30 lingue
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Il selettore dei caratteri supporta più lingue ed è diventato molto più veloce grazie alla logica della cache modificata, con un solo caricamento iniziale
+- Il controllo e la revisione tramite AI supportano più lingue
+- Il changelog nella nostra lingua, con selettore della lingua, e le modifiche tradotte in 30 lingue
+- Selettore di colori integrato, che supporta anche il motion e lo zoom con doppio clic
+- È possibile alternare la forma del Vector clip con un doppio clic, in modo da non compromettere la selezione
 
 Versione 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

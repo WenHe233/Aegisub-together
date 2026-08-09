@@ -1,15 +1,10 @@
 Version 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Schriftauswahl
-    - die Vorschauen werden vorab erstellt und auf der Festplatte gespeichert, sodass das Scrollen durch die Liste nicht ins Stocken gerät
-    - der Cache überlebt das Schließen des Programms und verarbeitet nur neue Schriftarten
-    - die Änderung der Vorschaugröße erfolgt sofort
-    - Refresh-Schaltfläche für einen vollständigen Neuaufbau
-- Das Stilfeld der Bearbeitungsleiste klappt nicht über den Texteditor aus
-- Die Sprache der KI-Prüfung kann eingestellt werden
-- Die Sprachfilter der Schriftauswahl können in den Einstellungen bearbeitet werden
-- Änderungsprotokoll in der eigenen Sprache, mit Sprachauswahl
-- Das Programm ist in 30 Sprachen übersetzt
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Die Schriftartauswahl unterstützt mehrere Sprachen und ist dank der geänderten Cache-Logik deutlich schneller geworden, es gibt nur noch einen einmaligen Ladevorgang
+- Die AI-Prüfung und das Review unterstützen mehrere Sprachen
+- Änderungsprotokoll in unserer eigenen Sprache, mit Sprachauswahl, die Änderungen wurden in 30 Sprachen übersetzt
+- Integrierter color picker, der auch motion und Zoom per Doppelklick unterstützt
+- Die Form des Vector clip kann per Doppelklick gewechselt werden, damit die Auswahl nicht beeinträchtigt wird
 
 Version 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

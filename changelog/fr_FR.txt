@@ -1,15 +1,10 @@
 Version 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Sélecteur de polices
-    - les aperçus sont générés à l’avance et conservés sur le disque, ainsi le défilement de la liste ne ralentit pas
-    - le cache survit à la fermeture du programme et ne traite que les nouvelles polices
-    - la modification de la taille de l’aperçu est immédiate
-    - bouton Refresh pour une reconstruction complète
-- La boîte de style de la barre d’édition ne s’ouvre pas sur l’éditeur de texte
-- La langue de la vérification par IA peut être configurée
-- Les filtres linguistiques du sélecteur de polices peuvent être modifiés dans les paramètres
-- Journal des modifications dans notre propre langue, avec sélecteur de langue
-- Le programme est traduit en 30 langues
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Le sélecteur de polices prend en charge plusieurs langues et est devenu beaucoup plus rapide grâce à la logique de cache modifiée, il n’y a qu’un seul chargement
+- La vérification et la review par IA prennent en charge plusieurs langues
+- Journal des modifications dans notre propre langue, avec un sélecteur de langue, les modifications traduites en 30 langues
+- Color picker intégré, qui prend également en charge le motion et le zoom par double-clic
+- La forme du vector clip peut être modifiée par double-clic afin de ne pas altérer la sélection
 
 Version 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

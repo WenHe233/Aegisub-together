@@ -1,15 +1,10 @@
 Wersja 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Wybierak czcionek
-    - próbki są przygotowywane z wyprzedzeniem i pozostają na dysku, dzięki czemu przewijanie listy nie zacina się
-    - pamięć podręczna przetrwa zamknięcie programu i przetwarza tylko nowe czcionki
-    - zmiana rozmiaru próbki odbywa się natychmiast
-    - przycisk Refresh do pełnej przebudowy
-- Pole stylu na pasku edycji nie rozwija się na edytor tekstu
-- Można ustawić język kontroli AI
-- Filtry językowe wybieraka czcionek można edytować w ustawieniach
-- Dziennik zmian w naszym własnym języku, z wyborem języka
-- Program został przetłumaczony na 30 języków
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Selektor czcionek obsługuje wiele języków i dzięki zmienionej logice cache stał się znacznie szybszy, ładowanie odbywa się tylko raz
+- Kontrola AI i review obsługują wiele języków
+- Dziennik zmian we własnym języku, z wyborem języka, zmiany przetłumaczone na 30 języków
+- Wbudowany color picker obsługujący motion i zoom po dwukrotnym kliknięciu
+- Kształt vector clip można przełączać dwukrotnym kliknięciem, aby nie zakłócać zaznaczenia
 
 Wersja 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

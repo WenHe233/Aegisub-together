@@ -14,6 +14,11 @@
 //
 // Aegisub Project http://www.aegisub.org/
 
+// This header had no include guard, which was survivable while every user
+// included it exactly once, and stopped being survivable when a shared header
+// started needing it too.
+#pragma once
+
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 

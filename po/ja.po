@@ -9027,3 +9027,99 @@ msgstr "変更履歴を翻訳するにはAI接続が必要です。AIメニュ�
 #: ../src/dialog_fontpicker.cpp:1948
 msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
 msgstr "インストールされているすべてのフォントのプレビューキャッシュを再構築しますか？\\n\\n前回以降にインストールされたフォントはプログラムが自動的に認識するため、フォント名を変更せずに置き換えた場合にのみ必要です。しばらく時間がかかります。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "Important notice"
+msgstr "重要なお知らせ"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Primary Color from Video"
+msgstr "動画から主要色を取得"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Outline Color from Video"
+msgstr "動画から輪郭色を取得"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Pick Shadow Color from Video"
+msgstr "動画から影色を取得"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the primary fill color (\\c) from the video pixel under the pointer"
+msgstr "マウス下の動画ピクセルから主要塗りつぶし色 (\\c) を取得"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the outline color (\\3c) from the video pixel under the pointer"
+msgstr "マウス下の動画ピクセルから輪郭色 (\\3c) を取得"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp
+msgid "Set the shadow color (\\4c) from the video pixel under the pointer"
+msgstr "マウス下の動画ピクセルから影色 (\\4c) を取得"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "pick color from video"
+msgstr "動画から色を取得"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "remember for future use"
+msgstr "これをデフォルトにする"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+#, c-format
+msgid "add with \\t(%d,%d,%s...)"
+msgstr "\\t(%d,%d,%s...) 形式で追加"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "also add for:"
+msgstr "これにも追加："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "import from motion"
+msgstr "motion trackからインポート"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Import from motion"
+msgstr "motion trackからインポート"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Reading the colour along the track..."
+msgstr "追跡パスに沿って色を読み込み中..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "There is no valid motion track on the clipboard."
+msgstr "クリップボードに有効なmotion trackがありません。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "import colors from motion"
+msgstr "motion trackから色をインポート"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "This line already has timed colors for that tag, from an earlier import or from a pick made with the transition option on.\\nImporting replaces them. Do you want to continue?"
+msgstr "この行には、このタグの時間指定された色がすでにあります。以前のインポート、またはトランジションによる色の取得で追加されたものです。\\nインポートすると上書きされます。続行しますか？"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\\n\\nPressed twice quickly it magnifies that part of the video around the pointer, and lets you write the color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form as well.\\n\\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, which writes the color the tracked point passes over as a sequence of \\t() tags.\\n\\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "新しい色選択機能が追加されました。この機能は、意図的にどのボタンにも自動割り当てされていません。\\n選択した行の色を、動画上のマウス位置からワンボタンで取得できます。\\n\\nすばやく2回押すと、マウス周辺の動画部分を拡大し、色を \\t(<aktuális milisecond>,<aktuális milisecond>,\\c...) 形式で動的に入力できます。\\n\\n拡大表示から、クリップボード内のmocha motion trackに沿って色を読み込むこともできます。この場合、追跡点の下の色が \\t() タグの連続として入力されます。\\n\\n使用するには、「video/colorpick/primary|outline|shadow」commandをショートカットに割り当ててください（1つのボタンへの割り当てを推奨）。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "accept color by doubleclick"
+msgstr "ダブルクリックで色を確定"

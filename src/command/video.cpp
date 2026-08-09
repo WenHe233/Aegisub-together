@@ -46,6 +46,7 @@
 #include "../project.h"
 #include "../selection_controller.h"
 #include "../utils.h"
+#include "../video_color_pick.h"
 #include "../video_controller.h"
 #include "../video_display.h"
 #include "../video_frame.h"
@@ -780,29 +781,49 @@ struct video_opt_colorautotransition final : public Command {
 	STR_HELP("Toggle adding \\t() for color picker")
 
 	bool IsActive(const agi::Context *) override {
-		return OPT_GET("Video/Color Auto Transition")->GetBool();
+		return OPT_GET("Video/Color Pick/Auto Transition")->GetBool();
 	}
 
 	void operator()(agi::Context *) override {
-		OPT_SET("Video/Color Auto Transition")->SetBool(!OPT_GET("Video/Color Auto Transition")->GetBool());
+		OPT_SET("Video/Color Pick/Auto Transition")->SetBool(!OPT_GET("Video/Color Pick/Auto Transition")->GetBool());
 	}
 };
 
-struct video_opt_colorrecent final : public Command {
-	CMD_NAME("video/opt/colorrecent")
-	CMD_ICON(toggle_colorrecent)
-	CMD_TYPE(COMMAND_TOGGLE)
-	STR_MENU("Toggle recent color")
-	STR_DISP("Toggle recent color")
-	STR_HELP("Toggle adding recent for color picker")
-
-	bool IsActive(const agi::Context *) override {
-		return OPT_GET("Video/Color Recent")->GetBool();
+/// Taking a colour off the video under the pointer, one command per colour so each
+/// can have its own hotkey.
+template<video_color_pick::Target Which>
+struct video_colorpick : public Command {
+	bool Validate(const agi::Context *c) override {
+		return video_color_pick::CanPick(c);
 	}
 
-	void operator()(agi::Context *) override {
-		OPT_SET("Video/Color Recent")->SetBool(!OPT_GET("Video/Color Recent")->GetBool());
+	void operator()(agi::Context *c) override {
+		video_color_pick::Invoke(c, Which);
 	}
+};
+
+struct video_colorpick_primary final : public video_colorpick<video_color_pick::Target::Primary> {
+	CMD_NAME("video/colorpick/primary")
+	CMD_ICON(button_color_one)
+	STR_MENU("Pick Primary Color from Video")
+	STR_DISP("Pick Primary Color from Video")
+	STR_HELP("Set the primary fill color (\\c) from the video pixel under the pointer")
+};
+
+struct video_colorpick_outline final : public video_colorpick<video_color_pick::Target::Outline> {
+	CMD_NAME("video/colorpick/outline")
+	CMD_ICON(button_color_three)
+	STR_MENU("Pick Outline Color from Video")
+	STR_DISP("Pick Outline Color from Video")
+	STR_HELP("Set the outline color (\\3c) from the video pixel under the pointer")
+};
+
+struct video_colorpick_shadow final : public video_colorpick<video_color_pick::Target::Shadow> {
+	CMD_NAME("video/colorpick/shadow")
+	CMD_ICON(button_color_four)
+	STR_MENU("Pick Shadow Color from Video")
+	STR_DISP("Pick Shadow Color from Video")
+	STR_HELP("Set the shadow color (\\4c) from the video pixel under the pointer")
 };
 
 struct video_toggle_mask final : public validator_video_loaded {
@@ -913,7 +934,9 @@ namespace cmd {
 		reg(std::make_unique<video_zoom_in>());
 		reg(std::make_unique<video_zoom_out>());
 		reg(std::make_unique<video_opt_colorautotransition>());
-		reg(std::make_unique<video_opt_colorrecent>());
+		reg(std::make_unique<video_colorpick_primary>());
+		reg(std::make_unique<video_colorpick_outline>());
+		reg(std::make_unique<video_colorpick_shadow>());
 		reg(std::make_unique<video_toggle_mask>());
 		reg(std::make_unique<video_toggle_subtitle>());
 		reg(std::make_unique<video_clip_toggle_info>());

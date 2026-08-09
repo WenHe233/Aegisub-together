@@ -1,15 +1,10 @@
 Versió 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Selector de tipus de lletra
-    - les mostres es preparen per endavant i es conserven al disc, de manera que el desplaçament per la llista no s’interromp
-    - la memòria cau sobreviu al tancament del programa i només processa els tipus de lletra nous
-    - l’ajust de la mida de la mostra és immediat
-    - Botó Refresh per reconstruir-ho completament
-- El quadre d’estil de la barra d’edició no s’obre sobre l’editor de text
-- L’idioma de la comprovació d’AI es pot configurar
-- Els filtres d’idioma del selector de tipus de lletra es poden editar a la configuració
-- Registre de canvis en la nostra pròpia llengua, amb selector d’idioma
-- El programa està traduït a 30 idiomes
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- El selector de tipus de lletra admet diversos idiomes i, gràcies a la lògica de memòria cau modificada, és molt més ràpid; només cal carregar-lo una vegada
+- La comprovació i la revisió amb IA admeten diversos idiomes
+- Registre de canvis en el nostre propi idioma, amb selector d’idioma; els canvis s’han traduït a 30 idiomes
+- Selector de colors integrat, que també admet el moviment i el zoom amb doble clic
+- La forma del retall vectorial es pot canviar fent doble clic per no malmetre la selecció
 
 Versió 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

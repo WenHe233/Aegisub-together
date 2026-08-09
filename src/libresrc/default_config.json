@@ -668,8 +668,10 @@
 			"Show Keyframes" : true
 		},
 		"Subtitle Sync" : true,
-		"Color Auto Transition" : false,
-		"Color Recent" : false,
+		"Color Pick" : {
+			"Auto Transition" : false,
+			"Intro Shown" : false
+		},
 		"Toggle Mask" : true,
 		"Toggle Subtitle" : true,
 		"Clip Info" : true

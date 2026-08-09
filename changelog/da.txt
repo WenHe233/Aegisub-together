@@ -1,15 +1,10 @@
 Version 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Skrifttypevælger
-    - prøverne forberedes på forhånd og forbliver på disken, så rulning gennem listen ikke går i stå
-    - cachen overlever en programlukning og behandler kun nye skrifttyper
-    - ændring af prøvens størrelse sker øjeblikkeligt
-    - Refresh-knap til fuldstændig genopbygning
-- Stilboksen i redigeringslinjen åbnes ikke oven på teksteditoren
-- Sproget for AI-kontrollen kan indstilles
-- Skrifttypevælgerens sprogfiltre kan redigeres i indstillingerne
-- Ændringslog på vores eget sprog med sprogvalg
-- Programmet er oversat til 30 sprog
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Skrifttypevælgeren understøtter flere sprog og er blevet meget hurtigere takket være den ændrede cachelogik, der er kun en enkelt indlæsning
+- AI-kontrol og review understøtter flere sprog
+- Ændringslog på vores eget sprog med sprogvalg, ændringerne er oversat til 30 sprog
+- Indbygget color picker, som også understøtter motion og zoom med dobbeltklik
+- Vector clip-formen kan skiftes med et dobbeltklik, så markeringen ikke bliver ødelagt
 
 Version 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

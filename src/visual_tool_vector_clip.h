@@ -242,6 +242,7 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	void SyncCurveFeatures(size_t idx);
 
 	bool InitializeHold() override;
+	void OnDoubleClick() override;
 	void UpdateHold() override;
 	void EndHold() override;
 

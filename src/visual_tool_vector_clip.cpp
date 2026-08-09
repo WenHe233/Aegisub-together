@@ -2457,6 +2457,19 @@ void VisualToolVectorClip::Draw() {
 	// draw the shade over clipped out areas and line showing the clip
 	gl.DrawMultiPolygon(points, start, count, video_pos, video_size, !inverse);
 
+	// A contour of one or two points encloses nothing, so the winding fill above
+	// draws nothing at all and the video stays untouched until a third point closes
+	// something. Shade it here instead: with no enclosed area the whole frame is
+	// outside the clip, and seeing that from the first point is the point of the
+	// shade. An inverse clip means the opposite, and correctly shades nothing.
+	bool any_closed = false;
+	for (size_t i = 0, total = std::min(start.size(), count.size()); i < total; ++i)
+		if (count[i] >= 3) { any_closed = true; break; }
+	if (!any_closed && !inverse) {
+		gl.SetFillColour(*wxBLACK, shaded_alpha);
+		gl.DrawRectangle(video_pos, video_pos + video_size);
+	}
+
 	// Never perform contour selection or highlighting work while the mouse is
 	// dragging. Drag mode also highlights the contour under the idle pointer;
 	// line and bicubic modes only mark the currently active contour.
@@ -2995,11 +3008,23 @@ void VisualToolVectorClip::OnSubtitleCommit(int type) {
 	parent->Render();
 }
 
+/// Double clicking inside a contour makes it the active one.
+///
+/// A press cannot do this: a press inside a contour is also how a box selection of
+/// the points within it begins, and one gesture cannot mean both.
+void VisualToolVectorClip::OnDoubleClick() {
+	if (mode != VCLIP_DRAG || !mouse_pos) return;
+	if (SelectPathAt(mouse_pos))
+		parent->Render();
+}
+
 bool VisualToolVectorClip::InitializeHold() {
 	// Box selection
 	if (mode == VCLIP_DRAG) {
-		if (SelectPathAt(mouse_pos))
-			return false;
+		// Choosing which contour is the active one is a double click, not a press.
+		// It used to happen here, and returning false for it cancelled the hold -
+		// which meant that inside a contour, where a press lands whenever the points
+		// to be box-selected are the inner ones, no box could be drawn at all.
 		if (ctrl_down)
 			box_added = sel_features;
 		else

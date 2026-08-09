@@ -410,34 +410,6 @@ namespace {
 		return 1;
 	}
 
-	int get_recent_color(lua_State *L)
-	{
-		std::vector<agi::Color> colors = OPT_GET("Tool/Colour Picker/Recent Colours")->GetListColor();
-
-		push_value(L, colors.front());
-		return 1;
-	}
-
-	int add_picked_color(lua_State *L)
-	{
-		agi::Color color = std::string_view(check_string(L, 1));
-
-		std::vector<agi::Color> colors = OPT_GET("Tool/Colour Picker/Recent Colours")->GetListColor();
-
-		auto existing = find(colors.begin(), colors.end(), color);
-		if (existing != colors.end())
-			rotate(colors.begin(), existing, existing + 1);
-		else {
-			colors.insert(colors.begin(), color);
-			colors.pop_back();
-		}
-
-		OPT_SET("Tool/Colour Picker/Recent Colours")->SetListColor(colors);
-
-		lua_pushnil(L);
-		return 1;
-	}
-
 	int decode_path(lua_State *L)
 	{
 		std::string path = check_string(L, 1);
@@ -757,8 +729,6 @@ namespace {
 		set_field<get_cursor_position>(L, "get_cursor_position");
 		set_field<is_editbox_active>(L, "is_editbox_active");
 		set_field<get_opt_value>(L, "get_opt_value");
-		set_field<add_picked_color>(L, "add_picked_color");
-		set_field<get_recent_color>(L, "get_recent_color");
 		set_field<decode_path>(L, "decode_path");
 		set_field<cancel_script>(L, "cancel");
 		set_field(L, "lua_automation_version", 4);

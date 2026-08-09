@@ -34,6 +34,7 @@
 #include "../ass_dialogue.h"
 #include "../ass_file.h"
 #include "../ass_karaoke.h"
+#include "../ass_parsed_line.h"
 #include "../ass_style.h"
 #include "../compat.h"
 #include "../dialog_folder_search.h"
@@ -274,140 +275,6 @@ bool paste_over(wxWindow *parent, std::vector<bool>& pasteOverOptions, AssDialog
 	return true;
 }
 
-struct parsed_line {
-	AssDialogue *line;
-	std::vector<std::unique_ptr<AssDialogueBlock>> blocks;
-
-	parsed_line(AssDialogue *line) : line(line), blocks(line->ParseTags()) { }
-	parsed_line(parsed_line&& r) = default;
-
-	const AssOverrideTag *find_tag(int blockn, std::string const& tag_name, std::string const& alt) const {
-		for (auto ovr : blocks | sliced(0, blockn + 1) | reversed | agi::of_type<AssDialogueBlockOverride>()) {
-			for (auto const& tag : ovr->Tags | reversed) {
-				if (tag.Name == tag_name || tag.Name == alt)
-					return &tag;
-			}
-		}
-		return nullptr;
-	}
-
-	template<typename T>
-	T get_value(int blockn, T initial, std::string const& tag_name, std::string const& alt = "") const {
-		auto tag = find_tag(blockn, tag_name, alt);
-		if (tag)
-			return tag->Params[0].template Get<T>(initial);
-		return initial;
-	}
-
-	int block_at_pos(int pos) const {
-		auto const& text = line->Text.get();
-		int n = 0;
-		int max = text.size() - 1;
-		bool in_block = false;
-
-		for (int i = 0; i <= max; ++i) {
-			if (text[i] == '{') {
-				if (!in_block && i > 0 && pos >= 0)
-					++n;
-				in_block = true;
-			}
-			else if (text[i] == '}' && in_block) {
-				in_block = false;
-				if (pos > 0 && (i + 1 == max || text[i + 1] != '{'))
-					n++;
-			}
-			else if (!in_block) {
-				if (--pos == 0)
-					return n + (i < max && text[i + 1] == '{');
-			}
-		}
-
-		return n - in_block;
-	}
-
-	int set_tag(std::string const& tag, std::string const& value, int norm_pos, int orig_pos) {
-		int blockn = block_at_pos(norm_pos);
-
-		AssDialogueBlockPlain *plain = nullptr;
-		AssDialogueBlockOverride *ovr = nullptr;
-		while (blockn >= 0 && !plain && !ovr) {
-			AssDialogueBlock *block = blocks[blockn].get();
-			switch (block->GetType()) {
-			case AssBlockType::PLAIN:
-				plain = static_cast<AssDialogueBlockPlain *>(block);
-				break;
-			case AssBlockType::DRAWING:
-				--blockn;
-				break;
-			case AssBlockType::COMMENT:
-				--blockn;
-				orig_pos = line->Text.get().rfind('{', orig_pos);
-				break;
-			case AssBlockType::OVERRIDE:
-				ovr = static_cast<AssDialogueBlockOverride*>(block);
-				break;
-			}
-		}
-
-		// If we didn't hit a suitable block for inserting the override just put
-		// it at the beginning of the line
-		if (blockn < 0)
-			orig_pos = 0;
-
-		std::string insert(tag + value);
-		int shift = insert.size();
-		if (plain || blockn < 0) {
-			std::string_view text = line->Text.get();
-			line->Text = agi::Str(text.substr(0, orig_pos), "{", insert, "}", text.substr(orig_pos));
-			shift += 2;
-			blocks = line->ParseTags();
-		}
-		else if (ovr) {
-			std::string alt;
-			if (tag == "\\c") alt = "\\1c";
-			// Remove old of same
-			bool found = false;
-			for (size_t i = 0; i < ovr->Tags.size(); i++) {
-				std::string const& name = ovr->Tags[i].Name;
-				if (tag == name || alt == name) {
-					shift -= ((std::string)ovr->Tags[i]).size();
-					if (found) {
-						ovr->Tags.erase(ovr->Tags.begin() + i);
-						i--;
-					}
-					else {
-						ovr->Tags[i].Params[0].Set(value);
-						found = true;
-					}
-				}
-			}
-			if (!found)
-				ovr->AddTag(insert);
-
-			line->UpdateText(blocks);
-		}
-		else
-			assert(false);
-
-		return shift;
-	}
-};
-
-int normalize_pos(std::string const& text, int pos) {
-	int plain_len = 0;
-	bool in_block = false;
-
-	for (int i = 0, max = text.size() - 1; i < pos && i <= max; ++i) {
-		if (text[i] == '{')
-			in_block = true;
-		if (!in_block)
-			++plain_len;
-		if (text[i] == '}' && in_block)
-			in_block = false;
-	}
-
-	return plain_len;
-}
 
 template<typename Func>
 void update_lines(const agi::Context *c, wxString const& undo_msg, Func&& f) {

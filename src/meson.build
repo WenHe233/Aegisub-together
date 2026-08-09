@@ -156,6 +156,7 @@ aegisub_src = files(
     'vector3d.cpp',
     'version.cpp',
     'video_box.cpp',
+    'video_color_pick.cpp',
     'video_controller.cpp',
     'video_display.cpp',
     'video_frame.cpp',

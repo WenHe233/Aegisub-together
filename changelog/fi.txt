@@ -1,15 +1,10 @@
 Versio 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Fontinvalitsin
-    - näytteet luodaan etukäteen ja säilytetään levyllä, joten luettelon vieritys ei takertele
-    - välimuisti säilyy ohjelman sulkemisen jälkeen, ja vain uudet fontit käsitellään
-    - näytteen koon muuttaminen tapahtuu välittömästi
-    - Refresh-painike täydellistä uudelleenrakennusta varten
-- Muokkauspalkin tyylilaatikko ei laajene tekstieditorin päälle
-- Tekoälytarkistuksen kielen voi määrittää
-- Fontinvalitsimen kielisuodattimia voi muokata asetuksissa
-- Muutosloki omalla kielellämme, kielenvalitsimella
-- Ohjelma on käännetty 30 kielelle
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- Fontinvalitsin tukee useita kieliä, ja muuttuneen välimuistilogiikan ansiosta se on paljon nopeampi; lataus tehdään vain kerran
+- Tekoälytarkistus ja review tukevat useita kieliä
+- Muutosloki omalla kielellämme, kielenvalitsimella; muutokset on käännetty 30 kielelle
+- Sisäänrakennettu color picker, joka tukee motionia ja zoomausta kaksoisnapsautuksella
+- Vector clip -muodon voi vaihtaa kaksoisnapsautuksella, jotta valinta ei mene pilalle
 
 Versio 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

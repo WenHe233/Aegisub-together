@@ -1,15 +1,10 @@
 Versie 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
-- Lettertypekiezer
-    - de voorbeelden worden vooraf aangemaakt en op de schijf bewaard, zodat het scrollen door de lijst niet hapert
-    - de cache blijft behouden na het afsluiten van het programma en verwerkt alleen nieuwe lettertypen
-    - het aanpassen van de voorbeeldgrootte gebeurt onmiddellijk
-    - Refresh-knop voor volledige heropbouw
-- Het stijlvenster van de bewerkingsbalk klapt niet uit over de teksteditor
-- De taal van de AI-controle kan worden ingesteld
-- De taalfilters van de lettertypekiezer kunnen in de instellingen worden bewerkt
-- Changelog in onze eigen taal, met taalkiezer
-- Het programma is naar 30 talen vertaald
+https://mutekifansub.hu/public/nyaa/Aegisub/aegisub-v4.3.zip
+- De lettertypekiezer ondersteunt meerdere talen en is dankzij de gewijzigde cachelogica veel sneller geworden; er is slechts één keer laden
+- AI-controle en review ondersteunen meerdere talen
+- Wijzigingslogboek in onze eigen taal, met taalkeuze, de wijzigingen vertaald naar 30 talen
+- Ingebouwde color picker, die ook motion en zoom met dubbelklikken ondersteunt
+- De vorm van de vector clip kan met dubbelklikken worden gewisseld, zodat de selectie niet wordt verpest
 
 Versie 4.2.2 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip

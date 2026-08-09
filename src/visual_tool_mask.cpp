@@ -1951,7 +1951,13 @@ void VisualToolMask::Draw() {
 		gl.SetFillColour(region_colour, mode == MASK_BRUSH ? .30f : .10f);
 		if (!flat_points.empty())
 			gl.DrawMultiPolygon(flat_points, starts, counts, video_pos, video_size, false);
-		else if (screen_points.size() == 2) gl.DrawLine(screen_points[0], screen_points[1]);
+		// Two points enclose nothing, so the winding fill above draws nothing for
+		// them and the first edge stayed invisible until a third point closed a
+		// triangle. This was an "else if": with a finished region already on the
+		// canvas, flat_points was not empty, so the branch never ran even though the
+		// shape being built still had only its two points.
+		if (screen_points.size() == 2)
+			gl.DrawLine(screen_points[0], screen_points[1]);
 		gl.SetFillColour(point_colour, .65f);
 		for (size_t i = 0; i < screen_points.size(); ++i)
 			gl.DrawCircle(screen_points[i], static_cast<int>(i) == hovered_point ||
@@ -2918,17 +2924,6 @@ void VisualToolMask::CreateAIMask(VisualToolMaskAction action) {
 	if (action == VisualToolMaskAction::GenerateText) {
 		if (ai_prompt_history.size() == 6) ai_prompt_history.erase(ai_prompt_history.begin());
 		ai_prompt_history.push_back(std::move(user_prompt));
-	}
-	auto video_name = c->project->VideoName();
-	if (!video_name.string().starts_with("?dummy")) {
-		auto debug_path = video_name.parent_path() /
-			(video_name.stem().string() + agi::format("-%d-ai-generated.jpg", frame_number));
-		wxImage debug_image = ai_working_image->Copy();
-		debug_image.SetOption(wxIMAGE_OPTION_QUALITY, 95);
-		if (!debug_image.SaveFile(to_wx(debug_path.string()), wxBITMAP_TYPE_JPEG))
-			wxMessageBox(_("The raw AI image could not be saved to:") + "\n" +
-				to_wx(debug_path.string()), _("AI masking failed"),
-				wxOK | wxICON_WARNING, c->parent);
 	}
 	mask_regions.clear();
 	points.clear();
