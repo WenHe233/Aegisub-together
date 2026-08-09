@@ -7,3 +7,7 @@ build*/
 !/subprojects/iconv
 !/subprojects/luabins
 AGENTS.md
+
+# Release helper secrets: holds the OpenAI key, must never be committed
+/tools/release/release.config.apikey.json
+/tools/release/__pycache__/

@@ -10,6 +10,13 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
 CONFIG_PATH = os.path.join(HERE, 'release.config.json')
+# release.config.json is committed, so a key put there would end up in the repo.
+# Keys live in this file instead, which .gitignore keeps out.
+APIKEY_PATH = os.path.join(HERE, 'release.config.apikey.json')
+
+DEFAULT_APIKEY = {
+    'openai_api_key': '',
+}
 
 DEFAULT_CONFIG = {
     'build_dir': 'build-codex',
@@ -18,11 +25,10 @@ DEFAULT_CONFIG = {
     'changelog_dir': r'C:\aegisub-portable\_release\changelog',
     'source_language': 'hu',
     'fallback_language': 'en',
-    # Where upload.cmd publishes to. A local path, a UNC share, or an
-    # sftp://user@host/path, ftp://... or ftps://... URL.
-    'upload_destination': r'\\CHANGE-ME\aegisub',
-    'upload_user': '',
     'openai_model': 'gpt-5.6-terra',
+    # Keys belong in release.config.apikey.json; this stays empty in the
+    # committed file, and is only read as a fallback.
+    'openai_api_key': '',
     'vcvars': r'D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat',
 }
 
@@ -30,12 +36,26 @@ DEFAULT_CONFIG = {
 def load_config():
     config = dict(DEFAULT_CONFIG)
     if os.path.exists(CONFIG_PATH):
-        with io.open(CONFIG_PATH, encoding='utf-8') as handle:
+        with io.open(CONFIG_PATH, encoding='utf-8-sig') as handle:
             config.update(json.load(handle))
     else:
         save_config(config)
         print('Created %s - check the paths in it before publishing.' % CONFIG_PATH)
     return config
+
+
+def load_apikeys():
+    """Read release.config.apikey.json, creating an empty one on first run."""
+    if not os.path.exists(APIKEY_PATH):
+        with io.open(APIKEY_PATH, 'w', encoding='utf-8', newline='\n') as handle:
+            json.dump(DEFAULT_APIKEY, handle, indent=2)
+            handle.write('\n')
+        print('Created %s - put your OpenAI key in it.' % APIKEY_PATH)
+        return dict(DEFAULT_APIKEY)
+    with io.open(APIKEY_PATH, encoding='utf-8-sig') as handle:
+        keys = dict(DEFAULT_APIKEY)
+        keys.update(json.load(handle))
+        return keys
 
 
 def save_config(config):
@@ -51,7 +71,12 @@ def fail(message):
 
 def ask_yes_no(question):
     while True:
-        answer = input('%s [y/n] ' % question).strip().lower()
+        try:
+            answer = input('%s [y/n] ' % question).strip().lower()
+        except EOFError:
+            # No console to answer on: take the cautious option rather than loop.
+            print('n')
+            return False
         if answer in ('y', 'yes'):
             return True
         if answer in ('n', 'no'):
@@ -192,15 +217,22 @@ def write_changelog(path, releases):
 
 # ----------------------------------------------------------------------- OpenAI
 
-def openai_key():
+def openai_key(config=None):
+    """From release.config.apikey.json first, then release.config.json, then the
+    environment. Only the apikey file is kept out of git."""
+    key = load_apikeys().get('openai_api_key', '').strip()
+    if key:
+        return key
+    if config:
+        key = str(config.get('openai_api_key', '')).strip()
+        if key:
+            print('Using the key from release.config.json. That file is committed, so '
+                  'release.config.apikey.json is the safe place for it.')
+            return key
     key = os.environ.get('OPENAI_API_KEY', '').strip()
     if key:
         return key
-    print('OPENAI_API_KEY is not set.')
-    key = input('Paste an OpenAI API key (used for this run only): ').strip()
-    if not key:
-        fail('No API key, nothing to translate with.')
-    return key
+    fail('No OpenAI key. Put one in openai_api_key in %s.' % APIKEY_PATH)
 
 
 def openai_text(key, model, instructions, user_text):
@@ -212,6 +244,9 @@ def openai_text(key, model, instructions, user_text):
         'model': model,
         'instructions': instructions,
         'input': [{'role': 'user', 'content': user_text}],
+        # Mechanical translation needs no deliberation, and reasoning tokens are
+        # billed as output. The program's own requests ask for low effort too.
+        'reasoning': {'effort': 'low'},
         'store': False,
         'max_output_tokens': 16000,
     }).encode('utf-8')

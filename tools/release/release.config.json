@@ -5,8 +5,6 @@
   "changelog_dir": "C:\\aegisub-portable\\_release\\changelog",
   "source_language": "hu",
   "fallback_language": "en",
-  "upload_destination": "\\\\CHANGE-ME\\aegisub",
-  "upload_user": "",
   "openai_model": "gpt-5.6-terra",
   "vcvars": "D:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat"
 }

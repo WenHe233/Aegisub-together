@@ -179,7 +179,7 @@ def main():
     version = common.newest_changelog_version(source_changelog)
     print('Releasing version %s\n' % version)
 
-    key = common.openai_key()
+    key = common.openai_key(config)
 
     print('Translating catalogues:')
     translate_catalogues(config, key)
