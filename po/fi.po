@@ -9234,3 +9234,8 @@ msgstr "Unkari (alkuperäinen)"
 #: src/muteki_update.cpp
 msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
 msgstr "Muutoslokin kääntäminen edellyttää tekoäly-yhteyttä. Voit määrittää sen tekoälyvalikon Configure AI connection -kohdassa."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_fontpicker.cpp:1948
+msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
+msgstr "Rakennetaanko kaikkien asennettujen fonttien esikatseluvälimuisti uudelleen?\\n\\nOhjelma tunnistaa viime käyttökerran jälkeen asennetut fontit automaattisesti, joten tämä on tarpeen vain, jos fontti on vaihdettu sen nimeä muuttamatta. Toiminto kestää hetken."

@@ -9659,3 +9659,8 @@ msgstr "匈牙利语（原文）"
 #: src/muteki_update.cpp
 msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
 msgstr "需要连接 AI 才能翻译变更日志。可在 AI 菜单的 Configure AI connection 中进行设置。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_fontpicker.cpp:1948
+msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
+msgstr "要重建所有已安装字体的预览缓存吗？\\n\\n程序会自动识别上次操作后安装的字体，因此仅当某字体在名称未变的情况下被替换时才需要执行此操作。此过程需要一些时间。"

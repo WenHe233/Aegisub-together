@@ -223,6 +223,61 @@ std::string PackageName(std::string value, std::string const& version) {
 	return value;
 }
 
+/// The version a release header announces, or "" if the line is not a header.
+///
+/// A header carries the word for "version" and the number, in whichever order that
+/// language puts them, before a trailing "---". The version is the last word
+/// containing a digit: languages disagree about the order, and Basque came back as
+/// "3.5.2 bertsioa ---", which a rule looking only at the last word dropped
+/// silently. Keep in step with header_version in tools/release/release_common.py.
+std::string HeaderVersion(std::string const& line) {
+	auto trimmed = Trim(line);
+	if (!trimmed.ends_with("---")) return {};
+
+	auto head = Trim(trimmed.substr(0, trimmed.size() - 3));
+	std::istringstream words(head);
+	std::string word;
+	std::string version;
+	while (words >> word) {
+		if (std::any_of(word.begin(), word.end(),
+				[](unsigned char c) { return std::isdigit(c); }))
+			version = word;
+	}
+	return version;
+}
+
+/// The changelog with the package line taken out of every release.
+///
+/// The line after a header is the download URL, which is there for the installer
+/// and is only noise to read. The dialogs that show the file itself go through this
+/// so that they agree with the update dialog, which builds its text from the parsed
+/// releases and so never had the URL in it.
+std::string ChangelogForDisplay(std::string const& text) {
+	std::string out;
+	std::istringstream input(text);
+	std::string line;
+	bool drop_package = false;
+	while (std::getline(input, line)) {
+		if (!line.empty() && line.back() == '\r') line.pop_back();
+		if (!HeaderVersion(line).empty()) {
+			drop_package = true;
+		}
+		else if (drop_package) {
+			// Only the first non-blank line after the header is the package.
+			if (Trim(line).empty()) {
+				out += line;
+				out += '\n';
+				continue;
+			}
+			drop_package = false;
+			continue;
+		}
+		out += line;
+		out += '\n';
+	}
+	return out;
+}
+
 std::vector<Release> ParseChangelog(std::string const& text) {
 	std::vector<Release> releases;
 	std::optional<Release> current;
@@ -232,23 +287,7 @@ std::vector<Release> ParseChangelog(std::string const& text) {
 	while (std::getline(input, line)) {
 		if (!line.empty() && line.back() == '\r') line.pop_back();
 		auto trimmed = Trim(line);
-		// A release header carries the word for "version" and the number, in
-		// whichever order that language puts them, before a trailing "---". The
-		// version is the last word containing a digit: languages disagree about the
-		// order, and Basque came back as "3.5.2 bertsioa ---", which a rule looking
-		// only at the last word dropped silently. Keep in step with parse_changelog
-		// in tools/release/release_common.py.
-		std::string version;
-		if (trimmed.ends_with("---")) {
-			auto head = Trim(trimmed.substr(0, trimmed.size() - 3));
-			std::istringstream words(head);
-			std::string word;
-			while (words >> word) {
-				if (std::any_of(word.begin(), word.end(),
-						[](unsigned char c) { return std::isdigit(c); }))
-					version = word;
-			}
-		}
+		std::string version = HeaderVersion(line);
 		if (!version.empty()) {
 			if (current) {
 				current->package = PackageName(current->package, current->version);
@@ -367,7 +406,7 @@ wxSizer *MakeChangelogLanguageRow(wxDialog *dialog, wxTextCtrl *target,
 		if (selected < 0 || selected >= static_cast<int>(languages->size())) return;
 		wxBusyCursor busy;
 		try {
-			target->SetValue(to_wx(FetchChangelog((*languages)[selected].first)));
+			target->SetValue(to_wx(ChangelogForDisplay(FetchChangelog((*languages)[selected].first))));
 		}
 		catch (std::exception const& error) {
 			wxMessageBox(to_wx(error.what()), _("Muteki update error"), wxOK | wxICON_ERROR, dialog);
@@ -753,7 +792,7 @@ void ShowChangelog(agi::Context *context) {
 		wxDialog dialog(context->parent, -1, _("Aegisub changelog"), wxDefaultPosition, wxSize(720, 560),
 			wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
 		auto sizer = new wxBoxSizer(wxVERTICAL);
-		auto view = new wxTextCtrl(&dialog, -1, to_wx(text), wxDefaultPosition, wxDefaultSize,
+		auto view = new wxTextCtrl(&dialog, -1, to_wx(ChangelogForDisplay(text)), wxDefaultPosition, wxDefaultSize,
 			wxTE_MULTILINE | wxTE_READONLY);
 		sizer->Add(view, 1, wxEXPAND | wxALL, 8);
 		auto buttons = new wxBoxSizer(wxHORIZONTAL);

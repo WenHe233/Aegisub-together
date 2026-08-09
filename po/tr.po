@@ -9771,3 +9771,8 @@ msgstr "Macarca (orijinal)"
 #: src/muteki_update.cpp
 msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
 msgstr "Değişiklik günlüğünü çevirmek için YZ bağlantısı gerekir. Bunu YZ menüsündeki Configure AI connection bölümünden ayarlayabilirsiniz."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_fontpicker.cpp:1948
+msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
+msgstr "Önizleme önbelleğini yüklü tüm yazı tipleri için yeniden oluşturmak istiyor musunuz?\\n\\nProgram, son işlemden bu yana yüklenen yazı tiplerini otomatik olarak algılar; bu nedenle bu işlem yalnızca bir yazı tipi adı değiştirilmeden değiştirilmişse gereklidir. Bu işlem biraz zaman alır."

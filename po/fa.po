@@ -8998,3 +8998,8 @@ msgstr "مجاری (اصلی)"
 #: src/muteki_update.cpp
 msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
 msgstr "برای ترجمهٔ گزارش تغییرات، اتصال هوش مصنوعی لازم است. می‌توانید آن را در بخش Configure AI connection از منوی هوش مصنوعی تنظیم کنید."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_fontpicker.cpp:1948
+msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
+msgstr "آیا حافظهٔ نهان پیش‌نمایش برای همهٔ فونت‌های نصب‌شده بازسازی شود؟\\n\\nبرنامه فونت‌هایی را که از آخرین بار نصب شده‌اند، خودکار شناسایی می‌کند؛ بنابراین این کار فقط زمانی لازم است که فونتی بدون تغییر نامش جایگزین شده باشد. این کار مدتی طول می‌کشد."

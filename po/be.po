@@ -9167,3 +9167,8 @@ msgstr "Венгерская (арыгінал)"
 #: src/muteki_update.cpp
 msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
 msgstr "Для перакладу журнала змяненняў неабходна падключэнне да ШІ. Наладзіць яго можна ў раздзеле Configure AI connection меню ШІ."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_fontpicker.cpp:1948
+msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
+msgstr "Перабудаваць кэш папярэдняга прагляду для ўсіх усталяваных шрыфтоў?\\n\\nШрыфты, усталяваныя пасля апошняга разу, праграма распазнае аўтаматычна, таму гэта неабходна толькі ў выпадку замены шрыфту без змены яго назвы. Гэта зойме некаторы час."

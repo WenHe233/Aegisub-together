@@ -9205,3 +9205,8 @@ msgstr "Hongrois (original)"
 #: src/muteki_update.cpp
 msgid "An AI connection is required to translate the changelog. Set it up under AI, Configure AI connection."
 msgstr "Une connexion à l’IA est requise pour traduire le journal des modifications. Vous pouvez la configurer dans le menu Configure AI connection."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_fontpicker.cpp:1948
+msgid "Rebuild the preview cache for every installed font?\\n\\nFonts installed since the last time are picked up on their own, so this is only needed when a font was replaced without its name changing. It takes a while."
+msgstr "Reconstruire le cache d’aperçu pour toutes les polices installées ?\\n\\nLe programme détecte automatiquement les polices installées depuis la dernière fois. Cette opération n’est nécessaire que si une police a été remplacée sans changer de nom. Cela peut prendre un certain temps."
