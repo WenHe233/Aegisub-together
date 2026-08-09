@@ -434,6 +434,14 @@ bool ConfirmInstall(wxWindow *parent, Release const& release, std::string const&
 	buttons->AddStretchSpacer();
 	buttons->Add(dialog.CreateStdDialogButtonSizer(wxYES | wxNO), 0, wxALIGN_CENTER_VERTICAL);
 	outer->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+
+	// Without this, declining the update does not work and Escape installs it.
+	// CreateStdDialogButtonSizer makes Yes the affirmative id but leaves the escape
+	// id at wxID_ANY, and wxDialogBase then treats No as an unknown button - the
+	// click is skipped and nothing happens - while Escape looks for a Cancel button,
+	// finds none, and falls back to the affirmative id, which is Yes.
+	dialog.SetEscapeId(wxID_NO);
+
 	dialog.SetSizerAndFit(outer);
 	dialog.SetMinSize(wxSize(620, 430));
 	dialog.CentreOnParent();
