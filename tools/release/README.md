@@ -32,6 +32,10 @@ back to `release.config.json` and then to the `OPENAI_API_KEY` environment
 variable. Translation is incremental in both directions:
 
 - `po/*.po` only receive msgids that are present in `po/hu.po` and missing from
-  that language, written as `#, fuzzy` so they can be reviewed later.
+  that language. They go in as live entries carrying the comment
+  `# machine translation from Hungarian, not reviewed yet`, which is what to
+  grep for when reviewing. They must not be marked `#, fuzzy`: msgfmt leaves
+  fuzzy entries out of the compiled catalogue, so the program would never show
+  them.
 - `changelog/<lang>.txt` only receive releases that the file does not have yet,
   so an already translated release is never paid for twice.

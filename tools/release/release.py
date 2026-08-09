@@ -10,11 +10,23 @@ Four steps, each of which skips whatever is already done:
 
 import io
 import os
+import re
 import shutil
 import sys
 import zipfile
 
 import release_common as common
+
+# What msgfmt understands as a printf conversion. Only entries that really
+# contain one may carry the c-format flag; on anything else msgfmt rejects the
+# catalogue over a stray per cent sign.
+PLACEHOLDER = re.compile(
+    r'%(?:\d+\$)?[-+ #0]*[\d.*]*(?:hh|h|ll|l|L|z|j|t)?[diouxXeEfgGaAcspn%]')
+
+# msgfmt drops fuzzy entries, so a machine translation marked fuzzy would never
+# reach the program. The entries go in live and carry a translator comment
+# instead, which is what a later reviewer can search for.
+MACHINE_COMMENT = '# machine translation from Hungarian, not reviewed yet'
 
 PO_INSTRUCTIONS = (
     'You translate strings of a subtitle editor user interface from Hungarian into '
@@ -23,7 +35,13 @@ PO_INSTRUCTIONS = (
     'placeholder (%%s, %%d, %%zu, %%.1f and so on), every escape (\\n, \\t), every '
     'keyboard accelerator marker (&) and any ASS override tag exactly as they appear. '
     'Keep the translation short enough for a button or a label. If a line is a '
-    'product name, a file name or a command name, leave it as it is.'
+    'product name, a file name or a command name, leave it as it is. '
+    # The batches are translated independently, so without these two rules the
+    # same catalogue ends up mixing forms of address and mixing "AI" with the
+    # local word for it.
+    'Address the user the same way throughout, with the form a commercial '
+    'application would use in that language. Translate "AI" with the usual '
+    'term of that language and then use that one term everywhere.'
 )
 
 CHANGELOG_INSTRUCTIONS = (
@@ -89,11 +107,10 @@ def translate_catalogues(config, key):
                 break
             for msgid, text in zip(batch, translated):
                 comments = [line for line in source_map[msgid][0] if line.startswith('#:')]
-                block = '\n'.join(comments) if comments else '#: src'
-                if '%' in msgid:
-                    block += '\n#, fuzzy, c-format'
-                else:
-                    block += '\n#, fuzzy'
+                block = MACHINE_COMMENT
+                block += '\n' + ('\n'.join(comments) if comments else '#: src')
+                if PLACEHOLDER.search(msgid):
+                    block += '\n#, c-format'
                 block += '\nmsgid %s\nmsgstr %s\n' % (common.quote_po(msgid), common.quote_po(text))
                 blocks.append(block)
             print('    %d/%d' % (min(start + batch_size, len(missing)), len(missing)))

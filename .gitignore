@@ -10,4 +10,6 @@ AGENTS.md
 
 # Release helper secrets: holds the OpenAI key, must never be committed
 /tools/release/release.config.apikey.json
+
+# Rewritten every time a release script runs, so it shows up as a change
 /tools/release/__pycache__/
