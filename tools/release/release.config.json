@@ -1,7 +1,7 @@
 {
   "build_dir": "build-codex",
   "portable_dir": "C:\\aegisub-portable",
-  "release_dir": "C:\\Users\\croni\\Aegisub\\_release",
+  "release_dir": "C:\\Users\\croni\\Aegisub\\.releases",
   "changelog_dir": "C:\\Users\\croni\\Aegisub\\changelog",
   "source_language": "hu",
   "fallback_language": "en",

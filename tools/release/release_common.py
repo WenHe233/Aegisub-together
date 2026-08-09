@@ -22,8 +22,8 @@ DEFAULT_CONFIG = {
     'build_dir': 'build-codex',
     'portable_dir': r'C:\aegisub-portable',
     # Both inside the repository now. The changelogs are tracked, because the program
-    # reads them from GitHub; _release is gitignored, since it only holds the zips.
-    'release_dir': os.path.join(REPO, '_release'),
+    # reads them from GitHub; .releases is gitignored, since it only holds the zips.
+    'release_dir': os.path.join(REPO, '.releases'),
     'changelog_dir': os.path.join(REPO, 'changelog'),
     # <owner>/<repo>. The releases the program downloads are this repository's
     # release assets, so the upload step needs to know which one.
@@ -378,13 +378,15 @@ def github_request(token, method, url, data=None, content_type=None):
 
 
 def github_release_id(token, repo, tag):
-    """The id of the release for this tag, or None if there is not one yet."""
+    """(release id, {asset name: asset id}) for this tag, or (None, {}) if there is
+    no release for it yet."""
     status, body = github_request(
         token, 'GET', '%s/repos/%s/releases/tags/%s' % (GITHUB_API, repo, tag))
     if status == 200:
-        return body.get('id'), [asset.get('name') for asset in body.get('assets', [])]
+        assets = {asset.get('name'): asset.get('id') for asset in body.get('assets', [])}
+        return body.get('id'), assets
     if status == 404:
-        return None, []
+        return None, {}
     fail('GitHub returned %d looking up %s: %s' % (status, tag, body.get('message')))
 
 
@@ -419,11 +421,30 @@ def github_upload_asset(token, repo, release_id, path):
         fail('GitHub returned %d uploading %s: %s' % (status, name, body.get('message')))
 
 
-def publish_release(token, repo, version, package, notes):
+def github_delete_asset(token, repo, asset_id):
+    status, body = github_request(
+        token, 'DELETE', '%s/repos/%s/releases/assets/%s' % (GITHUB_API, repo, asset_id))
+    if status not in (200, 204):
+        fail('GitHub returned %d deleting an asset: %s' % (status, body.get('message')))
+
+
+def github_update_notes(token, repo, release_id, notes):
+    status, body = github_request(
+        token, 'PATCH', '%s/repos/%s/releases/%s' % (GITHUB_API, repo, release_id),
+        data=json.dumps({'body': notes}).encode('utf-8'),
+        content_type='application/json')
+    if status != 200:
+        fail('GitHub returned %d updating the notes: %s' % (status, body.get('message')))
+
+
+def publish_release(token, repo, version, package, notes, replace=False):
     """Make sure the release for this version exists and carries its package.
 
-    Skips what is already there, so it is safe to run again after a failure part
-    way through.
+    Without `replace` an existing package is left alone, so the function is safe to
+    run again after a failure part way through. With it, the old asset is deleted
+    and the new one uploaded, and the notes are refreshed from the changelog -
+    GitHub does not allow an asset to be overwritten in place, a same-name upload
+    is refused, so replacing means deleting first.
     """
     tag = 'v%s' % version
     release_id, assets = github_release_id(token, repo, tag)
@@ -431,12 +452,17 @@ def publish_release(token, repo, version, package, notes):
         release_id = github_create_release(token, repo, tag, notes)
         print('    %s: release created' % tag)
 
-    if os.path.basename(package) in assets:
-        print('    %s: package already uploaded' % tag)
-        return
+    name = os.path.basename(package)
+    if name in assets:
+        if not replace:
+            print('    %s: package already uploaded, left alone' % tag)
+            return
+        github_delete_asset(token, repo, assets[name])
+        github_update_notes(token, repo, release_id, notes)
+        print('    %s: previous %s removed' % (tag, name))
 
     github_upload_asset(token, repo, release_id, package)
-    print('    %s: %s uploaded' % (tag, os.path.basename(package)))
+    print('    %s: %s uploaded' % (tag, name))
 
 
 # ------------------------------------------------------------------------ build

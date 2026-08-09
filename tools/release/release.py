@@ -332,9 +332,22 @@ def main():
 
     print('')
     if common.ask_yes_no('Publish %s as a GitHub release?' % version):
-        notes = release_notes(config, version)
-        common.publish_release(common.github_token(), config['github_repo'],
-                               version, archive, notes)
+        token = common.github_token()
+        repo = config['github_repo']
+
+        # Rebuilding a version that is already out is the normal case for a fix, so
+        # ask rather than silently leaving the old package in place.
+        _, assets = common.github_release_id(token, repo, 'v%s' % version)
+        replace = False
+        if os.path.basename(archive) in assets:
+            replace = common.ask_yes_no(
+                '%s is already published. Replace the attached package and notes?'
+                % version)
+            if not replace:
+                print('Left as it is.')
+
+        common.publish_release(token, repo, version, archive,
+                               release_notes(config, version), replace)
         print('\nDone. Commit changelog/ so the program can see the new release.')
     else:
         print('\nDone. %s is built but not published.' % archive)

@@ -16,4 +16,4 @@ AGENTS.md
 
 # Where release.cmd builds the zips. The changelogs beside them under /changelog
 # are tracked on purpose: the program reads those from this repository.
-/_release/
+/.releases/

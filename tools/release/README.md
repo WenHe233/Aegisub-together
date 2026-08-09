@@ -7,8 +7,7 @@ extra arguments.
 | Script | What it does |
 | --- | --- |
 | `release-local.cmd` | Copies the built `aegisub.exe` and the Hungarian catalogue into `C:\aegisub-portable`, for trying a build out immediately. |
-| `release.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages, builds, packs `aegisub-v<version>.zip` into `_release/`, and offers to publish it as a GitHub release. |
-| `upload-releases.cmd` | One-off catch-up: publishes every package in `_release/` that is not on GitHub yet. |
+| `release.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages, builds, packs `aegisub-v<version>.zip` into `.releases/`, and offers to publish it as a GitHub release. |
 | `backfill-translations.cmd` | One-off catch-up: runs only the two translation passes, no build and no packing. Prints how much is missing and asks before spending anything. |
 
 ## Settings
@@ -63,7 +62,7 @@ That means two things:
 
 - `changelog/` is **tracked**, and a new release is only visible to anyone once
   it has been committed and pushed.
-- `_release/` is **gitignored**. It only holds the built zips, which go to GitHub
+- `.releases/` is **gitignored**. It only holds the built zips, which go to GitHub
   as release assets rather than into the repository.
 
 `HEAD` in the address is not a branch: raw.githubusercontent.com resolves it to
