@@ -1,0 +1,195 @@
+Verze 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Výběr fontu
+    - vzorky se připraví předem a zůstanou na disku, takže se posouvání seznamu nezasekává
+    - mezipaměť přežije ukončení programu a zpracují se pouze nové fonty
+    - změna velikosti vzorku je okamžitá
+    - tlačítko Refresh pro kompletní znovuvytvoření
+- Panel stylu v editační liště se neotevírá přes textový editor
+- Jazyk kontroly AI lze nastavit
+- Jazykové filtry výběru fontu lze upravovat v nastavení
+- Změny ve vlastním jazyce s výběrem jazyka
+- Program je přeložen do 30 jazyků
+
+Verze 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- U Vector clipu vylepšeno fungování štětce, umí pracovat s průsečíky
+- Režim pipety
+    - oblast můžeme nakreslit i od ruky
+    - auto fill vylepšeno
+    - vyhlazování hran a automatické přizpůsobení
+    - šablony pro podobné clipy
+    - optimalizace
+
+Verze 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- I při vytváření masky lze vracet zpět
+- Problém s růstem ikon při vytváření tvarů
+
+Verze 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- příkaz "open/video/recent"
+- možnost "Open MKV" v nabídce souboru, která zároveň otevře mkv jako titulky i jako video
+Ostatní aktualizace se týkaly visual toolů:
+- Cross
+    - měření vzdálenosti podržením tlačítka myši
+- Drag (pos/move)
+    - opraven lagující pohyb, nyní je bleskurychlý
+    - dole přibyla nová možnost, pomocí které lze vycentrovat uvnitř zadaného obdélníku
+- Vector clip
+    - v prvním režimu lze přepínat mezi tvary
+    - aktivní tvar lze odstranit klávesou DELETE
+    - režim BRUSH (NOVÉ!): pomocí štětce přidávat/odebírat z vybrané oblasti
+    - režim DELETE: po označení lze odstranit i více bodů
+    - režim PIPETTE (NOVÉ!): přejde do samostatné části, kde lze v daném rozsahu vytvářet tvary a nakonec je potvrdit, čímž se přidají k existujícímu clipu
+        - 4 režimy: přidání/odebrání barevného rozsahu a přidání/odebrání štětcem
+        - nastavení tolerance pro barevný rozsah
+        - posun o zadaný počet px (může být i záporná hodnota)
+        - AI rozpoznávání
+- Úprava maskování (NOVÉ!)
+    - existující masku lze přímo upravovat, jako by šlo o vector clip
+    - získala všechny režimy vector clipu, včetně nových
+- Maskování (NOVÉ!)
+    - masky lze vytvářet obdélníkem, body, štětcem nebo volnou rukou
+    - po potvrzení vytvořené masky se automaticky vezme barva z jejího okraje a vytvoří se řádek
+    - režim PIPETTE i zde
+    - AI odstranění textu / vlastní prompt pro vybranou oblast
+- Kreslení tvarů (NOVÉ!)
+    - lze vytvářet zadané tvary, které se po potvrzení vytvoří s možností nastavení rozmazání a barvy
+    - lze přepínat mezi prázdnými a vyplněnými tvary
+    - při podržení ALT se vynutí pravidelný tvar (např. čtverec nebo kruh)
+    - lze nastavit také tloušťku čáry
+    - lze nastavit také zaoblení hran
+    - lze kreslit i volnou rukou (např. pro zakroužkování)
+
+Verze 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Fungování kontroly překladu u mnoha řádků
+- AI funkce související s karaoke (rozpoznávání hlasu, kanji, časování)
+- Vyhledávání v titulcích nacházejících se ve složce (nachází se v nabídce úprav)
+- Vyřešení aktualizace v rámci Aegisubu
+
+Verze 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Oprava mizení zdrojového řádku, snad už s tím nebudou problémy
+- Pokud bylo v MKV hodně materiálu, nebylo možné jej načíst, i to bylo opraveno
+- Možnost propojení s AI (nastavení modelu, zadání tokenu atd.)
+- Kontrola překladu vybraných řádků z japonštiny pomocí rozpoznávání řeči s AI
+- Následná kontrola celého titulku nebo vybraných řádků (minimálně 100) pomocí AI
+
+Verze 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Sloučené řádky PS obrázků
+    - otevírají a zavírají se kliknutím kolečkem myši
+    - neoznačuje samo sebe červenou barvou
+    - tučným písmem označuje, zda se právě nachází na videu (při zavření i otevření to označuje u čísla řádku)
+    - masky lze vybrat také tažením myší
+- Řádky Fold
+    - otevírají a zavírají se také kliknutím kolečkem myši
+    - „otevírací řádek“ se nezobrazuje červeně, pokud je právě na sobě
+    - „otevírací řádek“ tučným písmem označuje, zda se právě nachází na videu
+    - pomocí CTRL/SHIFT/tažení myší na „otevíracím řádku“ vybere celý fold (případně i více)
+    - vložení foldu nevytváří zbytečnou událost pro vrácení zpět
+    - při zavření foldu se seznam přesune na aktivní řádek
+- V nabídce časování je možnost "Sorokat a képkockához tolja (Vége)", která umožňuje zarovnat řádky podle konce aktivního řádku k aktuálnímu času
+- V nabídce titulků je možnost "Hozzárendelt fájlok betöltése" (možnost dodatečného načtení videa)
+- Automatizační skripty
+    - objevila se skupina "Muteki Fansub", kam byly přesunuty naše skripty (bindy není třeba měnit)
+    - pod "Automatizace" přibyla položka "Utolsó script", pomocí které lze spustit poslední skript a nastavit mu bind ("am/last" je název příkazu)
+    - pokud dvakrát rychle stiskneme tlačítko nastavené pro poslední skript, zobrazí se seznam posledních možností
+
+Verze 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- vykreslování složek pro zdrojové soubory a načítání videa/audia z nich (díky tomu může být video kdekoli, načte se podle stejného názvu)
+- vložení/vyjmutí vybrané části textu do/z komentáře
+- občasné pády při otevírání nových titulků
+
+Verze 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- foldy se nesbalí a při vkládání zůstanou zachované
+- vylepšení výběru fontu
+    - seznam nedávno nainstalovaných fontů (starší než tři dny, zpočátku nebude úplně spolehlivý)
+    - při zavírání upozorní, pokud máš uložený dočasný font
+    - editor stylů nyní také otevírá toto
+
+Verze 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- zdrojové řádky zůstávají zachovány při kopírování/vkládání
+- výběr sloučených řádků s PS obrázky a normální fungování šipek
+
+Verze 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- při slučování zdrojové řádky zůstanou zachovány
+- při slučování nepřidává formátování druhého řádku (např. není třeba mazat \i a/nebo \blurt na začátku řádku)
+- při rozdělování přidává formátování k novému řádku (např. není třeba přidávat \i a/nebo \blurt jako formátování pro rozdělení řádků)
+
+Verze 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- kódování zdrojových řádků
+- možnost zvětšit zdrojový řádek v nastavení
+
+Verze 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- dlouhé názvy písem
+- 3x, 5x, 6x rychlost přehrávání
+- při dvojkliku na poslední řádek ať drag nevybere řádek nad ním
+- drag vždy přesouvá to, co je vybrané (i při více výběrech)
+- kvůli skriptům ať nezmizí zdrojový řádek
+- po kliknutí na obrazovou masku ať video/audio přejde na řádek
+- 2 obrazové masky neslučovat, pokud nejsou ve stejném čase
+
+Verze 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- komentování a zobrazování zdrojových řádků vedle původního zaškrtávacího políčka
+
+Verze 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- vložené obrázky se zobrazují pouze v jednom řádku a dvojklikem je lze otevřít/zavřít
+- přepínání rychlosti přehrávání mezi 0.25x - 10x, kompatibilní pouze s audiem DirectSound
+
+Verze 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- vylepšení výběru fontů
+    - optimalizace
+    - možnost dočasného uložení (např. při hledání odložit fonty, které vypadají dobře)
+    - názvy fontů lze kopírovat
+- místo prostředního tlačítka myši odstraní funkce z obrazovky podržením pravého tlačítka (tak je používání pohodlnější)
+
+Verze 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- výběr fontu
+    - oprava chybového dialogu při přidávání fontu
+    - označení oblíbených fontů v seznamu
+    - při přidání do seznamu neskákat na začátek seznamu, pokud je odrolovaný dolů
+
+Verze 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- výběr písma
+    - lze měnit také hodnoty fs, fscx, fscy a fsp
+    - položky nabídek Všechna písma, Poslední, Nejčastější, Oblíbené a Vlastní seznamy
+    - Vlastní seznamy lze upravovat, importovat písma z daných titulků
+- změny nyní obsahují překlad do maďarštiny
+
+Verze 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Nahrazení textu
+        - kliknutí pravým tlačítkem na řádky -> Change text
+        - podporuje také gradient a pokusí se nastavit text proporcionálně
+        - při kopírování více řádků místo CTRL + H
+
+Verze 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - vylepšení pozičního nástroje
+        - horizontální/vertikální zamykání
+        - nastavení zamykání pomocí click + kolečka nahoru/dolů na malém pozičním čtverci
+        - pokud je na jedné pozici více řádků a je vybrán jeden z nich, přesune ho bez ohledu na to, kde se v seznamu nachází
+        - opravena chyba podivného výběru (při více výběrech bylo po kliknutí vedle podivné označení více řádků)
+    - vylepšení výběru fontu:
+        - přidal jsem CACHE, takže pomalé je to jen jednou, potom už neuvěřitelně rychlé. Pokud fonty updatelujete, je k dispozici tlačítko "Refresh", kterým cache vyprázdníte (např. když se přidá diakritika) - u nového fontu to NENÍ NUTNÉ!
+        - pozici a velikost modálního okna si pamatuje i po zavření Aegisubu
+        - velikost sloupců preview (pomocí kolečka) a sample lze měnit (posuvníkem nad nimi)
+        - font přijme i dvojklikem
+        - font přijme i klávesou Enter
+        - při šipce dolů/TAB ve vyhledávání vybere první prvek, takže lze okno jednoduše otevřít, hledat, vybrat pomocí šipky a potvrdit klávesou Enter, celkem rychle i bez myši
+    - při přehrávání videa už video nelaguje, když přes něj přejedete myší
+    - rychlé stisknutí prostředního tlačítka myši okamžitě vše skryje a jeho opětovné stisknutí zobrazí video (např. aby bylo při clipu ihned vidět výsledek)

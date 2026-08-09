@@ -1,0 +1,195 @@
+Versie 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Lettertypekiezer
+    - de voorbeelden worden vooraf aangemaakt en op de schijf bewaard, zodat het scrollen door de lijst niet hapert
+    - de cache blijft behouden na het afsluiten van het programma en verwerkt alleen nieuwe lettertypen
+    - het aanpassen van de voorbeeldgrootte gebeurt onmiddellijk
+    - Refresh-knop voor volledige heropbouw
+- Het stijlvenster van de bewerkingsbalk klapt niet uit over de teksteditor
+- De taal van de AI-controle kan worden ingesteld
+- De taalfilters van de lettertypekiezer kunnen in de instellingen worden bewerkt
+- Changelog in onze eigen taal, met taalkiezer
+- Het programma is naar 30 talen vertaald
+
+Versie 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- De werking van het penseel bij vector clips is verfijnd, zodat het doorsnijdingen kan verwerken
+- Pipetmodus
+    - we kunnen het gebied ook uit de vrije hand tekenen
+    - auto fill verfijnd
+    - anti-aliasing en automatische uitlijning
+    - sjablonen voor vergelijkbare clips
+    - optimalisatie
+
+Versie 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Kan ook tijdens het maken van een masker ongedaan worden gemaakt
+- Probleem met het groeien van pictogrammen bij het maken van vormen
+
+Versie 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- "Open MKV"-optie in het bestandsmenu, waarmee de mkv tegelijkertijd als ondertitel en als video wordt geopend
+De overige updates draaiden rond de visual tools:
+- Cross
+    - afstand meten door de muisknop ingedrukt te houden
+- Drag (pos/move)
+    - haperende beweging verholpen, is bliksemsnel geworden
+    - onderaan is een nieuwe optie toegevoegd waarmee je binnen een opgegeven rechthoek kunt centreren
+- Vector clip
+    - in de eerste modus kan er tussen vormen worden gewisseld
+    - de actieve vorm verwijderen met DELETE
+    - BRUSH-modus (NIEUW!): met een penseel toevoegen aan/verwijderen uit het geselecteerde gebied
+    - DELETE-modus: meerdere geselecteerde punten kunnen ook worden verwijderd
+    - PIPETTE-modus (NIEUW!): gaat naar een apart gedeelte waar binnen een opgegeven bereik vormen kunnen worden aangemaakt en uiteindelijk geaccepteerd, waarna ze aan de bestaande clip worden toegevoegd
+        - 4 modi: kleurgebied toevoegen/verwijderen en brush toevoegen/verwijderen
+        - tolerantie instellen voor het kleurgebied
+        - verschuiving met een opgegeven aantal px (kan ook een negatieve waarde zijn)
+        - AI-herkenning
+- Maskerbewerking (NIEUW!)
+    - een bestaand masker kan rechtstreeks worden bewerkt, alsof het een vector clip is
+    - heeft alle modi van de vector clip gekregen, ook de nieuwe
+- Maskeren (NIEUW!)
+    - maskers kunnen worden aangemaakt met een rechthoek, punten, een penseel of uit de vrije hand
+    - na het accepteren van het aangemaakte masker wordt automatisch een kleur van de rand genomen en de regel aangemaakt
+    - ook hier de PIPETTE-modus
+    - AI-tekst verwijderen / aangepaste prompt voor het geselecteerde gebied
+- Vormen tekenen (NIEUW!)
+    - bepaalde vormen kunnen worden aangemaakt, die na het accepteren met instelmogelijkheden voor blur en kleur worden gecreëerd
+    - er kan worden gewisseld tussen lege en gevulde vormen
+    - door ALT ingedrukt te houden wordt een regelmatige vorm afgedwongen (bijv. een vierkant of cirkel)
+    - ook de lijndikte kan worden ingesteld
+    - ook het afronden van randen kan worden ingesteld
+    - er kan ook uit de vrije hand worden getekend (bijv. om iets te omcirkelen)
+
+Versie 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Werking van de vertaalcontrole bij veel regels
+- AI-functies voor karaoke (spraakherkenning, kanji, timing)
+- Zoeken in ondertitels in een map (te vinden in het menu Bewerken)
+- Updaten binnen Aegisub mogelijk maken
+
+Versie 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Het verdwijnen van de bronregel opgelost, hopelijk zijn er nu geen problemen meer mee
+- Als er veel materiaal in een MKV zat, kon deze niet worden geladen; ook dat is opgelost
+- Mogelijkheid om AI te koppelen (model instellen, token opgeven, enz.)
+- Controle van de vertaling van geselecteerde regels uit het Japans met behulp van spraakherkenning en AI
+- Nacontrole van de volledige ondertiteling of geselecteerde regels (minimaal 100) met AI
+
+Versie 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Samengevoegde PS-afbeeldingsregels
+    - worden geopend en gesloten met een klik op het muiswiel
+    - geeft zichzelf niet rood aan
+    - geeft vetgedrukt aan of deze momenteel op de video staat (ingeklapt of uitgeklapt wordt dit bij het regelnummer aangegeven)
+    - selecteert maskers ook door er met de muis overheen te slepen
+- Fold-regels
+    - worden OOK geopend en gesloten met een klik op het muiswiel
+    - markeert de "openingsregel" niet rood wanneer deze momenteel op zichzelf staat
+    - de "openingsregel" geeft vetgedrukt aan of deze momenteel op de video staat
+    - met CTRL/SHIFT/door met de muis over de "openingsregel" te slepen wordt alles geselecteerd (zelfs meerdere)
+    - het invoegen van een fold maakt geen overbodige ongedaan te maken gebeurtenis aan
+    - bij het sluiten van een fold springt de lijst naar de actieve regel
+- De optie "Sorokat a képkockához tolja (Vége)" in het timingmenu, zodat regels volgens het einde van de actieve regel op het huidige beeld kunnen worden uitgelijnd
+- De optie "Hozzárendelt fájlok betöltése" in het ondertitelmenu (mogelijkheid om achteraf een video te laden)
+- Automatiseringsscripts
+    - de groep "Muteki Fansub" is verschenen en onze scripts zijn hierheen verplaatst (binds hoeven niet te worden gewijzigd)
+    - onder "Automatizáció" is een "Utolsó script" toegevoegd, waarmee het laatste script kan worden uitgevoerd en gebonden ("am/last" is de commandonaam)
+    - als we de aan het laatste script gebonden toets 2x snel indrukken, verschijnt er een lijst met de laatste opties
+
+Versie 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- mappen renderen voor bronbestanden en video/audio daaruit laden (daardoor kan de video zich overal bevinden, deze wordt op basis van dezelfde naam geladen)
+- geselecteerd tekstgedeelte in/uit een opmerking zetten
+- soms crashen bij het openen van een nieuwe ondertitel
+
+Versie 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- folds klappen niet in en blijven behouden bij plakken
+- verfijningen aan de fontkiezer
+    - lijst met recent geïnstalleerde fonts (ouder dan drie dagen staat waarschijnlijk niet vooraan)
+    - waarschuwt bij het sluiten als je tijdelijke fonts opgeslagen hebt
+    - de stijleditor opent dit nu ook
+
+Versie 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- bronregels blijven behouden bij het kopiëren/plakken
+- selectie van samengevoegde PS-beeldregels en normale werking van de pijltjestoetsen
+
+Versie 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- bronregels blijven behouden bij het samenvoegen
+- bij het samenvoegen wordt de opmaak van de tweede regel niet toegevoegd (bijv. \i en/of \blurt aan het begin van de regel hoeven niet te worden verwijderd)
+- bij het splitsen wordt de opmaak aan de nieuwe regel toegevoegd (bijv. \i en/of \blurt hoeven niet als opmaak aan regels te worden toegevoegd om ze op te splitsen)
+
+Versie 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- codering van bronregels
+- bronregel kunnen vergroten in de instellingen
+
+Versie 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- lange fontnamen
+- 3x, 5x, 6x afspeelsnelheid
+- bij dubbelklikken op de laatste regel selecteert drag niet de regel erboven
+- drag verplaatst altijd wat geselecteerd is (ook bij meerdere selecties)
+- de bronregel verdwijnt niet door scripts
+- bij het klikken op een beeldmasker springt de video/audio naar de regel
+- 2 beeldmaskers worden niet samengevoegd als ze niet op hetzelfde tijdstip zijn
+
+Versie 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- bronregels annoteren en weergeven naast het oorspronkelijke vinkje
+
+Versie 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- ingevoegde afbeeldingen worden slechts op één regel weergegeven en kunnen met een dubbele klik worden in- en uitgeklapt
+- afspeelsnelheid instelbaar tussen 0.25x - 10x, alleen compatibel met DirectSound-audio
+
+Versie 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- verfijningen aan de fontkiezer
+    - optimalisatie
+    - mogelijkheid om tijdelijk op te slaan (bijv. tijdens het zoeken fonts die er goed uitzien apart zetten)
+    - namen van fonts kunnen worden gekopieerd
+- in plaats van de middelste muisknop verdwijnen de functies van het scherm door de rechtermuisknop ingedrukt te houden (zo is het gebruik handiger)
+
+Versie 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- lettertypekiezer
+    - fix voor foutdialoog bij het toevoegen van een lettertype
+    - aanduiding van als favoriet gemarkeerde lettertypen in de lijst
+    - in een naar beneden gescrollde lijst niet naar boven springen bij het toevoegen aan de lijst
+
+Versie 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- lettertypekiezer
+    - het is nu ook mogelijk om de waarden van fs, fscx, fscy en fsp te wijzigen
+    - menu-items Alle lettertypen, Recent, Meest gebruikt, Favorieten en Eigen lijsten
+    - Eigen lijsten kunnen worden bewerkt en de lettertypen van een bepaalde ondertitel kunnen worden geïmporteerd
+- wijzigingen bevatten nu ook de Nederlandse vertaling
+
+Versie 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Tekst vervangen
+        - bij regels rechtsklikken -> Change text
+        - ondersteunt ook gradients en probeert de tekst proportioneel in te stellen
+        - bij het kopiëren van meerdere regels in plaats van CTRL + H
+
+Versie 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - verfijningen aan de positioneringstool
+        - horizontale/verticale vergrendeling
+        - vergrendeling instellen met click + muiswiel omhoog/omlaag op het kleine positioneringsvierkant
+        - als er meerdere regels op één positie staan en er één selectie is, wordt die verplaatst, ongeacht waar deze in de lijst staat
+        - vreemde selectiefout opgelost (bij meerdere selecties was het selecteren van meerdere regels na een verkeerde klik vreemd)
+    - verfijningen aan de fontkiezer:
+        - ik heb CACHE toegevoegd, waardoor het de eerste keer langzaam is en daarna razendsnel. Als fonts zijn geüpdatet, is er een knop "Refresh" waarmee de cache wordt geleegd (bijv. als er een accentteken bijkomt) - bij een nieuwe font is dit NIET NODIG!
+        - de positie en grootte van de modal worden ook na het sluiten van Aegisub onthouden
+        - de grootte van de preview (met het muiswiel) en de samplekolom kan worden gewijzigd (slider erboven)
+        - accepteert de font ook met dubbelklikken
+        - accepteert de font ook met Enter
+        - bij de pijl omlaag/TAB in de zoekbalk wordt het eerste element geselecteerd, zodat je eenvoudig kunt openen, zoeken, met de pijl selecteren en op Enter drukken, vrij snel zonder muis
+    - tijdens het afspelen van video hapert de video niet meer als je de muis erover beweegt
+    - een snelle druk op de middelste muisknop laat alles onmiddellijk verdwijnen en een volgende druk toont het weer op de video (zodat je bijvoorbeeld bij een clip meteen het resultaat kunt zien)

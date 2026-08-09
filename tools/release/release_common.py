@@ -21,8 +21,13 @@ DEFAULT_APIKEY = {
 DEFAULT_CONFIG = {
     'build_dir': 'build-codex',
     'portable_dir': r'C:\aegisub-portable',
-    'release_dir': r'C:\aegisub-portable\_release',
-    'changelog_dir': r'C:\aegisub-portable\_release\changelog',
+    # Both inside the repository now. The changelogs are tracked, because the program
+    # reads them from GitHub; _release is gitignored, since it only holds the zips.
+    'release_dir': os.path.join(REPO, '_release'),
+    'changelog_dir': os.path.join(REPO, 'changelog'),
+    # <owner>/<repo>. The releases the program downloads are this repository's
+    # release assets, so the upload step needs to know which one.
+    'github_repo': 'croni1012/Aegisub',
     'source_language': 'hu',
     'fallback_language': 'en',
     'openai_model': 'gpt-5.6-terra',
@@ -320,6 +325,118 @@ def openai_text(key, model, instructions, user_text):
     if not text:
         raise RuntimeError('OpenAI returned no text.')
     return text
+
+
+# ----------------------------------------------------------------------- GitHub
+
+GITHUB_API = 'https://api.github.com'
+GITHUB_UPLOADS = 'https://uploads.github.com'
+
+
+def github_token():
+    """From release.config.apikey.json, then the environment.
+
+    A fine-grained token with "Contents: read and write" on the one repository is
+    enough; nothing here needs more than that.
+    """
+    token = load_apikeys().get('github_token', '').strip()
+    if token:
+        return token
+    for name in ('GH_TOKEN', 'GITHUB_TOKEN'):
+        token = os.environ.get(name, '').strip()
+        if token:
+            return token
+    fail('No GitHub token. Put one in github_token in %s.\n'
+         'Create it at https://github.com/settings/personal-access-tokens with\n'
+         '"Contents: read and write" on the release repository.' % APIKEY_PATH)
+
+
+def github_request(token, method, url, data=None, content_type=None):
+    import urllib.error
+    import urllib.request
+
+    headers = {
+        'Authorization': 'Bearer %s' % token,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'muteki-release-script',
+    }
+    if content_type:
+        headers['Content-Type'] = content_type
+
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(request, timeout=600) as response:
+            body = response.read()
+            return response.status, (json.loads(body) if body else {})
+    except urllib.error.HTTPError as error:
+        body = error.read().decode('utf-8', 'replace')
+        try:
+            return error.code, json.loads(body)
+        except ValueError:
+            return error.code, {'message': body[:400]}
+
+
+def github_release_id(token, repo, tag):
+    """The id of the release for this tag, or None if there is not one yet."""
+    status, body = github_request(
+        token, 'GET', '%s/repos/%s/releases/tags/%s' % (GITHUB_API, repo, tag))
+    if status == 200:
+        return body.get('id'), [asset.get('name') for asset in body.get('assets', [])]
+    if status == 404:
+        return None, []
+    fail('GitHub returned %d looking up %s: %s' % (status, tag, body.get('message')))
+
+
+def github_create_release(token, repo, tag, notes):
+    status, body = github_request(
+        token, 'POST', '%s/repos/%s/releases' % (GITHUB_API, repo),
+        data=json.dumps({
+            'tag_name': tag,
+            'name': tag,
+            'body': notes,
+            'draft': False,
+            'prerelease': False,
+        }).encode('utf-8'),
+        content_type='application/json')
+    if status not in (200, 201):
+        fail('GitHub returned %d creating %s: %s' % (status, tag, body.get('message')))
+    return body.get('id')
+
+
+def github_upload_asset(token, repo, release_id, path):
+    """Attach one file to a release. Read whole rather than streamed: the packages
+    are tens of megabytes, which is nothing next to needing a chunked uploader."""
+    with io.open(path, 'rb') as handle:
+        payload = handle.read()
+
+    name = os.path.basename(path)
+    status, body = github_request(
+        token, 'POST',
+        '%s/repos/%s/releases/%s/assets?name=%s' % (GITHUB_UPLOADS, repo, release_id, name),
+        data=payload, content_type='application/zip')
+    if status not in (200, 201):
+        fail('GitHub returned %d uploading %s: %s' % (status, name, body.get('message')))
+
+
+def publish_release(token, repo, version, package, notes):
+    """Make sure the release for this version exists and carries its package.
+
+    Skips what is already there, so it is safe to run again after a failure part
+    way through.
+    """
+    tag = 'v%s' % version
+    release_id, assets = github_release_id(token, repo, tag)
+    if release_id is None:
+        release_id = github_create_release(token, repo, tag, notes)
+        print('    %s: release created' % tag)
+
+    if os.path.basename(package) in assets:
+        print('    %s: package already uploaded' % tag)
+        return
+
+    github_upload_asset(token, repo, release_id, package)
+    print('    %s: %s uploaded' % (tag, os.path.basename(package)))
 
 
 # ------------------------------------------------------------------------ build

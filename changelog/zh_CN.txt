@@ -1,0 +1,195 @@
+版本 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- 字体选择器
+    - 样本会预先生成并保留在磁盘上，因此滚动列表时不会卡顿
+    - 缓存会在程序关闭后保留，并且只处理新字体
+    - 样本大小调整立即生效
+    - 用于完全重建的 Refresh 按钮
+- 编辑栏的样式框不会扩展到文本编辑器上
+- 可设置 AI 检查的语言
+- 可在设置中编辑字体选择器的语言筛选器
+- 使用我们自己的语言显示更新日志，并提供语言选择器
+- 程序已翻译为 30 种语言
+
+版本 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- 优化 Vector clip 中画笔的操作，能够处理交叉部分
+- 吸管模式
+    - 可以手绘范围
+    - 优化自动填充
+    - 抗锯齿和自动拟合
+    - 用于相似 clip 的模板
+    - 优化
+
+版本 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- 制作蒙版时也可以撤销
+- 制作形状时图标不断变大的问题
+
+版本 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- 文件菜单中的 "Open MKV" 选项，可同时将 mkv 作为字幕和视频打开
+其他更新主要围绕 visual 工具展开：
+- Cross
+    - 按住鼠标即可测量距离
+- Drag (pos/move)
+    - 修复了移动时卡顿的问题，速度变得极快
+    - 底部新增一个选项，可在指定矩形范围内居中排列
+- Vector clip
+    - 在第一种模式下可以在形状之间切换
+    - 使用 DELETE 删除活动形状
+    - BRUSH 模式（新功能！）：使用画笔向选定区域中添加/移除内容
+    - DELETE 模式：选中后可以删除多个点
+    - PIPETTE 模式（新功能！）：进入一个独立区域，可以在指定范围内创建形状，最后确认后会将其添加到现有 clip 中
+        - 4 种模式：添加/移除颜色范围和添加/移除 brush
+        - 调整颜色范围的容差
+        - 按指定 px 偏移（也可以使用负值）
+        - AI 识别
+- 蒙版编辑（新功能！）
+    - 可以直接编辑现有蒙版，就像编辑 vector clip 一样
+    - 获得了 vector clip 的全部模式，包括新增模式
+- 蒙版（新功能！）
+    - 可以使用矩形、点、画笔或自由手绘创建蒙版
+    - 确认创建的蒙版后，会自动从边缘取色并创建行
+    - 这里也有 PIPETTE 模式
+    - AI 移除文字 / 为选定区域使用自定义 prompt
+- 绘制形状（新功能！）
+    - 可以创建指定形状，确认后会根据设置的 blur 和颜色生成
+    - 可以在空心和实心形状之间切换
+    - 按住 ALT 可强制绘制规则形状（例如正方形或圆形）
+    - 也可以设置线条粗细
+    - 也可以设置边缘圆角
+    - 还可以进行自由手绘（例如用于圈选）
+
+版本 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- 多行时翻译检查功能的运行
+- 与卡拉 OK 相关的 AI 功能（语音识别、汉字、时间轴）
+- 在文件夹中的字幕内进行搜索（位于编辑菜单中）
+- 在 Aegisub 内完成更新
+
+版本 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- 修复源行消失的问题，希望以后不再出现此问题
+- MKV 中素材较多时无法加载的问题也已修复
+- 支持连接 AI（模型设置、令牌输入等）
+- 根据语音识别结果，使用 AI 检查选中行从日语翻译的内容
+- 使用 AI 对完整字幕或选中行（至少 100 行）进行后期检查
+
+版本 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- 合并的 PS 图像行
+    - 点击鼠标滚轮即可展开和折叠
+    - 不再用红色标记自身
+    - 用粗体标示当前是否显示在视频上（折叠时在编号处标示）
+    - 也可以通过拖动鼠标来选择蒙版
+- Fold 行
+    - 点击鼠标滚轮也可以展开和折叠
+    - “打开行”在当前选中自身时不再用红色标示
+    - “打开行”用粗体标示当前是否显示在视频上
+    - 在“打开行”上使用 CTRL/SHIFT/拖动鼠标即可选择全部内容（甚至多个）
+    - 插入 fold 时不会创建多余的可撤销事件
+    - 折叠 fold 时列表会跳转到活动行
+- 在计时菜单中新增“将行推到帧（结束）”选项，可根据活动行的结束时间将行对齐到当前时间
+- 在字幕菜单中新增“加载关联文件”选项（可在之后加载视频）
+- 自动化脚本
+    - 新增“Muteki Fansub”组，我们的脚本已移至此处（无需更改绑定）
+    - 在“自动化”下新增“最后一个脚本”，可用于运行和绑定最后使用的脚本（命令名为“am/last”）
+    - 如果快速按下两次绑定了最后一个脚本的按键，将显示一个包含最近选项的列表
+
+版本 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- 为源文件渲染文件夹，并从中加载视频/音频（因此视频可以位于任意位置，会根据相同名称加载）
+- 将选中的文本部分设为注释/取消注释
+- 打开新字幕时偶尔崩溃
+
+版本 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- 折叠不会收起，并且在粘贴时会保留
+- 字体选择器改进
+    - 最近安装的字体列表（早于三天前安装的字体不一定会显示在最前面）
+    - 关闭时，如果保存有临时字体会发出警告
+    - 样式编辑器现在也会打开这个窗口
+
+版本 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- 复制/粘贴源行时得以保留
+- 可选择合并的 PS 图像行，并正常使用箭头
+
+版本 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- 合并时保留源行
+- 合并时不添加第二行的格式（例如不需要删除行首的 \i 和/或 \blurt）
+- 分割时将格式添加到新行（例如无需添加 \i 和/或 \blurt 等格式来将行拆分）
+
+版本 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- 源行编码
+- 可在设置中放大源行
+
+版本 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- 长字体名称
+- 3x、5x、6x 播放速度
+- 双击最后一行时，drag 不要选择它上面的一行
+- drag 始终移动当前选中的内容（包括多选时）
+- 不要因为脚本而使源行消失
+- 点击图像蒙版时跳转视频/音频到该行
+- 如果不在同一时间，不要合并 2 个图像蒙版
+
+版本 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- 源行的注释和显示，位于原始复选框旁边
+
+版本 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- 粘贴的图像仅显示在一行中，并可通过双击展开或收起
+- 播放速度可在 0.25x - 10x 之间切换，仅兼容 DirectSound 音频
+
+版本 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- 字体选择器改进
+    - 优化
+    - 临时保存选项（例如搜索时将看起来不错的字体暂存起来）
+    - 字体名称可以复制
+- 不再使用鼠标中键，而是通过按住右键将功能从屏幕上隐藏（这样使用起来更方便）
+
+版本 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- 字体选择器
+    - 修复添加字体时的错误对话框
+    - 在列表中标示标记为收藏的字体
+    - 在已滚动的列表中添加时不要跳回列表顶部
+
+版本 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- 字体选择器
+    - 现在也可以修改 fs、fscx、fscy 和 fsp 值
+    - “所有字体”、“最近使用”、“最常用”、“收藏夹”和“自定义列表”菜单项
+    - 可以编辑自定义列表，导入指定字幕中的字体
+- 修改内容现在也包含匈牙利语翻译
+
+版本 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - 文本替换
+        - 在行上右键 -> Change text
+        - 也支持 gradient，并尝试按比例设置文本
+        - 复制多行时替代 CTRL + H
+
+版本 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - 位置工具优化
+        - 水平/垂直锁定
+        - 在小位置方框上点击 + 滚轮上下调整锁定
+        - 如果一个位置上有多行且有一个选区，则移动该选区，无论它在列表中的什么位置
+        - 修复奇怪的选区错误（多个选区时误点击后选中多行的行为很奇怪）
+    - 字体选择器优化：
+        - 加入了 CACHE，因此第一次会变慢，之后会非常快。如果更新了字体，有“Refresh”按钮可以清空 cache（例如加入重音符号）——新字体不需要！
+        - 即使关闭 Aegisub 后也会记住模态窗口的位置和大小
+        - preview（使用滚轮）和 sample 列的大小可以调整（上方的滑块）
+        - 双击也可以接受字体
+        - 按 enter 也可以接受字体
+        - 在搜索框中按向下箭头/TAB 时会选中第一个项目，因此可以直接打开、搜索、用箭头选择并按 enter，整个过程非常快且无需鼠标
+    - 播放视频时将鼠标移过画面，现在视频不会再卡顿
+    - 快速按下鼠标中键会立即隐藏所有内容，再次按下则在视频上显示（例如在 clip 时可以立即看到结果）

@@ -1,0 +1,195 @@
+Versão 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Seletor de fontes
+    - as amostras são preparadas previamente e permanecem no disco, assim a rolagem da lista não trava
+    - o cache sobrevive ao fechamento do programa e processa apenas as novas fontes
+    - o ajuste do tamanho da amostra é imediato
+    - botão Refresh para uma reconstrução completa
+- A caixa de estilo da barra de edição não se abre sobre o editor de texto
+- O idioma da verificação de IA pode ser configurado
+- Os filtros de idioma do seletor de fontes podem ser editados nas configurações
+- Registro de alterações em nosso próprio idioma, com seletor de idioma
+- O programa está traduzido para 30 idiomas
+
+Versão 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Funcionamento do pincel refinado para vector clip, capaz de lidar com interseções
+- Modo conta-gotas
+    - podemos desenhar a área à mão livre
+    - preenchimento automático refinado
+    - suavização de bordas e ajuste automático
+    - modelos para clips semelhantes
+    - otimização
+
+Versão 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Também é possível desfazer ao criar máscaras
+- Problema de crescimento dos ícones de criação de formas
+
+Versão 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- comando "open/video/recent"
+- opção "Open MKV" no menu de arquivos, que abre o mkv simultaneamente como legenda e vídeo
+As demais atualizações giraram em torno das ferramentas visuais:
+- Cross
+    - medição de distância mantendo o mouse pressionado
+- Drag (pos/move)
+    - movimento com lag corrigido, ficou extremamente rápido
+    - uma nova opção foi adicionada na parte inferior, permitindo centralizar dentro de um retângulo especificado
+- Vector clip
+    - é possível alternar entre as formas no primeiro modo
+    - excluir a forma ativa com DELETE
+    - modo BRUSH (NOVO!): adicionar/remover da área selecionada com um pincel
+    - modo DELETE: é possível excluir vários pontos após selecioná-los
+    - modo PIPETTE (NOVO!): entra em uma seção separada, onde é possível criar formas dentro de um intervalo especificado e, por fim, aceitá-las, adicionando-as ao clip existente
+        - 4 modos: adicionar/remover intervalo de cores e adicionar/remover com brush
+        - ajuste da tolerância para o intervalo de cores
+        - deslocamento por uma quantidade determinada de px (também pode ser um valor negativo)
+        - reconhecimento por IA
+- Edição de máscara (NOVO!)
+    - é possível editar diretamente uma máscara existente, como se fosse apenas um vector clip
+    - recebeu todos os modos do vector clip, incluindo os novos
+- Máscara (NOVO!)
+    - é possível criar máscaras com retângulo, pontos, pincel ou à mão livre
+    - ao aceitar a máscara criada, uma cor é obtida automaticamente da borda e a linha é criada
+    - modo PIPETTE também está disponível aqui
+    - remoção de texto por IA / prompt personalizado para a área selecionada
+- Desenho de formas (NOVO!)
+    - é possível criar formas determinadas, que são criadas após a aceitação com opções de ajuste de blur e cor
+    - é possível alternar entre formas vazias e preenchidas
+    - mantendo ALT pressionado, a forma regular é forçada (por exemplo, quadrado ou círculo)
+    - também é possível definir a espessura da linha
+    - também é possível definir o arredondamento das bordas
+    - também é possível fazer desenhos à mão livre (por exemplo, para circular algo)
+
+Versão 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Funcionamento da verificação da tradução em muitas linhas
+- Funções de IA relacionadas a karaokê (reconhecimento de voz, kanji, sincronização)
+- Busca em legendas localizadas em uma pasta (encontrada no menu de edição)
+- Solução para atualização dentro do Aegisub
+
+Versão 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Correção do desaparecimento da linha de origem; esperamos que não haja mais problemas com isso
+- No MKV, quando havia muito material, não era possível carregá-lo; isso também foi corrigido
+- Possibilidade de integração com IA (configuração do modelo, fornecimento de token etc.)
+- Verificação da tradução das linhas selecionadas do japonês com IA, com base no reconhecimento de fala
+- Revisão posterior da legenda completa ou das linhas selecionadas (mínimo de 100) com IA
+
+Versão 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Linhas de imagem PS agrupadas
+    - abrem e fecham com um clique da roda do mouse
+    - não indica a si mesma com a cor vermelha
+    - indica em negrito se está no vídeo no momento (fechada, indica pelo número da linha quando aberta)
+    - também seleciona as máscaras arrastando o mouse
+- Linhas Fold
+    - também abre e fecha com um clique da roda do mouse
+    - não indica a "linha de abertura" em vermelho quando está posicionada nela
+    - a "linha de abertura" indica em negrito se está no vídeo no momento
+    - com CTRL/SHIFT/arrastando o mouse na "linha de abertura", seleciona tudo (até várias)
+    - a inserção de fold não cria um evento de desfazer desnecessário
+    - ao fechar o fold, a lista salta para a linha ativa
+- Opção "Sorokat a képkockához tolja (Vége)" no menu de temporização, para que as linhas possam ser alinhadas ao presente de acordo com o fim da linha ativa
+- Opção "Hozzárendelt fájlok betöltése" no menu de legendas (possibilidade de carregar o vídeo posteriormente)
+- Scripts de automação
+    - o grupo "Muteki Fansub" apareceu e nossos scripts foram movidos para cá (não é necessário alterar os binds)
+    - em "Automatizáció" foi adicionada uma "Utolsó script", com a qual é possível executar e definir um bind para o último script ("am/last" é o nome do comando)
+    - se pressionarmos 2x rapidamente o botão definido para o último script, uma lista com as últimas opções será exibida
+
+Versão 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- renderização de pastas para arquivos-fonte e carregamento de vídeo/áudio a partir delas (assim, o vídeo pode estar em qualquer lugar e será carregado com base no nome correspondente)
+- colocar/remover o trecho de texto selecionado como comentário
+- travamentos ocasionais ao abrir uma nova legenda
+
+Versão 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- folds não se fecham e são preservados ao colar
+- refinamentos no seletor de fontes
+    - lista de fontes instaladas recentemente (fontes com mais de três dias podem não aparecer no início)
+    - avisa ao fechar se houver uma fonte temporária salva
+    - o editor de estilos agora também abre isso
+
+Versão 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- as linhas de origem são mantidas ao copiar/colar
+- seleção de linhas de imagem PS mescladas e funcionamento normal das setas
+
+Versão 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- as linhas de origem são preservadas ao serem mescladas
+- ao mesclar, as formatações da segunda linha não são adicionadas (por exemplo, não é necessário remover \i e/ou \blurt no início da linha)
+- ao separar, as formatações são adicionadas à nova linha (por exemplo, não é necessário adicionar \i e/ou \blurt para dividir as linhas por formatação)
+
+Versão 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- codificação das linhas de origem
+- permitir ampliar a linha de origem nas configurações
+
+Versão 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- nomes de fontes longos
+- velocidades de reprodução de 3x, 5x e 6x
+- ao clicar duas vezes na última linha, o drag não deve selecionar a linha acima
+- o drag deve sempre mover o que está selecionado (mesmo em caso de várias seleções)
+- a linha de origem não deve desaparecer por causa dos scripts
+- ao clicar em uma máscara de imagem, o vídeo/áudio deve ir para a linha
+- não combinar 2 máscaras de imagem se elas não estiverem no mesmo horário
+
+Versão 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- comentar e exibir linhas de origem ao lado da caixa de seleção original
+
+Versão 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- imagens inseridas aparecem apenas em uma linha e podem ser expandidas/recolhidas com um clique duplo
+- alteração da velocidade de reprodução entre 0.25x - 10x, compatível apenas com áudio DirectSound
+
+Versão 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- aprimoramentos no seletor de fontes
+    - otimização
+    - possibilidade de salvamento temporário (por exemplo, deixar de lado as fontes que parecem boas durante uma busca)
+    - os nomes das fontes podem ser copiados
+- em vez do botão do meio do mouse, mantém o botão direito pressionado para remover as funções da tela (assim, o uso fica mais confortável)
+
+Versão 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- seletor de fontes
+    - correção do diálogo de erro ao adicionar fonte
+    - indicação das fontes marcadas como favoritas na lista
+    - na lista rolada, não deve voltar ao topo ao adicionar à lista
+
+Versão 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- seletor de fontes
+    - agora também é possível alterar os valores de fs, fscx, fscy e fsp
+    - itens de menu Todas as fontes, Recentes, Mais usadas, Favoritos e Minhas listas
+    - é possível editar Minhas listas e importar as fontes de uma legenda específica
+- as modificações agora também incluem a tradução para o húngaro
+
+Versão 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Substituição de texto
+        - clique com o botão direito nas linhas -> Change text
+        - também oferece suporte a gradientes e tenta ajustar o texto proporcionalmente
+        - em vez de CTRL + H ao copiar várias linhas
+
+Versão 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - refinamentos na ferramenta de posição
+        - travamento horizontal/vertical
+        - ajuste do travamento com clique + rolagem para cima/baixo no pequeno quadrado de posição
+        - se houver várias linhas em uma posição e uma seleção estiver ativa, move essa seleção, independentemente de onde ela esteja na lista
+        - corrigido um erro de seleção estranha (com várias seleções, após um clique incorreto, a seleção de várias linhas ficava estranha)
+    - refinamentos no seletor de fontes:
+        - adicionei um CACHE, então fica lento apenas uma vez e depois fica extremamente rápido. Se as fontes forem atualizadas, há um botão "Refresh", que limpa o cache (por exemplo, quando um caractere acentuado é adicionado) - para uma fonte nova, NÃO É NECESSÁRIO!
+        - a posição e o tamanho da janela modal são lembrados mesmo após fechar o Aegisub
+        - o tamanho das colunas de preview (com rolagem) e sample pode ser alterado (controle deslizante acima delas)
+        - a fonte também pode ser aceita com um clique duplo
+        - a fonte também pode ser aceita com Enter
+        - no campo de busca, ao pressionar a seta para baixo/TAB, o primeiro item é selecionado, permitindo abrir, pesquisar, selecionar com a seta e confirmar com Enter rapidamente, sem usar o mouse
+    - durante a reprodução do vídeo, mover o mouse sobre ele não causa mais travamentos
+    - pressionar rapidamente o botão do meio do mouse faz tudo desaparecer imediatamente, e pressioná-lo novamente exibe tudo no vídeo (por exemplo, para ver o resultado imediatamente ao fazer um clip)

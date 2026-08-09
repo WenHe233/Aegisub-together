@@ -46,7 +46,23 @@ namespace {
 
 namespace fs = std::filesystem;
 
-constexpr char AUTOMATION_ENDPOINT[] = "muteki-update.php";
+/// Where the changelogs are read from, compiled in rather than configurable.
+///
+/// It used to be an option, which turned out to be a trap: Options::Flush writes
+/// every setting to config.json, so a copy of the address was pinned in every
+/// installation and a later default could never reach anyone. If the address had
+/// stopped working, those installations would have had no way of finding updates
+/// again. A constant cannot be pinned.
+///
+/// "HEAD" rather than a branch name: raw.githubusercontent.com resolves it to
+/// whatever the repository's default branch is, so renaming the branch, or
+/// pointing the default at another one, does not break the address.
+constexpr char CHANGELOG_BASE[] = "https://raw.githubusercontent.com/croni1012/Aegisub/HEAD";
+
+/// The automation package is served by a script rather than being a static file,
+/// so it is the one thing that cannot live in the repository beside the rest.
+constexpr char AUTOMATION_URL[] = "https://mutekifansub.hu/public/nyaa/Aegisub/muteki-update.php";
+
 constexpr char CHANGELOG_FALLBACK_LANGUAGE[] = "en";
 /// What the "View as" chooser starts on: the language the changelog is written in.
 constexpr char CHANGELOG_DEFAULT_LANGUAGE[] = "hu";
@@ -87,16 +103,8 @@ std::string Trim(std::string value) {
 	return value;
 }
 
-std::string BaseUrl() {
-	auto base = Trim(OPT_GET("Muteki Update/Base URL")->GetString());
-	while (!base.empty() && base.back() == '/') base.pop_back();
-	if (!base.starts_with("https://"))
-		throw UpdateError("A Muteki Update alapcímének HTTPS-címet kell tartalmaznia.");
-	return base;
-}
-
-std::string UrlFor(std::string const& filename) {
-	return BaseUrl() + "/" + filename;
+std::string ChangelogUrl(std::string const& language) {
+	return std::string(CHANGELOG_BASE) + "/" + ChangelogName(language);
 }
 
 size_t AppendString(char *data, size_t size, size_t count, void *target) {
@@ -211,15 +219,23 @@ int CompareVersions(std::string const& left, std::string const& right) {
 	return 0;
 }
 
-std::string PackageName(std::string value, std::string const& version) {
+/// The package line of a release, kept as the address it is.
+///
+/// It used to be cut down to a bare file name and re-attached to one configured
+/// base, which assumed every package sits in the same directory. Release assets do
+/// not: each one is under its own tag. Keeping the whole address also means the
+/// changelog itself says where each version lives, so a future move needs no new
+/// program.
+///
+/// Nothing is derived from this but the request; the download always lands in
+/// package.zip inside a fresh temporary directory, so there is no file name here to
+/// be traversed with. Only the scheme has to be insisted on.
+std::string PackageUrl(std::string value, std::string const& version) {
 	value = Trim(std::move(value));
-	auto query = value.find_first_of("?#");
-	if (query != std::string::npos) value.erase(query);
-	auto slash = value.find_last_of("/\\");
-	if (slash != std::string::npos) value.erase(0, slash + 1);
-	if (value.empty()) value = "aegisub-v" + version + ".zip";
-	if (value.find("..") != std::string::npos || value.find_first_of("/\\") != std::string::npos)
-		throw UpdateError("Érvénytelen csomagnév található a changelogban.");
+	if (value.empty())
+		throw UpdateError("A changelog " + version + " kiadásához nem tartozik letöltési cím.");
+	if (!value.starts_with("https://"))
+		throw UpdateError("A changelogban szereplő letöltési címnek HTTPS-nek kell lennie: " + value);
 	return value;
 }
 
@@ -290,7 +306,7 @@ std::vector<Release> ParseChangelog(std::string const& text) {
 		std::string version = HeaderVersion(line);
 		if (!version.empty()) {
 			if (current) {
-				current->package = PackageName(current->package, current->version);
+				current->package = PackageUrl(current->package, current->version);
 				current->changes = Trim(current->changes);
 				releases.push_back(std::move(*current));
 			}
@@ -308,7 +324,7 @@ std::vector<Release> ParseChangelog(std::string const& text) {
 		current->changes += line;
 	}
 	if (current) {
-		current->package = PackageName(current->package, current->version);
+		current->package = PackageUrl(current->package, current->version);
 		current->changes = Trim(current->changes);
 		releases.push_back(std::move(*current));
 	}
@@ -347,10 +363,10 @@ std::string ChangesBetween(std::vector<Release> const& releases, std::string con
 /// translation published for it.
 std::string FetchChangelog(std::string const& language) {
 	if (language != CHANGELOG_FALLBACK_LANGUAGE) {
-		try { return FetchText(UrlFor(ChangelogName(language))); }
+		try { return FetchText(ChangelogUrl(language)); }
 		catch (std::exception const&) { }
 	}
-	return FetchText(UrlFor(ChangelogName(CHANGELOG_FALLBACK_LANGUAGE)));
+	return FetchText(ChangelogUrl(CHANGELOG_FALLBACK_LANGUAGE));
 }
 
 /// Languages the changelog is published in. Anything missing on the server falls
@@ -635,7 +651,7 @@ void StageProgramUpdate(Release const& release, wxWindow *parent) {
 	try {
 		auto archive = root / "package.zip";
 		auto stage = root / "package";
-		DownloadFile(UrlFor(release.package), archive, parent);
+		DownloadFile(release.package, archive, parent);
 		ExtractZip(archive, stage);
 		RemoveProtectedUserData(stage);
 		if (!fs::is_regular_file(stage / "aegisub.exe"))
@@ -696,7 +712,7 @@ std::pair<std::string, std::vector<Release>> LoadReleases() {
 	auto text = FetchChangelog(CHANGELOG_DEFAULT_LANGUAGE);
 	try { return {text, ParseChangelog(text)}; }
 	catch (std::exception const&) { }
-	auto fallback = FetchText(UrlFor(ChangelogName(CHANGELOG_FALLBACK_LANGUAGE)));
+	auto fallback = FetchText(ChangelogUrl(CHANGELOG_FALLBACK_LANGUAGE));
 	return {fallback, ParseChangelog(fallback)};
 }
 
@@ -821,7 +837,7 @@ void UpdateAutomation(agi::Context *context) {
 		root = MakeTempRoot();
 		auto archive = root / "automation.zip";
 		auto stage = root / "package";
-		DownloadFile(UrlFor(AUTOMATION_ENDPOINT), archive, context->parent);
+		DownloadFile(AUTOMATION_URL, archive, context->parent);
 		ExtractZip(archive, stage);
 		fs::remove(archive);
 		auto destination = config::path->Decode("?user/automation");

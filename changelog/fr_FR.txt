@@ -1,0 +1,195 @@
+Version 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Sélecteur de polices
+    - les aperçus sont générés à l’avance et conservés sur le disque, ainsi le défilement de la liste ne ralentit pas
+    - le cache survit à la fermeture du programme et ne traite que les nouvelles polices
+    - la modification de la taille de l’aperçu est immédiate
+    - bouton Refresh pour une reconstruction complète
+- La boîte de style de la barre d’édition ne s’ouvre pas sur l’éditeur de texte
+- La langue de la vérification par IA peut être configurée
+- Les filtres linguistiques du sélecteur de polices peuvent être modifiés dans les paramètres
+- Journal des modifications dans notre propre langue, avec sélecteur de langue
+- Le programme est traduit en 30 langues
+
+Version 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Fonctionnement du pinceau affiné pour les vector clips, prise en charge des intersections
+- Mode pipette
+    - possibilité de dessiner la zone à main levée
+    - auto fill affiné
+    - lissage des bords et ajustement automatique
+    - modèles pour les clips similaires
+    - optimisation
+
+Version 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Il est également possible d’annuler lors de la création d’un masque
+- Problème d’agrandissement des icônes de création de formes
+
+Version 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- option "Open MKV" dans le menu Fichier, qui ouvre simultanément le mkv comme sous-titre et comme vidéo
+Les autres mises à jour concernaient les outils visuels :
+- Cross
+    - mesure de la distance en maintenant le bouton de la souris enfoncé
+- Drag (pos/move)
+    - déplacement saccadé corrigé, il est devenu ultra-rapide
+    - une nouvelle option a été ajoutée en bas, permettant de centrer dans un rectangle donné
+- Vector clip
+    - possibilité de passer d'une forme à l'autre dans le premier mode
+    - supprimer la forme active avec DELETE
+    - mode BRUSH (NOUVEAU !) : ajouter/retirer à la zone sélectionnée avec un pinceau
+    - mode DELETE : possibilité de supprimer plusieurs points après les avoir sélectionnés
+    - mode PIPETTE (NOUVEAU !) : ouvre une section distincte où il est possible de créer des formes dans une zone donnée et de les valider à la fin, ce qui les ajoute au clip existant
+        - 4 modes : ajout/retrait d'une plage de couleurs et ajout/retrait avec un pinceau
+        - réglage de la tolérance pour la plage de couleurs
+        - décalage de px-elben donné (une valeur négative est également possible)
+        - reconnaissance par IA
+- Édition du masquage (NOUVEAU !)
+    - possibilité de modifier directement un masque existant, comme s'il s'agissait simplement d'un vector clip
+    - a reçu tous les modes du vector clip, y compris les nouveaux
+- Masquage (NOUVEAU !)
+    - possibilité de créer des masques avec un rectangle, des points, un pinceau ou à main levée
+    - après validation du masque créé, une couleur est automatiquement prélevée sur son bord et la ligne est créée
+    - mode PIPETTE ici aussi
+    - suppression de texte par IA / prompt personnalisé pour la zone sélectionnée
+- Dessin de formes (NOUVEAU !)
+    - possibilité de créer des formes prédéfinies, qui sont créées après validation avec des options de réglage du flou et de la couleur
+    - possibilité de passer entre des formes vides et pleines
+    - en maintenant ALT enfoncé, la forme régulière est imposée (p. ex. carré ou cercle)
+    - possibilité de régler l'épaisseur de la ligne
+    - possibilité de régler l'arrondissement des bords
+    - possibilité de réaliser un dessin à main levée (p. ex. pour entourer quelque chose)
+
+Version 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Fonctionnement de la vérification de la traduction pour de nombreuses lignes
+- Fonctionnalités d’IA liées au karaoké (reconnaissance vocale, kanji, synchronisation)
+- Recherche dans les sous-titres présents dans un dossier (accessible dans le menu édition)
+- Résolution de la mise à jour depuis Aegisub
+
+Version 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Correction de la disparition de la ligne source, espérons qu'il n'y aura plus de problème
+- Dans les MKV contenant beaucoup de contenu, le chargement était impossible ; cela a également été corrigé
+- Possibilité de connecter une IA (réglage du modèle, indication du token, etc.)
+- Vérification de la traduction des lignes sélectionnées du japonais à l'aide de la reconnaissance vocale par IA
+- Vérification finale de l'intégralité des sous-titres ou des lignes sélectionnées (minimum 100) par IA
+
+Version 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Lignes d’images PS regroupées
+    - s’ouvrent et se ferment avec un clic de la molette de la souris
+    - ne s’indiquent pas elles-mêmes en rouge
+    - indiquent en gras si elles sont actuellement affichées sur la vidéo (fermées, le numéro de ligne l’indique une fois ouvertes)
+    - les masques peuvent également être sélectionnés en faisant glisser la souris
+- Lignes Fold
+    - s’ouvrent et se ferment ÉGALEMENT avec un clic de la molette de la souris
+    - la « ligne d’ouverture » ne s’indique pas en rouge lorsqu’elle est elle-même active
+    - la « ligne d’ouverture » indique en gras si elle est actuellement affichée sur la vidéo
+    - CTRL/SHIFT/glissement de la souris sur la « ligne d’ouverture » permet de sélectionner l’ensemble (voire plusieurs)
+    - l’insertion d’un fold ne crée plus d’événement d’annulation superflu
+    - lors de la fermeture d’un fold, la liste se positionne sur la ligne active
+- option « Déplacer les lignes jusqu’à l’image (Fin) » dans le menu de synchronisation, afin de pouvoir aligner les lignes sur le présent selon la fin de la ligne active
+- option « Charger les fichiers associés » dans le menu des sous-titres (possibilité de charger une vidéo ultérieurement)
+- Scripts d’automatisation
+    - le groupe « Muteki Fansub » a été ajouté et nos scripts y ont été placés (il n’est pas nécessaire de modifier les binds)
+    - une option « Dernier script » a été ajoutée sous « Automatisation », permettant d’exécuter et de lier le dernier script (« am/last » est le nom de la commande)
+    - si l’on appuie rapidement 2 fois sur la touche liée au dernier script, une liste des dernières options s’affiche
+
+Version 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- rendu de dossiers pour les fichiers source, et chargement de la vidéo/de l’audio depuis ceux-ci (ainsi, la vidéo peut se trouver n’importe où, elle sera chargée en fonction de son nom)
+- mise en commentaire/suppression du commentaire de la partie de texte sélectionnée
+- plantage occasionnel lors de l’ouverture d’un nouveau sous-titre
+
+Version 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- les replis ne se réduisent pas et sont conservés lors du collage
+- améliorations du sélecteur de polices
+    - liste des polices installées récemment (celles d'il y a plus de trois jours ne seront pas fiables au début)
+    - avertissement à la fermeture si une police temporaire est enregistrée
+    - l'éditeur de styles ouvre désormais également celui-ci
+
+Version 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- les lignes sources sont conservées lors de la copie/du collage
+- sélection des lignes d’image PS fusionnées et fonctionnement normal des flèches
+
+Version 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- les lignes sources sont conservées lors de la fusion
+- lors de la fusion, les mises en forme de la deuxième ligne ne sont pas ajoutées (p. ex. il n’est pas nécessaire de supprimer \i et/ou \blurt en début de ligne)
+- lors de la séparation, les mises en forme sont ajoutées à la nouvelle ligne (p. ex. il n’est pas nécessaire d’ajouter \i et/ou \blurt comme mises en forme pour diviser les lignes)
+
+Version 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- encodage des lignes sources
+- possibilité d’agrandir la ligne source dans les paramètres
+
+Version 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- noms de polices longs
+- vitesses de lecture 3x, 5x, 6x
+- lors d'un double-clic sur la dernière ligne, le drag ne doit pas sélectionner celle située au-dessus
+- le drag doit toujours déplacer ce qui est sélectionné (même en cas de sélections multiples)
+- la ligne source ne doit pas disparaître à cause des scripts
+- en cliquant sur un masque d'image, la vidéo/l'audio doit accéder à la ligne
+- ne pas fusionner 2 masques d'image s'ils ne sont pas synchronisés
+
+Version 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- commentaire et affichage des lignes sources à côté de la coche d’origine
+
+Version 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- les images insérées s'affichent sur une seule ligne et peuvent être déployées ou réduites par double-clic
+- changement de la vitesse de lecture entre 0.25x et 10x, compatible uniquement avec l'audio DirectSound
+
+Version 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- améliorations du sélecteur de polices
+    - optimisation
+    - possibilité de sauvegarde temporaire (p. ex. mettre de côté les polices qui semblent bonnes lors d'une recherche)
+    - les noms des polices peuvent être copiés
+- au lieu du bouton central de la souris, maintenez le clic droit pour faire disparaître les fonctions de l'écran (ainsi, l'utilisation est plus confortable)
+
+Version 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- sélecteur de police
+    - correction de la boîte de dialogue d’erreur lors de l’ajout d’une police
+    - indication des polices marquées comme favorites dans la liste
+    - la liste déroulée ne doit pas remonter lors de l’ajout à la liste
+
+Version 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- sélecteur de polices
+    - possibilité de modifier également les valeurs fs, fscx, fscy et fsp
+    - éléments de menu Toutes les polices, Récentes, Les plus fréquentes, Favoris et Personnalisées
+    - possibilité de modifier les listes personnalisées et d’importer les polices d’un sous-titre donné
+- les modifications incluent désormais la traduction en hongrois
+
+Version 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Remplacement de texte
+        - clic droit sur les lignes -> Change text
+        - prend également en charge les dégradés et essaie de régler le texte proportionnellement
+        - lors de la copie de plusieurs lignes, à la place de CTRL + H
+
+Version 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - amélioration de l’outil de position
+        - verrouillage horizontal/vertical
+        - réglage du verrouillage avec un clic + la molette vers le haut/bas sur le petit carré de position
+        - s’il y a plusieurs lignes à une position et qu’une sélection est active, il la déplace, peu importe où elle se trouve dans la liste
+        - correction d’un problème de sélection étrange (avec plusieurs sélections, après un clic à côté, la sélection de plusieurs lignes était étrange)
+    - amélioration du sélecteur de polices :
+        - j’ai ajouté un CACHE, il n’est donc lent qu’une seule fois, puis il devient extrêmement rapide. Si vous mettez à jour des polices, il y a un bouton "Refresh" qui vide le cache (par ex. lorsqu’un caractère accentué est ajouté) - POUR une nouvelle police, ce n’est PAS NÉCESSAIRE !
+        - la position et la taille de la fenêtre modale sont mémorisées même après la fermeture d’Aegisub
+        - la taille des colonnes preview (avec la molette) et sample peut être modifiée (curseur au-dessus)
+        - la police peut également être validée par un double-clic
+        - la police peut également être validée avec la touche Entrée
+        - dans le champ de recherche, la flèche vers le bas/TAB sélectionne le premier élément, ce qui permet d’ouvrir, de rechercher, de sélectionner avec la flèche et de valider avec Entrée très rapidement, sans utiliser la souris
+    - pendant la lecture de la vidéo, celle-ci ne saccade désormais plus lorsque vous passez la souris dessus
+    - un appui rapide sur le bouton central de la souris fait immédiatement tout disparaître et un nouvel appui l’affiche sur la vidéo (par ex. pour voir immédiatement le résultat lors d’un clip)

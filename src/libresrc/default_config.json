@@ -113,11 +113,6 @@
 		"Recent" : [{"string": ""}]
 	},
 
-	"Muteki Update" : {
-		"Base URL" : "https://mutekifansub.hu/public/nyaa/Aegisub/"
-	},
-
-
 	"Colour" : {
 		"Audio Display" : {
 			"Keyframe" : "rgb(255,0,255)",

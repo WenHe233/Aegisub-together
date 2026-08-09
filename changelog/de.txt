@@ -1,0 +1,195 @@
+Version 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Schriftauswahl
+    - die Vorschauen werden vorab erstellt und auf der Festplatte gespeichert, sodass das Scrollen durch die Liste nicht ins Stocken gerät
+    - der Cache überlebt das Schließen des Programms und verarbeitet nur neue Schriftarten
+    - die Änderung der Vorschaugröße erfolgt sofort
+    - Refresh-Schaltfläche für einen vollständigen Neuaufbau
+- Das Stilfeld der Bearbeitungsleiste klappt nicht über den Texteditor aus
+- Die Sprache der KI-Prüfung kann eingestellt werden
+- Die Sprachfilter der Schriftauswahl können in den Einstellungen bearbeitet werden
+- Änderungsprotokoll in der eigenen Sprache, mit Sprachauswahl
+- Das Programm ist in 30 Sprachen übersetzt
+
+Version 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Pinselverhalten bei Vektor-Clips verfeinert, kann Querschnitte verarbeiten
+- Pipettenmodus
+    - Bereich kann auch freihändig gezeichnet werden
+    - Auto-Fill verfeinert
+    - Kantenglättung und automatische Anpassung
+    - Vorlagen für ähnliche Clips
+    - Optimierung
+
+Version 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Auch beim Erstellen einer Maske kann rückgängig gemacht werden
+- Problem mit dem Wachstum der Symbole bei der Formerstellung
+
+Version 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- "Open MKV" Option im Dateimenü, die gleichzeitig die mkvt als Untertitel und Video öffnet
+Die übrigen Aktualisierungen drehten sich um die Visual-Tools:
+- Cross
+    - Entfernungsmessung durch Gedrückthalten der Maustaste
+- Drag (pos/move)
+    - Ruckelige Bewegung behoben, jetzt blitzschnell
+    - Unten wurde eine neue Option hinzugefügt, mit der man innerhalb eines angegebenen Rechtecks zentrieren kann
+- Vector clip
+    - Im ersten Modus kann zwischen Formen gewechselt werden
+    - Aktive Form mit DELETE löschen
+    - BRUSH-Modus (NEU!): Mit dem Pinsel zum ausgewählten Bereich hinzufügen/aus ihm entfernen
+    - DELETE-Modus: Mehrere ausgewählte Punkte können gelöscht werden
+    - PIPETTE-Modus (NEU!): Wechselt in einen separaten Bereich, in dem innerhalb eines angegebenen Bereichs Formen erstellt und schließlich bestätigt werden können, wodurch sie zum bestehenden Clip hinzugefügt werden
+        - 4 Modi: Farbbereich hinzufügen/entfernen und Pinsel hinzufügen/entfernen
+        - Toleranz für den Farbbereich einstellen
+        - Verschiebung um angegebene px (kann auch ein negativer Wert sein)
+        - KI-Erkennung
+- Maskenbearbeitung (NEU!)
+    - Bestehende Masken können direkt bearbeitet werden, als wären sie Vector Clips
+    - Alle Modi des Vector Clips wurden übernommen, auch die neuen
+- Maskierung (NEU!)
+    - Masken können mit einem Rechteck, Punkten, einem Pinsel oder freihändig erstellt werden
+    - Nach Bestätigung der erstellten Maske wird automatisch eine Farbe von ihrem Rand genommen und die Zeile erstellt
+    - Auch hier gibt es den PIPETTE-Modus
+    - KI-Textentfernung / eigener Prompt für den ausgewählten Bereich
+- Formen zeichnen (NEU!)
+    - Vorgegebene Formen können erstellt werden, die nach der Bestätigung mit Unschärfe- und Farbeinstellungsmöglichkeiten erzeugt werden
+    - Es kann zwischen leeren und ausgefüllten Formen gewechselt werden
+    - Durch Gedrückthalten von ALT wird eine regelmäßige Form erzwungen (z. B. ein Quadrat oder ein Kreis)
+    - Die Linienstärke kann ebenfalls eingestellt werden
+    - Die Abrundung der Kanten kann ebenfalls eingestellt werden
+    - Es kann auch freihändig gezeichnet werden (z. B. zum Einkreisen)
+
+Version 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Funktionsweise der Übersetzungsprüfung bei vielen Zeilen
+- KI-Funktionen im Zusammenhang mit Karaoke (Spracherkennung, Kanji, Timing)
+- Suche in den in einem Ordner enthaltenen Untertiteln (im Menüpunkt „Bearbeiten“ zu finden)
+- Aktualisierung innerhalb von Aegisub gelöst
+
+Version 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Behebung des Verschwindens von Quellzeilen, hoffentlich gibt es damit keine Probleme mehr
+- Wenn eine MKV-Datei viel Material enthielt, konnte sie nicht geladen werden; auch das wurde behoben
+- Möglichkeit zur Anbindung von KI (Modellauswahl, Token-Angabe usw.)
+- Überprüfung der Übersetzung ausgewählter Zeilen aus dem Japanischen anhand von Spracherkennung mit KI
+- Nachkontrolle des gesamten Untertitels oder ausgewählter Zeilen (mindestens 100) mit KI
+
+Version 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Zusammengefasste PS-Bildzeilen
+    - öffnen und schließen sich durch einen Klick mit dem Mausrad
+    - markieren sich nicht selbst rot
+    - zeigen fett an, ob sie sich gerade im Video befinden (geschlossen bzw. geöffnet wird dies bei der Zeilennummer angezeigt)
+    - Masken lassen sich auch durch Ziehen mit der Maus auswählen
+- Fold-Zeilen
+    - öffnen und schließen sich AUCH durch einen Klick mit dem Mausrad
+    - die „Öffnungszeile“ wird nicht rot markiert, wenn sie gerade selbst aktiv ist
+    - die „Öffnungszeile“ zeigt fett an, ob sie sich gerade im Video befindet
+    - mit CTRL/SHIFT/Ziehen mit der Maus auf der „Öffnungszeile“ wird alles ausgewählt (auch mehrere)
+    - das Einfügen eines Folds erzeugt kein unnötiges rückgängig zu machendes Ereignis
+    - beim Schließen eines Folds springt die Liste zur aktiven Zeile
+- Option „Zeilen zum Bild schieben (Ende)“ im Timing-Menü, um die Zeilen anhand des Endes der aktiven Zeile an die Gegenwart anpassen zu können
+- Option „Zugeordnete Dateien laden“ im Untertitel-Menü (nachträgliche Möglichkeit zum Laden eines Videos)
+- Automatisierungsskripte
+    - Die Gruppe „Muteki Fansub“ ist erschienen und unsere Skripte wurden hierher verschoben (Bindings müssen nicht geändert werden)
+    - Unter „Automatisierung“ wurde ein „Letztes Skript“ hinzugefügt, mit dem das letzte Skript ausgeführt und gebunden werden kann (der Name des Befehls ist „am/last“)
+    - wenn die an das letzte Skript gebundene Taste zweimal schnell gedrückt wird, erscheint eine Liste mit den letzten Optionen
+
+Version 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- Rendern von Ordnern für Quelldateien und Laden von Videos/Audios daraus (dadurch kann sich das Video überall befinden und wird anhand des gleichen Namens geladen)
+- Ausgewählten Textabschnitt in einen Kommentar umwandeln/aus einem Kommentar entfernen
+- gelegentliche Abstürze beim Öffnen eines neuen Untertitels
+
+Version 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- Folds fallen nicht mehr zusammen und bleiben beim Einfügen erhalten
+- Verbesserungen am Fontauswähler
+    - Liste der kürzlich installierten Fonts (älter als drei Tage, anfangs nicht zuverlässig)
+    - warnt beim Schließen, wenn ein temporärer Font gespeichert ist
+    - auch der Stil-Editor öffnet diesen nun
+
+Version 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- Quellzeilen bleiben beim Kopieren/Einfügen erhalten
+- Auswahl zusammengeführter PS-Bildzeilen und normale Pfeilfunktion
+
+Version 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- Quellzeilen bleiben beim Zusammenfügen erhalten
+- Beim Zusammenfügen werden die Formatierungen der zweiten Zeile nicht hinzugefügt (z. B. müssen \i und/oder \blurt am Zeilenanfang nicht entfernt werden)
+- Beim Aufteilen werden die Formatierungen zur neuen Zeile hinzugefügt (z. B. müssen \i und/oder \blurt nicht als Formatierungen zum Aufteilen in Zeilen hinzugefügt werden)
+
+Version 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- Kodierung der Quellzeilen
+- Quellzeilen in den Einstellungen vergrößerbar machen
+
+Version 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- lange Schriftnamen
+- 3x, 5x, 6x Wiedergabegeschwindigkeit
+- bei Doppelklick auf die letzte Zeile soll Drag nicht die darüberliegende auswählen
+- Drag soll immer das verschieben, was ausgewählt ist (auch bei mehreren Auswahlen)
+- die Quellzeile soll wegen Skripten nicht verschwinden
+- beim Klicken auf eine Bildmaske soll das Video/Audio zur Zeile springen
+- 2 Bildmasken nicht zusammenführen, wenn sie nicht zur gleichen Zeit sind
+
+Version 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- Quellzeilen kommentieren und neben dem ursprünglichen Häkchen anzeigen
+
+Version 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- eingefügte Bilder werden nur in einer Zeile angezeigt und können per Doppelklick ein- und ausgeklappt werden
+- Wechsel der Wiedergabegeschwindigkeit zwischen 0.25x - 10x, nur mit DirectSound-Audio kompatibel
+
+Version 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- Verbesserungen am Schriftartenauswahldialog
+    - Optimierung
+    - Möglichkeit zum vorübergehenden Speichern (z. B. beim Suchen vielversprechende Schriftarten beiseitelegen)
+    - Namen der Schriftarten können kopiert werden
+- Anstelle der mittleren Maustaste werden die Funktionen durch Gedrückthalten der rechten Maustaste vom Bildschirm ausgeblendet (dadurch ist die Bedienung komfortabler)
+
+Version 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- Schriftartauswahl
+    - Fehlerdialog beim Hinzufügen einer Schriftart behoben
+    - Markierung als Favorit ausgewählter Schriftarten in der Liste
+    - In der heruntergerollten Liste beim Hinzufügen nicht zum Listenanfang springen
+
+Version 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- Schriftauswahl
+    - jetzt können auch die Werte für fs, fscx, fscy und fsp geändert werden
+    - Menüpunkt Alle Schriftarten, Zuletzt verwendet, Am häufigsten verwendet, Favoriten und Eigene Listen
+    - Eigene Listen können bearbeitet und die Schriftarten eines bestimmten Untertitels importiert werden
+- Änderungen enthalten jetzt auch die ungarische Übersetzung
+
+Version 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Text ersetzen
+        - Bei Zeilen Rechtsklick -> Change text
+        - Unterstützt auch Gradienten und versucht, den Text proportional anzupassen
+        - Beim Kopieren mehrerer Zeilen anstelle von CTRL + H
+
+Version 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - Überarbeitung des Positionierungs-Tools
+        - horizontales/vertikales Sperren
+        - Sperre per Klick + Mausrad hoch/runter auf dem kleinen Positionierungsquadrat einstellen
+        - wenn mehrere Zeilen an einer Position sind und eine Auswahl besteht, wird diese verschoben, unabhängig davon, wo sie in der Liste steht
+        - Fehler bei seltsamer Auswahl behoben (bei mehreren Auswahlen war nach einem Fehlklick die Auswahl mehrerer Zeilen seltsam)
+    - Überarbeitung der Schriftauswahl:
+        - Ich habe einen CACHE eingebaut, dadurch ist es nur einmal langsam, danach verdammt schnell. Wenn Fonts aktualisiert wurden, gibt es einen "Refresh"-Button, der den Cache leert (z. B. wenn ein Akzentzeichen hinzukommt) - bei neuen Fonts NICHT NÖTIG!
+        - merkt sich die Position und Größe des Modals auch nach dem Schließen von Aegisub
+        - Größe der Preview-Spalte (mit Mausrad) und der Sample-Spalte kann geändert werden (Schieberegler darüber)
+        - akzeptiert den Font auch per Doppelklick
+        - akzeptiert den Font auch mit Enter
+        - bei Pfeil nach unten/TAB im Suchfeld wird das erste Element ausgewählt, dadurch kann man einfach öffnen, suchen, mit den Pfeiltasten auswählen und Enter drücken, ziemlich schnell ohne Maus
+    - während der Videowiedergabe ruckelt das Video jetzt nicht mehr, wenn man die Maus darüber bewegt
+    - schnelles Drücken der mittleren Maustaste blendet alles sofort aus und erneutes Drücken zeigt es im Video an (z. B. damit man bei einem Clip sofort das Ergebnis sehen kann)

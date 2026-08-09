@@ -13,3 +13,7 @@ AGENTS.md
 
 # Rewritten every time a release script runs, so it shows up as a change
 /tools/release/__pycache__/
+
+# Where release.cmd builds the zips. The changelogs beside them under /changelog
+# are tracked on purpose: the program reads those from this repository.
+/_release/

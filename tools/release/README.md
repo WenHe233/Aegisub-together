@@ -7,7 +7,8 @@ extra arguments.
 | Script | What it does |
 | --- | --- |
 | `release-local.cmd` | Copies the built `aegisub.exe` and the Hungarian catalogue into `C:\aegisub-portable`, for trying a build out immediately. |
-| `release.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages, builds, and packs `aegisub-v<version>.zip` into `C:\aegisub-portable\_release`. |
+| `release.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages, builds, packs `aegisub-v<version>.zip` into `_release/`, and offers to publish it as a GitHub release. |
+| `upload-releases.cmd` | One-off catch-up: publishes every package in `_release/` that is not on GitHub yet. |
 | `backfill-translations.cmd` | One-off catch-up: runs only the two translation passes, no build and no packing. Prints how much is missing and asks before spending anything. |
 
 ## Settings
@@ -21,7 +22,8 @@ empty on the first run:
 
 ```json
 {
-  "openai_api_key": "sk-..."
+  "openai_api_key": "sk-...",
+  "github_token": "github_pat_..."
 }
 ```
 
@@ -49,3 +51,30 @@ or when something under `src/`, `libaegisub/` or `po/` is newer than the one
 that is there; otherwise it says so and goes straight to packing. Translating
 the changelog never triggers a build: the changelog is neither compiled nor
 packed.
+
+## Where the files live
+
+The program reads its changelogs straight out of this repository, from
+`https://raw.githubusercontent.com/croni1012/Aegisub/HEAD/changelog/<lang>.txt`,
+and downloads each version from that release's GitHub asset. The address of the
+asset is written in the changelog itself, on the line after each release header.
+
+That means two things:
+
+- `changelog/` is **tracked**, and a new release is only visible to anyone once
+  it has been committed and pushed.
+- `_release/` is **gitignored**. It only holds the built zips, which go to GitHub
+  as release assets rather than into the repository.
+
+`HEAD` in the address is not a branch: raw.githubusercontent.com resolves it to
+whatever the default branch is, so renaming the branch does not break it.
+
+## Publishing
+
+The upload needs a GitHub token in `release.config.apikey.json` as
+`github_token`, or one in `GH_TOKEN` / `GITHUB_TOKEN`. A fine-grained token with
+**Contents: read and write** on this repository is enough — create it at
+<https://github.com/settings/personal-access-tokens>.
+
+Both scripts skip what is already published, so either can be re-run after a
+failure part way through.

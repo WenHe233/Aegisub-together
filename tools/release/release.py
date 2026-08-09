@@ -329,7 +329,27 @@ def main():
         print('Skipping the build: %s.' % reason)
 
     archive = pack(config, version)
-    print('\nDone. %s is ready to upload.' % archive)
+
+    print('')
+    if common.ask_yes_no('Publish %s as a GitHub release?' % version):
+        notes = release_notes(config, version)
+        common.publish_release(common.github_token(), config['github_repo'],
+                               version, archive, notes)
+        print('\nDone. Commit changelog/ so the program can see the new release.')
+    else:
+        print('\nDone. %s is built but not published.' % archive)
+
+
+def release_notes(config, version):
+    """The release's own section of the source changelog, as the GitHub notes."""
+    source = os.path.join(config['changelog_dir'], '%s.txt' % config['source_language'])
+    for release_version, _, body in common.parse_changelog(source):
+        if release_version == version:
+            # The first line is the package address, which the GitHub page shows
+            # anyway as the attached file.
+            lines = [line for line in body if line.strip()]
+            return '\n'.join(lines[1:]) if lines else ''
+    return ''
 
 
 if __name__ == '__main__':

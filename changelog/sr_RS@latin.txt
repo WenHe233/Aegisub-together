@@ -1,0 +1,195 @@
+Verzija 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Birač fontova
+    - uzorci se unapred pripremaju i ostaju na disku, tako da pomeranje liste više ne zastajkuje
+    - keš preživljava zatvaranje programa i obrađuje samo nove fontove
+    - promena veličine uzorka je trenutna
+    - dugme Refresh za potpunu ponovnu izgradnju
+- Okvir za stil trake za uređivanje ne otvara se preko uređivača teksta
+- Jezik AI provere može da se podesi
+- Jezički filteri birača fontova mogu da se uređuju u podešavanjima
+- Dnevnik promena na našem jeziku, sa biračem jezika
+- Program je preveden na 30 jezika
+
+Verzija 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Funkcionisanje četkice kod vektorskog klipa je doterano, može da obrađuje preseke
+- Režim pipete
+    - oblast možemo nacrtati slobodnom rukom
+    - auto fill je doteran
+    - antialiasing i automatsko uklapanje
+    - šabloni za slične klipove
+    - optimizacija
+
+Verzija 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Sada je moguće poništiti radnje i prilikom pravljenja maske
+- Problem sa uvećavanjem ikona za pravljenje oblika
+
+Verzija 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- komanda "open/video/recent"
+- opcija "Open MKV" u meniju za fajlove, koja istovremeno otvara mkvt kao titl i video
+Ostala ažuriranja su se odnosila na visual toolove:
+- Cross
+    - merenje rastojanja držanjem miša
+- Drag (pos/move)
+    - popravljeno seckavo pomeranje, postalo je munjevito brzo
+    - dole je dodata nova opcija kojom se može centrirati unutar zadatog pravougaonika
+- Vector clip
+    - u prvom režimu je moguće prebacivanje između oblika
+    - brisanje aktivnog oblika tasterom DELETE
+    - BRUSH režim (NOVO!): dodavanje/oduzimanje označene oblasti četkicom
+    - DELETE režim: moguće je obrisati više označenih tačaka
+    - PIPETTE režim (NOVO!): ulazi u poseban deo gde je moguće kreirati oblike unutar zadatog opsega i na kraju ih prihvatiti, čime se dodaju postojećem clipu
+        - 4 režima: dodavanje/oduzimanje opsega boja i dodavanje/oduzimanje četkicom
+        - podešavanje tolerancije za opseg boja
+        - pomeranje za zadati broj px (može biti i negativna vrednost)
+        - AI prepoznavanje
+- Uređivanje maskiranja (NOVO!)
+    - postojeća maska može direktno da se uređuje, kao da je u pitanju vector clip
+    - dobila je sve režime vector clipa, uključujući i nove
+- Maskiranje (NOVO!)
+    - maske mogu da se kreiraju pravougaonikom, tačkama, četkicom ili slobodnom rukom
+    - nakon prihvatanja kreirane maske, automatski uzima boju sa njene ivice i kreira liniju
+    - PIPETTE režim i ovde
+    - uklanjanje AI teksta / prilagođeni prompt za izabranu oblast
+- Crtanje oblika (NOVO!)
+    - mogu se kreirati određeni oblici, koji se nakon prihvatanja kreiraju uz mogućnost podešavanja blur-a i boje
+    - moguće je prebacivanje između praznih i ispunjenih oblika
+    - držanjem tastera ALT ograničava se na pravilan oblik (npr. kvadrat ili krug)
+    - moguće je podesiti i debljinu linije
+    - moguće je podesiti i zaobljavanje ivica
+    - moguće je crtati i slobodnom rukom (npr. za zaokruživanje)
+
+Verzija 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Funkcionisanje provere prevoda u slučaju velikog broja redova
+- AI funkcije povezane sa karaokama (prepoznavanje glasa, kanji, tajming)
+- Pretraga u titlovima koji se nalaze u fascikli (nalazi se u meniju za uređivanje)
+- Rešeno ažuriranje unutar Aegisuba
+
+Verzija 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Ispravljeno nestajanje izvornog reda, nadamo se da više neće biti problema s tim
+- U MKV-u, ako je bilo mnogo materijala, nije bilo moguće učitati ga; i to je ispravljeno
+- Mogućnost povezivanja s AI-jem (podešavanje modela, unos tokena itd.)
+- Provera prevoda označenih redova s japanskog pomoću prepoznavanja govora uz AI
+- Naknadna provera celog titla ili označenih redova (najmanje 100) uz AI
+
+Verzija 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Spojene PS slikovne linije
+    - otvaraju se i zatvaraju klikom na točkić miša
+    - ne označava samog sebe crvenom bojom
+    - podebljano označava da li se trenutno nalazi na videu (kada je zatvoreno, otvoreno, označava kod broja reda)
+    - maske se mogu označiti i prevlačenjem miša
+- Fold redovi
+    - takođe se otvaraju i zatvaraju klikom na točkić miša
+    - "nyitósor" ne označava crvenom bojom ako se trenutno nalazi na njemu
+    - "nyitósor" podebljano označava da li se trenutno nalazi na videu
+    - pomoću CTRL/SHIFT/prevlačenja miša na "nyitósor" označava se sve (čak i više njih)
+    - umetanje fold-a ne stvara nepotreban događaj koji treba poništiti
+    - prilikom zatvaranja fold-a lista skače na aktivni red
+- Opcija "Sorokat a képkockához tolja (Vége)" u meniju za tajming, kako bi se redovi mogli uskladiti sa trenutkom prema kraju aktivnog reda
+- Opcija "Hozzárendelt fájlok betöltése" u meniju titlova (mogućnost naknadnog učitavanja videa)
+- Skripte automatizacije
+    - pojavila se grupa "Muteki Fansub" i ovde su premeštene naše skripte (bindove nije potrebno menjati)
+    - pod "Automatizáció" dodata je stavka "Utolsó script", pomoću koje se može pokrenuti i bindovati poslednja skripta (naziv komande je "am/last")
+    - ako 2 puta brzo pritisnemo dugme bindovano za poslednju skriptu, prikazaće se lista sa poslednjim opcijama
+
+Verzija 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- renderovanje foldera za izvorne fajlove i učitavanje videa/audija iz njih (tako video može biti bilo gde, učitava se na osnovu istog imena)
+- stavljanje/uklanjanje označenog dela teksta u komentar
+- povremeno rušenje pri otvaranju novog titla
+
+Verzija 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- foldovi se ne skupljaju i ostaju prilikom nalepljivanja
+- poboljšanja birača fontova
+    - lista nedavno instaliranih fontova (starijih od tri dana, na početku neće biti sasvim pouzdano)
+    - pri zatvaranju upozorava ako imate sačuvan privremeni font
+    - uređivač stilova sada takođe otvara ovo
+
+Verzija 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- izvorni redovi ostaju prilikom kopiranja/lepljenja
+- označavanje spojenih PS slikovnih redova i normalan rad strelica
+
+Verzija 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- izvorni redovi ostaju sačuvani pri spajanju
+- pri spajanju ne dodaje formatiranja drugog reda (npr. nije potrebno brisati \i i/ili \blurt na početku reda)
+- pri razdvajanju dodaje formatiranja novom redu (npr. nije potrebno dodavati \i i/ili \blurt radi deljenja formatiranja na redove)
+
+Verzija 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- kodiranje izvornih redova
+- omogućeno uvećavanje izvornog reda u podešavanjima
+
+Verzija 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- duga imena fontova
+- 3x, 5x, 6x brzina reprodukcije
+- pri dvostrukom kliku na poslednji red, drag ne treba da izabere red iznad njega
+- drag uvek treba da pomera ono što je izabrano (čak i pri višestrukom izboru)
+- izvorni red ne treba da nestane zbog skripti
+- pri kliku na masku slike, video/audio treba da pređe na taj red
+- 2 maske slike ne treba spajati ako nisu u isto vreme
+
+Verzija 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- komentarisanje i prikazivanje izvornih redova pored originalnog štrikliranog polja
+
+Verzija 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- umetnute slike se prikazuju samo u jednom redu i mogu se otvoriti/zatvoriti dvostrukim klikom
+- promena brzine reprodukcije između 0.25x - 10x, kompatibilno samo sa DirectSound zvukom
+
+Verzija 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- poboljšanja birača fontova
+    - optimizacija
+    - mogućnost privremenog čuvanja (npr. prilikom pretrage skloniti fontove koji deluju dobro)
+    - nazivi fontova mogu da se kopiraju
+- umesto srednjeg tastera miša, držanjem desnog klika uklanja funkcije sa ekrana (tako je korišćenje praktičnije)
+
+Verzija 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- birač fontova
+    - ispravka dijaloga greške pri dodavanju fonta
+    - označavanje omiljenih fontova u listi
+    - u skrolovanoj listi ne treba da skače na vrh prilikom dodavanja u listu
+
+Verzija 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- birač fonta
+    - moguće je menjati i vrednosti fs, fscx, fscy i fsp
+    - meniji Svi fontovi, Najnoviji, Najčešći, Omiljeni i Lične liste
+    - moguće je uređivati lične liste i uvesti fontove iz određenog titla
+- izmene sada uključuju i prevod na mađarski
+
+Verzija 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Zamena teksta
+        - desni klik na redove -> Change text
+        - podržava i gradijent i pokušava da proporcionalno podesi tekst
+        - umesto CTRL + H pri kopiranju više redova
+
+Verzija 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - doterivanje pozicionog alata
+        - horizontalno/vertikalno zaključavanje
+        - podešavanje zaključavanja pomoću click + točkića gore/dole na malom pozicionom kvadratu
+        - ako na jednoj poziciji ima više redova i jedan je izabran, pomera upravo njega, bez obzira na to gde se nalazi na listi
+        - ispravljena greška sa čudnim izborom (kod više izbora, nakon pogrešnog klika bilo je čudno izabrati više redova)
+    - doterivanje birača fonta:
+        - Ubacio sam CACHE, tako da je jednom spor, a nakon toga veoma brz. Ako ažurirate font, postoji dugme "Refresh", kojim se cache prazni (npr. kada se dodaju dijakritički znakovi) - kod novog fonta NIJE POTREBNO!
+        - pamti mesto i veličinu modala čak i nakon zatvaranja Aegisub-a
+        - veličina preview (pomoću točkića) i sample kolone može da se menja (klizač iznad nje)
+        - prihvata font i dvostrukim klikom
+        - prihvata font i pritiskom na enter
+        - u pretrazi, kada se pritisne strelica nadole/TAB, bira prvi element, tako da se može jednostavno otvoriti, pretražiti, izabrati strelicom i pritisnuti enter, prilično brzo bez miša
+    - tokom reprodukcije videa, kada pređete mišem preko njega, video više ne secka
+    - brzo pritiskanje srednjeg tastera miša odmah sakriva sve, a ponovni pritisak ih prikazuje na videu (npr. da bi se kod clip-a odmah mogao videti rezultat)

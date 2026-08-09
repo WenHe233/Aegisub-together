@@ -1,0 +1,195 @@
+Versi 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Pemilih font
+    - sampel dibuat sebelumnya dan tetap berada di disk, sehingga pengguliran daftar tidak tersendat
+    - cache tetap bertahan setelah program ditutup, dan hanya memproses font baru
+    - pengaturan ukuran sampel langsung diterapkan
+    - tombol Refresh untuk pembangunan ulang secara menyeluruh
+- Kotak gaya bilah penyuntingan tidak terbuka di atas penyunting teks
+- Bahasa pemeriksaan AI dapat diatur
+- Filter bahasa pemilih font dapat diedit di pengaturan
+- Catatan perubahan dalam bahasa kita sendiri, dengan pemilih bahasa
+- Program telah diterjemahkan ke dalam 30 bahasa
+
+Versi 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Pengoperasian kuas pada Vector clip disempurnakan, dapat menangani persimpangan
+- Mode pipet
+    - rentang juga dapat digambar dengan tangan bebas
+    - auto fill disempurnakan
+    - penghalusan tepi dan penyesuaian otomatis
+    - templat untuk clip yang serupa
+    - pengoptimalan
+
+Versi 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Pembatalan juga dapat dilakukan saat membuat masker
+- Masalah pembesaran ikon saat membuat bentuk
+
+Versi 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- perintah "open/video/recent"
+- opsi "Open MKV" di menu file, yang sekaligus membuka mkvt sebagai subtitle dan video
+Pembaruan lainnya berkisar pada visual tool:
+- Cross
+    - mengukur jarak dengan menahan mouse
+- Drag (pos/move)
+    - pergerakannya yang lag telah diperbaiki, menjadi sangat cepat
+    - ditambahkan opsi baru di bagian bawah untuk memusatkan di dalam persegi panjang yang ditentukan
+- Vector clip
+    - dapat berpindah antar bentuk dalam mode pertama
+    - menghapus bentuk aktif dengan DELETE
+    - mode BRUSH (BARU!): menambahkan/menghapus dari area yang dipilih dengan kuas
+    - mode DELETE: dapat menghapus beberapa titik sekaligus setelah dipilih
+    - mode PIPETTE (BARU!): masuk ke bagian khusus, tempat bentuk dapat dibuat di dalam rentang tertentu dan akhirnya dikonfirmasi, yang akan ditambahkan ke clip yang sudah ada
+        - 4 mode: menambahkan/menghapus rentang warna dan menambahkan/menghapus brush
+        - mengatur toleransi untuk rentang warna
+        - menggeser sebesar px tertentu (nilai negatif juga dapat digunakan)
+        - pengenalan AI
+- Pengeditan masking (BARU!)
+    - mask yang sudah ada dapat diedit secara langsung, seolah-olah hanya berupa vector clip
+    - mendapatkan semua mode vector clip, termasuk yang baru
+- Masking (BARU!)
+    - dapat membuat mask dengan persegi panjang, titik, kuas, atau gambar bebas
+    - setelah mask yang dibuat dikonfirmasi, warna diambil otomatis dari tepinya dan baris dibuat
+    - mode PIPETTE juga tersedia di sini
+    - penghapusan teks AI / prompt khusus untuk area yang dipilih
+- Menggambar bentuk (BARU!)
+    - dapat membuat bentuk tertentu, yang setelah dikonfirmasi akan dibuat dengan opsi pengaturan blur dan warna
+    - dapat berpindah antara bentuk kosong dan terisi
+    - dengan menahan ALT, bentuk reguler akan dipaksakan (misalnya persegi atau lingkaran)
+    - ketebalan garis juga dapat diatur
+    - pembulatan tepi juga dapat diatur
+    - dapat membuat gambar bebas (misalnya untuk melingkari sesuatu)
+
+Versi 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Cara kerja pemeriksaan terjemahan untuk banyak baris
+- Fitur AI terkait karaoke (pengenalan suara, kanji, pengaturan waktu)
+- Pencarian dalam subtitle yang terdapat di folder (terdapat di menu penyuntingan)
+- Solusi pembaruan di dalam Aegisub
+
+Versi 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Perbaikan hilangnya baris sumber, semoga tidak akan ada masalah lagi
+- Jika ada banyak materi dalam MKV, file tidak dapat dimuat; hal itu juga telah diperbaiki
+- Kemungkinan menghubungkan AI (pengaturan model, memasukkan token, dll.)
+- Pemeriksaan terjemahan baris yang dipilih dari bahasa Jepang berdasarkan pengenalan suara dengan AI
+- Pemeriksaan akhir seluruh subtitle atau baris yang dipilih (minimal 100) dengan AI
+
+Versi 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Baris gambar PS yang digabung
+    - terbuka dan tertutup saat diklik dengan roda mouse
+    - tidak menandai dirinya sendiri dengan warna merah
+    - menandai dengan huruf tebal apakah sedang berada pada video (saat tertutup atau terbuka, ditandai di nomor baris)
+    - masker juga dapat dipilih dengan menyeret mouse
+- Baris Fold
+    - juga terbuka dan tertutup saat diklik dengan roda mouse
+    - tidak menandai "baris pembuka" dengan warna merah jika sedang berada pada baris itu sendiri
+    - "baris pembuka" menandai dengan huruf tebal apakah sedang berada pada video
+    - dengan CTRL/SHIFT/menyeret mouse pada "baris pembuka", seluruhnya dapat dipilih (bahkan beberapa sekaligus)
+    - penyisipan fold tidak membuat kejadian pembatalan yang tidak perlu
+    - saat menutup fold, daftar melompat ke baris aktif
+- Opsi "Sorong baris ke bingkai (Akhir)" di menu timing, agar baris dapat diselaraskan dengan waktu saat ini berdasarkan akhir baris aktif
+- Opsi "Memuat file yang ditetapkan" di menu subtitle (kemungkinan memuat video setelahnya)
+- Skrip otomasi
+    - grup "Muteki Fansub" telah muncul dan skrip kami dipindahkan ke sini (bind tidak perlu diubah)
+    - di bawah "Automatizáció" ditambahkan "Utolsó script", yang dapat digunakan untuk menjalankan dan melakukan bind pada skrip terakhir ("am/last" adalah nama command-nya)
+    - jika tombol yang di-bind ke skrip terakhir ditekan 2x dengan cepat, daftar opsi terakhir akan muncul
+
+Versi 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- rendering folder untuk berkas sumber, dan memuat video/audio dari folder tersebut (sehingga video dapat berada di mana saja, akan dimuat berdasarkan nama yang sama)
+- memasukkan/mengeluarkan bagian teks yang dipilih ke/dari komentar
+- sesekali crash saat membuka subtitle baru
+
+Versi 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- fold tidak menyusut dan tetap ada saat ditempel
+- penyempurnaan pemilih font
+    - daftar font yang baru-baru ini diinstal (font yang lebih dari tiga hari lalu mungkin tidak akan muncul di awal)
+    - memperingatkan saat ditutup jika ada font sementara yang tersimpan
+    - editor gaya sekarang juga membukanya
+
+Versi 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- baris sumber tetap ada saat menyalin/menempel
+- pemilihan baris gambar PS yang digabung dan fungsi panah normal
+
+Versi 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- baris sumber tetap ada saat penggabungan
+- saat penggabungan, pemformatan pada baris kedua tidak ditambahkan (mis. \i dan/atau \blurt di awal baris tidak perlu dihapus)
+- saat pemisahan, pemformatan ditambahkan ke baris baru (mis. \i dan/atau \blurt tidak perlu ditambahkan sebagai pemformat untuk membagi baris)
+
+Versi 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- pengodean baris sumber
+- baris sumber dapat diperbesar di pengaturan
+
+Versi 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- nama font yang panjang
+- kecepatan pemutaran 3x, 5x, 6x
+- saat mengeklik ganda baris terakhir, drag tidak boleh memilih baris di atasnya
+- drag selalu memindahkan yang sedang dipilih (juga saat beberapa pilihan)
+- baris sumber tidak menghilang karena skrip
+- saat mengeklik maske gambar, video/audio melompat ke baris tersebut
+- 2 maske gambar tidak digabungkan jika waktunya tidak sama
+
+Versi 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- mencatat dan menampilkan baris sumber di samping tanda centang asli
+
+Versi 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- gambar yang disisipkan hanya ditampilkan dalam satu baris dan dapat dibuka-tutup dengan klik dua kali
+- pengubahan kecepatan pemutaran antara 0.25x - 10x, hanya kompatibel dengan audio DirectSound
+
+Versi 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- penyempurnaan pemilih font
+    - pengoptimalan
+    - opsi penyimpanan sementara (misalnya saat mencari, menyisihkan font yang tampak bagus)
+    - nama font dapat disalin
+- alih-alih tombol tengah mouse, dengan menahan klik kanan fungsi-fungsi di layar akan disembunyikan (sehingga lebih nyaman digunakan)
+
+Versi 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- pemilih font
+    - perbaikan dialog error saat menambahkan font
+    - penanda font yang ditandai sebagai favorit di dalam daftar
+    - daftar yang telah digulir ke bawah tidak boleh melompat ke atas saat menambahkan ke daftar
+
+Versi 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- pemilih font
+    - sekarang dapat mengubah nilai fs, fscx, fscy dan fsp juga
+    - menu Semua font, Terbaru, Paling sering digunakan, Favorit dan Daftar sendiri
+    - Daftar sendiri dapat diedit, font dari subtitle tertentu dapat diimpor
+- perubahan sekarang juga mencakup terjemahan ke bahasa Hungaria
+
+Versi 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Penggantian teks
+        - klik kanan pada baris -> Change text
+        - juga mendukung gradient dan mencoba menyesuaikan teks secara proporsional
+        - saat menyalin beberapa baris, alih-alih CTRL + H
+
+Versi 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - penyempurnaan tool posisi
+        - penguncian horizontal/vertikal
+        - pengaturan penguncian dengan click + roda mouse naik/turun pada kotak posisi kecil
+        - jika ada beberapa baris pada satu posisi dan satu pilihan aktif, maka baris tersebut yang dipindahkan, tidak peduli di mana letaknya dalam daftar
+        - bug pilihan aneh diperbaiki (saat beberapa pilihan aktif, setelah salah klik, pemilihan beberapa baris menjadi aneh)
+    - penyempurnaan pemilih font:
+        - saya menambahkan CACHE, sehingga hanya akan lambat sekali, setelah itu sangat cepat. Jika font di-update, tersedia tombol "Refresh" untuk mengosongkan cache (misalnya jika karakter beraksen ditambahkan) - untuk font baru TIDAK PERLU!
+        - posisi dan ukuran modal diingat bahkan setelah Aegisub ditutup
+        - ukuran kolom preview (dengan roda mouse) dan sample dapat diubah (dengan slider di atasnya)
+        - font juga dapat diterima dengan double click
+        - font juga dapat diterima dengan menekan enter
+        - saat menekan panah bawah/TAB di pencarian, elemen pertama akan dipilih, sehingga dapat membuka, mencari, memilih dengan tombol panah, lalu menekan enter dengan mudah dan cukup cepat tanpa mouse
+    - saat memutar video, video sekarang tidak lagi lag ketika mouse digerakkan melintasinya
+    - menekan cepat tombol tengah mouse langsung menyembunyikan semuanya dan menekannya lagi menampilkan semuanya pada video (misalnya agar hasilnya dapat langsung dilihat saat membuat clip)

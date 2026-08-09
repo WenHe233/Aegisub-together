@@ -1,0 +1,195 @@
+Version 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Skrifttypevælger
+    - prøverne forberedes på forhånd og forbliver på disken, så rulning gennem listen ikke går i stå
+    - cachen overlever en programlukning og behandler kun nye skrifttyper
+    - ændring af prøvens størrelse sker øjeblikkeligt
+    - Refresh-knap til fuldstændig genopbygning
+- Stilboksen i redigeringslinjen åbnes ikke oven på teksteditoren
+- Sproget for AI-kontrollen kan indstilles
+- Skrifttypevælgerens sprogfiltre kan redigeres i indstillingerne
+- Ændringslog på vores eget sprog med sprogvalg
+- Programmet er oversat til 30 sprog
+
+Version 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Ved Vector clip er penslens funktion finjusteret, så den kan håndtere kryds
+- Pipettetilstand
+    - området kan også tegnes i fri hånd
+    - auto fill finjusteret
+    - kantudjævning og automatisk tilpasning
+    - skabeloner til lignende clips
+    - optimering
+
+Version 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Det er også muligt at fortryde under oprettelse af masker
+- Problem med at ikonerne til oprettelse af figurer vokser
+
+Version 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- "Open MKV"-indstilling i filmenuen, som samtidig åbner mkv'en som undertekst og video
+De øvrige opdateringer drejede sig om visual-værktøjerne:
+- Cross
+    - afstandsmåling ved at holde musen nede
+- Drag (pos/move)
+    - den hakkende bevægelse er rettet, den er blevet lynhurtig
+    - en ny indstilling er tilføjet nederst, som gør det muligt at centrere inden for et angivet rektangel
+- Vector clip
+    - der kan skiftes mellem figurer i den første tilstand
+    - den aktive figur kan slettes med DELETE
+    - BRUSH-tilstand (NY!): tilføj/fjern fra det valgte område med en pensel
+    - DELETE-tilstand: flere punkter kan slettes, når de er markeret
+    - PIPETTE-tilstand (NY!): åbner en separat sektion, hvor figurer kan oprettes inden for et angivet område og til sidst accepteres, så de tilføjes til det eksisterende clip
+        - 4 tilstande: tilføj/fjern farveområde og tilføj/fjern med brush
+        - justering af tolerance for farveområdet
+        - forskydning med et angivet antal px (kan også være en negativ værdi)
+        - AI-genkendelse
+- Redigering af maskering (NY!)
+    - eksisterende masker kan redigeres direkte, som om de blot var vector clip
+    - har fået alle vector clip-tilstande, også de nye
+- Maskering (NY!)
+    - masker kan oprettes med rektangel, punkter, pensel eller frihånd
+    - ved at acceptere den oprettede maske tages der automatisk en farve fra kanten, og linjen oprettes
+    - PIPETTE-tilstand også her
+    - AI-tekstfjernelse / brugerdefineret prompt for det valgte område
+- Tegning af figurer (NY!)
+    - angivne figurer kan oprettes, som oprettes efter godkendelse med mulighed for justering af blur og farve
+    - der kan skiftes mellem tomme og udfyldte figurer
+    - ved at holde ALT nede tvinges en regelmæssig figur frem (f.eks. et kvadrat eller en cirkel)
+    - linjetykkelsen kan også indstilles
+    - kanterne kan også afrundes
+    - der kan også tegnes frihånd (f.eks. til at sætte en cirkel omkring noget)
+
+Version 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Funktionen til kontrol af oversættelser ved mange linjer
+- AI-funktioner relateret til karaoke (talegenkendelse, kanji, timing)
+- Søgning i undertekster i en mappe (findes i redigeringsmenuen)
+- Løsning af opdatering i Aegisub
+
+Version 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Rettelse af, at kildelinjen forsvinder, forhåbentlig vil der ikke længere være problemer med det
+- Hvis der var meget materiale i en MKV, kunne den ikke indlæses; dette er også blevet rettet
+- Mulighed for AI-integration (modelindstillinger, angivelse af token osv.)
+- Kontrol af oversættelsen af de valgte linjer fra japansk ved hjælp af talegenkendelse med AI
+- Efterkontrol af hele underteksten eller de valgte linjer (minimum 100) med AI
+
+Version 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Sammenlagte PS-billedlinjer
+    - åbnes og lukkes med klik på musens rullehjul
+    - markér ikke sig selv med rødt
+    - viser med fed, om den aktuelt er på videoen (lukket eller åbnet vises det ved linjenummeret)
+    - masker kan også markeres ved at trække med musen
+- Fold-linjer
+    - åbnes og lukkes OGSÅ med klik på musens rullehjul
+    - markér ikke "åbningslinjen" med rødt, når den aktuelt står på sig selv
+    - "åbningslinjen" viser med fed, om den aktuelt er på videoen
+    - med CTRL/SHIFT/træk med musen på "åbningslinjen" markeres det hele (også flere)
+    - indsættelse af fold opretter ikke en unødvendig hændelse, der skal fortrydes
+    - ved lukning af fold springer listen til den aktive linje
+- Indstillingen "Sorokat a képkockához tolja (Vége)" i timing-menuen, så linjer kan justeres til det aktuelle tidspunkt ud fra slutningen af den aktive linje
+- Indstillingen "Hozzárendelt fájlok betöltése" i undertekstmenuen (mulighed for at indlæse video efterfølgende)
+- Automatiseringsscripts
+    - gruppen "Muteki Fansub" er kommet til, og vores scripts er placeret her (binds behøver ikke ændres)
+    - under "Automatizáció" er der tilføjet en "Utolsó script", som kan bruges til at køre og binde det sidste script ("am/last" er command-navnet)
+    - hvis vi trykker 2 gange hurtigt på knappen, der er bundet til det sidste script, vises en liste med de seneste indstillinger
+
+Version 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- mapper til kildefiler, samt indlæsning af video/lyd fra disse (videoen kan dermed være hvor som helst og indlæses baseret på samme navn)
+- indsættelse/fjernelse af den markerede tekst som kommentar
+- lejlighedsvise nedbrud ved åbning af nye undertekster
+
+Version 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- foldere falder ikke sammen og bevares ved indsættelse
+- forbedringer af fontvælgeren
+    - liste over nyligt installerede fonte (ældre end tre dage vises ikke nødvendigvis i starten)
+    - advarer ved lukning, hvis du har en midlertidig font gemt
+    - stilredigeringen åbner også denne nu
+
+Version 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- kildelinjer bevares ved kopiering/indsættelse
+- markering af sammenføjede PS-billedlinjer og normal pilfunktion
+
+Version 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- kildelinjerne bevares ved sammenføjning
+- ved sammenføjning tilføjes formateringen fra den anden linje ikke (f.eks. behøver \i og/eller \blurt i begyndelsen af linjen ikke at blive slettet)
+- ved opdeling tilføjes formateringen til den nye linje (f.eks. behøver \i og/eller \blurt ikke at blive tilføjet som formateringer for at opdele linjer)
+
+Version 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- kodning af kildelinjer
+- mulighed for at zoome kildelinjen i indstillingerne
+
+Version 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- lange skriftnavne
+- 3x, 5x, 6x afspilningshastighed
+- ved dobbeltklik på den sidste linje skal drag ikke vælge den ovenover
+- drag skal altid flytte det, der er markeret (også ved flere markeringer)
+- kildelinjen må ikke forsvinde på grund af scripts
+- ved klik på en billedmaske skal videoen/audioen springe til linjen
+- 2 billedmasker skal ikke sammenføjes, hvis de ikke er på samme tidspunkt
+
+Version 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- kommentering og visning af kildelinjer ved siden af det oprindelige flueben
+
+Version 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- indsatte billeder vises kun på én linje og kan åbnes/lukkes med et dobbeltklik
+- skift af afspilningshastighed mellem 0.25x - 10x, kun kompatibelt med DirectSound-lyd
+
+Version 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- forbedringer af fontvælgeren
+    - optimering
+    - mulighed for midlertidig lagring (f.eks. at lægge de fonte, der ser gode ud, til side ved søgning)
+    - fontnavne kan kopieres
+- funktionerne fjernes fra skærmen ved at holde højreklik nede i stedet for den midterste museknap (så den er mere behagelig at bruge)
+
+Version 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- fontvælger
+    - rettelse af fejldialogen ved tilføjelse af fonte
+    - markering af favoritmarkerede fonte i listen
+    - den rullede liste skal ikke hoppe op ved tilføjelse til listen
+
+Version 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- skrifttypevælger
+    - det er også muligt at ændre værdierne for fs, fscx, fscy og fsp
+    - menupunkterne Alle skrifttyper, Seneste, Mest brugte, Favoritter og Egne lister
+    - Egne lister kan redigeres, og skrifttyper fra en bestemt undertekst kan importeres
+- ændringerne indeholder nu også den ungarske oversættelse
+
+Version 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Tekst erstatning
+        - højreklik på linjer -> Change text
+        - understøtter også gradient og forsøger at indstille teksten proportionalt
+        - ved kopiering af flere linjer i stedet for CTRL + H
+
+Version 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - finpudsning af positionsværktøjet
+        - horisontal/vertikal låsning
+        - justering af låsning med klik + musehjul op/ned på den lille positionsfirkant
+        - hvis der er flere linjer på en position, og én er markeret, flyttes den, uanset hvor den er på listen
+        - rettet fejl med mærkelig markering (ved flere markeringer var markering af flere linjer efter et fejlklik mærkelig)
+    - finpudsning af fontvælgeren:
+        - jeg har tilføjet CACHE, så den kun er langsom første gang og derefter lynhurtig. Hvis fonte er blevet opdateret, er der en "Refresh"-knap, som rydder cachen (f.eks. hvis et accenttegn er blevet tilføjet) - IKKE NØDVENDIGT ved en ny font!
+        - den husker modalens placering og størrelse, også efter Aegisub er blevet lukket
+        - størrelsen på preview (med musehjul) og sample-kolonnen kan ændres (skyderen ovenover)
+        - accepterer også fonten ved dobbeltklik
+        - accepterer også fonten med enter
+        - ved pil ned/TAB i søgefeltet vælges det første element, så man nemt kan åbne, søge, vælge med pilen og trykke enter, ret hurtigt uden mus
+    - videoen hakker ikke længere, når du fører musen hen over den under afspilning
+    - et hurtigt tryk på den midterste museknap skjuler alt med det samme, og et nyt tryk viser det på videoen (f.eks. så man straks kan se resultatet ved clip)

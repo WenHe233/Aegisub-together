@@ -1,0 +1,195 @@
+Bertsioa 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Letra-tipoen hautatzailea
+    - laginak aldez aurretik prestatzen dira eta diskoan gordetzen dira, zerrendan barrena korritzea eten ez dadin
+    - cache-ak programaren itxiera gainditzen du, eta letra-tipo berriak soilik prozesatzen ditu
+    - laginaren tamaina berehala alda daiteke
+    - Refresh botoia erabateko berreraikuntzarako
+- Edizio-barrako estilo-koadroa ez da testu-editorean zabaltzen
+- AI egiaztapenaren hizkuntza konfigura daiteke
+- Letra-tipoen hautatzailearen hizkuntza-iragazkiak ezarpenetan edita daitezke
+- Aldaketen erregistroa gure hizkuntzan, hizkuntza-hautatzailearekin
+- Programa 30 hizkuntzatara itzulita dago
+
+Bertsioa 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Bektorezko clip-ean pintzelaren funtzionamendua hobetu da, ebakidurak kudea ditzake
+- Pipeta modua
+    - barrutia esku hutsez ere marraz dezakegu
+    - auto fill hobetu da
+    - ertzen leuntzea eta doikuntza automatikoa
+    - antzeko clip-etarako txantiloiak
+    - optimizazioa
+
+Bertsioa 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Maskak sortzean ere desegin daiteke
+- Formak sortzeko ikonoen handitze-arazoa
+
+Bertsioa 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- "Open MKV" aukera fitxategien menuan, mkv-a azpititulu eta bideo gisa aldi berean irekitzen duena
+Gainerako eguneraketak visual tresnen ingurukoak izan dira:
+- Cross
+    - distantziak neurtzea sagua sakatuta mantenduz
+- Drag (pos/move)
+    - atzerapenarekin mugitzea konponduta, izugarri azkarra bihurtu da
+    - behealdean aukera berri bat gehitu da, zehaztutako laukizuzen baten barruan erdian lerrokatzeko
+- Vector clip
+    - lehenengo moduan formen artean alda daiteke
+    - forma aktiboa DELETE erabiliz ezabatzea
+    - BRUSH modua (BERRIA!): hautatutako eremutik pintzelarekin gehitu/kendu
+    - DELETE modua: hainbat puntu ere ezaba daitezke hautatuta
+    - PIPETTE modua (BERRIA!): atal bereizi batera sartzen da, non zehaztutako barruti baten barruan formak sor daitezkeen eta, azkenik, onartu; hori lehendik dagoen clip-ari gehituko zaio
+        - 4 modu: kolore-barrutia gehitu/kendu eta brush gehitu/kendu
+        - kolore-barrutirako tolerantzia doitzea
+        - desplazamendua emandako px-elbetez (balio negatiboa ere izan daiteke)
+        - AI bidezko ezagutza
+- Maskaratzea editatzea (BERRIA!)
+    - lehendik dagoen maskara zuzenean edita daiteke, vector clip bat balitz bezala
+    - vector clip-en modu guztiak jaso ditu, berriak ere bai
+- Maskaratzea (BERRIA!)
+    - maskarak sortu daitezke laukizuzenarekin, puntuekin, pintzelarekin edo esku hutsez
+    - sortutako maskara onartzean, automatikoki kolore bat hartzen du ertzetik eta lerroa sortzen du
+    - PIPETTE modua hemen ere bai
+    - AI bidezko testua kentzea / prompt pertsonalizatua hautatutako eremurako
+- Formak marraztea (BERRIA!)
+    - zehaztutako formak sor daitezke; onartu ondoren sortzen dira, blur eta kolorea doitzeko aukerekin
+    - forma hutsen eta beteen artean alda daiteke
+    - ALT sakatuta mantenduz, forma erregularra behartzen da (adib. karratua edo zirkulua)
+    - lerroaren lodiera ere ezar daiteke
+    - ertzen biribiltzea ere ezar daiteke
+    - esku hutsez marraztea ere egin daiteke (adib. inguratzeko)
+
+Bertsioa 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Itzulpenaren egiaztapenaren funtzionamendua lerro askoren kasuan
+- Karaokerako AI funtzioak (ahots-hautematea, kanji-a, denboralizazioa)
+- Karpeta batean dauden azpitituluetan bilatzea (edizio-menuan dago)
+- Aegisub barruan eguneratzea konpontzea
+
+Bertsioa 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Iturburu-lerroa desagertzearen konponketa, zorionez ez da berriro arazorik izango
+- MKV-n material asko zegoenean ezin zen kargatu; hori ere konpondu da
+- AI integratzeko aukera (modeloa ezartzea, tokena zehaztea, etab.)
+- Hautatutako lerroen itzulpena japonieratik egiaztatzea, AI bidezko ahots-hautematean oinarrituta
+- Azpititulu osoaren edo hautatutako lerroen (gutxienez 100) ondorengo egiaztapena AI bidez
+
+Bertsioa 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Bateratutako PS irudi-lerroak
+    - saguaren gurpilaren klikarekin ireki eta ixten dira
+    - ez dezala bere burua gorriz adierazi
+    - letra lodiz adierazten du une honetan bideoan dagoen ala ez (itxita edo irekita, zenbakiaren ondoan adierazten du)
+    - maskarak sagua arrastatuz ere hautatzen ditu
+- Fold lerroak
+    - saguaren gurpilaren klikarekin ERE ireki eta ixten dira
+    - ez du "nyitósor" gorriz adierazten une honetan haren gainean dagoenean
+    - "nyitósor" letra lodiz adierazten du une honetan bideoan dagoen ala ez
+    - CTRL/SHIFT/sagua arrastatuz "nyitósoron" dena hautatzen du (bat baino gehiago ere bai)
+    - fold txertatzeak ez du desegiteko alferrikako gertaerarik sortzen
+    - fold ixtean zerrendak lerro aktibora egiten du salto
+- "Sorokat a képkockához tolja (Vége)" aukera sinkronizazio-menuan, lerroak lerro aktiboaren amaieraren arabera uneko unera lerrokatu ahal izateko
+- "Hozzárendelt fájlok betöltése" aukera azpitituluen menuan (bideoa geroago kargatzeko aukera)
+- Automatizazio-scriptak
+    - "Muteki Fansub" taldea agertu da, eta gure scriptak hona ekarri dira (ez da bind-ak aldatu behar)
+    - "Automatizáció" atalean "Utolsó script" bat gehitu da, azkena exekutatu eta bind-atzeko ("am/last" da komandoaren izena)
+    - azken scriptari bindatutako botoia 2 aldiz azkar sakatzen badugu, zerrenda bat agertzen da azken aukerekin
+
+Bertsioa 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- iturburu-fitxategietarako karpetak errendatzea, eta haietatik bideoa/audioa kargatzea (horri esker, bideoa edozein tokitan egon daiteke, eta izen berean oinarrituta kargatuko da)
+- hautatutako testu-zatia iruzkin bihurtzea/iruzkinetik ateratzea
+- noizbehinkako kraskatzea azpititulu berri bat irekitzean
+
+Bertsioa 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- foldak ez dira tolesten eta itsastean mantentzen dira
+- letra-tipoen hautatzailearen hobekuntzak
+    - duela gutxi instalatutako letra-tipoen zerrenda (duela hiru egun baino lehenagokoak, hasieran ez dira ziurrak izango)
+    - ixtean abisatzen du, aldi baterako letra-tiporen bat gordeta baduzu
+    - estiloen editoreak ere hau irekitzen du orain
+
+Bertsioa 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- iturburu-lerroak mantentzen dira kopiatzean/itsastean
+- bateratutako PS irudi-lerroak hautatzea eta geziaren funtzionamendu normala
+
+Bertsioa 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- iturburu-lerroak mantentzen dira lerroak elkartzean
+- elkartzean, ez ditu bigarren lerroko formatuak gehitzen (adib. lerroaren hasierako \i eta/edo \blurt ez dira ezabatu behar)
+- banatzean, formatuak lerro berrira gehitzen ditu (adib. ez da \i eta/edo \blurt gehitu behar formatzaile gisa lerroak banatzeko)
+
+Bertsioa 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- iturburu-lerroen kodeketa
+- iturburu-lerroa ezarpenetan handitu ahal izatea
+
+Bertsioa 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- letra-tipoen izen luzeak
+- 3x, 5x, 6x erreprodukzio-abiadura
+- azken lerroan klik bikoitza egitean drag-ek ez dezala haren gaineko lerroa hautatu
+- drag-ek beti mugitzea hautatuta dagoena (hautapen bat baino gehiago egonda ere)
+- script-ak direla eta iturburu-lerroa desagertu ez dadila
+- irudi-maskaran klik egitean bideoa/audioa lerrora jauzi dadila
+- 2 irudi-maskara ez batzea aldi berean ez badaude
+
+Bertsioa 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- iturburu-lerroen oharra eta bistaratzea jatorrizko kontrol-laukiaren ondoan
+
+Bertsioa 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- itsatsitako irudiak lerro bakarrean soilik bistaratzen dira, eta klik bikoitzarekin ireki eta itxi daitezke
+- erreprodukzio-abiadura 0.25x - 10x artean aldatzea, DirectSound audioarekin soilik bateragarria
+
+Bertsioa 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- letra-tipoen hautatzailearen hobekuntzak
+    - optimizazioa
+    - aldi baterako gordetzeko aukera (adib. bilaketan itxura ona duten letra-tipoak alde batera uztea)
+    - letra-tipoen izenak kopia daitezke
+- saguaren erdiko botoiaren ordez, eskuineko klikari eutsita funtzioak pantailatik kentzen ditu (horrela erabiltzea erosoagoa da)
+
+Bertsioa 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- letra-tipoen hautatzailea
+    - letra-tipoa gehitzean errore-dialogoaren konponketa
+    - gogoko gisa markatutako letra-tipoen adierazlea zerrendan
+    - beherantz korritutako zerrendan, ez dadila zerrendaren goialdera jauzi gehitzean
+
+Bertsioa 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- letra-tipo hautatzailea
+    - fs, fscx, fscy eta fsp balioak ere alda daitezke
+    - Letra-tipo guztiak, Azkenak, Ohikoenak, Gogokoak eta Norberaren zerrendak menu-elementuak
+    - Norberaren zerrendak edita daitezke, azpititulu jakin bateko letra-tipoak inporta daitezke
+- aldaketek orain hungarierarako itzulpena ere badute
+
+Bertsioa 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Testu-ordezkapena
+        - lerroetan eskuineko klika -> Change text
+        - gradientea ere onartzen du eta testua proportzionalki ezartzen saiatzen da
+        - hainbat lerro kopiatzean CTRL + H-ren ordez
+
+Bertsioa 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - posizio-tresnaren fintzea
+        - blokeatze horizontala/bertikala
+        - blokeatzea click + gurpila gora/behera erabiliz ezartzea posizio-koadro txikian
+        - posizio batean hainbat lerro daudenean eta hautapen bat dagoenean, hura mugitzen du, zerrendan non dagoen kontuan hartu gabe
+        - hautapen arraroaren errorea konponduta (hainbat hautapen daudenean, okerreko klikaren ondoren hainbat lerro hautatzea arraroa zen)
+    - letra-tipoen hautatzailearen fintzea:
+        - CACHE jarri dut, beraz behin bakarrik izango da motela, ondoren izugarri azkarra. Letra-tipoak updatelatu badituzte, "Refresh" botoia dago, cachea garbitzen duena (adibidez, azentu bat gehitzen denean) - letra-tipo berri baterako EZ DA BEHAR!
+        - modalaren kokapena eta tamaina gogoratzen ditu Aegisub itxi ondoren ere
+        - preview (gurpilarekin) eta sample zutabearen tamaina alda daitezke (gaineko graduatzailea)
+        - klik bikoitzarekin ere onartzen du letra-tipoa
+        - enterrekin ere onartzen du letra-tipoa
+        - bilatzailean beherako geziaren/TABen kasuan lehen elementua hautatzen du; horrela, erraz ireki, bilatu, geziaren bidez hautatu eta enter egin daiteke, nahiko azkar sagurik gabe
+    - bideoa erreproduzitzen ari den bitartean sagua gainetik eramanez gero, bideoak ez du orain lag egiten
+    - saguaren erdiko botoia azkar sakatzeak dena berehala ezkutatzen du, eta berriro sakatzeak bideoan erakusten du (adibidez, clip batean emaitza berehala ikusi ahal izateko)

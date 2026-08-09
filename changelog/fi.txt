@@ -1,0 +1,195 @@
+Versio 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Fontinvalitsin
+    - näytteet luodaan etukäteen ja säilytetään levyllä, joten luettelon vieritys ei takertele
+    - välimuisti säilyy ohjelman sulkemisen jälkeen, ja vain uudet fontit käsitellään
+    - näytteen koon muuttaminen tapahtuu välittömästi
+    - Refresh-painike täydellistä uudelleenrakennusta varten
+- Muokkauspalkin tyylilaatikko ei laajene tekstieditorin päälle
+- Tekoälytarkistuksen kielen voi määrittää
+- Fontinvalitsimen kielisuodattimia voi muokata asetuksissa
+- Muutosloki omalla kielellämme, kielenvalitsimella
+- Ohjelma on käännetty 30 kielelle
+
+Versio 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Vektorileikkeen siveltimen toimintaa hienosäädetty, osaa käsitellä leikkausalueita
+- Pipettatila
+    - alueen voi piirtää myös vapaalla kädellä
+    - auto fill hienosäädetty
+    - reunojen tasaus ja automaattinen sovitus
+    - mallipohjia samankaltaisille leikkeille
+    - optimointi
+
+Versio 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Kumoa on mahdollista myös maskia luotaessa
+- Muotojen luontikuvakkeiden kasvamisongelma
+
+Versio 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- "Open MKV" -valinta tiedostovalikossa, joka avaa mkv-tiedoston samalla sekä tekstityksenä että videona
+Muut päivitykset liittyivät visual-työkaluihin:
+- Cross
+    - etäisyyden mittaus hiiren painiketta painettuna pitämällä
+- Drag (pos/move)
+    - viiveellinen liike korjattu, siitä tuli salamannopea
+    - alareunaan lisättiin uusi valinta, jolla kohteen voi keskittää annetun suorakulmion sisälle
+- Vector clip
+    - ensimmäisessä tilassa voi vaihtaa muotojen välillä
+    - aktiivisen muodon voi poistaa DELETE-näppäimellä
+    - BRUSH-tila (UUSI!): valitulta alueelta voi lisätä tai poistaa alueita siveltimellä
+    - DELETE-tila: useita pisteitä voi poistaa valitsemalla ne
+    - PIPETTE-tila (UUSI!): siirtyy erilliseen osioon, jossa voi luoda muotoja annetun alueen sisälle ja lopuksi hyväksyä ne, jolloin ne lisätään olemassa olevaan clipiin
+        - 4 tilaa: väriavaruuden lisääminen/poistaminen ja brushin lisääminen/poistaminen
+        - väriavaruuden toleranssin säätäminen
+        - siirtäminen annetulla px-määrällä (myös negatiivinen arvo on mahdollinen)
+        - AI-tunnistus
+- Maskin muokkaus (UUSI!)
+    - olemassa olevaa maskia voi muokata suoraan aivan kuten vector clipiä
+    - siihen lisättiin kaikki vector clipin tilat, myös uudet
+- Maskaus (UUSI!)
+    - maskeja voi luoda suorakulmiolla, pisteillä, siveltimellä tai vapaalla kädellä
+    - luodun maskin hyväksymisen jälkeen se ottaa automaattisesti värin sen reunasta ja luo rivin
+    - PIPETTE-tila myös täällä
+    - AI-tekstin poisto / mukautettu prompti valitulle alueelle
+- Muodon piirtäminen (UUSI!)
+    - voi luoda määritettyjä muotoja, jotka luodaan hyväksymisen jälkeen blur- ja värinsäätömahdollisuuksilla
+    - tyhjien ja täytettyjen muotojen välillä voi vaihtaa
+    - pitämällä ALT-näppäintä painettuna muoto pakotetaan säännölliseksi (esim. neliöksi tai ympyräksi)
+    - myös viivan paksuuden voi säätää
+    - reunojen pyöristystä voi säätää
+    - voi myös piirtää vapaalla kädellä (esim. ympyröintiä varten)
+
+Versio 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Käännöksen tarkistuksen toiminta useiden rivien tapauksessa
+- Karaoken tekoon liittyvät AI-toiminnot (puheentunnistus, kanjit, ajoitus)
+- Kansiossa olevien tekstitysten haku (löytyy muokkausvalikosta)
+- Päivityksen toteuttaminen Aegisubin sisällä
+
+Versio 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Lähderivin katoamisen korjaus, toivottavasti sen kanssa ei enää ole ongelmia
+- Jos MKV:ssa oli paljon materiaalia, sitä ei voinut ladata; tämäkin on korjattu
+- Mahdollisuus yhdistää AI:hin (mallin asettaminen, tokenin antaminen jne.)
+- Valittujen rivien käännöksen tarkistaminen japanista puheentunnistuksen perusteella AI:n avulla
+- Koko tekstityksen tai valittujen rivien (vähintään 100) jälkitarkistus AI:n avulla
+
+Versio 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Yhdistetyt PS-kuvarivit
+    - avautuvat ja sulkeutuvat hiiren rullan napsautuksella
+    - ei merkitse itseään punaisella värillä
+    - lihavoi sen, onko se parhaillaan videolla (suljettuna ja avattuna merkitään rivinumeron kohdalla)
+    - maskit voi valita myös vetämällä hiirellä
+- Fold-rivit
+    - avautuu ja sulkeutuu MYÖS hiiren rullan napsautuksella
+    - ei merkitse "avausriviä" punaisella, jos se on parhaillaan itsensä kohdalla
+    - "avausrivi" lihavoi sen, onko se parhaillaan videolla
+    - CTRL/SHIFT/hiirellä vetämällä "avausrivillä" voi valita kaiken (jopa useita)
+    - foldin lisääminen ei luo tarpeetonta kumottavaa tapahtumaa
+    - foldia suljettaessa lista siirtyy aktiiviseen riviin
+- "Sorokat a képkockához tolja (Vége)" -asetus ajoitusvalikossa, jotta rivit voidaan kohdistaa nykyhetkeen aktiivisen rivin lopun mukaan
+- "Hozzárendelt fájlok betöltése" -asetus tekstitysvalikossa (mahdollisuus ladata video myöhemmin)
+- Automaatioskriptit
+    - "Muteki Fansub" -ryhmä ilmestyi, ja skriptimme siirrettiin sinne (bindejä ei tarvitse muuttaa)
+    - "Automatizáció" -kohdan alle lisättiin "Utolsó script", jolla viimeisen voi suorittaa ja bindata ("am/last" on komennon nimi)
+    - jos viimeiseen skriptiin bindattua painiketta painetaan nopeasti 2 kertaa, näkyviin tulee luettelo viimeisistä vaihtoehdoista
+
+Versio 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- lähdetiedostoille kansioiden renderöinti ja videoiden/audioiden lataaminen niistä (näin video voi olla missä tahansa, se ladataan saman nimen perusteella)
+- valitun tekstiosan lisääminen kommentiksi/poistaminen kommentista
+- satunnainen kaatuminen uutta tekstitystä avattaessa
+
+Versio 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- foldit eivät romahda ja säilyvät liitettäessä
+- fontinvalitsimen hienosäätöjä
+    - äskettäin asennettujen fonttien luettelo (yli kolme päivää vanhoista ei aluksi ole täyttä varmuutta)
+    - varoittaa suljettaessa, jos sinulla on tallennettuna väliaikainen fontti
+    - tyylieditori avaa nyt myös tämän
+
+Versio 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- lähderivit säilyvät kopioitaessa/liitettäessä
+- yhdistettyjen PS-kuvarivien valinta ja nuolinäppäinten normaali toiminta
+
+Versio 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- lähderivit säilyvät yhdistettäessä
+- yhdistettäessä toisen rivin muotoiluja ei lisätä (esim. rivin alussa olevia \i- ja/tai \blurt-koodeja ei tarvitse poistaa)
+- erotettaessa muotoilut lisätään uuteen riviin (esim. \i- ja/tai \blurt-koodeja ei tarvitse lisätä, jotta muotoilut saadaan jaettua riveille)
+
+Versio 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- lähderivien koodaus
+- lähderiviä voi suurentaa asetuksissa
+
+Versio 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- pitkät fonttien nimet
+- 3x, 5x, 6x toistonopeus
+- viimeistä riviä kaksoisnapsautettaessa drag ei valitse sen yläpuolella olevaa riviä
+- drag siirtää aina valittuna olevaa riviä (myös useita valittaessa)
+- lähderivi ei katoa skriptien takia
+- kuvaan tehdyn maskin napsauttaminen siirtää videon/audion rivin kohdalle
+- kahta kuvamaskia ei yhdistetä, jos ne eivät ole samanaikaisia
+
+Versio 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- lähderivien kommentointi ja näyttäminen alkuperäisen valintaruudun vieressä
+
+Versio 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- liitetyt kuvat näkyvät vain yhdellä rivillä, ja ne voi avata/sulkea kaksoisnapsautuksella
+- toistonopeuden vaihtaminen välillä 0.25x - 10x, yhteensopiva vain DirectSound-audion kanssa
+
+Versio 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- fontinvalitsimen hienosäädöt
+    - optimointi
+    - tilapäinen tallennusmahdollisuus (esim. haun aikana hyvältä vaikuttavien fonttien siirtäminen sivuun)
+    - fonttien nimet voi kopioida
+- keskimmäisen hiiren painikkeen sijaan toisen painikkeen painettuna pitäminen poistaa toiminnot näytöltä (näin käyttö on mukavampaa)
+
+Versio 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- fontinvalitsin
+    - fontin lisäämisen virhedialogin korjaus
+    - suosikeiksi merkittyjen fonttien merkintä luettelossa
+    - vieritetyssä luettelossa ei hypätä ylös luetteloon lisättäessä
+
+Versio 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- fontinvalitsin
+    - arvoja fs, fscx, fscy ja fsp voi myös muuttaa
+    - Kaikki fontit, Viimeisimmät, Yleisimmät, Suosikit ja Omat listat -valikkokohdat
+    - Omat listat -kohtia voi muokata, tietyn tekstityksen fontit voi tuoda
+- muutokset sisältävät nyt myös unkarinkielisen käännöksen
+
+Versio 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Tekstin korvaus
+        - rivien kohdalla hiiren oikea painike -> Change text
+        - tukee myös gradienttia ja yrittää asettaa tekstin suhteellisesti
+        - useiden rivien kopiointiin CTRL + H:n sijaan
+
+Versio 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - positionointityökalun hienosäätö
+        - horisontaalinen/vertikaalinen lukitus
+        - lukituksen säätäminen klikkaamalla + vierittämällä ylös/alas pienessä positionointiruudussa
+        - jos samassa positiossa on useita rivejä ja yksi niistä on valittuna, se siirtää sitä riippumatta siitä, missä kohtaa listaa se on
+        - outo valintaongelma korjattu (useamman valinnan tapauksessa useiden rivien valitseminen väärän klikkauksen jälkeen oli outoa)
+    - fontinvalitsimen hienosäätö:
+        - lisäsin CACHE:n, joten se on kerran hidas ja sen jälkeen erittäin nopea. Jos fontteja on päivitetty, siellä on "Refresh"-painike, jolla cachen voi tyhjentää (esim. jos mukaan tulee aksenttimerkki) - uutta fonttia varten EI TARVITA!
+        - se muistaa modaalin sijainnin ja koon myös Aegisubin sulkemisen jälkeen
+        - preview- ja sample-sarakkeen kokoa voi muuttaa (niiden yläpuolella olevalla liukusäätimellä)
+        - hyväksyy fontin myös kaksoisklikkauksella
+        - hyväksyy fontin myös enterillä
+        - hakukentässä alanuolen/TAB-näppäimen painaminen valitsee ensimmäisen kohteen, joten sen voi avata, hakea, valita nuolella ja painaa enteriä helposti ja nopeasti ilman hiirtä
+    - videon toiston aikana hiiren liikuttaminen videon yli ei enää aiheuta videon laggaamista
+    - hiiren keskipainikkeen nopea painallus piilottaa kaiken välittömästi ja uusi painallus näyttää kaiken videolla (esim. jotta tuloksen voi nähdä heti clipin yhteydessä)

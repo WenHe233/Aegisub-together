@@ -1,0 +1,195 @@
+Sürüm 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Yazı tipi seçici
+    - örnekler önceden oluşturulur ve diskte tutulur, böylece listeyi kaydırırken takılma olmaz
+    - önbellek program kapatıldıktan sonra da korunur ve yalnızca yeni yazı tiplerini işler
+    - örnek boyutunun ayarlanması anlıktır
+    - tam yeniden oluşturma için Refresh düğmesi
+- Düzenleme çubuğunun stil kutusu metin düzenleyicinin üzerine açılmaz
+- AI denetiminin dili ayarlanabilir
+- Yazı tipi seçicinin dil filtreleri ayarlardan düzenlenebilir
+- Kendi dilimizde, dil seçicili değişiklik günlüğü
+- Program 30 dile çevrildi
+
+Sürüm 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Vector clip'te fırçanın çalışması iyileştirildi, kesişimleri işleyebilir
+- Damlalık modu
+    - alanı serbest elle de çizebiliriz
+    - auto fill iyileştirildi
+    - kenar yumuşatma ve otomatik hizalama
+    - benzer clip'ler için şablonlar
+    - optimizasyon
+
+Sürüm 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Maske oluştururken de geri alma yapılabilir
+- Şekil oluşturma simgelerinin büyüme sorunu
+
+Sürüm 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- Dosya menüsünde, mkv'yi hem altyazı hem de video olarak aynı anda açan "Open MKV" seçeneği
+Diğer güncellemeler visual tool'lar etrafında gerçekleşti:
+- Cross
+    - fareyi basılı tutarak mesafe ölçümü
+- Drag (pos/move)
+    - gecikmeli hareket düzeltildi, ışık hızında oldu
+    - alta, belirtilen bir dikdörtgenin içine ortalamayı sağlayan yeni bir seçenek eklendi
+- Vector clip
+    - ilk modda şekiller arasında geçiş yapılabilir
+    - etkin şekil DELETE ile silinebilir
+    - BRUSH modu (YENİ!): fırçayla seçili alana ekleme/alandan çıkarma
+    - DELETE modu: birden fazla nokta seçilerek silinebilir
+    - PIPETTE modu (YENİ!): şekillerin belirli bir aralık içinde oluşturulabildiği ve sonunda onaylanarak mevcut clip'e eklendiği ayrı bir bölüme girer
+        - 4 mod: renk aralığı ekleme/çıkarma ve brush ekleme/çıkarma
+        - renk aralığı için tolerans ayarı
+        - belirtilen px kadar kaydırma (negatif değer de olabilir)
+        - AI tanıma
+- Maske düzenleme (YENİ!)
+    - mevcut maske, vector clip'teki gibi doğrudan düzenlenebilir
+    - vector clip'in tüm modlarını, yenileri de dahil olmak üzere aldı
+- Maskeleme (YENİ!)
+    - dikdörtgen, noktalar, fırça veya serbest çizim ile maskeler oluşturulabilir
+    - oluşturulan maske onaylandığında kenarından otomatik olarak bir renk alır ve satırı oluşturur
+    - PIPETTE modu burada da mevcut
+    - seçili alan için AI metin kaldırma / özel prompt
+- Şekil çizme (YENİ!)
+    - belirli şekiller oluşturulabilir; blur ve renk ayarı seçenekleriyle onaylandıktan sonra oluşturulurlar
+    - boş ve dolu şekiller arasında geçiş yapılabilir
+    - ALT basılı tutulduğunda düzgün şekil zorlanır (örn. kare veya daire)
+    - çizgi kalınlığı da ayarlanabilir
+    - kenarların yuvarlatılması da ayarlanabilir
+    - serbest çizim de yapılabilir (örn. daire içine alma için)
+
+Sürüm 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Çok sayıda satırda çeviri denetiminin çalışması
+- Karaoke ile ilgili AI özellikleri (ses tanıma, kanji, zamanlama)
+- Klasörde bulunan altyazılarda arama (düzenleme menüsünde bulunur)
+- Aegisub içinde güncelleme yapılması
+
+Sürüm 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Kaynak satırının kaybolması sorunu düzeltildi, umarız artık sorun yaşanmaz
+- MKV'de çok fazla içerik olduğunda yüklenemiyordu, bu da düzeltildi
+- AI bağlantısı kurma olanağı (model ayarlama, token girme vb.)
+- Seçili satırların Japoncadan ses tanıma temelinde AI ile çeviri kontrolü
+- Tüm altyazının veya seçili satırların (en az 100) AI ile son kontrolü
+
+Sürüm 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Birleştirilmiş PS resim satırları
+    - fare tekerleğine tıklayınca açılır ve kapanır
+    - kendisini kırmızı renkle işaretlemez
+    - videoda o anda bulunup bulunmadığını kalın yazıyla belirtir (kapalıyken, açıkken satır numarasının yanında belirtir)
+    - fareyi sürükleyerek de maskeleri seçer
+- Fold satırları
+    - fare tekerleğine tıklayınca DA açılır ve kapanır
+    - o anda kendi üzerindeyse "açma satırını" kırmızıyla işaretlemez
+    - "açma satırı", videoda o anda bulunup bulunmadığını kalın yazıyla belirtir
+    - CTRL/SHIFT/fareyi sürükleyerek "açma satırında" tümünü seçer (hatta birden fazlasını da)
+    - fold ekleme gereksiz bir geri alınabilir olay oluşturmaz
+    - fold kapatılırken liste aktif satıra atlar
+- zamanlama menüsüne, satırları aktif satırın sonuna göre mevcut zamana hizalamayı sağlayan "Satırları kareye taşı (Son)" seçeneği eklendi
+- altyazı menüsüne "Atanmış dosyaları yükle" seçeneği eklendi (sonradan video yükleme imkânı)
+- Otomasyon scriptleri
+    - "Muteki Fansub" grubu eklendi ve scriptlerimiz buraya taşındı (bindleri değiştirmeye gerek yok)
+    - "Otomasyon" altına, son scripti çalıştırıp bind etmeyi sağlayan bir "Son script" eklendi ("am/last" command adıdır)
+    - son script'e bind edilmiş tuşa hızlıca 2x basarsak, son seçeneklerin bulunduğu bir liste görüntülenir
+
+Sürüm 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- kaynak dosyalar için klasörlerin işlenmesi ve bunlardan video/ses yüklenmesi (böylece video herhangi bir yerde olabilir, aynı ada göre yüklenir)
+- seçili metin bölümünü yoruma alma/yorumdan çıkarma
+- yeni altyazı açılırken ara sıra çökme
+
+Sürüm 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- foldlar artık daralmıyor ve yapıştırma sırasında korunuyor
+- font seçicide iyileştirmeler
+    - yakın zamanda yüklenen fontların listesi (üç günden daha eski olanlar başta kesin olarak görünmeyebilir)
+    - kaydedilmiş geçici bir fontunuz varsa kapatırken uyarır
+    - stil düzenleyici de artık bunu açıyor
+
+Sürüm 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- kaynak satırlar kopyalama/yapıştırma sırasında korunur
+- birleştirilmiş PS görüntü satırlarının seçimi ve normal ok işlevi
+
+Sürüm 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- kaynak satırlar birleştirme sırasında korunur
+- birleştirme sırasında ikinci satırın biçimlendirmelerini eklemez (ör. satır başındaki \i ve/veya \blurt silinmek zorunda kalmaz)
+- ayırma sırasında biçimlendirmeleri yeni satıra ekler (ör. satırları bölmek için \i ve/veya \blurt eklemek ve biçimlendirmek gerekmez)
+
+Sürüm 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- kaynak satırların kodlaması
+- kaynak satırın ayarlardan büyütülebilmesi
+
+Sürüm 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- uzun font adları
+- 3x, 5x, 6x oynatma hızı
+- son satıra çift tıklandığında drag üstündeki satırı seçmesin
+- drag her zaman seçili olanı hareket ettirsin (birden fazla seçimde de)
+- scriptler nedeniyle kaynak satır kaybolmasın
+- görüntü maskesine tıklandığında video/ses satıra atlasın
+- aynı zamanda değillerse 2 görüntü maskesini birleştirmesin
+
+Sürüm 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- kaynak satırlarının not edilmesi ve orijinal onay kutusunun yanında görüntülenmesi
+
+Sürüm 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- eklenen resimler yalnızca tek bir satırda görüntülenir ve çift tıklamayla açılıp kapatılabilir
+- 0.25x - 10x arasında oynatma hızı değiştirme, yalnızca DirectSound ses ile uyumlu
+
+Sürüm 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- yazı tipi seçicisinde iyileştirmeler
+    - optimizasyon
+    - geçici kaydetme olanağı (ör. arama sırasında iyi görünen yazı tiplerini bir kenara koymak)
+    - yazı tipi adları kopyalanabilir
+- orta fare düğmesi yerine sağ tıklamayı basılı tutarak işlevleri ekrandan kaldırır (böylece kullanımı daha kolaydır)
+
+Sürüm 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- yazı tipi seçici
+    - yazı tipi ekleme hata iletişim kutusu düzeltildi
+    - favori olarak işaretlenen yazı tiplerinin listede belirtilmesi
+    - kaydırılmış listede ekleme sırasında listenin yukarı sıçramaması
+
+Sürüm 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- yazı tipi seçici
+    - fs, fscx, fscy ve fsp değerleri de değiştirilebilir
+    - Tüm yazı tipleri, Son kullanılanlar, En sık kullanılanlar, Favoriler ve Özel listeler menü öğeleri
+    - Özel listeler düzenlenebilir, belirli bir altyazının yazı tipleri içe aktarılabilir
+- değişiklikler artık Macarcaya çeviriyi de içeriyor
+
+Sürüm 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Metin değiştirme
+        - satırlarda sağ tık -> Change text
+        - gradienti de destekler ve metni orantılı olarak ayarlamaya çalışır
+        - birden fazla satır kopyalarken CTRL + H yerine
+
+Sürüm 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - pozisyon aracında iyileştirmeler
+        - yatay/dikey kilitleme
+        - küçük pozisyon karesinde click + tekerlek yukarı/aşağı ile kilitleme ayarı
+        - bir pozisyonda birden fazla satır varsa ve bir seçim mevcutsa, listede nerede olduğuna bakmaksızın onu taşır
+        - garip seçim hatası düzeltildi (birden fazla seçimde yanlış tıklamadan sonra birden fazla satırın seçilmesi garipti)
+    - font seçicide iyileştirmeler:
+        - CACHE ekledim, böylece yalnızca ilk sefer yavaş olur, sonrasında son derece hızlıdır. Fontları updatelerseniz, cache'i temizleyen bir "Refresh" düğmesi var (ör. aksan eklenir) - yeni fontta GEREK YOK!
+        - modalın konumunu ve boyutunu Aegisub kapatıldıktan sonra da hatırlar
+        - preview (tekerlek ile) ve sample sütununun boyutu değiştirilebilir (üzerindeki kaydırıcıyla)
+        - çift tıklamayla da fontu kabul eder
+        - enter ile de fontu kabul eder
+        - arama alanında aşağı ok/TAB durumunda ilk öğeyi seçer, böylece açmak, aramak, okla seçmek ve enterlamak oldukça hızlı bir şekilde fare olmadan yapılabilir
+    - video oynatılırken fareyi üzerinden geçirdiğinizde artık video lag yapmıyor
+    - orta fare düğmesine hızlıca basmak her şeyi anında gizler ve tekrar basmak videoda gösterir (ör. clip sırasında sonucu hemen görebilmek için)

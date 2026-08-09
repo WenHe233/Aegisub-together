@@ -1,0 +1,195 @@
+Version 4.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+- Font selector
+    - samples are prepared in advance and remain on disk, so scrolling the list does not get stuck
+    - the cache survives closing the program and only processes new fonts
+    - changing the sample size is immediate
+    - Refresh button for a complete rebuild
+- The style box in the editing bar does not expand over the text editor
+- The language of the AI check can be configured
+- The font selector's language filters can be edited in the settings
+- Changelog in our own language, with a language selector
+- The program has been translated into 30 languages
+
+Version 4.2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+- Brush behaviour in the vector clip refined, it can handle intersections
+- Pipette mode
+    - the range can also be drawn freehand
+    - auto fill refined
+    - edge smoothing and automatic snapping
+    - templates for similar clips
+    - optimisation
+
+Version 4.2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+- Undo now works while creating a mask as well
+- Growing shape creation icons fixed
+
+Version 4.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+- "open/video/recent" command
+- "Open MKV" option in the file menu, which opens the mkv as subtitles and as video at once
+The rest of the update revolved around the visual tools:
+- Cross
+    - distance measurement by holding the mouse button
+- Drag (pos/move)
+    - laggy movement fixed, it is lightning fast now
+    - a new option was added at the bottom for centring inside a given rectangle
+- Vector clip
+    - you can switch between shapes in the first mode
+    - delete the active shape with DELETE
+    - BRUSH mode (NEW!): add to or take away from the selected area with a brush
+    - DELETE mode: with several points selected, all of them can be deleted
+    - PIPETTE mode (NEW!): enters a separate section where shapes can be created inside a given range and finally accepted, which adds them to the existing clip
+        - 4 modes: colour range add/subtract and brush add/subtract
+        - tolerance adjustment for the colour range
+        - offset in pixels (negative values are allowed too)
+        - AI recognition
+- Mask editing (NEW!)
+    - an existing mask can be edited directly, as if it were a vector clip
+    - it received every vector clip mode, the new ones included
+- Masking (NEW!)
+    - masks can be created with a rectangle, with points, with a brush or freehand
+    - on accepting the created mask it takes a colour from its edge automatically and creates the line
+    - PIPETTE mode is available here as well
+    - AI text removal / custom prompt for the selected area
+- Shape drawing (NEW!)
+    - predefined shapes can be created, which are made with blur and colour adjustment after accepting them
+    - you can switch between hollow and filled shapes
+    - holding ALT forces a regular shape (a square or a circle, for example)
+    - line thickness can be set as well
+    - corner rounding can be set as well
+    - freehand drawing is possible too (for circling something, for example)
+
+Version 4.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+- Behaviour of translation checking with many lines
+- AI features related to karaoke (audio recognition, kanji, timing)
+- Searching in the subtitles found in a folder (in the edit menu)
+- Updating handled inside Aegisub
+
+Version 4.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+- Disappearing source line fixed, hopefully it will not cause trouble any more
+- Loading failed when an MKV contained a lot of material, that was fixed too
+- Option to set up an AI connection (model selection, token entry, and so on)
+- Checking the translation of selected lines from Japanese with AI, based on audio recognition
+- Post-checking the whole subtitle or selected lines (at least 100) with AI
+
+Version 3.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+- Collapsed PS image lines
+    - open and close with a middle mouse click
+    - do not mark themselves in red
+    - bold marks whether the line is currently on the video (shown at the line number both collapsed and expanded)
+    - masks can also be selected by dragging the mouse across them
+- Fold lines
+    - a middle mouse click ALSO opens and closes them
+    - the "opening line" is not marked in red when the cursor is on it
+    - the "opening line" marks in bold whether it is currently on the video
+    - CTRL/SHIFT/mouse drag on the "opening line" selects the whole fold (even several of them)
+    - pasting a fold no longer creates a needless undo step
+    - on collapsing a fold the list jumps to the active line
+- "Shift lines to the frame (End)" option in the timing menu, for aligning lines to the current frame by the end of the active line
+- "Load linked files" option in the subtitle menu (a way to load video afterwards)
+- Automation scripts
+    - the "Muteki Fansub" group appeared and our scripts moved here (bindings do not need changing)
+    - a "Last script" entry was added under "Automation" for running and binding the last one ("am/last" is the command name)
+    - pressing the button bound to the last script twice quickly shows a list of the most recent options
+
+Version 3.5.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+- rendering folders for source files, and loading video/audio from them (so the video can be anywhere, it is loaded by matching name)
+- putting the selected text into a comment and taking it out again
+- occasional crash when opening a new subtitle
+
+Version 3.5.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+- folds do not collapse and are kept when pasting
+- font picker refinements
+    - list of recently installed fonts (installed within the last three days; not certain at the very beginning)
+    - warns on closing if you have a temporary font saved
+    - the style editor now opens this one as well
+
+Version 3.5.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+- source lines are kept when copying and pasting
+- selecting collapsed PS image lines and proper arrow key behaviour
+
+Version 3.5.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+- source lines are kept when joining
+- when joining, the formatting of the second line is not added (there is no need to delete a leading \i and/or \blur, for example)
+- when splitting, the formatting is added to the new line (so there is no need to add \i and/or \blur, and typesetters do not have to do it when breaking lines)
+
+Version 3.5.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+- encoding of source lines
+- the source line can be enlarged in the settings
+
+Version 3.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+- long font names
+- 3x, 5x, 6x playback speed
+- on double clicking the last line, drag should not select the one above it
+- drag should always move what is selected (with several lines selected as well)
+- the source line should not disappear because of scripts
+- clicking an image mask should make the video/audio jump to the line
+- two image masks should not be merged if they are not at the same time
+
+Version 3.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+- commenting and displaying source lines next to the original checkbox
+
+Version 3.3 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+- pasted images appear on a single line only and can be opened and closed with a double click
+- playback speed switching between 0.25x and 10x, compatible with DirectSound audio only
+
+Version 3.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+- font picker refinements
+    - optimisation
+    - temporary saving option (for setting aside promising fonts while searching, for example)
+    - font names can be copied
+- instead of the middle mouse button, holding down the right button hides the functions from the screen (which is more comfortable to use)
+
+Version 3.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+- font picker
+    - font adding error dialog fix
+    - fonts marked as favourites are indicated in the list
+    - the scrolled list should not jump to the top when adding to the list
+
+Version 3.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+- font picker
+    - fs, fscx, fscy and fsp values can be changed as well
+    - All fonts, Recent, Most used, Favourites and Custom lists entries
+    - Custom lists can be edited, and the fonts of a given subtitle imported
+- the changes now include the Hungarian translation
+
+Version 2.2 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+    - Text replacement
+        - right click on the lines -> Change text
+        - gradients are supported too and it tries to set the text proportionally
+        - instead of CTRL + H when copying several lines
+
+Version 2.1 ---
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+    - position tool refinement
+        - horizontal/vertical locking
+        - locking is adjusted with click + scroll up/down on the small position square
+        - if several lines share one position and there is one selection, that one is moved, wherever it is in the list
+        - odd selection bug fixed (with several lines selected, a misclick selected several lines strangely)
+    - font picker refinement:
+        - I added a CACHE, so it is slow once and blazing fast afterwards. If fonts were updated there is a "Refresh" button which empties the cache (when an accent is added, for example) - NOT NEEDED for a new font!
+        - it remembers the position and size of the modal even after Aegisub is closed
+        - the size of the preview (with the scroll wheel) and of the sample column can be changed (slider above it)
+        - a double click also accepts the font
+        - Enter also accepts the font
+        - down arrow/TAB in the search box selects the first entry, so you can simply open, search, select with the arrow keys and press Enter, quite quickly without a mouse
+    - the video no longer lags when you move the mouse across it during playback
+    - a quick middle mouse click hides everything at once and pressing it again shows it on the video (so that the result of a clip can be seen right away, for example)
