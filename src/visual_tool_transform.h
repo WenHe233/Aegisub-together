@@ -1,0 +1,494 @@
+// Copyright (c) 2026, Muteki Aegisub
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+/// @file visual_tool_transform.h
+/// @brief Reshaping the selected drawings by dragging on the video
+
+#pragma once
+
+#include "text_to_shape.h"
+#include "typesetting_transform.h"
+#include "visual_feature.h"
+#include "visual_tool.h"
+
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+
+class OpenGLText;
+
+/// A linear map of the plane: what a scale, a turn and a lean come to when they are put
+/// together. Only the two by two part - where something sits is kept separately.
+struct TransformMatrix2 {
+	double a = 1, b = 0;
+	double c = 0, d = 1;
+};
+
+/// Which shape of transform the handles describe.
+enum class VisualToolTransformMode {
+	Free,     ///< scale, rotate and move, written as tags rather than baked into a shape
+	Arch,     ///< two handles above and two below, bending the top and bottom edges
+	Distort,  ///< four corner handles, straight lines staying straight
+	Warp      ///< Photoshop's warp: a 3x3 mesh over a bicubic patch
+};
+
+/// The buttons of the tool's own bar across the top of the video.
+enum class VisualToolTransformAction {
+	None,
+	Undo,
+	Redo,
+	Apply,
+	Cancel,
+	/// Whether the border, the shadow and the blur are scaled along with the text.
+	RecalcBord,
+	RecalcShad,
+	/// Whether the border and the shadow are kept exactly, by being drawn as shapes. An upright
+	/// pen cannot be leaned or squashed, so this is the only way they can follow one - and it
+	/// answers the same question as the two above, which is why it rules them out.
+	MaintainDecor,
+	RecalcBlur,
+	RecalcClip
+};
+
+/// Bend or distort the selected drawings by dragging handles over the video.
+///
+/// Nothing is written while the reshaping is being worked out. The video is given copies
+/// of the lines carrying the reshaped drawing and renders those instead of the originals,
+/// so what is on screen is the real result - while the file, the edit box and the undo
+/// history stay untouched until Apply. Cancel has nothing to put back, because nothing was
+/// ever taken away.
+///
+/// Every drag maps the *original* drawings rather than the last result, so dragging back
+/// and forth cannot make the shape creep.
+class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
+	VisualToolTransformMode mode;
+
+	std::unique_ptr<OpenGLText> gl_text;
+
+	/// The drawings being reshaped. Holds the original shapes, the result of the last
+	/// mapping, and the outline that is drawn while it is only a preview.
+	std::optional<typesetting::ShapeEditor> editor;
+
+	/// The box the drawings lie in, at whatever angle they lie at.
+	typesetting::OrientedBox box;
+
+	/// The four corners the distort drags. The arch and the warp use the control net.
+	Vector2D corners[4];
+	/// What those corners come to as a map. Kept rather than built where it is needed, since
+	/// it is asked for once per corner of every line on every repaint.
+	typesetting::PointMap distort_map;
+	typesetting::WarpNet net;
+
+	/// A drag of the whole shape rather than of one handle: the four corners as they were when
+	/// it began, and where it was taken hold of. Kept so that every mouse move is worked out
+	/// from the start of the gesture and rounding cannot walk the shape away.
+	Vector2D hold_corners[4];
+	Vector2D hold_start;
+
+	/// A drag of the mesh itself rather than of a handle: where on the patch it started,
+	/// what the net was at the time, and where that point of the surface was. Kept so
+	/// every mouse move works out from the start of the gesture and the mesh cannot creep.
+	double hold_u = 0;
+	double hold_v = 0;
+	typesetting::WarpNet hold_net;
+	Vector2D hold_origin;
+
+	/// One selected line as the free transform found it. Everything it needs is something
+	/// ASS can say, so nothing here is baked into a shape.
+	struct TagLine {
+		AssDialogue *line = nullptr;
+
+		/// A piece of another line, made for the lean and not in the file, so it has to be
+		/// kept alive here; `source` is the line in the file it was cut from.
+		std::shared_ptr<AssDialogue> owned;
+		AssDialogue *source = nullptr;
+		/// Whether this line has been cut into pieces, so what is drawn is the pieces and
+		/// this line itself has to stop being drawn.
+		bool replaced = false;
+
+		/// Where the line stands now. Each drag folds what came before it into these, so
+		/// that a gesture is always measured from a standing start.
+		Vector2D pos;
+		/// Where the line is on the frame on screen, and the run it is on if it moves. `pos` is
+		/// that same point: everything is worked out from where the line is now, and both ends of
+		/// the run are taken through the gesture when it is written back.
+		text_to_shape::Placement placed;
+		Vector2D org;        ///< bad when the line has none, and then \frz turns about pos
+		Vector2D scale{100.f, 100.f};
+		Vector2D shear;      ///< \fax and \fay
+		Vector2D bord;       ///< the border, per axis
+		Vector2D shad;       ///< the shadow offset, per axis
+		double blur = 0;     ///< \blur
+		double be = 0;       ///< \be
+
+		/// The line's border and shadow as shapes, in the frame its own tags act on, worked out
+		/// once from the line as the tool found it. Only the tags on them change as the gesture
+		/// goes on: the shapes are what the letters were, so a lean leans them with the letters.
+		std::vector<text_to_shape::Decoration> decor;
+		bool decor_built = false;
+
+		/// The line's clip, if it has one. Kept as it was read, so that the gesture is
+		/// always applied to the original rather than to its own last result.
+		struct Clip {
+			bool present = false;
+			bool inverse = false;    ///< \iclip rather than \clip
+			bool rectangle = false;  ///< the two-corner form
+			Vector2D first;
+			Vector2D second;
+			int scale = 1;           ///< the \clip(<n>, ...) the drawing was written with
+			std::string drawing;
+		};
+		Clip clip;
+		float angle = 0;
+		/// \frx and \fry. A line with either of these is not a rectangle on screen, so it is
+		/// carried as the four corners it really has instead of as a scale and a turn.
+		double angle_x = 0;
+		double angle_y = 0;
+		/// The line's own extents before its scale, which is what the corners are worked out
+		/// from - and worked back to.
+		Vector2D box_first;
+		Vector2D box_second;
+		Vector2D size;       ///< how big it is on screen, with its scale applied
+		Vector2D ink;        ///< the top left of its ink, relative to where it is anchored
+		int align = 2;
+		bool drawing = false;  ///< a shape rather than words, which leans about its own point
+		/// Whether the line already says how it wants to be wrapped, and whether it is being
+		/// wrapped as it stands. A line that is not wrapped can have wrapping turned off
+		/// without moving anything; one that is would collapse into a single row.
+		bool has_wrap_style = false;
+		bool wrapped = false;
+
+		/// What the line said when the tool opened, so that only what really changed is
+		/// written back.
+		Vector2D start_pos;
+		Vector2D start_org;
+		Vector2D start_scale{100.f, 100.f};
+		Vector2D start_shear;
+		Vector2D start_bord;
+		Vector2D start_shad;
+		double start_blur = 0;
+		double start_be = 0;
+		float start_angle = 0;
+	};
+	std::vector<TagLine> tag_lines;
+
+	/// The same selection with every row, and every stretch that leans about its own point,
+	/// on a line of its own. Built the first time a lean is dragged, because that is the only
+	/// gesture that needs it, and kept for the rest of the session.
+	std::vector<TagLine> split_lines;
+	/// Whether the pieces are what the gesture is being applied to.
+	bool shear_split = false;
+	/// Whether the pieces have been worked out yet. They are only worth building once, and a
+	/// selection where no line needs breaking up leaves this true and the pieces empty.
+	bool split_built = false;
+
+	/// What the gesture has come to so far, all measured from where it started.
+	Vector2D gesture_scale{1.f, 1.f};
+	/// How far the box leans, as \fax and \fay do, in the frame the box was read in.
+	Vector2D gesture_shear{0.f, 0.f};
+	float shear_frame_angle = 0;
+
+	/// Everything done to the box before the gesture in progress, as a map about its middle.
+	/// The box itself is never re-measured, so it never jumps: this is what carries the shape
+	/// it has taken, including a lean, which a rectangle could not hold.
+	TransformMatrix2 frame_linear;
+	Vector2D frame_offset{0.f, 0.f};
+	float gesture_angle = 0;
+	Vector2D gesture_move{0.f, 0.f};
+	/// The corner of the box that stays put while the other one is dragged, in the box's
+	/// own frame.
+	Vector2D gesture_anchor{0.f, 0.f};
+	/// Where the mouse was when a move or a rotation began.
+	Vector2D gesture_start;
+	float gesture_start_angle = 0;
+
+	/// Whether anything has been dragged yet, which is what makes Apply worth pressing.
+	bool touched = false;
+
+	/// Whether any selected line is long enough that the margins could still re-break it, in
+	/// which case the bar says so.
+	bool wrap_hint = false;
+
+	/// Whether the lines that could not be converted have already been complained about,
+	/// so it is said once per session rather than on every refresh.
+	bool reported = false;
+
+	/// Set once the tool has asked to be replaced. Several things can end a session at
+	/// almost the same moment - a button, a key, the selection changing - and only the
+	/// first of them should get to schedule the switch.
+	bool leaving = false;
+
+	/// The line the session belongs to. When another one is picked it is a new session:
+	/// new shapes, and no history carried over from the old one.
+	AssDialogue *session_line = nullptr;
+
+	/// One step of the tool's own history. The handles say everything, because the shape
+	/// is always mapped from the untouched original.
+	struct HistoryState {
+		Vector2D corners[4];
+		typesetting::WarpNet net;
+		Vector2D scale{1.f, 1.f};
+		float angle = 0;
+		Vector2D move{0.f, 0.f};
+		Vector2D anchor{0.f, 0.f};
+		Vector2D shear{0.f, 0.f};
+		/// What had been done to the box before this step.
+		TransformMatrix2 frame_linear;
+		Vector2D frame_offset{0.f, 0.f};
+		/// Whether the lines had been broken up for the lean yet, so a step back can put
+		/// them together again.
+		bool split = false;
+	};
+	std::vector<HistoryState> undo_history;
+	std::vector<HistoryState> redo_history;
+
+	/// Whether the things measured in pixels rather than in ems follow the scale. On by
+	/// default: a border that stays put while the text grows reads as a different design.
+	bool recalc_bord = true;
+	bool recalc_shad = true;
+	/// Off by default, because it turns one line into three. The distort has it on from the start:
+	/// there is no distort without a lean, and a lean is exactly what a pen cannot follow.
+	bool maintain_decor = false;
+	bool recalc_blur = true;
+	bool recalc_clip = true;
+
+	VisualToolTransformAction hovered_action = VisualToolTransformAction::None;
+	mutable std::map<std::string, float> text_width_cache;
+
+	/// Whether any line has a border or a shadow worth drawing as a shape, which is what decides
+	/// whether accepting adds lines to the file or only rewrites them.
+	bool HasDecor() const;
+
+	/// Whether any selected line has a border or a shadow that the switches can only come close to,
+	/// so that the bar can say as much. Nothing to say once they are being kept as shapes.
+	bool DecorHint() const;
+
+	/// Whether a line's letters are already inside the shape that stands for its border, painted
+	/// the same colour - in which case drawing them again adds nothing and the line of letters is
+	/// left out altogether.
+	bool Covered(TagLine const& source) const;
+
+	/// Work out the shapes that stand for every line's border and shadow, for the lines that have
+	/// not had theirs worked out yet. Measuring a line costs a font and a walk along every letter
+	/// of it, so it is done once and kept - and only when it is wanted at all.
+	void EnsureDecor();
+
+	/// One line's border, or its shadow, as the line it has to become: the same tags the letters
+	/// get, so that it leans and turns with them, and the shape in place of the words.
+	std::string DecorLineText(TagLine const& original,
+	                          text_to_shape::Decoration const& decor, bool shadow) const;
+
+	/// Whether the window itself is on its way out, in which case there is no picture left worth
+	/// putting right: handing the lines back would only cost one more rendered frame, which is the
+	/// flash seen on closing the program in the middle of a session.
+	bool WindowGoing() const;
+
+	/// Whether this mode says what it does in tags rather than in an outline. The free
+	/// transform and the distort do; the arch and the warp bend curves no tag can describe.
+	bool TagsMode() const;
+
+	/// Whether there is anything to work on. The shape modes hold an editor; the modes that
+	/// speak in tags hold the lines themselves.
+	bool Active() const;
+
+	/// Whether the lines this session is holding are still in the file. Opening another file
+	/// destroys all of them, and anything done through those pointers afterwards is a crash.
+	bool LinesAlive() const;
+	/// The file was replaced wholesale, so there is nothing left to hold on to.
+	void OnFileReplaced(int type);
+
+	void Collect();
+	/// Hand the video the reshaped lines, or the originals again to undo that.
+	void SendPreview();
+	void ClearPreview();
+	/// Lock the line editor while the preview owns what the lines say, because editing them
+	/// from under it would be editing something the user cannot see.
+	void LockEditing(bool locked);
+	/// And the menus that would run a script over the lines while the preview is what is on
+	/// screen: the scripts would read the file rather than the picture, and committing would
+	/// throw the reshaping away.
+	void LockMenus(bool locked);
+
+	/// The controls LockEditing switched off, so that only those are switched back on -
+	/// some of them were already unusable for reasons of their own.
+	void PlaceFeatures();
+	/// Move the existing handles to where the state now says, without building the list
+	/// again - which would pull the ground out from under a drag in progress.
+	void SyncFeatures();
+	/// Work out the preview from where the handles are. Writes nothing.
+	void Rebuild();
+
+	/// Read the selected lines as they are, for a transform written in tags.
+	bool CollectTags();
+	/// Everything one line says that the transform has to know, measured as it stands.
+	TagLine ReadLine(AssDialogue *line);
+	/// The lines the gesture is applied to: the selection, or its pieces once a lean has
+	/// asked for them.
+	std::vector<TagLine> const& Lines() const;
+	/// Break the selection up so that a lean can be written for each row and each stretch
+	/// that leans about its own point. Does nothing when no line needs it.
+	void EnsureShearSplit();
+	/// Measure the box the handles sit on, from the lines as they now stand.
+	void BuildBox();
+
+	/// What one line becomes under the gesture in progress: the numbers, before anything is
+	/// decided about which of them are worth writing. The one place that works this out, so
+	/// that writing the tags and folding the gesture into the starting point cannot drift
+	/// apart.
+	struct Applied {
+		Vector2D pos;
+		Vector2D org;
+		Vector2D scale{100.f, 100.f};
+		double shear_x = 0;
+		double angle = 0;
+		/// Only for a line turned out of the plane, where these are solved from the corners
+		/// rather than left alone.
+		bool perspective = false;
+		double shear_y = 0;
+		double angle_x = 0;
+		double angle_y = 0;
+	};
+	Applied ApplyGesture(TagLine const& original) const;
+
+	/// Where the two ends of a line's run have got to under the gesture - the same point twice for
+	/// a line that does not move. A run is a straight mixture of its ends and the gesture is affine,
+	/// so taking the ends through it is exact on every frame of the run.
+	std::pair<Vector2D, Vector2D> MovedEnds(TagLine const& original, Applied const& applied) const;
+	/// Whether this line is turned out of the plane, and so has to be carried by its corners.
+	static bool Perspective(TagLine const& original);
+	/// The four corners of a line's box on screen, as it was read.
+	void LineQuad(TagLine const& original, Vector2D corners[4]) const;
+	/// What one line would say with the gesture applied.
+	std::string TagLineText(TagLine const& original) const;
+	/// The same gesture applied to a clip: its coordinates are script coordinates like any
+	/// others. Returns an empty string when there is nothing to write.
+	std::string MapClip(TagLine::Clip const& clip) const;
+	/// What clip a line carries, if any.
+	static TagLine::Clip ReadClip(AssDialogue *line);
+
+	/// Carry the transform into the tags set partway through a line. A value written there
+	/// overrides the one at the start, so without this the tail of a line would ignore the
+	/// whole gesture.
+	///
+	/// Called before the start of the line is written, so that the state in force at each of
+	/// the later blocks can still be read from the line itself.
+	void AdjustLaterTags(AssDialogue *line, TagLine const& original, Vector2D scale_ratio,
+	                     double turn, double grow_x, double grow_y, double grow) const;
+	/// Where a point of the box ends up under the gesture in progress.
+	Vector2D MapPoint(Vector2D point) const;
+	/// The frame and the gesture in progress as one map, which is everything that has been
+	/// done to the selection since the tool opened.
+	TransformMatrix2 TotalMatrix() const;
+	/// How much bigger the selection has become along each axis, which is what the things
+	/// measured in pixels - the border, the shadow, the blur - have to be told.
+	Vector2D FrameGrowth() const;
+	/// Whether what has been done leaves a rectangle a rectangle. Only then can a rectangular
+	/// clip stay one.
+	bool SquareOn() const;
+
+	/// A point of the box under the gesture alone, before the frame is applied. This is the
+	/// space a gesture is measured in, and the space a handle's own maths works in.
+	Vector2D GesturePoint(Vector2D point) const;
+	/// The frame, and its inverse - which is how a mouse position on screen is brought back
+	/// into the space the gesture works in.
+	Vector2D FramePoint(Vector2D point) const;
+	Vector2D FrameInverse(Vector2D point) const;
+	/// What the gesture turns about, on screen.
+	Vector2D GesturePivot() const;
+	/// Compose the gesture onto the frame and start a fresh one. Called at the beginning of
+	/// every drag, so that no gesture is ever measured against a state another gesture has
+	/// already moved - and because it is a multiplication, nothing is re-measured and nothing
+	/// jumps.
+	void RebaseGesture();
+	/// Feature index -> which corner or side of the box it drags, which point stays, and
+	/// what it does: 0 sizes, 1 turns, 2 leans.
+	void HandleRole(int index, Vector2D& grabbed, Vector2D& anchor, int& role) const;
+
+	/// How many handles this mode has, and which point of the net each one is.
+	int HandleCount() const;
+	Vector2D HandlePosition(int index) const;
+	void MoveHandle(int index, Vector2D to);
+
+	HistoryState Capture() const;
+	void RestoreState(HistoryState const& state);
+	void PushHistory();
+	bool UndoHistory();
+	bool RedoHistory();
+
+	/// Write the reshaping into the lines and leave the tool.
+	void Accept();
+	/// Leave without writing anything.
+	void Reject();
+	/// Hand the video back to the tool that was in use before this one.
+	void ExitTool();
+
+	wxString LabelFor(VisualToolTransformAction action) const;
+	float MeasuredTextWidth(wxString const& label, bool bold) const;
+	std::pair<Vector2D, Vector2D> ActionBounds(VisualToolTransformAction action) const;
+	float TopBarHeight() const;
+	VisualToolTransformAction ActionAt(Vector2D point) const;
+	bool ActionEnabled(VisualToolTransformAction action) const;
+	void Perform(VisualToolTransformAction action);
+	void DrawTopBar();
+	/// The free transform's own handles: plain outlines rather than the crossed blocks the
+	/// other tools use, because there are sixteen of them and they sit close together.
+	void DrawFreeHandles();
+	/// One corner: a small empty square, which is what a corner looks like in every mode.
+	void DrawCorner(Vector2D at, bool current);
+	/// The handles of the modes that are not the free transform. The corners are drawn as
+	/// corners; everything else is left to the framework, which already draws it well.
+	void DrawShapeHandles();
+
+	/// Swallowed. The framework commits after every mouse move of a drag, which is how
+	/// the other tools push their changes out - and a commit makes the video re-read the
+	/// file, throwing away the preview it was holding. Applying commits explicitly.
+	void Commit(wxString message = wxString()) override;
+
+	bool InitializeDrag(VisualDraggableFeature *feature) override;
+	void UpdateDrag(VisualDraggableFeature *feature) override;
+
+	bool InitializeHold() override;
+	void UpdateHold() override;
+
+	void DoRefresh() override;
+	void OnLineChanged() override;
+	/// Zooming or panning the video changes nothing about the shapes, so it must not send
+	/// the tool back to the file - that used to throw the reshaping away.
+	void OnCoordinateSystemsChanged() override;
+	void Draw() override;
+
+	/// Any change of what is selected ends the session: the shapes it is holding belong
+	/// to the lines that were selected when it started.
+	agi::signal::Connection selection_connection;
+
+	/// The visual tool command to go back to when this one is done with.
+	std::string return_tool;
+
+public:
+	VisualToolTransform(VideoDisplay *parent, agi::Context *context,
+	                    VisualToolTransformMode mode, std::string return_tool);
+	~VisualToolTransform();
+
+	void OnMouseEvent(wxMouseEvent &event) override;
+	bool OnKeyEvent(wxKeyEvent &event) override;
+
+private:
+	/// Escape, Enter and the history keys, caught on the whole window rather than on the
+	/// video: the video only sees them while it has the focus, and it does not always have
+	/// it - which is why Escape sometimes did nothing.
+	void OnCharHook(wxKeyEvent &event);
+	bool HandleKey(int key, bool control, bool shift);
+};

@@ -28,7 +28,7 @@ static bool HasSameTiming(const AssDialogue* a, const AssDialogue* b) {
     return a->Start == b->Start && a->End == b->End;
 }
 
-static bool IsMaskLine(const AssDialogue* d) {
+bool IsImageMaskLine(const AssDialogue* d) {
     const std::string& raw = d->Text.get();
 
     if (raw.find("\\p1") == std::string::npos)
@@ -90,7 +90,7 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines) {
     int n = (int)lines.size();
 
     while (i < n) {
-        if (!IsMaskLine(lines[i])) {
+        if (!IsImageMaskLine(lines[i])) {
             i++;
             continue;
         }
@@ -100,7 +100,7 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines) {
 
         AssDialogue* base = lines[start];
 
-        while (j < n && HasSameTiming(base, lines[j]) && IsMaskLine(lines[j]))
+        while (j < n && HasSameTiming(base, lines[j]) && IsImageMaskLine(lines[j]))
             j++;
 
         int count = j - start;

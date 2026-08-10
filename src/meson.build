@@ -54,6 +54,7 @@ aegisub_src = files(
     'command/time.cpp',
     'command/timecode.cpp',
     'command/tool.cpp',
+    'command/typesetting.cpp',
     'command/video.cpp',
     'command/vis_tool.cpp',
     'compat.cpp',
@@ -156,6 +157,9 @@ aegisub_src = files(
     'vector3d.cpp',
     'version.cpp',
     'video_box.cpp',
+    'text_to_shape.cpp',
+    'typesetting_perspective.cpp',
+    'typesetting_transform.cpp',
     'video_color_pick.cpp',
     'video_controller.cpp',
     'video_display.cpp',
@@ -178,6 +182,7 @@ aegisub_src = files(
     'visual_tool_rotatexy.cpp',
     'visual_tool_rotatez.cpp',
     'visual_tool_scale.cpp',
+    'visual_tool_transform.cpp',
     'visual_tool_vector_clip.cpp',
 )
 

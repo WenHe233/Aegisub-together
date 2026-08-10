@@ -68,6 +68,9 @@ struct Context {
 	AudioBox *audioBox = nullptr;
 	AudioKaraoke *karaoke = nullptr;
 	BaseGrid *subsGrid = nullptr;
+	/// The line editing panel. Held only so that it can be locked while something else
+	/// owns what the selected lines say.
+	wxWindow *editBox = nullptr;
 	std::unique_ptr<DialogManager> dialog;
 	FrameMain *frame = nullptr;
 	VideoDisplay *videoDisplay = nullptr;

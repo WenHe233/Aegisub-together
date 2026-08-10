@@ -1541,30 +1541,162 @@ namespace {
 			(std::abs(cd_b) <= epsilon && point_on_segment(b, c, d));
 	}
 
+	struct ContourBounds {
+		float min_x = 0, min_y = 0, max_x = 0, max_y = 0;
+		bool valid = false;
+	};
+
+	ContourBounds contour_bounds(std::vector<Vector2D> const& contour) {
+		ContourBounds bounds;
+		for (auto point : contour) {
+			if (!bounds.valid) {
+				bounds = {point.X(), point.Y(), point.X(), point.Y(), true};
+				continue;
+			}
+			bounds.min_x = std::min(bounds.min_x, point.X());
+			bounds.min_y = std::min(bounds.min_y, point.Y());
+			bounds.max_x = std::max(bounds.max_x, point.X());
+			bounds.max_y = std::max(bounds.max_y, point.Y());
+		}
+		return bounds;
+	}
+
+	/// A uniform grid over one contour's segments, so asking whether something
+	/// crosses it does not mean looking at every segment.
+	///
+	/// A pixel-traced outline - which is what an AI selection becomes - runs to
+	/// thousands of points, and every one of these questions used to be answered
+	/// by walking all of them against all of them. The answer is the same, it just
+	/// stops costing the square of the outline.
+	class SegmentGrid {
+		std::vector<Vector2D> const& contour;
+		std::vector<std::vector<int>> cells;
+		/// Segments covering too much of the grid to be worth bucketing, which are
+		/// looked at whatever is being asked.
+		std::vector<int> wide;
+		float origin_x = 0, origin_y = 0;
+		float cell_width = 1, cell_height = 1;
+		int columns = 1, rows = 1;
+
+		void Range(Vector2D a, Vector2D b, int& first_column, int& last_column,
+			int& first_row, int& last_row) const {
+			// segments_intersect counts a near miss as a touch, so the box a
+			// segment is looked up in has to be that much wider than the segment.
+			constexpr float slack = .01f;
+			float min_x = std::min(a.X(), b.X()) - slack;
+			float max_x = std::max(a.X(), b.X()) + slack;
+			float min_y = std::min(a.Y(), b.Y()) - slack;
+			float max_y = std::max(a.Y(), b.Y()) + slack;
+			auto column_of = [&](float x) {
+				return std::clamp(static_cast<int>(std::floor((x - origin_x) / cell_width)),
+					0, columns - 1);
+			};
+			auto row_of = [&](float y) {
+				return std::clamp(static_cast<int>(std::floor((y - origin_y) / cell_height)),
+					0, rows - 1);
+			};
+			first_column = column_of(min_x);
+			last_column = column_of(max_x);
+			first_row = row_of(min_y);
+			last_row = row_of(max_y);
+		}
+
+		Vector2D End(int index) const {
+			return contour[(static_cast<size_t>(index) + 1) % contour.size()];
+		}
+
+	public:
+		explicit SegmentGrid(std::vector<Vector2D> const& source) : contour(source) {
+			auto bounds = contour_bounds(source);
+			if (!bounds.valid || source.size() < 2) return;
+			// About two segments to a cell: enough to make the lookup cheap without
+			// spending more on the grid than on the question.
+			int side = std::clamp(static_cast<int>(
+				std::lround(std::sqrt(static_cast<double>(source.size()) / 2.0))), 1, 512);
+			columns = rows = side;
+			origin_x = bounds.min_x;
+			origin_y = bounds.min_y;
+			cell_width = std::max((bounds.max_x - bounds.min_x) / columns, 1e-3f);
+			cell_height = std::max((bounds.max_y - bounds.min_y) / rows, 1e-3f);
+			cells.assign(static_cast<size_t>(columns) * rows, {});
+			for (size_t i = 0; i < source.size(); ++i) {
+				int first_column, last_column, first_row, last_row;
+				Range(source[i], End(static_cast<int>(i)),
+					first_column, last_column, first_row, last_row);
+				size_t span = static_cast<size_t>(last_column - first_column + 1) *
+					(last_row - first_row + 1);
+				if (span > 64) {
+					wide.push_back(static_cast<int>(i));
+					continue;
+				}
+				for (int row = first_row; row <= last_row; ++row)
+					for (int column = first_column; column <= last_column; ++column)
+						cells[static_cast<size_t>(row) * columns + column]
+							.push_back(static_cast<int>(i));
+			}
+		}
+
+		/// Whether any of this contour's segments meets the given one. `skip`
+		/// answers for a segment index, so a contour can be asked about itself
+		/// without its neighbours counting.
+		template<typename Skip>
+		bool Meets(Vector2D a, Vector2D b, Skip&& skip) const {
+			if (contour.size() < 2) return false;
+			for (int index : wide) {
+				if (skip(index)) continue;
+				if (segments_intersect(a, b, contour[index], End(index))) return true;
+			}
+			if (cells.empty()) return false;
+			int first_column, last_column, first_row, last_row;
+			Range(a, b, first_column, last_column, first_row, last_row);
+			for (int row = first_row; row <= last_row; ++row) {
+				for (int column = first_column; column <= last_column; ++column) {
+					for (int index : cells[static_cast<size_t>(row) * columns + column]) {
+						if (skip(index)) continue;
+						if (segments_intersect(a, b, contour[index], End(index))) return true;
+					}
+				}
+			}
+			return false;
+		}
+	};
+
 	bool contour_self_intersects(std::vector<Vector2D> const& contour) {
 		if (contour.size() < 4) return false;
-		for (size_t i = 0; i < contour.size(); ++i) {
-			size_t i_next = (i + 1) % contour.size();
-			for (size_t j = i + 1; j < contour.size(); ++j) {
-				size_t j_next = (j + 1) % contour.size();
-				if (i == j || i_next == j || j_next == i) continue;
-				if (segments_intersect(contour[i], contour[i_next],
-					contour[j], contour[j_next]))
-					return true;
-			}
+		size_t count = contour.size();
+		SegmentGrid grid(contour);
+		for (size_t i = 0; i < count; ++i) {
+			// A segment always meets itself and the two it shares an end with.
+			auto skip = [&](int index) {
+				size_t j = static_cast<size_t>(index);
+				return j == i || (j + 1) % count == i || (i + 1) % count == j;
+			};
+			if (grid.Meets(contour[i], contour[(i + 1) % count], skip)) return true;
 		}
 		return false;
 	}
 
 	bool contours_intersect(std::vector<Vector2D> const& first,
 		std::vector<Vector2D> const& second) {
-		for (size_t i = 0; i < first.size(); ++i) {
-			for (size_t j = 0; j < second.size(); ++j) {
-				if (segments_intersect(first[i], first[(i + 1) % first.size()],
-					second[j], second[(j + 1) % second.size()]))
-					return true;
-			}
-		}
+		if (first.size() < 2 || second.size() < 2) return false;
+		auto first_bounds = contour_bounds(first);
+		auto second_bounds = contour_bounds(second);
+		// Outlines that do not even share a rectangle cannot cross, which is the
+		// usual answer and by far the cheapest one.
+		constexpr float slack = .01f;
+		if (first_bounds.min_x > second_bounds.max_x + slack ||
+			second_bounds.min_x > first_bounds.max_x + slack ||
+			first_bounds.min_y > second_bounds.max_y + slack ||
+			second_bounds.min_y > first_bounds.max_y + slack)
+			return false;
+
+		// Index the longer outline and walk the shorter one past it.
+		auto const& indexed = second.size() >= first.size() ? second : first;
+		auto const& walked = second.size() >= first.size() ? first : second;
+		SegmentGrid grid(indexed);
+		auto skip = [](int) { return false; };
+		for (size_t i = 0; i < walked.size(); ++i)
+			if (grid.Meets(walked[i], walked[(i + 1) % walked.size()], skip)) return true;
 		return false;
 	}
 
@@ -2821,10 +2953,12 @@ std::vector<std::vector<Vector2D>> ApplyVectorBrushStroke(
 	float radius, bool add) {
 	constexpr int circle_segments = 64;
 	if (radius <= 0.f || stroke.empty()) return contours;
+	size_t total_points = 0;
+	for (auto const& contour : contours) total_points += contour.size();
 
 	auto contains = [](std::vector<Vector2D> const& polygon, Vector2D point) {
 		bool inside = false;
-		for (size_t i = 0, previous = polygon.size() - 1; i < polygon.size(); previous = i) {
+		for (size_t i = 0, previous = polygon.size() - 1; i < polygon.size(); previous = i++) {
 			auto const& a = polygon[previous];
 			auto const& b = polygon[i];
 			if ((a.Y() > point.Y()) != (b.Y() > point.Y()) &&
@@ -2835,7 +2969,7 @@ std::vector<std::vector<Vector2D>> ApplyVectorBrushStroke(
 	};
 	auto boundary_distance_squared = [](std::vector<Vector2D> const& polygon, Vector2D point) {
 		float best = std::numeric_limits<float>::max();
-		for (size_t i = 0, previous = polygon.size() - 1; i < polygon.size(); previous = i) {
+		for (size_t i = 0, previous = polygon.size() - 1; i < polygon.size(); previous = i++) {
 			Vector2D start = polygon[previous];
 			Vector2D delta = polygon[i] - start;
 			float length_squared = delta.SquareLen();
@@ -2876,6 +3010,40 @@ std::vector<std::vector<Vector2D>> ApplyVectorBrushStroke(
 			}
 		}
 	}
+
+	// A click wholly inside or outside the selection never needs a general
+	// polygon operation. This is the common correction workflow and preserves
+	// every existing point exactly.
+	//
+	// Answered before the winding component below, which compares every outline
+	// against every other: after an AI selection those outlines are pixel-traced
+	// and thousands of points long, and a click that only drops a circle of its own
+	// has no business paying for that.
+	if (centres.size() == 1 && !boundary_touched) {
+		bool selected = false;
+		for (auto const& contour : contours)
+			if (contour.size() >= 3 && contains(contour, centres.front())) selected = !selected;
+		if (add == selected) return contours;
+		double reference_area = 1.0;
+		for (auto const& contour : contours)
+			if (std::abs(polygon_area(contour)) > std::abs(reference_area))
+				reference_area = polygon_area(contour);
+		bool positive_winding = add ? reference_area > 0.0 : reference_area < 0.0;
+		contours.push_back(make_circle(centres.front(), positive_winding));
+		return contours;
+	}
+
+	// Boundary-crossing strokes use a bounded local bitmap. Unlike the previous
+	// polygon boolean implementations this has a strict memory/time ceiling and
+	// cannot loop on self-intersecting AI contours. Unaffected contours are kept
+	// byte-for-byte.
+	if (affected.empty()) {
+		if (add)
+			for (auto centre : centres) contours.push_back(make_circle(centre, true));
+		return contours;
+	}
+
+
 	// A winding relationship can change even when only one of two intersecting
 	// contours directly touches the brush. Expand to the complete intersecting
 	// or nested component so it is rebuilt as one stable filled region.
@@ -2901,32 +3069,6 @@ std::vector<std::vector<Vector2D>> ApplyVectorBrushStroke(
 	for (size_t i = 0; i < affected_mask.size(); ++i)
 		if (affected_mask[i]) affected.push_back(i);
 
-	// A click wholly inside or outside the selection never needs a general
-	// polygon operation. This is the common correction workflow and preserves
-	// every existing point exactly.
-	if (centres.size() == 1 && !boundary_touched) {
-		bool selected = false;
-		for (auto const& contour : contours)
-			if (contour.size() >= 3 && contains(contour, centres.front())) selected = !selected;
-		if (add == selected) return contours;
-		double reference_area = 1.0;
-		for (auto const& contour : contours)
-			if (std::abs(polygon_area(contour)) > std::abs(reference_area))
-				reference_area = polygon_area(contour);
-		bool positive_winding = add ? reference_area > 0.0 : reference_area < 0.0;
-		contours.push_back(make_circle(centres.front(), positive_winding));
-		return contours;
-	}
-
-	// Boundary-crossing strokes use a bounded local bitmap. Unlike the previous
-	// polygon boolean implementations this has a strict memory/time ceiling and
-	// cannot loop on self-intersecting AI contours. Unaffected contours are kept
-	// byte-for-byte.
-	if (affected.empty()) {
-		if (add)
-			for (auto centre : centres) contours.push_back(make_circle(centre, true));
-		return contours;
-	}
 	float minimum_x = centres.front().X() - radius - 2.f;
 	float maximum_x = centres.front().X() + radius + 2.f;
 	float minimum_y = centres.front().Y() - radius - 2.f;

@@ -84,9 +84,10 @@ void VideoController::OnSubtitlesCommit(int type, const AssDialogue *changed) {
 		provider->UpdateSubtitles(changed);
 }
 
-void VideoController::PreviewSubtitles(std::vector<AssDialogue const *> const& changed) {
+void VideoController::PreviewSubtitles(std::vector<AssDialogue const *> const& changed,
+                                      std::vector<AssDialogue const *> const& added) {
 	if (provider)
-		provider->UpdateSubtitlesPreview(changed);
+		provider->UpdateSubtitlesPreview(changed, added);
 }
 
 void VideoController::OnActiveLineChanged(AssDialogue *line) {

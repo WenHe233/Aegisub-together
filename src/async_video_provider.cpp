@@ -165,6 +165,8 @@ void AsyncVideoProvider::LoadSubtitles(const AssFile *new_subs) throw() {
 
 	auto copy = new AssFile(*new_subs);
 	worker->Async([=, this]{
+		// The lines a preview had added belonged to the file being replaced.
+		preview_extras.clear();
 		subs.reset(copy);
 		single_frame = NEW_SUBS_FILE;
 		ProcAsync(req_version, false);
@@ -190,17 +192,22 @@ void AsyncVideoProvider::UpdateSubtitles(const AssDialogue *changed) throw() {
 	});
 }
 
-void AsyncVideoProvider::UpdateSubtitlesPreview(std::vector<AssDialogue const *> const& changed) throw() {
-	if (changed.empty()) return;
+void AsyncVideoProvider::UpdateSubtitlesPreview(std::vector<AssDialogue const *> const& changed,
+                                               std::vector<AssDialogue const *> const& added) throw() {
+	if (changed.empty() && added.empty()) return;
 
-	std::vector<std::unique_ptr<AssDialogue>> copies;
+	std::vector<std::unique_ptr<AssDialogue>> copies, extra_copies;
 	copies.reserve(changed.size());
 	for (auto line : changed)
 		copies.emplace_back(std::make_unique<AssDialogue>(*line));
+	extra_copies.reserve(added.size());
+	for (auto line : added)
+		extra_copies.emplace_back(std::make_unique<AssDialogue>(*line));
 
 	{
 		std::lock_guard<std::mutex> lock(preview_mutex);
 		pending_preview_lines = std::move(copies);
+		pending_preview_extras = std::move(extra_copies);
 		++version;
 		if (preview_job_queued) return;
 		preview_job_queued = true;
@@ -208,14 +215,15 @@ void AsyncVideoProvider::UpdateSubtitlesPreview(std::vector<AssDialogue const *>
 
 	worker->Async([this] {
 		for (;;) {
-			std::vector<std::unique_ptr<AssDialogue>> updates;
+			std::vector<std::unique_ptr<AssDialogue>> updates, extras;
 			{
 				std::lock_guard<std::mutex> lock(preview_mutex);
-				if (pending_preview_lines.empty()) {
+				if (pending_preview_lines.empty() && pending_preview_extras.empty()) {
 					preview_job_queued = false;
 					return;
 				}
 				updates.swap(pending_preview_lines);
+				extras.swap(pending_preview_extras);
 			}
 
 			if (!subs) continue;
@@ -235,6 +243,20 @@ void AsyncVideoProvider::UpdateSubtitlesPreview(std::vector<AssDialogue const *>
 				subs->Events.insert(old, *update.release());
 				delete &*old;
 				current_row = target_row + 1;
+			}
+
+			// Whatever a previous preview added goes first, or a drag would leave a trail
+			// of them behind. The new ones go on the end, which is where a line that is not
+			// in the file yet can sit without disturbing anyone's row number.
+			for (auto line : preview_extras) {
+				subs->Events.erase(subs->Events.iterator_to(*line));
+				delete line;
+			}
+			preview_extras.clear();
+			for (auto& extra : extras) {
+				auto line = extra.release();
+				preview_extras.push_back(line);
+				subs->Events.push_back(*line);
 			}
 
 			single_frame = NEW_SUBS_FILE;

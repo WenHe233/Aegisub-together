@@ -6,6 +6,12 @@
 
 class AssDialogue;
 
+/// Whether this line is the rectangle an image mask is drawn on.
+///
+/// Such a line is a placeholder for a picture rather than something with a shape of its
+/// own, so anything that reshapes drawings has to leave it alone.
+bool IsImageMaskLine(const AssDialogue* d);
+
 class ImageMaskCombiner {
 public:
     bool IsVisible(const AssDialogue* d) const;

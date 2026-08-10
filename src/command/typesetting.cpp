@@ -1,0 +1,191 @@
+// Copyright (c) 2026, Muteki Aegisub
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+/// @file typesetting.cpp
+/// @brief Reshaping the selected lines: the Typesetting menu
+///
+/// The entries put the video into the matching transform tool rather than opening a
+/// dialog, because the reshaping is done by dragging on the video. They are plain menu
+/// items and not the radio buttons the other visual tools use: from a menu called
+/// Transform, "which tool is currently active" is not the question being asked - and the
+/// tool hands the video back to whichever one was in use as soon as it is finished with.
+
+#include "command.h"
+
+#include "../ass_file.h"
+#include "../compat.h"
+#include "../image_mask_combiner.h"
+#include "../include/aegisub/context.h"
+#include "../selection_controller.h"
+#include "../project.h"
+#include "../typesetting_transform.h"
+#include "../video_display.h"
+#include "../visual_tool_transform.h"
+
+#include <string>
+#include <typeinfo>
+
+#include <wx/msgdlg.h>
+
+namespace {
+	using cmd::Command;
+
+	/// Which visual tool to give the video back to when a transform is finished.
+	///
+	/// Remembered rather than looked up at the end, because by then the transform tool
+	/// is the active one and the answer would always be the same. It also survives
+	/// switching straight from one transform to another, which would otherwise forget
+	/// where the user came from.
+	std::string remembered_tool = "video/tool/cross";
+
+	std::string const& previous_tool(const agi::Context *c) {
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolTransform)))
+			return remembered_tool;
+
+		static const char *tools[] = {
+			"video/tool/cross", "video/tool/drag", "video/tool/rotate/z",
+			"video/tool/rotate/xy", "video/tool/perspective", "video/tool/scale",
+			"video/tool/clip", "video/tool/vector_clip", "video/tool/mask_edit",
+			"video/tool/mask", "video/tool/shape"
+		};
+		remembered_tool = "video/tool/cross";
+		for (auto name : tools) {
+			if (cmd::get(name)->IsActive(c)) {
+				remembered_tool = name;
+				break;
+			}
+		}
+		return remembered_tool;
+	}
+
+	/// Whether the selection holds a line that pins an image, in which case there is nothing here
+	/// that can be done with it: the line is a rectangle standing in for a picture rather than
+	/// typesetting, so reshaping it would move the frame and leave the picture where it was. Said
+	/// out loud rather than greyed out, so that it is clear why nothing happened.
+	bool RefusedForMask(agi::Context *c) {
+		for (auto line : c->selectionController->GetSelectedSet()) {
+			if (!IsImageMaskLine(line)) continue;
+			wxMessageBox(_("Image mask not supported."), _("Transform"),
+				wxOK | wxICON_WARNING, c->parent);
+			return true;
+		}
+		return false;
+	}
+
+	template<VisualToolTransformMode M>
+	struct transform_command : public Command {
+		CMD_TYPE(COMMAND_VALIDATE)
+
+		bool Validate(const agi::Context *c) override {
+			return !!c->project->VideoProvider() && typesetting::CanTransform(c);
+		}
+
+		void operator()(agi::Context *c) override {
+			if (RefusedForMask(c)) return;
+			std::string back = previous_tool(c);
+			c->videoDisplay->SetTool(
+				std::make_unique<VisualToolTransform>(c->videoDisplay, c, M, std::move(back)));
+		}
+	};
+
+struct typesetting_transform_free final :
+	public transform_command<VisualToolTransformMode::Free> {
+	CMD_NAME("typesetting/transform/free")
+	STR_MENU("&Free transform")
+	STR_DISP("Free transform")
+	STR_HELP("Scale, turn and move the selected lines on the video, written as tags")
+};
+
+struct typesetting_transform_arch final :
+	public transform_command<VisualToolTransformMode::Arch> {
+	CMD_NAME("typesetting/transform/arch")
+	STR_MENU("&Arch")
+	STR_DISP("Arch")
+	STR_HELP("Bend the selected lines up or down by dragging on the video")
+};
+
+struct typesetting_transform_distort final :
+	public transform_command<VisualToolTransformMode::Distort> {
+	CMD_NAME("typesetting/transform/distort")
+	STR_MENU("&Distort")
+	STR_DISP("Distort")
+	STR_HELP("Drag the four corners of the selected lines on the video")
+};
+
+struct typesetting_transform_warp final :
+	public transform_command<VisualToolTransformMode::Warp> {
+	CMD_NAME("typesetting/transform/warp")
+	STR_MENU("&Warp")
+	STR_DISP("Warp")
+	STR_HELP("Bend the selected lines by dragging a 3x3 mesh over the video")
+};
+
+/// Mirroring needs no handles and no video, so it is a plain command: convert to shapes,
+/// mirror, done. Nothing else about the lines is touched.
+template<bool Horizontal>
+struct flip_command : public Command {
+	CMD_TYPE(COMMAND_VALIDATE)
+
+	bool Validate(const agi::Context *c) override {
+		return typesetting::CanTransform(c);
+	}
+
+	void operator()(agi::Context *c) override {
+		if (RefusedForMask(c)) return;
+		typesetting::ShapeEditor editor(c);
+		if (!editor.ok()) {
+			if (!editor.refusals().empty()) {
+				wxString message = _("The text could not be converted:");
+				for (auto const& why : editor.refusals())
+					message += "\n\n" + to_wx(why);
+				wxMessageBox(message, _("Convert text to shapes"), wxOK | wxICON_WARNING,
+					c->parent);
+			}
+			return;
+		}
+		// No subdivision: a mirror keeps straight lines straight, so splitting them up
+		// would only make the drawing longer.
+		editor.Build(typesetting::FlipMap(editor.Box().centre, Horizontal), false);
+		editor.Apply();
+		c->ass->Commit(Horizontal ? _("flip horizontally") : _("flip vertically"),
+			AssFile::COMMIT_DIAG_FULL);
+	}
+};
+
+struct typesetting_flip_horizontal final : public flip_command<true> {
+	CMD_NAME("typesetting/transform/flip/horizontal")
+	STR_MENU("Flip &horizontally")
+	STR_DISP("Flip horizontally")
+	STR_HELP("Turn the selected lines into shapes and mirror them left to right")
+};
+
+struct typesetting_flip_vertical final : public flip_command<false> {
+	CMD_NAME("typesetting/transform/flip/vertical")
+	STR_MENU("Flip &vertically")
+	STR_DISP("Flip vertically")
+	STR_HELP("Turn the selected lines into shapes and mirror them top to bottom")
+};
+
+}
+
+namespace cmd {
+	void init_typesetting() {
+		reg(std::make_unique<typesetting_transform_free>());
+		reg(std::make_unique<typesetting_transform_arch>());
+		reg(std::make_unique<typesetting_transform_distort>());
+		reg(std::make_unique<typesetting_transform_warp>());
+		reg(std::make_unique<typesetting_flip_horizontal>());
+		reg(std::make_unique<typesetting_flip_vertical>());
+	}
+}

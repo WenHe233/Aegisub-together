@@ -1,3 +1,13 @@
+Verzió 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Maszk szerkesztéses pipettás mód brush fagyás
+- Átalakítás a Photoshop mintájára, akár több sort is kijelölve:
+    - Szabad alakítás
+    - Ívelés
+    - Torzítás
+    - Hajlítás
+    - Függőleges- és Vízszintes Tükrözés
+
 Verzió 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Betűtípus választó támogatja a több nyelvet és a megváltozott cache logikának hála sokkal gyorsabb lett, egyszeri betöltés van csupán

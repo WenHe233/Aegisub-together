@@ -7,6 +7,7 @@
         { "submenu" : "main/video",    "text" : "&Video" },
         { "submenu" : "main/audio",    "text" : "&Audio" },
         { "submenu" : "main/ai",       "text" : "A&I" },
+        { "submenu" : "main/typesetting", "text" : "T&ypesetting" },
         { "special" : "automation",    "text" : "A&utomation" },
         { "special" : "muteki",        "text" : "Muteki Fansub" },
         { "submenu" : "main/view",     "text" : "Vie&w" },
@@ -58,6 +59,18 @@
 		{ "command" : "ai/karaoke/syllables" },
 		{ "command" : "ai/karaoke/kanji" }
 	],
+    "main/typesetting" : [
+        { "submenu" : "main/typesetting/transform", "text" : "&Transform" }
+    ],
+    "main/typesetting/transform" : [
+        { "command" : "typesetting/transform/free" },
+        { "command" : "typesetting/transform/distort" },
+        { "command" : "typesetting/transform/arch" },
+        { "command" : "typesetting/transform/warp" },
+        {},
+        { "command" : "typesetting/transform/flip/horizontal" },
+        { "command" : "typesetting/transform/flip/vertical" }
+    ],
     "main/muteki-update" : [
         { "command" : "muteki-update/check" },
         { "command" : "muteki-update/install-version" },

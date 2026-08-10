@@ -29,6 +29,7 @@
 #include "visual_tool_clip.h"
 #include "visual_tool_drag.h"
 #include "visual_tool_perspective.h"
+#include "visual_tool_transform.h"
 #include "visual_tool_vector_clip.h"
 
 #include <libaegisub/ass/time.h>
@@ -342,8 +343,13 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 				} else {
 					sel_features.clear();
 
+					// A tool whose gesture is a drag on empty space must not have the
+					// selection cut down to the active line under it: the transform works
+					// on every selected line at once, and dragging its mesh would have
+					// thrown the rest of them out of the session.
 					if (!c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip)) &&
 						!c->videoDisplay->ToolIsType(typeid(VisualToolMaskEdit)) &&
+						!c->videoDisplay->ToolIsType(typeid(VisualToolTransform)) &&
 						!c->videoDisplay->ToolIsType(typeid(VisualToolClip)))
 						c->selectionController->SetSelectedSet({ c->selectionController->GetActiveLine() });
 				}

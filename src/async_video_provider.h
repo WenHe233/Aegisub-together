@@ -82,7 +82,12 @@ class AsyncVideoProvider {
 	/// positions replace the pending state rather than queueing stale frames.
 	std::mutex preview_mutex;
 	std::vector<std::unique_ptr<AssDialogue>> pending_preview_lines;
+	std::vector<std::unique_ptr<AssDialogue>> pending_preview_extras;
 	bool preview_job_queued = false;
+
+	/// Lines a preview added to the worker's copy of the file. Kept so that the next
+	/// preview can take them out again instead of piling them up.
+	std::vector<AssDialogue *> preview_extras;
 
 	std::vector<std::shared_ptr<VideoFrame>> buffers;
 
@@ -104,9 +109,12 @@ public:
 	/// insertions or deletions.
 	void UpdateSubtitles(const AssDialogue *changed) throw();
 
-	/// Update all visible lines changed by a visual-tool drag. At most one
-	/// preview worker job is active, and it always consumes the newest state.
-	void UpdateSubtitlesPreview(std::vector<AssDialogue const *> const& changed) throw();
+	/// Update all visible lines changed by a visual-tool drag, and optionally add lines
+	/// that are not in the file at all - which is what lets one line be previewed as
+	/// several. At most one preview worker job is active, and it always consumes the
+	/// newest state. The added lines last until the next preview or the next commit.
+	void UpdateSubtitlesPreview(std::vector<AssDialogue const *> const& changed,
+	                            std::vector<AssDialogue const *> const& added = {}) throw();
 
 	/// @brief Queue a request for a frame
 	/// @brief frame Frame number

@@ -8413,3 +8413,266 @@ msgstr "Új színválasztó funkció került bevezetésre, mely szándékosan ne
 #: ../src/video_color_pick.cpp
 msgid "accept color by doubleclick"
 msgstr "szín elfogadása dupla kattintással"
+
+#: ../src/libresrc/default_menu_platform.json
+msgid "T&ypesetting"
+msgstr "&Formázás"
+
+#: ../src/libresrc/default_menu_platform.json
+msgid "&Transform"
+msgstr "Á&talakítás"
+
+#: ../src/command/typesetting.cpp
+msgid "&Arch..."
+msgstr "&Ívelés..."
+
+#: ../src/command/typesetting.cpp
+msgid "Arch"
+msgstr "Ívelés"
+
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down as one shape"
+msgstr "A kijelölt sorok ívelése felfelé vagy lefelé, egyetlen alakzatként"
+
+#: ../src/typesetting_transform.cpp
+msgid "Bend"
+msgstr "Ívelés"
+
+#: ../src/typesetting_transform.cpp
+msgid "Positive bends upwards, negative downwards."
+msgstr "A pozitív érték felfelé, a negatív lefelé ível."
+
+#: ../src/typesetting_transform.cpp
+msgid "arch"
+msgstr "ívelés"
+
+#: ../src/typesetting_transform.cpp
+msgid "The selection has no drawing that can be reshaped."
+msgstr "A kijelölésben nincs olyan alakzat, amit át lehetne formálni."
+
+#: ../src/typesetting_transform.cpp
+msgid "Some drawings use curve commands this cannot reshape, and were left alone."
+msgstr "Néhány alakzat olyan görbeparancsokat használ, amiket ez nem tud átformálni, ezeket érintetlenül hagytam."
+
+#: ../src/typesetting_transform.cpp
+msgid "Some of the selected lines still hold text, and only a drawing can be reshaped.\n\nContinuing converts that text into drawings. The text stops being text: the font is baked into the shape, and it can no longer be edited, spell checked or translated.\n\nDo you want to continue?"
+msgstr "A kijelölt sorok egy része még szöveget tartalmaz, átformálni pedig csak alakzatot lehet.\n\nA folytatás ezt a szöveget alakzattá alakítja. A szöveg ezzel megszűnik szövegnek lenni: a betűtípus beépül az alakzatba, és többé nem szerkeszthető, nem ellenőrizhető helyesírásilag és nem fordítható.\n\nFolytatod?"
+
+#: ../src/typesetting_transform.cpp
+msgid "Convert text to shapes"
+msgstr "Szöveg alakzattá alakítása"
+
+#: ../src/text_to_shape.cpp
+msgid "Converting text to shapes is only implemented on Windows so far."
+msgstr "A szöveg alakzattá alakítása egyelőre csak Windowson van megvalósítva."
+
+#: ../src/text_to_shape.cpp
+msgid "The line already mixes text with a drawing."
+msgstr "A sor szöveget és alakzatot is tartalmaz."
+
+#: ../src/text_to_shape.cpp
+msgid "The line has no \\pos, so where its text sits depends on layout this cannot reproduce yet."
+msgstr "A sorban nincs \\pos, így a szöveg helye olyan tördelésen múlik, amit ez még nem tud reprodukálni."
+
+#: ../src/text_to_shape.cpp
+msgid "The line is scaled with \\fscx or \\fscy, which is not handled yet."
+msgstr "A sor \\fscx vagy \\fscy szerint méretezett, ezt még nem kezeli."
+
+#: ../src/text_to_shape.cpp
+msgid "The line is karaoke timed, and the syllables would be lost."
+msgstr "A sor karaoke időzítésű, a szótagok elveszlenének."
+
+#: ../src/text_to_shape.cpp
+msgid "The line has a manual break, which is not handled yet."
+msgstr "A sorban kézi sortörés van, ezt még nem kezeli."
+
+#: ../src/text_to_shape.cpp
+msgid "The outline of the text could not be read from the font."
+msgstr "A szöveg körvonalát nem sikerült kiolvasni a betűtípusból."
+
+#: ../src/text_to_shape.cpp
+msgid "Some lines were left as text:"
+msgstr "Néhány sor szövegként maradt:"
+
+#: ../src/text_to_shape.cpp
+msgid "The text could not be converted:"
+msgstr "A szöveget nem sikerült átalakítani:"
+
+#: ../src/text_to_shape.cpp
+msgid "convert text to shapes"
+msgstr "szöveg alakzattá alakítása"
+
+#: ../src/command/vis_tool.cpp
+msgid "Distort"
+msgstr "Torzítás"
+
+#: ../src/command/vis_tool.cpp
+msgid "Bend the selected drawings by dragging on the video"
+msgstr "A kijelölt alakzatok ívelése a videón húzással"
+
+#: ../src/command/vis_tool.cpp
+msgid "Drag the corners of the selected drawings on the video"
+msgstr "A kijelölt alakzatok sarkainak húzása a videón"
+
+#: ../src/command/vis_tool.cpp
+msgid "distort"
+msgstr "torzítás"
+
+#: ../src/command/typesetting.cpp
+msgid "&Arch"
+msgstr "&Ívelés"
+
+#: ../src/command/typesetting.cpp
+msgid "&Distort"
+msgstr "&Torzítás"
+
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down by dragging on the video"
+msgstr "A kijelölt sorok ívelése fel vagy le, a videón húzással"
+
+#: ../src/command/typesetting.cpp
+msgid "Drag the four corners of the selected lines on the video"
+msgstr "A kijelölt sorok négy sarkának húzása a videón"
+
+#: ../src/command/typesetting.cpp
+msgid "&Warp"
+msgstr "&Hajlítás"
+
+#: ../src/command/typesetting.cpp
+msgid "Warp"
+msgstr "Hajlítás"
+
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines by dragging a 3x3 mesh over the video"
+msgstr "A kijelölt sorok hajlítása 3x3-as rács húzásával a videón"
+
+#: ../src/command/typesetting.cpp
+msgid "Flip &horizontally"
+msgstr "&Vízszintes tükrözés"
+
+#: ../src/command/typesetting.cpp
+msgid "Flip horizontally"
+msgstr "Vízszintes tükrözés"
+
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them left to right"
+msgstr "A kijelölt sorok alakzattá alakítása és tükrözése balról jobbra"
+
+#: ../src/command/typesetting.cpp
+msgid "Flip &vertically"
+msgstr "Fü&ggőleges tükrözés"
+
+#: ../src/command/typesetting.cpp
+msgid "Flip vertically"
+msgstr "Függőleges tükrözés"
+
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them top to bottom"
+msgstr "A kijelölt sorok alakzattá alakítása és tükrözése fentről le"
+
+#: ../src/command/typesetting.cpp
+msgid "warp"
+msgstr "hajlítás"
+
+#: ../src/command/typesetting.cpp
+msgid "flip horizontally"
+msgstr "vízszintes tükrözés"
+
+#: ../src/command/typesetting.cpp
+msgid "flip vertically"
+msgstr "függőleges tükrözés"
+
+#: ../src/command/typesetting.cpp
+msgid "cancel transform"
+msgstr "átalakítás elvetése"
+
+#: ../src/command/typesetting.cpp
+msgid "Arch - preview only until applied"
+msgstr "Ívelés – alkalmazásig csak előnézet"
+
+#: ../src/command/typesetting.cpp
+msgid "Distort - preview only until applied"
+msgstr "Torzítás – alkalmazásig csak előnézet"
+
+#: ../src/command/typesetting.cpp
+msgid "Warp - preview only until applied"
+msgstr "Hajlítás – alkalmazásig csak előnézet"
+
+#: ../src/text_to_shape.cpp
+msgid "The text is wider than the margins allow, so the renderer would break it into rows this cannot work out yet."
+msgstr "A szöveg szélesebb, mint amit a margók engednek, tehát a megjelenítő sorokra bontaná – ezt még nem tudja kiszámolni."
+
+#: ../src/text_to_shape.cpp
+msgid "The line changes font, size or shape partway through. It would have to be split into one line per part first, which is not done yet."
+msgstr "A sor közben megváltozik a betűtípus, a méret vagy az alak. Ehhez először részenként külön sorokra kellene bontani, ami még nincs kész."
+
+#: ../src/command/typesetting.cpp
+msgid "&Free transform"
+msgstr "&Szabad alakítás"
+
+#: ../src/command/typesetting.cpp
+msgid "Free transform"
+msgstr "Szabad alakítás"
+
+#: ../src/command/typesetting.cpp
+msgid "free transform"
+msgstr "szabad alakítás"
+
+#: ../src/command/typesetting.cpp
+msgid "Scale, turn and move the selected lines on the video, written as tags"
+msgstr "A kijelölt sorok méretezése, forgatása és mozgatása a videón, taggekkel kiírva"
+
+#: ../src/command/typesetting.cpp
+msgid "Free transform - preview only until applied"
+msgstr "Szabad alakítás – alkalmazásig csak előnézet"
+
+#: ../src/visual_tool_transform.cpp
+msgid "Recalculate:"
+msgstr "Újraszámol:"
+
+#: ../src/visual_tool_transform.cpp
+msgid "bord"
+msgstr "szegély"
+
+#: ../src/visual_tool_transform.cpp
+msgid "shad"
+msgstr "árnyék"
+
+#: ../src/visual_tool_transform.cpp
+msgid "blur"
+msgstr "elken"
+
+#: ../src/visual_tool_transform.cpp
+msgid "maintain bord & shad"
+msgstr "bord & shad megtartása"
+
+#: ../src/command/typesetting.cpp
+msgid "Image mask not supported."
+msgstr "Kép maszk sorok nem támogatottak."
+
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate bord"
+msgstr "bord újraszámolása"
+
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate shad"
+msgstr "shad újraszámolása"
+
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate blur"
+msgstr "blur újraszámolása"
+
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate clip"
+msgstr "clip újraszámolása"
+
+#: ../src/visual_tool_transform.cpp
+msgid ""
+"The bord and the shad can be scatchy, using the maintain option is advised. "
+"It will transform into a shape."
+msgstr ""
+"A bord és a shad értéke elcsúszhat, a megtartás opció bekapcsolása javasolt, "
+"ekkor alakzattal helyettesítődnek."
+
+msgid "If the rows move by themselves, use \\q2."
+msgstr "Ha a sorok automatikusan elmozdulnának, használd a \\q2-t."

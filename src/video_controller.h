@@ -125,9 +125,11 @@ public:
 	/// Get the current frame number
 	int GetFrameN() const { return frame_n; }
 
-	/// Preview visible lines changed by a visual-tool drag without creating a
-	/// full subtitle-file commit.
-	void PreviewSubtitles(std::vector<AssDialogue const *> const& changed);
+	/// Preview visible lines changed by a visual-tool drag without creating a full
+	/// subtitle-file commit. Lines passed as `added` are shown as well even though they are
+	/// not in the file, which is how one line can be previewed as several.
+	void PreviewSubtitles(std::vector<AssDialogue const *> const& changed,
+	                      std::vector<AssDialogue const *> const& added = {});
 
 	/// Get the actual aspect ratio from a predefined AR type
 	double GetARFromType(AspectRatio type) const;
