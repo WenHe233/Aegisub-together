@@ -6,6 +6,8 @@ The bug tracker can be found at https://github.com/TypesettingTools/Aegisub/issu
 
 Support is available on [Discord](https://discord.com/invite/AZaVyPr) or [IRC](irc://irc.rizon.net/aegisub).
 
+[See what is new in this version.](https://mutekifansub.hu/public/aegisub-docs/)
+
 ## Building Aegisub
 
 ### Windows
