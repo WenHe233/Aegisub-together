@@ -9660,3 +9660,119 @@ msgstr "bord- ja shad-arvot voivat siirtyä. Säilytysasetuksen käyttöä suosi
 #: src
 msgid "If the rows move by themselves, use \\q2."
 msgstr "Jos rivit siirtyvät automaattisesti, käytä komentoa \\q2."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Gradient (%d lines, text: %s)"
+msgstr "Liukuväri (%d riviä, teksti: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp ../src/dialog_gradient.cpp
+msgid "Gradient"
+msgstr "Liukuväri"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Create a linear, radial or per-character colour gradient on the selected lines"
+msgstr "Luo lineaarisen, säteittäisen tai merkkikohtaisen liukuvärin valituille riveille"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Apply to this color"
+msgstr "Käytä tähän väriin"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy stops from..."
+msgstr "Kopioi väripisteet tästä..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Bord color"
+msgstr "Reunan väri"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shadow color"
+msgstr "Varjon väri"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Click the bar to add a stop. Drag a square to move it; click it to choose a color; right-click it to remove it."
+msgstr "Napsauta palkkia lisätäksesi uuden väripisteen. Siirrä neliötä vetämällä, valitse väri napsauttamalla ja poista piste napsauttamalla hiiren oikealla painikkeella."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Drag the angle dial or enter an exact value. Double-click the dial to measure an angle on the video."
+msgstr "Vedä kulmasäädintä tai anna tarkka arvo. Voit mitata kulman videosta kaksoisnapsauttamalla säädintä."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "With shapes there will be no clips and you can give additional clip, blur, etc. You can edit the gradient after saving."
+msgstr "Muotoihin muunnettuna niissä ei ole leikkausta, joten voit käyttää lisää leikkauksia, sumennuksia ja muuta. Voit muokata liukuväriä tallennuksen jälkeen."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Enable at least one color block."
+msgstr "Ota käyttöön vähintään yksi värilohko."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "No characters were found in the selected lines."
+msgstr "Valituilla riveillä ei ole käsiteltäviä merkkejä."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "No selected lines could be converted to shapes."
+msgstr "Yhtäkään valittua riviä ei voitu muuntaa muodoiksi."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Radial"
+msgstr "Säteittäinen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type"
+msgstr "Liukuvärin tyyppi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "By character"
+msgstr "Merkkikohtainen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "With shapes"
+msgstr "Muodoilla"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Output"
+msgstr "Tuloste"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Angle:"
+msgstr "Kulma:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Pixels per strip:"
+msgstr "Pikselietäisyys palkkia kohden:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Anti-strip overlap:"
+msgstr "Raitaisuuden eston limitys:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Overlap on each side of oblique, radial, and shape bands, in script units. Rectangular clips force this value to 0."
+msgstr "Kaltevien, säteittäisten ja muotoiltujen palkkien limitys sivua kohden skriptin yksiköissä. Suorakulmaiset leikkaukset asettavat tämän arvoksi 0."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_gradient.cpp
+msgid "apply gradient"
+msgstr "käytä liukuväriä"

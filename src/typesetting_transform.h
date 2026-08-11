@@ -79,8 +79,28 @@ class ShapeEditor {
 	std::shared_ptr<Impl> impl;
 
 public:
+	enum class LayerKind {
+		Primary,
+		Outline,
+		Shadow
+	};
+
+	/// One visible layer produced by the last Build, together with the same geometry
+	/// in absolute script coordinates. This lets callers cut an already converted
+	/// text outline into smaller drawings without parsing its placement again.
+	struct ShapeLayer {
+		AssDialogue *source = nullptr;
+		LayerKind kind = LayerKind::Primary;
+		std::string text;
+		Vector2D centre;
+		std::vector<std::vector<Vector2D>> contours;
+		bool covered = false;
+	};
+
 	/// Collects the drawings of the current selection.
 	explicit ShapeEditor(const agi::Context *c);
+	/// Collects an explicit set of source lines without changing the grid selection.
+	ShapeEditor(const agi::Context *c, std::vector<AssDialogue *> const& lines);
 
 	/// Whether anything was found to work on.
 	bool ok() const;
@@ -118,6 +138,11 @@ public:
 
 	/// The outline of the last Build, as closed polylines in script coordinates.
 	std::vector<std::vector<Vector2D>> const& contours() const;
+	/// Fill, border and shadow outlines made by the last Build, in paint order.
+	std::vector<ShapeLayer> const& layers() const;
+	/// Replace a built layer's drawing with an arbitrary subset of its absolute contours.
+	std::string TextForContours(ShapeLayer const& layer,
+		std::vector<std::vector<Vector2D>> const& contours) const;
 
 	/// The lines the session is working on.
 	std::vector<AssDialogue *> const& lines() const;

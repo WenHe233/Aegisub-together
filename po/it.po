@@ -9529,3 +9529,119 @@ msgstr "Il valore di bord e shad può cambiare; si consiglia di attivare l'opzio
 #: src
 msgid "If the rows move by themselves, use \\q2."
 msgstr "Se le righe si spostano automaticamente, usa \\q2."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Gradient (%d lines, text: %s)"
+msgstr "Gradiente (%d righe, testo: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp ../src/dialog_gradient.cpp
+msgid "Gradient"
+msgstr "Gradiente"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Create a linear, radial or per-character colour gradient on the selected lines"
+msgstr "Crea un gradiente lineare, radiale o carattere per carattere sulle righe selezionate"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Apply to this color"
+msgstr "Applica a questo colore"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy stops from..."
+msgstr "Copia i punti colore da..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Bord color"
+msgstr "Colore del bordo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shadow color"
+msgstr "Colore dell’ombra"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Click the bar to add a stop. Drag a square to move it; click it to choose a color; right-click it to remove it."
+msgstr "Fai clic sulla barra per aggiungere un nuovo punto colore. Trascina il quadrato per spostarlo, fai clic per scegliere un colore e fai clic con il pulsante destro per rimuoverlo."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Drag the angle dial or enter an exact value. Double-click the dial to measure an angle on the video."
+msgstr "Trascina la ghiera dell’angolo o inserisci un valore preciso. Per misurare l’angolo sul video, fai doppio clic sulla ghiera."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "With shapes there will be no clips and you can give additional clip, blur, etc. You can edit the gradient after saving."
+msgstr "Convertendole in forme, non avranno clip e potrai applicare ulteriori clip, blur e altro. Potrai modificare il gradiente dopo il salvataggio."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Enable at least one color block."
+msgstr "Attiva almeno un blocco colore."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "No characters were found in the selected lines."
+msgstr "Nelle righe selezionate non è stato trovato alcun carattere elaborabile."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "No selected lines could be converted to shapes."
+msgstr "Non è stato possibile convertire in forme nessuna delle righe selezionate."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Radial"
+msgstr "Radiale"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type"
+msgstr "Tipo di gradiente"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "By character"
+msgstr "Carattere per carattere"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "With shapes"
+msgstr "Con forme"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Output"
+msgstr "Output"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Angle:"
+msgstr "Angolo:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Pixels per strip:"
+msgstr "Distanza in pixel per banda:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Anti-strip overlap:"
+msgstr "Sovrapposizione anti-banding:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Overlap on each side of oblique, radial, and shape bands, in script units. Rectangular clips force this value to 0."
+msgstr "Sovrapposizione per lato delle bande oblique, radiali e sagomate, in unità di script. I clip rettangolari impostano questo valore su 0."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_gradient.cpp
+msgid "apply gradient"
+msgstr "applica sfumatura"

@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <regex>
 #include <string>
 #include <vector>
@@ -202,7 +203,7 @@ bool ParseDrawing(std::string const& text, int scale, Vector2D origin,
 }
 
 std::string FormatNumber(double value) {
-	std::string text = agi::format("%.2f", value);
+	std::string text = agi::format("%.3f", value);
 	// Trailing zeroes are noise in a drawing, and drawings get long.
 	auto dot = text.find('.');
 	if (dot != std::string::npos) {
@@ -277,6 +278,44 @@ std::string HangFromCentre(std::string const& text, Vector2D centre, bool baked 
 	tags = std::regex_replace(tags, std::regex(R"(\\a\d+)"), "");
 
 	return "{" + tags + anchor + "}" + body.substr(close + 1);
+}
+
+bool IsDecorationTag(std::string const& name) {
+	return name == "\\bord" || name == "\\xbord" || name == "\\ybord" ||
+		name == "\\shad" || name == "\\xshad" || name == "\\yshad" ||
+		name == "\\3c" || name == "\\4c" || name == "\\3a" || name == "\\4a";
+}
+
+void StripDecorationTags(AssDialogueBlockOverride& block) {
+	for (auto& tag : block.Tags)
+		for (auto& parameter : tag.Params)
+			if (parameter.GetType() == VariableDataType::BLOCK)
+				StripDecorationTags(*parameter.Get<AssDialogueBlockOverride*>());
+
+	block.Tags.erase(std::remove_if(block.Tags.begin(), block.Tags.end(),
+		[](AssOverrideTag const& tag) { return IsDecorationTag(tag.Name); }),
+		block.Tags.end());
+}
+
+/// A decoration layer is already the fill, widened and/or shifted into the pixels which the
+/// renderer would have painted. Native border and shadow tags would paint those pixels again,
+/// and their colours and alpha no longer affect anything, so remove all of them and neutralise
+/// the style before choosing the layer's colour.
+std::string PaintDecorationShape(std::string text, std::string const& paint) {
+	AssDialogue line;
+	line.Text = std::move(text);
+	auto blocks = line.ParseTags();
+	for (auto& block : blocks)
+		if (block->GetType() == AssBlockType::OVERRIDE)
+			StripDecorationTags(*static_cast<AssDialogueBlockOverride*>(block.get()));
+	line.UpdateText(blocks);
+	text = line.Text.get();
+
+	size_t close = text.find('}');
+	std::string tags = "\\bord0\\shad0" + paint;
+	if (close == std::string::npos) return "{" + tags + "}" + text;
+	text.insert(close, tags);
+	return text;
 }
 
 // ---------------------------------------------------------------------- the clips
@@ -1174,20 +1213,26 @@ struct ShapeEditor::Impl {
 	std::vector<AssDialogue *> applied;
 	std::vector<std::string> refusals;
 	std::vector<std::vector<Vector2D>> contours;
+	std::vector<ShapeLayer> layers;
 	OrientedBox box;
 	int refused = 0;
 	size_t shape_count = 0;
 };
 
-ShapeEditor::ShapeEditor(const agi::Context *c) : impl(std::make_shared<Impl>()) {
+ShapeEditor::ShapeEditor(const agi::Context *c)
+: ShapeEditor(c, c->selectionController->GetSortedSelection()) {
+}
+
+ShapeEditor::ShapeEditor(const agi::Context *c, std::vector<AssDialogue *> const& lines)
+: impl(std::make_shared<Impl>()) {
 	impl->c = const_cast<agi::Context *>(c);
 	std::vector<Vector2D> all_points;
 
 	// Text becomes a drawing here and nowhere else: in memory, so the line keeps saying
 	// what it said until the reshaping is accepted.
-	auto converted = text_to_shape::ConvertSelection(c, impl->refusals);
+	auto converted = text_to_shape::ConvertLines(c, lines, impl->refusals);
 
-	for (auto line : c->selectionController->GetSortedSelection()) {
+	for (auto line : lines) {
 		// The rectangle an image is pinned to is not a shape to be reshaped.
 		if (IsImageMaskLine(line)) continue;
 
@@ -1307,6 +1352,31 @@ std::vector<std::string> const& ShapeEditor::refusals() const { return impl->ref
 std::vector<std::vector<Vector2D>> const& ShapeEditor::contours() const {
 	return impl->contours;
 }
+std::vector<ShapeEditor::ShapeLayer> const& ShapeEditor::layers() const {
+	return impl->layers;
+}
+
+std::string ShapeEditor::TextForContours(ShapeLayer const& layer,
+		std::vector<std::vector<Vector2D>> const& contours) const {
+	if (!layer.source || contours.empty() || layer.text.empty()) return {};
+	AssDialogue writing(*layer.source);
+	writing.Text = layer.text;
+	auto blocks = writing.ParseTags();
+	bool written = false;
+	for (auto& block : blocks) {
+		if (block->GetType() != AssBlockType::DRAWING) continue;
+		auto drawing = static_cast<AssDialogueBlockDrawing*>(block.get());
+		if (!written) {
+			drawing->text = EmitDrawing(SegmentsOf(contours), drawing->Scale, layer.centre);
+			written = !drawing->text.empty();
+		}
+		else
+			drawing->text.clear();
+	}
+	if (!written) return {};
+	writing.UpdateText(blocks);
+	return writing.Text.get();
+}
 std::vector<AssDialogue *> const& ShapeEditor::lines() const { return impl->line_list; }
 
 ShapeEditor::Preview ShapeEditor::PreviewLines() const {
@@ -1346,6 +1416,7 @@ ShapeEditor::Preview ShapeEditor::PreviewLines() const {
 void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, bool decorations) {
 	double span = impl->box.half.X() * 2;
 	impl->contours.clear();
+	impl->layers.clear();
 
 	// Whether the mapping folds the shape over itself anywhere, which is worth knowing once
 	// rather than per point: only then is there a back of the shape to put right.
@@ -1369,6 +1440,8 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 		work.border_result.clear();
 		work.shadow_result.clear();
 		work.covered = false;
+		std::vector<std::vector<Vector2D>> fill_contours;
+		std::vector<std::vector<Vector2D>> wide_contours;
 
 		AssDialogue writing(*work.line);
 		writing.Text = work.source;
@@ -1418,6 +1491,16 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 				wide_pieces = MapShape(SegmentsOf(wide), map, impl->box, fold, subdivide, span,
 					step);
 			}
+			{
+				auto rings = RingsOf(pieces);
+				fill_contours.insert(fill_contours.end(),
+					std::make_move_iterator(rings.begin()), std::make_move_iterator(rings.end()));
+			}
+			if (!wide_pieces.empty()) {
+				auto rings = RingsOf(wide_pieces);
+				wide_contours.insert(wide_contours.end(),
+					std::make_move_iterator(rings.begin()), std::make_move_iterator(rings.end()));
+			}
 			for (auto const& segment : pieces)
 				for (auto point : segment.points) {
 					if (first_point) { low = high = point; first_point = false; }
@@ -1464,11 +1547,15 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 
 		writing.UpdateText(blocks);
 		work.result = HangFromCentre(writing.Text.get(), centre, work.baked);
+		if (decorations)
+			work.result = PaintDecorationShape(std::move(work.result), {});
 
 		// The pair of them, from the widened shape and the same centre. Both are written from the
 		// same body: a shadow is what stands behind the bordered shape, so it is that shape again,
 		// hung from a point the offset has moved - and since the coordinates are written around the
 		// centre, moving where it hangs from moves the whole of it.
+		Vector2D shadow_centre = centre;
+		std::vector<std::vector<Vector2D>> shadow_contours;
 		if (!widened.empty()) {
 			for (auto const& piece : widened)
 				static_cast<AssDialogueBlockDrawing*>(blocks[piece.block_index].get())->text =
@@ -1477,17 +1564,9 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 			writing.UpdateText(blocks);
 			std::string body = writing.Text.get();
 
-			auto painted = [](std::string text, std::string const& paint) {
-				// What makes it stand for one of the pair goes at the end of the first block, so
-				// that nothing the line carried can undo it.
-				size_t close = text.find('}');
-				if (close == std::string::npos) return "{\\bord0\\shad0" + paint + "}" + text;
-				text.insert(close, "\\bord0\\shad0" + paint);
-				return text;
-			};
-
 			if (want_border)
-				work.border_result = painted(HangFromCentre(body, centre, work.baked),
+				work.border_result = PaintDecorationShape(
+					HangFromCentre(body, centre, work.baked),
 					paint.border);
 			if (want_shadow) {
 				// Where the renderer would have put it. The offset is turned by the line's own
@@ -1503,8 +1582,13 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 						(float)(paint.offset.X() * cosine - paint.offset.Y() * sine),
 						(float)(paint.offset.X() * sine + paint.offset.Y() * cosine));
 				}
-				work.shadow_result = painted(HangFromCentre(body, centre + drift, work.baked),
+				work.shadow_result = PaintDecorationShape(
+					HangFromCentre(body, centre + drift, work.baked),
 					paint.shadow);
+				shadow_centre = centre + drift;
+				shadow_contours = wide_contours;
+				for (auto& contour : shadow_contours)
+					for (auto& point : contour) point = point + drift;
 			}
 		}
 		// The clip belongs to the picture too, and a gradient is a stack of clipped copies -
@@ -1517,6 +1601,15 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 			if (!work.shadow_result.empty())
 				work.shadow_result = MapClips(work.shadow_result, map, impl->box, span);
 		}
+		if (!work.shadow_result.empty())
+			impl->layers.push_back({work.line, LayerKind::Shadow, work.shadow_result,
+				shadow_centre, std::move(shadow_contours), false});
+		if (!work.border_result.empty())
+			impl->layers.push_back({work.line, LayerKind::Outline, work.border_result,
+				centre, wide_contours, false});
+		if (!work.result.empty())
+			impl->layers.push_back({work.line, LayerKind::Primary, work.result,
+				centre, std::move(fill_contours), work.covered});
 	}
 }
 

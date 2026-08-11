@@ -9568,3 +9568,119 @@ msgstr "Значення bord і shad можуть зміститися, рек�
 #: src
 msgid "If the rows move by themselves, use \\q2."
 msgstr "Якщо рядки автоматично зміщуються, використовуйте \\q2."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Gradient (%d lines, text: %s)"
+msgstr "Градієнт (%d рядків, текст: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp ../src/dialog_gradient.cpp
+msgid "Gradient"
+msgstr "Градієнт"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Create a linear, radial or per-character colour gradient on the selected lines"
+msgstr "Створити лінійний, радіальний або посимвольний градієнт на вибраних рядках"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Apply to this color"
+msgstr "Застосувати до цього кольору"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy stops from..."
+msgstr "Копіювати точки кольору звідси..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Bord color"
+msgstr "Колір обводки"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shadow color"
+msgstr "Колір тіні"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Click the bar to add a stop. Drag a square to move it; click it to choose a color; right-click it to remove it."
+msgstr "Клацніть смугу, щоб додати нову точку кольору. Перетягуйте квадратик, щоб перемістити її, клацніть, щоб вибрати колір, або клацніть правою кнопкою, щоб видалити її."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Drag the angle dial or enter an exact value. Double-click the dial to measure an angle on the video."
+msgstr "Перетягуйте диск кута або введіть точне значення. Щоб виміряти кут на відео, двічі клацніть диск."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "With shapes there will be no clips and you can give additional clip, blur, etc. You can edit the gradient after saving."
+msgstr "Після перетворення на фігури clip відсутній, тож можна застосувати додаткові clip, blur тощо. Градієнт можна редагувати після збереження."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Enable at least one color block."
+msgstr "Увімкніть принаймні один блок кольору."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "No characters were found in the selected lines."
+msgstr "У вибраних рядках не знайдено символів для обробки."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "No selected lines could be converted to shapes."
+msgstr "Не вдалося перетворити на фігури жодного вибраного рядка."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Radial"
+msgstr "Радіальний"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type"
+msgstr "Тип градієнта"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "By character"
+msgstr "Посимвольний"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "With shapes"
+msgstr "Фігурами"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Output"
+msgstr "Вихід"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Angle:"
+msgstr "Кут:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Pixels per strip:"
+msgstr "Відстань між пікселями на смугу:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Anti-strip overlap:"
+msgstr "Перекриття для усунення смуг:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Overlap on each side of oblique, radial, and shape bands, in script units. Rectangular clips force this value to 0."
+msgstr "Перекриття похилих, радіальних і фігурних смуг з кожного боку в одиницях скрипту. Прямокутні кліпи встановлюють це значення на 0."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_gradient.cpp
+msgid "apply gradient"
+msgstr "застосувати градієнт"

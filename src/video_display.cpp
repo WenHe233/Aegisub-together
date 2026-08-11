@@ -261,6 +261,8 @@ void VideoDisplay::Render() try {
 
 	if ((mouse_pos || !autohideTools->GetBool()) && tool && !isRightHold)
 		tool->Draw();
+	if (angle_measure_line_visible)
+		DrawAngleMeasurementLine();
 
 	SwapBuffers();
 }
@@ -269,6 +271,50 @@ catch (const agi::Exception &err) {
 		fmt_tl("An error occurred trying to render the video frame on the screen.\nError message reported: %s",
 		err.GetMessage()));
 	con->project->CloseVideo();
+}
+
+void VideoDisplay::SetAngleMeasurementLine(wxPoint start, wxPoint end) {
+	angle_measure_line_start = ScreenToClient(start);
+	angle_measure_line_end = ScreenToClient(end);
+	angle_measure_line_visible = true;
+	Render();
+}
+
+void VideoDisplay::ClearAngleMeasurementLine() {
+	if (!angle_measure_line_visible) return;
+	angle_measure_line_visible = false;
+	Render();
+}
+
+void VideoDisplay::DrawAngleMeasurementLine() const {
+	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_POINT_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_POINT_SMOOTH);
+
+	auto draw = [this](float line_width, float point_size, float red, float green,
+		float blue, float alpha) {
+		glColor4f(red, green, blue, alpha);
+		glLineWidth(line_width * scale_factor);
+		glBegin(GL_LINES);
+		glVertex2i(angle_measure_line_start.x, angle_measure_line_start.y);
+		glVertex2i(angle_measure_line_end.x, angle_measure_line_end.y);
+		glEnd();
+		glPointSize(point_size * scale_factor);
+		glBegin(GL_POINTS);
+		glVertex2i(angle_measure_line_start.x, angle_measure_line_start.y);
+		glVertex2i(angle_measure_line_end.x, angle_measure_line_end.y);
+		glEnd();
+	};
+
+	draw(6.0f, 10.0f, 0.0f, 0.0f, 0.0f, .8f);
+	draw(2.0f, 6.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+	glPopMatrix();
+	glPopAttrib();
 }
 
 void VideoDisplay::DrawOverscanMask(float horizontal_percent, float vertical_percent) const {

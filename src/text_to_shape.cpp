@@ -315,7 +315,7 @@ Decorations TransformDecorations(TextStyle const& style, Vector2D shadow, Vector
 }
 
 std::string FormatNumber(double value) {
-	std::string text = agi::format("%.2f", value);
+	std::string text = agi::format("%.3f", value);
 	auto dot = text.find('.');
 	if (dot != std::string::npos) {
 		while (!text.empty() && text.back() == '0') text.pop_back();
@@ -737,6 +737,13 @@ bool ReadFontStyle(HDC dc, unsigned short& weight, unsigned short& selection) {
 	return true;
 }
 
+/// Whether the face selected into the device keeps its outlines as PostScript curves rather than
+/// TrueType ones. It decides who slants a made-up italic: libass matches GDI for a TrueType face and
+/// uses tan(10 degrees) for a PostScript one, which is nearly half as much.
+bool FontIsPostScript(HDC dc) {
+	return GetFontData(dc, 0x20464643 /* 'CFF ' */, 0, nullptr, 0) != GDI_ERROR;
+}
+
 /// What the renderers make of that weight. Small numbers are the old one-to-nine scale, and a
 /// zero says the font did not answer, in which case the style bit is all there is to go on.
 int FaceWeight(unsigned short weight, bool bold_bit) {
@@ -856,6 +863,10 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 		/// so taking it off would stand the letters back up - and a slant changes no advance, so
 		/// there is nothing to correct for either.
 		HFONT plain = nullptr;
+		/// How far the outline has to be slanted by hand, and where the baseline it slants about is,
+		/// in the font's own units. Both nought unless the italic was taken off GDI above.
+		double slant = 0;
+		double baseline = 0;
 		std::vector<INT> advances;
 		/// The same advances without the letter spacing, which is the width of a letter's own bar.
 		std::vector<INT> bars;
@@ -892,22 +903,47 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 
 		HFONT previous = (HFONT)SelectObject(dc, ready.font);
 
-		// Whether the face GDI found is really bold, or whether GDI is making one up. Asked of the
-		// font file itself, since GDI reports back what was asked for rather than what it found.
-		// The renderers ask the same question of the same table: they make a bold up when what they
-		// found is more than a step and a half short of the one asked for.
-		//
-		// Only the bold. An italic is made up by everyone, renderers included, and by slanting the
-		// outline rather than by touching the advances - so it is left exactly as it was asked for.
-		if (piece.style.bold) {
-			unsigned short weight = 0, selection = 0;
-			bool read = ReadFontStyle(dc, weight, selection);
-			int face_weight = FaceWeight(weight, (selection & 0x20) != 0);
-			if (read && 700 > face_weight + 150) {
-				LOGFONTW plain = lf;
-				plain.lfWeight = FW_NORMAL;
-				ready.plain = CreateFontIndirectW(&plain);
+		// What GDI really found. It reports back the weight that was asked for rather than the
+		// weight it found, so the font file is asked instead - and asked twice, because the answer
+		// to "is this bold invented" is not in one face's table but in the difference between two.
+		unsigned short weight = 0, selection = 0;
+		bool read = ReadFontStyle(dc, weight, selection);
+		int asked_weight = FaceWeight(weight, (selection & 0x20) != 0);
+		bool postscript = FontIsPostScript(dc);
+
+		bool drop_bold = false;
+		if (piece.style.bold && read) {
+			// The same request without the bold. If it lands on a face that says the same about
+			// itself, then the family has no bolder member and what GDI is showing is its own
+			// invention - either on a face that is already bold enough (a family whose own name is
+			// the bold one), or on one that is not. Both are wrong here: GDI's invented bold walks
+			// the letters apart, which no renderer does.
+			LOGFONTW upright = lf;
+			upright.lfWeight = FW_NORMAL;
+			if (HFONT probe = CreateFontIndirectW(&upright)) {
+				SelectObject(dc, probe);
+				unsigned short probe_weight = 0, probe_selection = 0;
+				int found = ReadFontStyle(dc, probe_weight, probe_selection) ?
+					FaceWeight(probe_weight, (probe_selection & 0x20) != 0) : asked_weight;
+				SelectObject(dc, ready.font);
+				DeleteObject(probe);
+				drop_bold = found == asked_weight;
 			}
+		}
+
+		// An italic is made up by everyone, renderers included, and by slanting the outline rather
+		// than by touching the advances. libass says in its own source that its slant matches GDI's
+		// - but the matrix it says that about is the TrueType one. A PostScript face is slanted by
+		// tan(10 degrees) instead, where GDI uses tan(18.77), so there the slant is taken off GDI
+		// and put back by hand; otherwise GDI's is exactly right and is kept.
+		bool drop_italic = piece.style.italic && read && !(selection & 0x01) && postscript;
+
+		if (drop_bold || drop_italic) {
+			LOGFONTW plain = lf;
+			if (drop_bold) plain.lfWeight = FW_NORMAL;
+			if (drop_italic) plain.lfItalic = FALSE;
+			ready.plain = CreateFontIndirectW(&plain);
+			if (ready.plain && drop_italic) ready.slant = 0.17632698070846498;
 		}
 
 		// Everything measured below comes from the face as it really is.
@@ -917,6 +953,9 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 
 		TEXTMETRICW metrics{};
 		GetTextMetricsW(dc, &metrics);
+		// FreeType slants about the origin, which is the baseline; the outline here is measured from
+		// the top of the cell, so the baseline is the ascent down from it.
+		ready.baseline = metrics.tmAscent;
 		piece.ascent = metrics.tmAscent * ready.dy;
 		piece.descent = metrics.tmDescent * ready.dy;
 
@@ -1106,6 +1145,17 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 			double units = 1.0 / UPSCALE;
 			auto rings = FlattenPath(points, types, units, .75);
 
+			// The slant GDI was not allowed to make up, put back about the baseline.
+			double baseline = ready.baseline * units;
+			auto lean = [&](Vector2D point) {
+				if (ready.slant == 0) return point;
+				return Vector2D((float)(point.X() + ready.slant * (baseline - point.Y())),
+				                point.Y());
+			};
+			if (ready.slant != 0)
+				for (auto& ring : rings)
+					for (auto& point : ring) point = lean(point);
+
 			// The bars under and through the letters belong to the letters, so they are widened
 			// with them.
 			if (ready.underline.wanted || ready.strikeout.wanted) {
@@ -1116,8 +1166,8 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 						if (!deco.wanted || bar <= 0) continue;
 						float left = (float)(walked * units), right = (float)((walked + bar) * units);
 						float top = (float)(deco.top * units), bottom = (float)(deco.bottom * units);
-						Contour rect{Vector2D(left, top), Vector2D(right, top),
-						             Vector2D(right, bottom), Vector2D(left, bottom)};
+						Contour rect{lean(Vector2D(left, top)), lean(Vector2D(right, top)),
+						             lean(Vector2D(right, bottom)), lean(Vector2D(left, bottom))};
 						WindRing(rect, sense);
 						rings.push_back(std::move(rect));
 					}
@@ -1144,8 +1194,14 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 			continue;
 		}
 
+		// The slant GDI was not allowed to make up, put back about the baseline - in the font's own
+		// units, before the scale, which is where the renderers apply it too.
+		auto lean = [&](double px, double py) {
+			return ready.slant == 0 ? px : px + ready.slant * (ready.baseline - py);
+		};
+
 		for (int i = 0; i < count; ++i) {
-			double x = points[i].x * ready.dx, y = points[i].y * ready.dy;
+			double x = lean(points[i].x, points[i].y) * ready.dx, y = points[i].y * ready.dy;
 			switch (types[i] & ~PT_CLOSEFIGURE) {
 			case PT_MOVETO: append('m', x, y); break;
 			case PT_LINETO: append('l', x, y); break;
@@ -1162,19 +1218,24 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 				LONG bar = ready.bars[i];
 				for (auto const& deco : {ready.underline, ready.strikeout}) {
 					if (!deco.wanted || bar <= 0) continue;
-					double left = pen * ready.dx, right = (pen + bar) * ready.dx;
+					// Each corner leans by how far it is from the baseline, so a bar under leaning
+					// letters leans with them rather than standing square under them.
+					double left_top = lean(pen, deco.top) * ready.dx;
+					double right_top = lean(pen + bar, deco.top) * ready.dx;
+					double left_low = lean(pen, deco.bottom) * ready.dx;
+					double right_low = lean(pen + bar, deco.bottom) * ready.dx;
 					double top = deco.top * ready.dy, bottom = deco.bottom * ready.dy;
 					if (turned >= 0) {
-						append('m', left, top);
-						append('l', right, top);
-						append('l', right, bottom);
-						append('l', left, bottom);
+						append('m', left_top, top);
+						append('l', right_top, top);
+						append('l', right_low, bottom);
+						append('l', left_low, bottom);
 					}
 					else {
-						append('m', left, top);
-						append('l', left, bottom);
-						append('l', right, bottom);
-						append('l', right, top);
+						append('m', left_top, top);
+						append('l', left_low, bottom);
+						append('l', right_low, bottom);
+						append('l', right_top, top);
 					}
 				}
 				pen += ready.advances[i];
@@ -1368,11 +1429,11 @@ std::vector<std::vector<Vector2D>> WidenRings(std::vector<std::vector<Vector2D>>
 	return Widen(rings, rx, ry, area >= 0 ? 1. : -1.);
 }
 
-std::vector<Converted> ConvertSelection(const agi::Context *c,
-                                        std::vector<std::string>& refusals) {
+std::vector<Converted> ConvertLines(const agi::Context *c,
+		std::vector<AssDialogue *> const& lines, std::vector<std::string>& refusals) {
 	std::vector<Converted> converted;
 
-	for (auto line : c->selectionController->GetSortedSelection()) {
+	for (auto line : lines) {
 		auto blocks = line->ParseTags();
 
 		bool has_text = false;
@@ -1464,6 +1525,11 @@ std::vector<Converted> ConvertSelection(const agi::Context *c,
 	}
 
 	return converted;
+}
+
+std::vector<Converted> ConvertSelection(const agi::Context *c,
+		std::vector<std::string>& refusals) {
+	return ConvertLines(c, c->selectionController->GetSortedSelection(), refusals);
 }
 
 std::vector<Decoration> BakeDecorations(const agi::Context *c, AssDialogue *line) {

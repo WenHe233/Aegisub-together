@@ -9500,3 +9500,119 @@ msgstr "Vrednosti bord i shad mogu da se pomere; preporučuje se uključivanje o
 #: src
 msgid "If the rows move by themselves, use \\q2."
 msgstr "Ako bi se redovi automatski pomerili, koristite \\q2."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+#, c-format
+msgid "Gradient (%d lines, text: %s)"
+msgstr "Градијент (%d редова, текст: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp ../src/dialog_gradient.cpp
+msgid "Gradient"
+msgstr "Градијент"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Create a linear, radial or per-character colour gradient on the selected lines"
+msgstr "Прављење линеарног, радијалног или градијента по знаковима на изабраним редовима"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Apply to this color"
+msgstr "Примени на ову боју"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy stops from..."
+msgstr "Копирај тачке боја из..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Bord color"
+msgstr "Боја ивице"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shadow color"
+msgstr "Боја сенке"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Click the bar to add a stop. Drag a square to move it; click it to choose a color; right-click it to remove it."
+msgstr "Кликните на траку да додате нову тачку боје. Превуците квадрат да бисте је померили, кликните да изаберете боју, а кликните десним тастером да је уклоните."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Drag the angle dial or enter an exact value. Double-click the dial to measure an angle on the video."
+msgstr "Превуците точкић за угао или унесите тачну вредност. Двапут кликните на точкић да измерите угао на видеу."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "With shapes there will be no clips and you can give additional clip, blur, etc. You can edit the gradient after saving."
+msgstr "Претварањем у облике уклања се clip, па можете применити додатни clip, blur и друго. Градијент можете уређивати и након чувања."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Enable at least one color block."
+msgstr "Укључите бар један блок боје."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "No characters were found in the selected lines."
+msgstr "У изабраним редовима нема знакова који се могу обрадити."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "No selected lines could be converted to shapes."
+msgstr "Ниједан изабрани ред није успео да се конвертује у облик."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Radial"
+msgstr "Радијални"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type"
+msgstr "Тип градијента"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "By character"
+msgstr "По знаковима"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "With shapes"
+msgstr "Облицима"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Output"
+msgstr "Излаз"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Angle:"
+msgstr "Угао:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Pixels per strip:"
+msgstr "Растојање у пикселима по траци:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Anti-strip overlap:"
+msgstr "Преклапање против пруга:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Overlap on each side of oblique, radial, and shape bands, in script units. Rectangular clips force this value to 0."
+msgstr "Преклапање косих, радијалних и обликованих трака по страни, у скриптним јединицама. Правоугаони клипови постављају ову вредност на 0."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_gradient.cpp
+msgid "apply gradient"
+msgstr "Примена градијента"

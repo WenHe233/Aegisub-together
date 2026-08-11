@@ -1,10 +1,12 @@
 #pragma once
 
 #include "ass_dialogue.h"
+#include <string>
 #include <vector>
 #include <unordered_map>
 
 class AssDialogue;
+class AssFile;
 
 /// Whether this line is the rectangle an image mask is drawn on.
 ///
@@ -18,18 +20,22 @@ public:
     bool IsGroupStart(const AssDialogue* d) const;
     bool IsInGroup(const AssDialogue* d) const;
     bool IsCollapsed(const AssDialogue* d) const;
+	bool IsGradientGroup(const AssDialogue* d) const;
+	std::string const& GetGroupLabel(const AssDialogue* d) const;
 
     int GetGroupSize(const AssDialogue* d) const;
     AssDialogue* GetLastInGroup(const AssDialogue* d) const;
     const std::vector<AssDialogue*>& GetGroupLines(const AssDialogue* d) const;
 
-    void Rebuild(const std::vector<AssDialogue*>& lines);
+	void Rebuild(const std::vector<AssDialogue*>& lines, AssFile const& file);
     void Toggle(AssDialogue* d);
 
 private:
     struct ImageMaskGroup {
         bool collapsed = true;
-        AssDialogue* start = nullptr;
+		bool gradient = false;
+		AssDialogue* start = nullptr;
+		std::string label;
         std::vector<AssDialogue*> lines;
     };
 

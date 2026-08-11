@@ -56,6 +56,11 @@ struct Converted {
 std::vector<Converted> ConvertSelection(const agi::Context *c,
                                         std::vector<std::string>& refusals);
 
+/// Convert an explicit set of lines. This is used by editable generated effects,
+/// whose hidden source lines are only part of a larger selected group.
+std::vector<Converted> ConvertLines(const agi::Context *c,
+	std::vector<AssDialogue *> const& lines, std::vector<std::string>& refusals);
+
 /// The border and the shadow of a line, drawn as shapes.
 ///
 /// A pen cannot be leaned or squashed: \bord is one number, an upright ellipse, and it cannot even

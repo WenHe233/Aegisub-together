@@ -6802,6 +6802,9 @@ msgstr "Ideiglenes listába mentés"
 msgid "Image Mask (%d lines)"
 msgstr "Kép maszk (%d sor)"
 
+msgid "Gradient (%d lines, text: %s)"
+msgstr "Gradient (%d sor, szöveg: %s)"
+
 msgid "Image Mask background"
 msgstr "Kép maszk háttere"
 
@@ -7921,7 +7924,7 @@ msgstr "Egyéni blur"
 msgid "Select shape color"
 msgstr "Alakzat színének kiválasztása"
 
-#: src/visual_tool_shape.cpp
+#: src/dialog_gradient.cpp src/visual_tool_shape.cpp
 msgid "Color"
 msgstr "Szín"
 
@@ -8676,3 +8679,91 @@ msgstr ""
 
 msgid "If the rows move by themselves, use \\q2."
 msgstr "Ha a sorok automatikusan elmozdulnának, használd a \\q2-t."
+
+#: ../src/command/typesetting.cpp ../src/dialog_gradient.cpp
+msgid "Gradient"
+msgstr "Gradient"
+
+#: ../src/command/typesetting.cpp
+msgid "Create a linear, radial or per-character colour gradient on the selected lines"
+msgstr "Lineáris, radiális vagy karakterenkénti színátmenet létrehozása a kijelölt sorokon"
+
+#: ../src/dialog_gradient.cpp
+msgid "Apply to this color"
+msgstr "Alkalmazás erre a színre"
+
+#: ../src/dialog_gradient.cpp
+msgid "Copy stops from..."
+msgstr "Színpontok másolása innen..."
+
+#: ../src/dialog_gradient.cpp
+msgid "Bord color"
+msgstr "Bord szín"
+
+#: ../src/dialog_gradient.cpp
+msgid "Shadow color"
+msgstr "Árnyék szín"
+
+#: ../src/dialog_gradient.cpp
+msgid "Click the bar to add a stop. Drag a square to move it; click it to choose a color; right-click it to remove it."
+msgstr "Kattints a sávra új színpont hozzáadásához. A négyzet húzásával mozgathatod, kattintással színt választhatsz, jobb kattintással pedig eltávolíthatod."
+
+#: ../src/dialog_gradient.cpp
+msgid "Drag the angle dial or enter an exact value. Double-click the dial to measure an angle on the video."
+msgstr "Húzd a szögtárcsát, vagy adj meg pontos értéket. A videón történő szögméréshez kattints duplán a tárcsára."
+
+#: ../src/dialog_gradient.cpp
+msgid "With shapes there will be no clips and you can give additional clip, blur, etc. You can edit the gradient after saving."
+msgstr "Alakzatokká alakítva nincsen clip és így lehet további clipet, blurt, egyebet alkalmazni. Szerkesztheted a gradientet mentés után."
+
+#: ../src/dialog_gradient.cpp
+msgid "Enable at least one color block."
+msgstr "Kapcsolj be legalább egy színblokkot."
+
+#: ../src/dialog_gradient.cpp
+msgid "No characters were found in the selected lines."
+msgstr "A kijelölt sorokban nem található feldolgozható karakter."
+
+#: ../src/dialog_gradient.cpp
+msgid "No selected lines could be converted to shapes."
+msgstr "Egyetlen kijelölt sort sem sikerült alakzattá konvertálni."
+
+#: ../src/dialog_gradient.cpp
+msgid "Radial"
+msgstr "Radiális"
+
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type"
+msgstr "Színátmenet típusa"
+
+#: ../src/dialog_gradient.cpp
+msgid "By character"
+msgstr "Karakterenként"
+
+#: ../src/dialog_gradient.cpp
+msgid "With shapes"
+msgstr "Alakzatokkal"
+
+#: ../src/dialog_gradient.cpp
+msgid "Output"
+msgstr "Kimenet"
+
+#: ../src/dialog_gradient.cpp
+msgid "Angle:"
+msgstr "Szög:"
+
+#: ../src/dialog_gradient.cpp
+msgid "Pixels per strip:"
+msgstr "Pixeltávolság sávonként:"
+
+#: ../src/dialog_gradient.cpp
+msgid "Anti-strip overlap:"
+msgstr "Csíkosság elleni átfedés:"
+
+#: ../src/dialog_gradient.cpp
+msgid "Overlap on each side of oblique, radial, and shape bands, in script units. Rectangular clips force this value to 0."
+msgstr "A ferde, radiális és alakzatos sávok oldalankénti átfedése script-egységben. A téglalapos clipek ezt az értéket 0-ra állítják."
+
+#: ../src/typesetting_gradient.cpp
+msgid "apply gradient"
+msgstr "színátmenet alkalmazása"

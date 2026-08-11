@@ -257,7 +257,7 @@ void BaseGrid::UpdateMaps(bool rebuild) {
 		temp.push_back(curdiag);
 
 	if (rebuild)
-		context->imageMask->Rebuild(temp);
+		context->imageMask->Rebuild(temp, *context->ass);
 
 	for (auto* d : temp) {
 		if (context->imageMask->IsVisible(d))
@@ -614,7 +614,17 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 				}
 
 				if (context->imageMask->IsGroupStart(curDiag) && context->imageMask->IsCollapsed(curDiag) && j == columns.size() - 1) {
-					wxString text = "--- " + fmt_tl("Image Mask (%d lines)", context->imageMask->GetGroupSize(curDiag)) + " ---";
+					bool gradient = context->imageMask->IsGradientGroup(curDiag);
+					wxString text;
+					if (gradient) {
+						auto const& label = context->imageMask->GetGroupLabel(curDiag);
+						text = "--- " + fmt_tl("Gradient (%d lines, text: %s)",
+							context->imageMask->GetGroupSize(curDiag), to_wx(label)) + " ---";
+					}
+					else {
+						text = "--- " + fmt_tl("Image Mask (%d lines)",
+							context->imageMask->GetGroupSize(curDiag)) + " ---";
+					}
 
 					int left = x + 4;
 					if (columns[j]->Centered()) {

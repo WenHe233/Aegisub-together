@@ -60,7 +60,8 @@
 		{ "command" : "ai/karaoke/kanji" }
 	],
     "main/typesetting" : [
-        { "submenu" : "main/typesetting/transform", "text" : "&Transform" }
+        { "submenu" : "main/typesetting/transform", "text" : "&Transform" },
+        { "command" : "typesetting/gradient" }
     ],
     "main/typesetting/transform" : [
         { "command" : "typesetting/transform/free" },

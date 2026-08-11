@@ -25,6 +25,7 @@
 
 #include "../ass_file.h"
 #include "../compat.h"
+#include "../dialog_gradient.h"
 #include "../image_mask_combiner.h"
 #include "../include/aegisub/context.h"
 #include "../selection_controller.h"
@@ -73,10 +74,10 @@ namespace {
 	/// that can be done with it: the line is a rectangle standing in for a picture rather than
 	/// typesetting, so reshaping it would move the frame and leave the picture where it was. Said
 	/// out loud rather than greyed out, so that it is clear why nothing happened.
-	bool RefusedForMask(agi::Context *c) {
+	bool RefusedForMask(agi::Context *c, wxString const& title = _("Transform")) {
 		for (auto line : c->selectionController->GetSelectedSet()) {
 			if (!IsImageMaskLine(line)) continue;
-			wxMessageBox(_("Image mask not supported."), _("Transform"),
+			wxMessageBox(_("Image mask not supported."), title,
 				wxOK | wxICON_WARNING, c->parent);
 			return true;
 		}
@@ -177,6 +178,23 @@ struct typesetting_flip_vertical final : public flip_command<false> {
 	STR_HELP("Turn the selected lines into shapes and mirror them top to bottom")
 };
 
+struct typesetting_gradient final : public Command {
+	CMD_NAME("typesetting/gradient")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Gradient")
+	STR_DISP("Gradient")
+	STR_HELP("Create a linear, radial or per-character colour gradient on the selected lines")
+
+	bool Validate(const agi::Context *c) override {
+		return !c->selectionController->GetSelectedSet().empty();
+	}
+
+	void operator()(agi::Context *c) override {
+		if (RefusedForMask(c, _("Gradient"))) return;
+		ShowGradientDialog(c);
+	}
+};
+
 }
 
 namespace cmd {
@@ -187,5 +205,6 @@ namespace cmd {
 		reg(std::make_unique<typesetting_transform_warp>());
 		reg(std::make_unique<typesetting_flip_horizontal>());
 		reg(std::make_unique<typesetting_flip_vertical>());
+		reg(std::make_unique<typesetting_gradient>());
 	}
 }

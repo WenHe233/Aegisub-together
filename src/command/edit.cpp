@@ -52,6 +52,7 @@
 #include "../selection_controller.h"
 #include "../subs_controller.h"
 #include "../text_selection_controller.h"
+#include "../typesetting_gradient.h"
 #include "../utils.h"
 #include "../video_controller.h"
 
@@ -193,6 +194,7 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 
 	AssDialogue *pendingFoldStart = nullptr;
 	std::vector<std::pair<AssDialogue*, AssDialogue*>> foldsToAdd;
+	bool restored_gradient_metadata = false;
 
 	boost::char_separator<char> sep("\r\n");
 	for (auto curdata : boost::tokenizer<boost::char_separator<char>>(data, sep)) {
@@ -221,6 +223,8 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 		}
 
 		inserted->Text = text;
+		restored_gradient_metadata |=
+			typesetting::gradient::RestoreClipboardMetadata(*c->ass, *inserted);
 
 		newsel.insert(inserted);
 		if (!first)
@@ -232,7 +236,9 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 		for (auto const& fold : foldsToAdd)
 			commitId = c->foldController->AddFold(*fold.first, *fold.second, true, commitId);
 
-		c->ass->Commit(_("paste"), paste_over ? AssFile::COMMIT_DIAG_FULL : AssFile::COMMIT_DIAG_ADDREM, commitId);
+		int commit_type = paste_over ? AssFile::COMMIT_DIAG_FULL : AssFile::COMMIT_DIAG_ADDREM;
+		if (restored_gradient_metadata) commit_type |= AssFile::COMMIT_EXTRADATA;
+		c->ass->Commit(_("paste"), commit_type, commitId);
 
 		if (!paste_over)
 			c->selectionController->SetSelectionAndActive(std::move(newsel), first);
@@ -765,29 +771,32 @@ struct edit_find_in_folder final : public Command {
 };
 
 static void copy_lines(agi::Context *c) {
-	SetClipboard(join(c->selectionController->GetSortedSelection()
-		| transformed(static_cast<std::string(*)(AssDialogue*)>([](AssDialogue *d) {
-			std::string str = d->GetEntryData(false);
+	std::string clipboard;
+	for (auto d : c->selectionController->GetSortedSelection()) {
+		if (!clipboard.empty()) clipboard += "\r\n";
+		std::string str = d->GetEntryData(false);
 
-			if (d->Fold.hasFold() && !d->Fold.isEnd())
-				str += "{:Foldstart}";
+		if (d->Fold.hasFold() && !d->Fold.isEnd())
+			str += "{:Foldstart}";
 
-			if (d->Fold.hasFold() && d->Fold.isEnd())
-				str += "{:Foldend}";
+		if (d->Fold.hasFold() && d->Fold.isEnd())
+			str += "{:Foldend}";
 
-			if (d->SourceLineText.get().size()) {
-				str += "{:Source Line: ";
+		str += typesetting::gradient::ClipboardMetadata(*c->ass, *d);
 
-				for (auto c : d->SourceLineText.get())
-					if (c != '\n' && c != '\r')
-						str += c;
+		if (d->SourceLineText.get().size()) {
+			str += "{:Source Line: ";
 
-				str += "}";
-			}
+			for (auto character : d->SourceLineText.get())
+				if (character != '\n' && character != '\r')
+					str += character;
 
-			return str;
-		})),
-		"\r\n"));
+			str += "}";
+		}
+
+		clipboard += std::move(str);
+	}
+	SetClipboard(clipboard);
 }
 
 static void delete_lines(agi::Context *c, wxString const& commit_message) {
@@ -1115,6 +1124,10 @@ static bool try_paste_lines(agi::Context *c) {
 			return false;
 		}
 	}
+	bool restored_gradient_metadata = false;
+	for (auto& line : parsed)
+		restored_gradient_metadata |=
+			typesetting::gradient::RestoreClipboardMetadata(*c->ass, line);
 
 	AssDialogue *new_active = &*parsed.begin();
 	Selection new_selection;
@@ -1123,7 +1136,9 @@ static bool try_paste_lines(agi::Context *c) {
 
 	auto pos = c->ass->iterator_to(*c->selectionController->GetActiveLine());
 	c->ass->Events.splice(pos, parsed, parsed.begin(), parsed.end());
-	c->ass->Commit(_("paste"), AssFile::COMMIT_DIAG_ADDREM);
+	int commit_type = AssFile::COMMIT_DIAG_ADDREM;
+	if (restored_gradient_metadata) commit_type |= AssFile::COMMIT_EXTRADATA;
+	c->ass->Commit(_("paste"), commit_type);
 	c->selectionController->SetSelectionAndActive(std::move(new_selection), new_active);
 
 	return true;

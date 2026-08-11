@@ -140,11 +140,16 @@ class VideoDisplay final : public wxGLCanvas {
 
 	wxTimer rightClickTimer;
 	bool isRightHold = false;
+	bool angle_measure_line_visible = false;
+	wxPoint angle_measure_line_start;
+	wxPoint angle_measure_line_end;
 
 	/// @brief Draw an overscan mask
 	/// @param horizontal_percent The percent of the video reserved horizontally
 	/// @param vertical_percent The percent of the video reserved vertically
 	void DrawOverscanMask(float horizontal_percent, float vertical_percent) const;
+	/// Draw the temporary line used by the gradient angle picker
+	void DrawAngleMeasurementLine() const;
 
 	/// Upload the image for the current frame to the video card
 	void UploadFrameData(FrameReadyEvent&);
@@ -240,6 +245,11 @@ public:
 
 	/// @brief Render the currently visible frame
 	void Render();
+
+	/// Show a temporary angle measurement line. Points are in screen coordinates.
+	void SetAngleMeasurementLine(wxPoint start, wxPoint end);
+	/// Remove the temporary angle measurement line.
+	void ClearAngleMeasurementLine();
 
 	/// @brief Set the window zoom level
 	/// @param value The new zoom level

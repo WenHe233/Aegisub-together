@@ -7,8 +7,8 @@ extra arguments.
 | Script | What it does |
 | --- | --- |
 | `release-local.cmd` | Copies the built `aegisub.exe` and the Hungarian catalogue into `C:\aegisub-portable`, for trying a build out immediately. |
-| `release.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages, builds, packs `aegisub-v<version>.zip` into `.releases/`, and offers to publish it as a GitHub release. |
-| `backfill-translations.cmd` | One-off catch-up: runs only the two translation passes, no build and no packing. Prints how much is missing and asks before spending anything. |
+| `translate.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages. It does not build or pack anything. |
+| `release.cmd` | Builds, packs `aegisub-v<version>.zip` into `.releases/`, and offers to publish it as a GitHub release. It does not run translations. |
 
 ## Settings
 
@@ -28,7 +28,7 @@ empty on the first run:
 
 ## Translation
 
-`release.cmd` reads the OpenAI key from `release.config.apikey.json`, falling
+`translate.cmd` reads the OpenAI key from `release.config.apikey.json`, falling
 back to `release.config.json` and then to the `OPENAI_API_KEY` environment
 variable. Translation is incremental in both directions:
 
@@ -45,11 +45,11 @@ variable. Translation is incremental in both directions:
 
 `release.cmd` builds only when it would change what gets packed, because every
 build relinks an 85 MB executable — the version header is regenerated on every
-run. It builds when a catalogue was translated, when there is no executable yet,
-or when something under `src/`, `libaegisub/` or `po/` is newer than the one
-that is there; otherwise it says so and goes straight to packing. Translating
-the changelog never triggers a build: the changelog is neither compiled nor
-packed.
+run. It builds when there is no executable yet or when something under `src/`,
+`libaegisub/` or `po/` is newer than the one that is there; otherwise it says so
+and goes straight to packing. This also detects catalogue changes made by
+`translate.cmd`. Translating the changelog never triggers a build: the changelog
+is neither compiled nor packed.
 
 ## Where the files live
 
@@ -75,5 +75,5 @@ The upload needs a GitHub token in `release.config.apikey.json` as
 **Contents: read and write** on this repository is enough — create it at
 <https://github.com/settings/personal-access-tokens>.
 
-Both scripts skip what is already published, so either can be re-run after a
-failure part way through.
+Both translation passes and the release publishing step skip what is already
+done, so either script can be re-run after a failure part way through.
