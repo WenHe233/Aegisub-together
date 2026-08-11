@@ -9175,3 +9175,328 @@ msgstr "Dodata je nova funkcija za izbor boje, koja namerno nije automatski dode
 #: ../src/video_color_pick.cpp
 msgid "accept color by doubleclick"
 msgstr "prihvati boju dvostrukim klikom"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/libresrc/default_menu_platform.json
+msgid "T&ypesetting"
+msgstr "&Formatiranje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/libresrc/default_menu_platform.json
+msgid "&Transform"
+msgstr "&Transformacija"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Arch..."
+msgstr "&Krivljenje..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Arch"
+msgstr "Krivljenje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down as one shape"
+msgstr "Krivljenje izabranih linija nagore ili nadole kao jedinstvenog oblika"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Bend"
+msgstr "Krivljenje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Positive bends upwards, negative downwards."
+msgstr "Pozitivna vrednost krivi nagore, a negativna nadole."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "arch"
+msgstr "krivljenje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "The selection has no drawing that can be reshaped."
+msgstr "U izboru nema oblika koji može da se transformiše."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Some drawings use curve commands this cannot reshape, and were left alone."
+msgstr "Neki oblici koriste krive koje ova funkcija ne može da transformiše; ostavljeni su nepromenjeni."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Some of the selected lines still hold text, and only a drawing can be reshaped.\\n\\nContinuing converts that text into drawings. The text stops being text: the font is baked into the shape, and it can no longer be edited, spell checked or translated.\\n\\nDo you want to continue?"
+msgstr "Deo izabranih linija još uvek sadrži tekst, a transformisati se mogu samo oblici.\\n\\nNastavak će ovaj tekst pretvoriti u oblik. Tekst time prestaje da bude tekst: font se ugrađuje u oblik i više ne može da se uređuje, proverava pravopis niti prevodi.\\n\\nDa li želite da nastavite?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Convert text to shapes"
+msgstr "Pretvaranje teksta u oblik"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "Converting text to shapes is only implemented on Windows so far."
+msgstr "Pretvaranje teksta u oblik za sada je implementirano samo na Windowsu."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line already mixes text with a drawing."
+msgstr "Linija sadrži i tekst i oblik."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line has no \\pos, so where its text sits depends on layout this cannot reproduce yet."
+msgstr "Linija nema \\pos, pa položaj teksta zavisi od prelamanja koje ova funkcija još ne može da reprodukuje."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line is scaled with \\fscx or \\fscy, which is not handled yet."
+msgstr "Linija je skalirana prema \\fscx ili \\fscy, što ova funkcija još ne podržava."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line is karaoke timed, and the syllables would be lost."
+msgstr "Linija ima karaoke vremenske oznake, pa bi slogovi bili izgubljeni."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line has a manual break, which is not handled yet."
+msgstr "Linija sadrži ručni prelom reda, što ova funkcija još ne podržava."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The outline of the text could not be read from the font."
+msgstr "Kontura teksta nije mogla da se učita iz fonta."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "Some lines were left as text:"
+msgstr "Neke linije su ostale tekst:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The text could not be converted:"
+msgstr "Tekst nije moguće pretvoriti:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "convert text to shapes"
+msgstr "pretvaranje teksta u oblik"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Distort"
+msgstr "Izobličenje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Bend the selected drawings by dragging on the video"
+msgstr "Savijanje izabranih oblika prevlačenjem na videu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Drag the corners of the selected drawings on the video"
+msgstr "Prevlačenje uglova izabranih oblika na videu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "distort"
+msgstr "izobličenje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Arch"
+msgstr "&Savijanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Distort"
+msgstr "&Izobličenje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down by dragging on the video"
+msgstr "Savijanje izabranih redova nagore ili nadole prevlačenjem na videu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Drag the four corners of the selected lines on the video"
+msgstr "Prevlačenje četiri ugla izabranih redova na videu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Warp"
+msgstr "&Deformisanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Warp"
+msgstr "Deformisanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines by dragging a 3x3 mesh over the video"
+msgstr "Deformisanje izabranih redova prevlačenjem mreže 3x3 na videu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip &horizontally"
+msgstr "&Horizontalno preslikavanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip horizontally"
+msgstr "Horizontalno preslikavanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them left to right"
+msgstr "Pretvaranje izabranih redova u oblik i preslikavanje sleva nadesno"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip &vertically"
+msgstr "&Vertikalno preslikavanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip vertically"
+msgstr "Vertikalno preslikavanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them top to bottom"
+msgstr "Pretvaranje izabranih redova u oblik i preslikavanje odozgo nadole"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "warp"
+msgstr "deformisanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "flip horizontally"
+msgstr "horizontalno preslikavanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "flip vertically"
+msgstr "vertikalno preslikavanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "cancel transform"
+msgstr "odbaci transformaciju"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Arch - preview only until applied"
+msgstr "Savijanje – samo pregled do primene"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Distort - preview only until applied"
+msgstr "Izobličenje – samo pregled do primene"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Warp - preview only until applied"
+msgstr "Krivljenje – samo pregled do primene"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The text is wider than the margins allow, so the renderer would break it into rows this cannot work out yet."
+msgstr "Tekst je širi od prostora koji margine dozvoljavaju, pa bi ga prikazivač prelomio u više redova – to još nije moguće izračunati."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line changes font, size or shape partway through. It would have to be split into one line per part first, which is not done yet."
+msgstr "Tokom reda se menja font, veličina ili oblik. Najpre bi ga trebalo podeliti na zasebne redove po delovima, što još nije podržano."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Free transform"
+msgstr "&Slobodna transformacija"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Free transform"
+msgstr "Slobodna transformacija"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "free transform"
+msgstr "slobodna transformacija"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Scale, turn and move the selected lines on the video, written as tags"
+msgstr "Promena veličine, rotiranje i pomeranje izabranih redova na videu, ispisano pomoću tagova"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Free transform - preview only until applied"
+msgstr "Slobodna transformacija – samo pregled do primene"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Recalculate:"
+msgstr "Ponovo izračunaj:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "bord"
+msgstr "ivicu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "shad"
+msgstr "senku"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "blur"
+msgstr "zamućenje"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "maintain bord & shad"
+msgstr "zadrži bord & shad"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Image mask not supported."
+msgstr "Redovi sa maskom slike nisu podržani."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate bord"
+msgstr "ponovo izračunaj bord"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate shad"
+msgstr "ponovno izračunavanje shad"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate blur"
+msgstr "ponovno izračunavanje blur"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate clip"
+msgstr "ponovno izračunavanje clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "The bord and the shad can be scatchy, using the maintain option is advised. It will transform into a shape."
+msgstr "Vrednosti bord i shad mogu da se pomere; preporučuje se uključivanje opcije zadržavanja, čime se zamenjuju oblikom."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "If the rows move by themselves, use \\q2."
+msgstr "Ako bi se redovi automatski pomerili, koristite \\q2."

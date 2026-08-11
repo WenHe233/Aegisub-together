@@ -9268,3 +9268,328 @@ msgstr "Дададзена новая функцыя выбару колеру, 
 #: ../src/video_color_pick.cpp
 msgid "accept color by doubleclick"
 msgstr "прыняць колер падвойным націскам спасылка"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/libresrc/default_menu_platform.json
+msgid "T&ypesetting"
+msgstr "&Фарматаванне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/libresrc/default_menu_platform.json
+msgid "&Transform"
+msgstr "П&ераўтварэнне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Arch..."
+msgstr "&Выгібанне..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Arch"
+msgstr "Выгібанне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down as one shape"
+msgstr "Выгнуць выбраныя радкі ўверх або ўніз як адну фігуру"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Bend"
+msgstr "Выгібанне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Positive bends upwards, negative downwards."
+msgstr "Станоўчае значэнне выгінае ўверх, адмоўнае — уніз."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "arch"
+msgstr "выгібанне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "The selection has no drawing that can be reshaped."
+msgstr "У выбары няма фігур, якія можна пераўтварыць."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Some drawings use curve commands this cannot reshape, and were left alone."
+msgstr "Некаторыя фігуры выкарыстоўваюць каманды крывых, якія гэта не падтрымлівае, таму я пакінуў іх без змен."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Some of the selected lines still hold text, and only a drawing can be reshaped.\\n\\nContinuing converts that text into drawings. The text stops being text: the font is baked into the shape, and it can no longer be edited, spell checked or translated.\\n\\nDo you want to continue?"
+msgstr "Некаторыя выбраныя радкі ўсё яшчэ ўтрымліваюць тэкст, а пераўтвараць можна толькі фігуры.\\n\\nПрацяг пераўтворыць гэты тэкст у фігуру. Тэкст перастане быць тэкстам: шрыфт убудуецца ў фігуру, і яго больш нельга будзе рэдагаваць, правяраць правапіс і перакладаць.\\n\\nПрацягнуць?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Convert text to shapes"
+msgstr "Пераўтварэнне тэксту ў фігуру"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "Converting text to shapes is only implemented on Windows so far."
+msgstr "Пераўтварэнне тэксту ў фігуру пакуль рэалізавана толькі ў Windows."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line already mixes text with a drawing."
+msgstr "Радок утрымлівае і тэкст, і фігуру."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line has no \\pos, so where its text sits depends on layout this cannot reproduce yet."
+msgstr "У радку няма \\pos, таму размяшчэнне тэксту залежыць ад разбіўкі, якую гэта пакуль не ўмее ўзнаўляць."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line is scaled with \\fscx or \\fscy, which is not handled yet."
+msgstr "Радок маштабуецца паводле \\fscx або \\fscy, што пакуль не падтрымліваецца."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line is karaoke timed, and the syllables would be lost."
+msgstr "Радок мае караоке-таймінг, таму склады будуць страчаныя."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line has a manual break, which is not handled yet."
+msgstr "У радку ёсць ручны разрыў радка, што пакуль не падтрымліваецца."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The outline of the text could not be read from the font."
+msgstr "Не ўдалося прачытаць контур тэксту са шрыфту."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "Some lines were left as text:"
+msgstr "Некаторыя радкі засталіся тэкстам:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The text could not be converted:"
+msgstr "Не ўдалося пераўтварыць тэкст:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "convert text to shapes"
+msgstr "пераўтварэнне тэксту ў фігуру"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Distort"
+msgstr "Скажэнне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Bend the selected drawings by dragging on the video"
+msgstr "Выгін выбраных фігур перацягваннем на відэа"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Drag the corners of the selected drawings on the video"
+msgstr "Перацягванне вуглоў выбраных фігур на відэа"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "distort"
+msgstr "скажэнне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Arch"
+msgstr "&Выгін"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Distort"
+msgstr "&Скажэнне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down by dragging on the video"
+msgstr "Выгін выбраных радкоў уверх або ўніз перацягваннем на відэа"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Drag the four corners of the selected lines on the video"
+msgstr "Перацягванне чатырох вуглоў выбраных радкоў на відэа"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Warp"
+msgstr "&Згінанне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Warp"
+msgstr "Згінанне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines by dragging a 3x3 mesh over the video"
+msgstr "Згінанне выбраных радкоў перацягваннем сеткі 3×3 на відэа"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip &horizontally"
+msgstr "&Гарызантальнае адлюстраванне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip horizontally"
+msgstr "Гарызантальнае адлюстраванне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them left to right"
+msgstr "Пераўтварэнне выбраных радкоў у фігуры і адлюстраванне злева направа"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip &vertically"
+msgstr "&Вертыкальнае адлюстраванне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip vertically"
+msgstr "Вертыкальнае адлюстраванне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them top to bottom"
+msgstr "Пераўтварэнне выбраных радкоў у фігуры і адлюстраванне зверху ўніз"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "warp"
+msgstr "згінанне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "flip horizontally"
+msgstr "Гарызантальнае адлюстраванне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "flip vertically"
+msgstr "Вертыкальнае адлюстраванне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "cancel transform"
+msgstr "Скасаваць пераўтварэнне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Arch - preview only until applied"
+msgstr "Выгінанне — толькі папярэдні прагляд да прымянення"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Distort - preview only until applied"
+msgstr "Скажэнне — толькі папярэдні прагляд да прымянення"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Warp - preview only until applied"
+msgstr "Згінанне — толькі папярэдні прагляд да прымянення"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The text is wider than the margins allow, so the renderer would break it into rows this cannot work out yet."
+msgstr "Тэкст шырэйшы за даступную палямі прастору, таму візуалізатар разбіў бы яго на радкі — пакуль гэта немагчыма разлічыць."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line changes font, size or shape partway through. It would have to be split into one line per part first, which is not done yet."
+msgstr "У сярэдзіне радка змяняецца шрыфт, памер або форма. Спачатку радок трэба было б разбіць на асобныя часткі, але гэта яшчэ не рэалізавана."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Free transform"
+msgstr "&Свабоднае пераўтварэнне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Free transform"
+msgstr "Свабоднае пераўтварэнне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "free transform"
+msgstr "свабоднае пераўтварэнне"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Scale, turn and move the selected lines on the video, written as tags"
+msgstr "Змена памеру, паварот і перамяшчэнне выбраных радкоў на відэа з запісам у тэгах"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Free transform - preview only until applied"
+msgstr "Свабоднае пераўтварэнне — толькі папярэдні прагляд да прымянення"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Recalculate:"
+msgstr "Пералічыць:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "bord"
+msgstr "абводку"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "shad"
+msgstr "цень"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "blur"
+msgstr "размыццё"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "maintain bord & shad"
+msgstr "захаваць bord & shad"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Image mask not supported."
+msgstr "Радкі з маскай выявы не падтрымліваюцца."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate bord"
+msgstr "пералічыць bord"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate shad"
+msgstr "пераразлік shad"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate blur"
+msgstr "пераразлік blur"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate clip"
+msgstr "пераразлік clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "The bord and the shad can be scatchy, using the maintain option is advised. It will transform into a shape."
+msgstr "Значэнні bord і shad могуць зрушыцца; рэкамендуецца ўключыць опцыю захавання — тады яны будуць заменены фігурай."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "If the rows move by themselves, use \\q2."
+msgstr "Калі радкі будуць аўтаматычна зрушвацца, выкарыстоўвайце \\q2."

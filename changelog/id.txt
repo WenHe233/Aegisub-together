@@ -1,3 +1,13 @@
+Versi 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Pembekuan brush dalam mode pipet pengeditan masker
+- Transformasi seperti di Photoshop, bahkan dengan memilih beberapa baris:
+    - Transformasi bebas
+    - Pelengkungan
+    - Distorsi
+    - Kemiringan
+    - Pencerminan Vertikal dan Horizontal
+
 Versi 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Pemilih font mendukung banyak bahasa dan berkat logika cache yang diubah menjadi jauh lebih cepat, hanya ada satu kali pemuatan

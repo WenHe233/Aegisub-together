@@ -1,3 +1,13 @@
+Versão 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Congelamento do pincel no modo conta-gotas da edição de máscaras
+- Transformação à semelhança do Photoshop, mesmo com várias linhas selecionadas:
+    - Transformação livre
+    - Deformação
+    - Distorção
+    - Inclinação
+    - Espelhamento vertical e horizontal
+
 Versão 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - O seletor de tipos de letra suporta vários idiomas e, graças à lógica de cache alterada, ficou muito mais rápido; há apenas um carregamento inicial

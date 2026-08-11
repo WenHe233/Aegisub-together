@@ -1,3 +1,13 @@
+Version 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Brush freezing in mask editing eyedropper mode
+- Photoshop-style transformations, with multiple lines selectable:
+    - Free Transform
+    - Warp
+    - Distort
+    - Bend
+    - Vertical and Horizontal Flip
+
 Version 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Font chooser supports multiple languages and, thanks to the changed cache logic, has become much faster; it only loads once

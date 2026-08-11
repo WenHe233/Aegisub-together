@@ -1,3 +1,13 @@
+版本 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- 遮罩編輯的滴管模式筆刷凍結
+- 仿照 Photoshop 的變形，可選取多行：
+    - 自由變形
+    - 彎曲
+    - 扭曲
+    - 彎折
+    - 垂直與水平翻轉
+
 版本 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - 字型選擇器支援多種語言，並且得益於變更後的 cache 邏輯，速度快了許多，僅需載入一次

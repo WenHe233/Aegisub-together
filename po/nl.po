@@ -9227,3 +9227,328 @@ msgstr "Er is een nieuwe kleurselectiefunctie toegevoegd die opzettelijk niet au
 #: ../src/video_color_pick.cpp
 msgid "accept color by doubleclick"
 msgstr "kleur accepteren door dubbelklikken"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/libresrc/default_menu_platform.json
+msgid "T&ypesetting"
+msgstr "&Opmaak"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/libresrc/default_menu_platform.json
+msgid "&Transform"
+msgstr "&Transformatie"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Arch..."
+msgstr "&Buigen..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Arch"
+msgstr "Buigen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down as one shape"
+msgstr "De geselecteerde regels naar boven of beneden buigen als één vorm"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Bend"
+msgstr "Buigen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Positive bends upwards, negative downwards."
+msgstr "Een positieve waarde buigt naar boven, een negatieve naar beneden."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "arch"
+msgstr "buigen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "The selection has no drawing that can be reshaped."
+msgstr "Er is geen vorm in de selectie die kan worden getransformeerd."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Some drawings use curve commands this cannot reshape, and were left alone."
+msgstr "Sommige vormen gebruiken gebogen opdrachten die niet kunnen worden getransformeerd; deze heb ik ongewijzigd gelaten."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Some of the selected lines still hold text, and only a drawing can be reshaped.\\n\\nContinuing converts that text into drawings. The text stops being text: the font is baked into the shape, and it can no longer be edited, spell checked or translated.\\n\\nDo you want to continue?"
+msgstr "Een deel van de geselecteerde regels bevat nog tekst, maar alleen vormen kunnen worden getransformeerd.\\n\\nDoorgaan zet deze tekst om in een vorm. De tekst is dan geen tekst meer: het lettertype wordt onderdeel van de vorm en kan niet meer worden bewerkt, op spelling gecontroleerd of vertaald.\\n\\nDoorgaan?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Convert text to shapes"
+msgstr "Tekst omzetten in vorm"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "Converting text to shapes is only implemented on Windows so far."
+msgstr "Tekst omzetten in vorm is momenteel alleen op Windows geïmplementeerd."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line already mixes text with a drawing."
+msgstr "De regel bevat zowel tekst als een vorm."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line has no \\pos, so where its text sits depends on layout this cannot reproduce yet."
+msgstr "De regel bevat geen \\pos, dus de positie van de tekst hangt af van een opmaak die dit nog niet kan reproduceren."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line is scaled with \\fscx or \\fscy, which is not handled yet."
+msgstr "De regel is geschaald volgens \\fscx of \\fscy; dit wordt nog niet ondersteund."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line is karaoke timed, and the syllables would be lost."
+msgstr "De regel heeft karaoke-timing; de lettergrepen zouden verloren gaan."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line has a manual break, which is not handled yet."
+msgstr "De regel bevat een handmatige regeleinde; dit wordt nog niet ondersteund."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The outline of the text could not be read from the font."
+msgstr "De omtrek van de tekst kon niet uit het lettertype worden gelezen."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "Some lines were left as text:"
+msgstr "Sommige regels zijn als tekst behouden:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The text could not be converted:"
+msgstr "De tekst kon niet worden geconverteerd:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "convert text to shapes"
+msgstr "tekst naar vorm converteren"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Distort"
+msgstr "Vervorming"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Bend the selected drawings by dragging on the video"
+msgstr "De geselecteerde vormen krommen door in de video te slepen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Drag the corners of the selected drawings on the video"
+msgstr "De hoeken van de geselecteerde vormen in de video slepen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "distort"
+msgstr "vervorming"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Arch"
+msgstr "&Krommen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Distort"
+msgstr "&Vervormen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down by dragging on the video"
+msgstr "De geselecteerde regels omhoog of omlaag krommen door in de video te slepen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Drag the four corners of the selected lines on the video"
+msgstr "De vier hoeken van de geselecteerde regels in de video slepen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Warp"
+msgstr "&Buigen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Warp"
+msgstr "Buigen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines by dragging a 3x3 mesh over the video"
+msgstr "De geselecteerde regels buigen door een 3x3-raster in de video te slepen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip &horizontally"
+msgstr "&Horizontaal spiegelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip horizontally"
+msgstr "Horizontaal spiegelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them left to right"
+msgstr "De geselecteerde regels naar vormen converteren en van links naar rechts spiegelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip &vertically"
+msgstr "&Verticaal spiegelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip vertically"
+msgstr "Verticaal spiegelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them top to bottom"
+msgstr "De geselecteerde regels naar vormen converteren en van boven naar beneden spiegelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "warp"
+msgstr "buigen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "flip horizontally"
+msgstr "Horizontaal spiegelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "flip vertically"
+msgstr "Verticaal spiegelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "cancel transform"
+msgstr "Transformatie annuleren"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Arch - preview only until applied"
+msgstr "Buigen – alleen voorbeeldweergave tot toepassen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Distort - preview only until applied"
+msgstr "Vervormen – alleen voorbeeldweergave tot toepassen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Warp - preview only until applied"
+msgstr "Kromtrekken – alleen voorbeeldweergave tot toepassen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The text is wider than the margins allow, so the renderer would break it into rows this cannot work out yet."
+msgstr "De tekst is breder dan de marges toestaan, waardoor de renderer deze over meerdere regels zou verdelen – dit kan nog niet worden berekend."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line changes font, size or shape partway through. It would have to be split into one line per part first, which is not done yet."
+msgstr "Tijdens de regel veranderen het lettertype, de grootte of de vorm. Hiervoor moet de regel eerst per deel worden opgesplitst; dit is nog niet klaar."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Free transform"
+msgstr "&Vrije transformatie"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Free transform"
+msgstr "Vrije transformatie"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "free transform"
+msgstr "vrije transformatie"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Scale, turn and move the selected lines on the video, written as tags"
+msgstr "De geselecteerde regels in de video schalen, draaien en verplaatsen, weergegeven met tags"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Free transform - preview only until applied"
+msgstr "Vrije transformatie – alleen voorbeeldweergave tot toepassen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Recalculate:"
+msgstr "Herberekenen:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "bord"
+msgstr "rand"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "shad"
+msgstr "schaduw"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "blur"
+msgstr "vervaging"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "maintain bord & shad"
+msgstr "bord & shad behouden"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Image mask not supported."
+msgstr "Afbeeldingsmaskerregels worden niet ondersteund."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate bord"
+msgstr "bord herberekenen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate shad"
+msgstr "shad opnieuw berekenen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate blur"
+msgstr "blur opnieuw berekenen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate clip"
+msgstr "clip opnieuw berekenen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "The bord and the shad can be scatchy, using the maintain option is advised. It will transform into a shape."
+msgstr "De waarden van bord en shad kunnen verschuiven; het inschakelen van de optie voor behoud wordt aanbevolen. Ze worden dan vervangen door een vorm."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "If the rows move by themselves, use \\q2."
+msgstr "Als de regels automatisch zouden verschuiven, gebruik dan \\q2."

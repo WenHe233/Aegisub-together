@@ -1,3 +1,13 @@
+Phiên bản 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Khắc phục lỗi đóng băng cọ trong chế độ ống nhỏ giọt khi chỉnh sửa mặt nạ
+- Các phép biến đổi theo mẫu Photoshop, có thể chọn nhiều dòng:
+    - Biến đổi tự do
+    - Uốn cong
+    - Làm méo
+    - Bẻ cong
+    - Lật dọc và lật ngang
+
 Phiên bản 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Bộ chọn phông chữ hỗ trợ nhiều ngôn ngữ và nhờ logic bộ nhớ đệm được thay đổi nên nhanh hơn nhiều, chỉ cần tải một lần

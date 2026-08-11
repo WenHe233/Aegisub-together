@@ -1,3 +1,13 @@
+バージョン 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- マスク編集のスポイトモードでブラシがフリーズする問題
+- Photoshopに倣った変形（複数行を選択した状態でも使用可能）:
+    - 自由変形
+    - ワープ
+    - 遠近法
+    - ゆがみ
+    - 垂直・水平方向の反転
+
 バージョン 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - フォント選択が多言語に対応し、変更されたキャッシュロジックのおかげではるかに高速化、読み込みは一度だけ

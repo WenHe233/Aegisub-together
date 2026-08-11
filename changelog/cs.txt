@@ -1,3 +1,13 @@
+Verze 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Zamrzání štětce v režimu kapátka při úpravě masky
+- Transformace podle vzoru Photoshopu, i při výběru více řádků:
+    - Volná transformace
+    - Prohnutí
+    - Deformace
+    - Ohýbání
+    - Svislé a vodorovné převrácení
+
 Verze 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Výběr písem podporuje více jazyků a díky změněné logice cache je mnohem rychlejší, načítá se pouze jednou

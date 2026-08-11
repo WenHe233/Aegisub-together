@@ -1,3 +1,13 @@
+Wersja 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Zawieszanie się pędzla w trybie pipety z edycją maski
+- Przekształcenia na wzór Photoshopa, z możliwością zaznaczenia wielu wierszy:
+    - Swobodne przekształcanie
+    - Wyginanie
+    - Zniekształcanie
+    - Wyginanie
+    - Odbicie w pionie i poziomie
+
 Wersja 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Selektor czcionek obsługuje wiele języków i dzięki zmienionej logice cache stał się znacznie szybszy, ładowanie odbywa się tylko raz

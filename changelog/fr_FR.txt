@@ -1,3 +1,13 @@
+Version 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Gel du pinceau en mode pipette de l’édition des masques
+- Transformation à la manière de Photoshop, même en sélectionnant plusieurs lignes :
+    - Transformation libre
+    - Courbure
+    - Distorsion
+    - Déformation
+    - Miroir vertical et horizontal
+
 Version 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Le sélecteur de polices prend en charge plusieurs langues et est devenu beaucoup plus rapide grâce à la logique de cache modifiée, il n’y a qu’un seul chargement

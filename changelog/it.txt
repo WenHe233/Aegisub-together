@@ -1,3 +1,13 @@
+Versione 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Blocco del pennello nella modalità contagocce per la modifica delle maschere
+- Trasformazioni in stile Photoshop, anche selezionando più righe:
+    - Trasformazione libera
+    - Deformazione
+    - Distorsione
+    - Piegatura
+    - Rifletti verticalmente e orizzontalmente
+
 Versione 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Il selettore dei caratteri supporta più lingue ed è diventato molto più veloce grazie alla logica della cache modificata, con un solo caricamento iniziale

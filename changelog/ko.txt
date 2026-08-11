@@ -1,3 +1,13 @@
+버전 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- 마스크 편집의 스포이트 모드 브러시 멈춤
+- 여러 줄을 선택해도 Photoshop 방식으로 변환:
+    - 자유 변형
+    - 곡률
+    - 왜곡
+    - 기울이기
+    - 수직 및 수평 뒤집기
+
 버전 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - 글꼴 선택기가 여러 언어를 지원하며, 변경된 캐시 로직 덕분에 훨씬 빨라졌고 한 번만 로드됩니다

@@ -1,3 +1,13 @@
+Sürüm 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Maske düzenleme pipet modunda fırçanın donması
+- Photoshop benzeri dönüşüm, birden fazla satır seçiliyken bile:
+    - Serbest dönüştürme
+    - Eğme
+    - Çarpıtma
+    - Bükme
+    - Dikey ve Yatay Aynalama
+
 Sürüm 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Yazı tipi seçici artık birden fazla dili destekliyor ve değiştirilen önbellek mantığı sayesinde çok daha hızlı; yalnızca bir kez yükleme yapılıyor

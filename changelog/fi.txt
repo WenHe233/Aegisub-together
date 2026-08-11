@@ -1,3 +1,13 @@
+Versio 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Siveltimen jäätyminen maskin muokkaustilan pipettitilassa
+- Photoshopin mallin mukainen muunnos, myös useita rivejä valittuna:
+    - Vapaa muunnos
+    - Kaarevuus
+    - Vääristys
+    - Taivutus
+    - Pysty- ja vaakasuuntainen peilaus
+
 Versio 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Fontinvalitsin tukee useita kieliä, ja muuttuneen välimuistilogiikan ansiosta se on paljon nopeampi; lataus tehdään vain kerran

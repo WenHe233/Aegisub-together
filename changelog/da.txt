@@ -1,3 +1,13 @@
+Version 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Brush-frysning i pipettetilstand ved maskeredigering
+- Transformationer som i Photoshop, også med flere linjer markeret:
+    - Fri transformation
+    - Bøjning
+    - Forvrængning
+    - Perspektiv
+    - Lodret og vandret spejlvending
+
 Version 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Skrifttypevælgeren understøtter flere sprog og er blevet meget hurtigere takket være den ændrede cachelogik, der er kun en enkelt indlæsning

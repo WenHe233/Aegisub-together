@@ -1,3 +1,13 @@
+Version 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Pinsel-Einfrieren im Pipettenmodus der Maskenbearbeitung
+- Transformation nach dem Vorbild von Photoshop, auch bei Auswahl mehrerer Zeilen:
+    - Freie Transformation
+    - Wölbung
+    - Verzerrung
+    - Biegen
+    - Vertikales und horizontales Spiegeln
+
 Version 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Die Schriftartauswahl unterstützt mehrere Sprachen und ist dank der geänderten Cache-Logik deutlich schneller geworden, es gibt nur noch einen einmaligen Ladevorgang

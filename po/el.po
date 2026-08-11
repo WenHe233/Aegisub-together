@@ -9324,3 +9324,328 @@ msgstr "Προστέθηκε μια νέα λειτουργία επιλογής
 #: ../src/video_color_pick.cpp
 msgid "accept color by doubleclick"
 msgstr "αποδοχή χρώματος με διπλό κλικ"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/libresrc/default_menu_platform.json
+msgid "T&ypesetting"
+msgstr "&Μορφοποίηση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/libresrc/default_menu_platform.json
+msgid "&Transform"
+msgstr "&Μετασχηματισμός"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Arch..."
+msgstr "&Καμπύλωση..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Arch"
+msgstr "Καμπύλωση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down as one shape"
+msgstr "Καμπύλωση των επιλεγμένων γραμμών προς τα πάνω ή κάτω, ως ενιαίο σχήμα"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Bend"
+msgstr "Καμπύλωση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Positive bends upwards, negative downwards."
+msgstr "Θετική τιμή προς τα πάνω, αρνητική προς τα κάτω."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "arch"
+msgstr "καμπύλωση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "The selection has no drawing that can be reshaped."
+msgstr "Δεν υπάρχει σχήμα στην επιλογή που να μπορεί να μετασχηματιστεί."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Some drawings use curve commands this cannot reshape, and were left alone."
+msgstr "Ορισμένα σχήματα χρησιμοποιούν εντολές καμπύλης που δεν υποστηρίζονται από αυτό· τα άφησα ανέπαφα."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Some of the selected lines still hold text, and only a drawing can be reshaped.\\n\\nContinuing converts that text into drawings. The text stops being text: the font is baked into the shape, and it can no longer be edited, spell checked or translated.\\n\\nDo you want to continue?"
+msgstr "Μέρος των επιλεγμένων γραμμών περιέχει ακόμη κείμενο, ενώ μπορεί να μετασχηματιστεί μόνο σχήμα.\\n\\nΗ συνέχεια θα μετατρέψει αυτό το κείμενο σε σχήμα. Το κείμενο θα πάψει να είναι κείμενο: η γραμματοσειρά θα ενσωματωθεί στο σχήμα και δεν θα είναι πλέον επεξεργάσιμη, ελέγξιμη ορθογραφικά ή μεταφράσιμη.\\n\\nΣυνέχεια;"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_transform.cpp
+msgid "Convert text to shapes"
+msgstr "Μετατροπή κειμένου σε σχήμα"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "Converting text to shapes is only implemented on Windows so far."
+msgstr "Η μετατροπή κειμένου σε σχήμα υλοποιείται προς το παρόν μόνο στα Windows."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line already mixes text with a drawing."
+msgstr "Η γραμμή περιέχει και κείμενο και σχήμα."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line has no \\pos, so where its text sits depends on layout this cannot reproduce yet."
+msgstr "Η γραμμή δεν περιέχει \\pos, επομένως η θέση του κειμένου εξαρτάται από διάταξη που δεν μπορεί ακόμη να αναπαραχθεί."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line is scaled with \\fscx or \\fscy, which is not handled yet."
+msgstr "Η γραμμή έχει κλίμακα σύμφωνα με \\fscx ή \\fscy, κάτι που δεν υποστηρίζεται ακόμη."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line is karaoke timed, and the syllables would be lost."
+msgstr "Η γραμμή έχει χρονισμό karaoke· οι συλλαβές θα χαθούν."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line has a manual break, which is not handled yet."
+msgstr "Η γραμμή περιέχει χειροκίνητη αλλαγή γραμμής, κάτι που δεν υποστηρίζεται ακόμη."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The outline of the text could not be read from the font."
+msgstr "Δεν ήταν δυνατή η ανάγνωση του περιγράμματος του κειμένου από τη γραμματοσειρά."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "Some lines were left as text:"
+msgstr "Ορισμένες γραμμές παρέμειναν ως κείμενο:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The text could not be converted:"
+msgstr "Αποτυχία μετατροπής του κειμένου:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "convert text to shapes"
+msgstr "μετατροπή κειμένου σε σχήμα"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Distort"
+msgstr "Παραμόρφωση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Bend the selected drawings by dragging on the video"
+msgstr "Καμπύλωση των επιλεγμένων σχημάτων σύροντας στο βίντεο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Drag the corners of the selected drawings on the video"
+msgstr "Σύρσιμο των γωνιών των επιλεγμένων σχημάτων στο βίντεο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "distort"
+msgstr "παραμόρφωση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Arch"
+msgstr "&Καμπύλωση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Distort"
+msgstr "&Παραμόρφωση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines up or down by dragging on the video"
+msgstr "Καμπύλωση των επιλεγμένων γραμμών προς τα πάνω ή κάτω, σύροντας στο βίντεο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Drag the four corners of the selected lines on the video"
+msgstr "Σύρσιμο των τεσσάρων γωνιών των επιλεγμένων γραμμών στο βίντεο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Warp"
+msgstr "&Κάμψη"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Warp"
+msgstr "Κάμψη"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Bend the selected lines by dragging a 3x3 mesh over the video"
+msgstr "Κάμψη των επιλεγμένων γραμμών σύροντας ένα πλέγμα 3x3 στο βίντεο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip &horizontally"
+msgstr "&Οριζόντια αναστροφή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip horizontally"
+msgstr "Οριζόντια αναστροφή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them left to right"
+msgstr "Μετατροπή των επιλεγμένων γραμμών σε σχήμα και αναστροφή από αριστερά προς τα δεξιά"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip &vertically"
+msgstr "&Κατακόρυφη αναστροφή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Flip vertically"
+msgstr "Κατακόρυφη αναστροφή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Turn the selected lines into shapes and mirror them top to bottom"
+msgstr "Μετατροπή των επιλεγμένων γραμμών σε σχήμα και αναστροφή από πάνω προς τα κάτω"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "warp"
+msgstr "κάμψη"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "flip horizontally"
+msgstr "οριζόντια αναστροφή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "flip vertically"
+msgstr "κατακόρυφη αναστροφή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "cancel transform"
+msgstr "ακύρωση μετασχηματισμού"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Arch - preview only until applied"
+msgstr "Καμπύλωση – μόνο προεπισκόπηση μέχρι την εφαρμογή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Distort - preview only until applied"
+msgstr "Παραμόρφωση – μόνο προεπισκόπηση μέχρι την εφαρμογή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Warp - preview only until applied"
+msgstr "Κάμψη – μόνο προεπισκόπηση μέχρι την εφαρμογή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The text is wider than the margins allow, so the renderer would break it into rows this cannot work out yet."
+msgstr "Το κείμενο είναι πλατύτερο από όσο επιτρέπουν τα περιθώρια, επομένως η μηχανή απόδοσης θα το έσπαγε σε γραμμές – αυτό δεν μπορεί να υπολογιστεί ακόμη."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/text_to_shape.cpp
+msgid "The line changes font, size or shape partway through. It would have to be split into one line per part first, which is not done yet."
+msgstr "Η γραμματοσειρά, το μέγεθος ή η μορφή αλλάζει μέσα στη γραμμή. Για αυτό θα έπρεπε πρώτα να χωριστεί σε ξεχωριστές γραμμές ανά τμήμα, κάτι που δεν είναι ακόμη έτοιμο."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "&Free transform"
+msgstr "&Ελεύθερος μετασχηματισμός"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Free transform"
+msgstr "Ελεύθερος μετασχηματισμός"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "free transform"
+msgstr "ελεύθερος μετασχηματισμός"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Scale, turn and move the selected lines on the video, written as tags"
+msgstr "Αλλαγή μεγέθους, περιστροφή και μετακίνηση των επιλεγμένων γραμμών στο βίντεο, με εγγραφή μέσω tags"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Free transform - preview only until applied"
+msgstr "Ελεύθερος μετασχηματισμός – μόνο προεπισκόπηση μέχρι την εφαρμογή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Recalculate:"
+msgstr "Επανυπολογισμός:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "bord"
+msgstr "περιγράμματος"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "shad"
+msgstr "σκιάς"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "blur"
+msgstr "θολώματος"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "maintain bord & shad"
+msgstr "διατήρηση των bord & shad"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Image mask not supported."
+msgstr "Οι γραμμές με μάσκες εικόνας δεν υποστηρίζονται."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate bord"
+msgstr "επανυπολογισμός του bord"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate shad"
+msgstr "Επανυπολογισμός shad"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate blur"
+msgstr "Επανυπολογισμός blur"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "recalculate clip"
+msgstr "Επανυπολογισμός clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "The bord and the shad can be scatchy, using the maintain option is advised. It will transform into a shape."
+msgstr "Οι τιμές bord και shad ενδέχεται να μετακινηθούν. Συνιστάται η ενεργοποίηση της επιλογής διατήρησης· τότε αντικαθίστανται με σχήμα."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "If the rows move by themselves, use \\q2."
+msgstr "Αν οι γραμμές μετακινούνται αυτόματα, χρησιμοποιήστε το \\q2."

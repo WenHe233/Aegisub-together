@@ -1,3 +1,13 @@
+Versie 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Vastlopen van de brush in de pipetmodus voor maskbewerking
+- Transformaties naar het voorbeeld van Photoshop, waarbij zelfs meerdere regels geselecteerd kunnen worden:
+    - Vrije transformatie
+    - Buigen
+    - Vervormen
+    - Kromtrekken
+    - Verticaal en horizontaal spiegelen
+
 Versie 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - De lettertypekiezer ondersteunt meerdere talen en is dankzij de gewijzigde cachelogica veel sneller geworden; er is slechts één keer laden

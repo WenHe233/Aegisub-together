@@ -1,3 +1,13 @@
+4.4 bertsioa ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- Maskak editatzeko pipeta moduan brotxa izoztea
+- Photoshopen antzeko eraldaketa, hainbat lerro hautatuta ere:
+    - Forma libreko eraldaketa
+    - Kurbatzea
+    - Distortsioa
+    - Tolestea
+    - Bertikalki eta horizontalki islatzea
+
 Bertsioa 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Letra-tipoen hautatzaileak hainbat hizkuntza onartzen ditu eta, cachearen logika aldatuari esker, askoz azkarragoa da; karga bakarra egiten da

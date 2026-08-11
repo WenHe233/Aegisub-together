@@ -1,3 +1,13 @@
+版本 4.4 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+- 修复蒙版编辑中的吸管模式画笔冻结问题
+- 仿照 Photoshop 进行变换，可同时选中多行：
+    - 自由变换
+    - 变形
+    - 扭曲
+    - 弯曲
+    - 垂直和水平翻转
+
 版本 4.3 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - 字体选择器支持多种语言，并且得益于改进后的缓存逻辑，速度大幅提升，仅需加载一次
