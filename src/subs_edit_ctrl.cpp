@@ -125,6 +125,7 @@ SubsTextEditCtrl::SubsTextEditCtrl(wxWindow* parent, wxSize wsize, long style, a
 	}
 
 	Bind(wxEVT_CONTEXT_MENU, &SubsTextEditCtrl::OnContextMenu, this);
+	Bind(wxEVT_RIGHT_DOWN, &SubsTextEditCtrl::OnRightDown, this);
 	Bind(wxEVT_IDLE, std::bind(&SubsTextEditCtrl::UpdateCallTip, this));
 	Bind(wxEVT_STC_DOUBLECLICK, &SubsTextEditCtrl::OnDoubleClick, this);
 	Bind(wxEVT_STC_STYLENEEDED, [this](wxStyledTextEvent&) {
@@ -362,13 +363,47 @@ void SubsTextEditCtrl::Paste() {
 	SetSelectionEnd(sel_start);
 }
 
+void SubsTextEditCtrl::OnRightDown(wxMouseEvent &event) {
+	right_click_pending = true;
+	right_click_selection_start = GetSelectionStart();
+	right_click_selection_end = GetSelectionEnd();
+	right_click_position = PositionFromPoint(event.GetPosition());
+	if (right_click_selection_start == right_click_selection_end) {
+		event.Skip();
+		return;
+	}
+
+	bool on_selection = right_click_position >= right_click_selection_start &&
+		right_click_position < right_click_selection_end;
+	if (on_selection)
+		SetSelection(right_click_selection_start, right_click_selection_end);
+	else
+		SetSelection(right_click_selection_end, right_click_selection_end);
+	// Do not pass a selected-text right click to Scintilla: its native handler first
+	// moves the caret to the visual line end, which creates a visible one-frame flash.
+	// WM_CONTEXTMENU still arrives normally and opens our existing popup menu.
+}
+
 void SubsTextEditCtrl::OnContextMenu(wxContextMenuEvent &event) {
 	wxPoint pos = event.GetPosition();
 	int activePos;
-	if (pos == wxDefaultPosition)
+	if (right_click_pending) {
+		activePos = right_click_position;
+		if (right_click_selection_start != right_click_selection_end) {
+			bool on_selection = activePos >= right_click_selection_start &&
+				activePos < right_click_selection_end;
+			if (on_selection)
+				SetSelection(right_click_selection_start, right_click_selection_end);
+			else
+				SetSelection(right_click_selection_end, right_click_selection_end);
+		}
+		right_click_pending = false;
+	}
+	else if (pos == wxDefaultPosition)
 		activePos = GetCurrentPos();
 	else
 		activePos = PositionFromPoint(ScreenToClient(pos));
+	if (activePos < 0) activePos = GetCurrentPos();
 
 	currentWordPos = GetBoundsOfWordAtPosition(activePos);
 	currentWord = line_text.substr(currentWordPos.first, currentWordPos.second);

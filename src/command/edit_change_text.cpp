@@ -414,7 +414,8 @@ void EditChangeText(agi::Context *c)
 	wxPoint pos(parentPos.x + (parentSize.x - size.x) / 2, parentPos.y + (parentSize.y - size.y) / 2);
 	wxDialog dialog(c->parent, wxID_ANY, _("Change text"), pos, size);
 	wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
-	wxTextCtrl *textCtrl = new wxTextCtrl(&dialog, wxID_ANY, to_wx(text), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_RICH2);
+	wxTextCtrl *textCtrl = new wxTextCtrl(&dialog, wxID_ANY, to_wx(text),
+		wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
 	wxCheckBox *keepGradients = new wxCheckBox( &dialog, wxID_ANY, _("Keep gradients"));
 
 	keepGradients->SetValue(true);
@@ -451,10 +452,14 @@ void EditChangeText(agi::Context *c)
 		e.Skip();
 	});
 
-	dialog.Show();
-	dialog.CallAfter([=]{
-		textCtrl->SetFocus();
-		textCtrl->SetSelection(textCtrl->GetLastPosition(), 0);
+	dialog.Bind(wxEVT_SHOW, [textCtrl](wxShowEvent& event) {
+		if (event.IsShown()) {
+			textCtrl->CallAfter([textCtrl] {
+				textCtrl->SetFocus();
+				textCtrl->SetSelection(-1, -1);
+			});
+		}
+		event.Skip();
 	});
 
 	if (dialog.ShowModal() != wxID_OK)
