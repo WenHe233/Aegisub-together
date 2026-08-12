@@ -2455,7 +2455,7 @@ private:
     void OnFontActivated()
     {
         CommitSelection();
-        RunCallback();
+        RunCallback(false, true);
         EndModal(wxID_OK);
     }
 
