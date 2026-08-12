@@ -189,6 +189,8 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 			drag_tool->OnCenterMouseEvent(event);
 			return;
 		}
+		if (drag_tool->OnBoxSelectionMouseEvent(event))
+			return;
 	}
 
 	bool left_click = event.LeftDown();

@@ -323,6 +323,93 @@ void VisualToolDrag::OnCenterMouseEvent(wxMouseEvent &event) {
 	parent->Render();
 }
 
+void VisualToolDrag::ApplyEmptyClickSelection() {
+	if (box_selection_additive || alt_down || features.size() <= 1) return;
+	Feature *active_line_feature = nullptr;
+	for (auto selected : sel_features) {
+		if (selected->line && selected->line == c->selectionController->GetActiveLine()) {
+			active_line_feature = selected;
+			break;
+		}
+	}
+	if (!active_line_feature) return;
+
+	auto line = active_line_feature->line;
+	c->selectionController->SetSelectionAndActive({line}, line);
+	auto it = c->ass->iterator_to(*line);
+	auto next = it;
+	++next;
+	if (next != c->ass->Events.end()) {
+		c->selectionController->NextLine();
+		c->selectionController->PrevLine();
+	}
+}
+
+void VisualToolDrag::ApplyBoxSelection() {
+	Vector2D minimum = box_selection_start.Min(box_selection_end);
+	Vector2D maximum = box_selection_start.Max(box_selection_end);
+	std::set<Feature *> next = box_selection_additive ? box_selection_original :
+		std::set<Feature *>{};
+	Feature *first_hit = nullptr;
+	for (auto& feature : features) {
+		if (!feature.pos || feature.pos.X() < minimum.X() || feature.pos.X() > maximum.X() ||
+			feature.pos.Y() < minimum.Y() || feature.pos.Y() > maximum.Y()) continue;
+		next.insert(&feature);
+		if (!first_hit) first_hit = &feature;
+	}
+	if (!first_hit && next.empty()) return;
+
+	Selection lines;
+	for (auto feature : next)
+		if (feature->line) lines.insert(feature->line);
+	if (lines.empty()) return;
+
+	sel_features = std::move(next);
+	AssDialogue *active = c->selectionController->GetActiveLine();
+	if (!lines.count(active)) active = first_hit ? first_hit->line : *lines.begin();
+	c->selectionController->SetSelectionAndActive(std::move(lines), active);
+}
+
+bool VisualToolDrag::OnBoxSelectionMouseEvent(wxMouseEvent &event) {
+	if (!box_selecting) {
+		if (!event.LeftDown() || event.LeftDClick()) return false;
+		Vector2D position = event.GetPosition();
+		for (auto& feature : features)
+			if (feature.IsMouseOver(position)) return false;
+
+		shift_down = event.ShiftDown();
+		ctrl_down = event.CmdDown();
+		alt_down = event.AltDown();
+		mouse_pos = position;
+		box_selection_start = position;
+		box_selection_end = position;
+		box_selection_additive = ctrl_down || shift_down;
+		box_selection_original = sel_features;
+		box_selecting = true;
+		if (!parent->HasCapture()) parent->CaptureMouse();
+		parent->Render();
+		return true;
+	}
+
+	mouse_pos = event.GetPosition();
+	box_selection_end = mouse_pos;
+	if (event.LeftUp() || !event.LeftIsDown()) {
+		Vector2D distance = box_selection_end - box_selection_start;
+		box_selecting = false;
+		if (parent->HasCapture()) parent->ReleaseMouse();
+		parent->SetFocus();
+		if (distance.SquareLen() >= 9.f)
+			ApplyBoxSelection();
+		else
+			ApplyEmptyClickSelection();
+		box_selection_original.clear();
+		box_selection_start = Vector2D();
+		box_selection_end = Vector2D();
+	}
+	parent->Render();
+	return true;
+}
+
 void VisualToolDrag::OnLineChanged() {
 	UpdateToggleButtons();
 }
@@ -458,6 +545,24 @@ void VisualToolDrag::Draw() {
 			gl.DrawDashedLine(Vector2D(centre.X(), minimum.Y()), Vector2D(centre.X(), maximum.Y()), 5);
 		if (center_mode == VisualToolDragCenterMode::Vertical || center_mode == VisualToolDragCenterMode::Both)
 			gl.DrawDashedLine(Vector2D(minimum.X(), centre.Y()), Vector2D(maximum.X(), centre.Y()), 5);
+	}
+
+	if (box_selecting) {
+		Vector2D minimum = box_selection_start.Min(box_selection_end);
+		Vector2D maximum = box_selection_start.Max(box_selection_end);
+		wxColour colour = to_wx(highlight_color_secondary_opt->GetColor());
+		gl.SetFillColour(colour, .06f);
+		gl.SetLineColour(colour, 0.f, 1);
+		gl.DrawRectangle(minimum, maximum);
+		gl.SetLineColour(colour, 1.f, 1);
+		auto draw_dashed_edge = [&](Vector2D start, Vector2D end) {
+			if ((end - start).SquareLen() > .01f)
+				gl.DrawDashedLine(start, end, 5);
+		};
+		draw_dashed_edge(minimum, Vector2D(maximum.X(), minimum.Y()));
+		draw_dashed_edge(Vector2D(maximum.X(), minimum.Y()), maximum);
+		draw_dashed_edge(maximum, Vector2D(minimum.X(), maximum.Y()));
+		draw_dashed_edge(Vector2D(minimum.X(), maximum.Y()), minimum);
 	}
 }
 

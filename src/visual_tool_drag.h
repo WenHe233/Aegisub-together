@@ -69,6 +69,11 @@ class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
 	VisualToolDragCenterMode center_mode = VisualToolDragCenterMode::Both;
 	Vector2D center_rectangle_start;
 	Vector2D center_rectangle_end;
+	bool box_selecting = false;
+	bool box_selection_additive = false;
+	Vector2D box_selection_start;
+	Vector2D box_selection_end;
+	std::set<Feature *> box_selection_original;
 
 	void AddTool(int id);
 	void UpdateTool(int id);
@@ -97,11 +102,14 @@ class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
 	void ShowCenterMenu(Vector2D position);
 	void SetCentering(bool enabled);
 	void ApplyCentering();
+	void ApplyBoxSelection();
+	void ApplyEmptyClickSelection();
 	void OnSubTool(wxCommandEvent &event);
 public:
 	VisualToolDrag(VideoDisplay *parent, agi::Context *context);
 	~VisualToolDrag() override;
 	bool IsCentering() const { return centering; }
 	void OnCenterMouseEvent(wxMouseEvent &event);
+	bool OnBoxSelectionMouseEvent(wxMouseEvent &event);
 	void SetToolbar(wxToolBar *toolbar) override;
 };
