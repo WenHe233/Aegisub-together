@@ -1,5 +1,5 @@
 버전 4.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - 마스크 편집의 스포이트 모드 브러시 멈춤
 - 여러 줄을 선택해도 Photoshop 방식으로 변환:
     - 자유 변형
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - 수직 및 수평 뒤집기
 
 버전 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - 글꼴 선택기가 여러 언어를 지원하며, 변경된 캐시 로직 덕분에 훨씬 빨라졌고 한 번만 로드됩니다
 - AI 검사 및 리뷰가 여러 언어를 지원합니다
 - 변경 사항을 30개 언어로 번역했으며, 언어 선택기가 포함된 변경 로그를 모국어로 볼 수 있습니다
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - 선택 영역을 망치지 않도록 더블 클릭으로 Vector clip 도형을 전환할 수 있습니다
 
 버전 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - Vector clip에서 브러시 작동 개선, 교차 영역 처리 가능
 - 스포이드 모드
     - 영역을 자유롭게 그릴 수 있음
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - 최적화
 
 버전 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - 마스크 생성 중에도 실행 취소 가능
 - 도형 생성 아이콘의 크기 증가 문제
 
 버전 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - "open/video/recent" command
 - 파일 메뉴의 "Open MKV" 옵션으로, mkvt를 자막과 비디오로 동시에 엽니다
 나머지 업데이트는 visual 도구를 중심으로 이루어졌습니다:
@@ -68,14 +68,14 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
     - 자유 그리기도 가능함 (예: 동그라미 표시용)
 
 버전 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - 많은 줄에서 번역 검사 기능 작동
 - 가라오케 관련 AI 기능 (음성 인식, 간지, 타이밍)
 - 폴더에 있는 자막에서 검색 (편집 메뉴에서 찾을 수 있음)
 - Aegisub 내에서 업데이트 문제 해결
 
 버전 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - 원본 줄이 사라지는 문제를 수정했으며, 이제는 더 이상 문제가 없기를 바랍니다
 - MKV에 자료가 많을 경우 불러올 수 없었던 문제도 수정했습니다
 - AI 연결 기능 추가 (모델 설정, 토큰 입력 등)
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - 전체 자막 또는 선택한 줄(최소 100줄)의 AI 사후 검사
 
 버전 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - PS 그림 행 통합
     - 마우스 휠 클릭으로 열고 닫을 수 있음
     - 자기 자신을 빨간색으로 표시하지 않음
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - 마지막 스크립트에 bind된 버튼을 빠르게 2번 누르면 마지막 옵션 목록이 표시됨
 
 버전 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - 소스 파일용 폴더 렌더링 및 해당 폴더에서 비디오/오디오 불러오기 (이를 통해 비디오가 어디에 있든 동일한 이름을 기준으로 불러올 수 있음)
 - 선택한 텍스트 부분을 주석으로 설정/해제
 - 새 자막을 열 때 간헐적으로 충돌하던 문제
 
 버전 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - 폴드가 접히지 않고 붙여넣을 때도 유지됨
 - 글꼴 선택기 개선
     - 최근 설치된 글꼴 목록 (3일보다 오래된 글꼴은 처음에는 확실하지 않음)
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - 이제 스타일 편집기도 이것을 엶
 
 버전 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - 복사/붙여넣기 시 원본 줄이 유지됨
 - 병합된 PS 이미지 줄 선택 및 정상적인 화살표 작동
 
 버전 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - 소스 줄 병합 시 유지됨
 - 병합 시 두 번째 줄의 서식을 추가하지 않음 (예: 줄 처음의 \i 및/또는 \blurt를 삭제할 필요가 없음)
 - 분할 시 서식을 새 줄에 추가함 (\i 및/또는 \blurt를 추가하고 서식을 줄로 나눌 필요가 없음)
 
 버전 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - 원본 줄 인코딩
 - 설정에서 원본 줄을 확대할 수 있도록 함
 
 버전 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - 긴 글꼴 이름
 - 3배, 5배, 6배 재생 속도
 - 마지막 줄을 더블 클릭할 때 그 위의 줄을 선택하지 않도록 drag
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - 두 이미지 마스크의 시간이 같지 않으면 합치지 않도록
 
 버전 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - 원본 체크 표시 옆에 소스 줄 주석 처리 및 표시
 
 버전 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - 삽입된 이미지는 한 줄에만 표시되며 더블 클릭으로 펼치거나 접을 수 있음
 - 재생 속도를 0.25x - 10x 사이에서 전환, DirectSound 오디오와만 호환됨
 
 버전 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - 글꼴 선택기 개선
     - 최적화
     - 임시 저장 기능 (예: 검색할 때 괜찮아 보이는 글꼴을 따로 보관)
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - 마우스 가운데 버튼 대신 오른쪽 클릭을 누르고 있으면 화면에서 기능이 사라짐 (사용이 더 편리함)
 
 버전 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - 글꼴 선택기
     - 글꼴 추가 오류 대화 상자 수정
     - 즐겨찾기로 표시된 글꼴을 목록에서 표시
     - 스크롤된 목록에 추가할 때 목록이 위로 이동하지 않도록 수정
 
 버전 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - 글꼴 선택기
     - 이제 fs, fscx, fscy 및 fsp 값도 변경할 수 있음
     - 모든 글꼴, 최근 항목, 가장 많이 사용한 항목, 즐겨찾기 및 사용자 지정 목록 메뉴 항목
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - 변경 사항에 이제 헝가리어 번역도 포함됨
 
 버전 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - 텍스트 교체
         - 줄에서 오른쪽 클릭 -> Change text
         - gradient도 지원하며 텍스트를 비례적으로 설정하려고 시도
         - 여러 줄을 복사할 때 CTRL + H 대신
 
 버전 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - 위치 지정 tool 개선
         - 수평/수직 잠금
         - 작은 위치 지정 사각형에서 click + 휠 위/아래로 잠금 설정

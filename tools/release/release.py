@@ -3,7 +3,8 @@
 Three steps, each of which skips whatever is already done:
 
 1. build Aegisub and compile every catalogue
-2. pack aegisub.exe plus locale/ into <release_dir>/aegisub-v<version>.zip
+2. pack aegisub.exe plus locale/ into
+   <release_dir>/aegisub-nyaa-edition-v<version>.zip
 3. optionally publish the package as a GitHub release
 """
 
@@ -77,7 +78,7 @@ def pack(config, version):
     build_dir = os.path.join(common.REPO, config['build_dir'])
     release_dir = config['release_dir']
     os.makedirs(release_dir, exist_ok=True)
-    archive = os.path.join(release_dir, 'aegisub-v%s.zip' % version)
+    archive = os.path.join(release_dir, common.release_asset_name(config, version))
 
     executable = os.path.join(build_dir, 'aegisub.exe')
     if not os.path.exists(executable):
@@ -108,7 +109,7 @@ def pack(config, version):
 def main():
     config = common.load_config()
     source_changelog = os.path.join(config['changelog_dir'],
-                                    '%s.txt' % config['source_language'])
+                                    '%s.txt' % config['release_language'])
     version = common.newest_changelog_version(source_changelog)
     print('Releasing version %s\n' % version)
 
@@ -137,7 +138,7 @@ def main():
             if not replace:
                 print('Left as it is.')
 
-        common.publish_release(token, repo, version, archive,
+        common.publish_release(token, repo, version, common.release_name(config, version), archive,
                                release_notes(config, version), replace)
         print('\nDone. Commit changelog/ so the program can see the new release.')
     else:
@@ -145,8 +146,8 @@ def main():
 
 
 def release_notes(config, version):
-    """The release's own section of the source changelog, as the GitHub notes."""
-    source = os.path.join(config['changelog_dir'], '%s.txt' % config['source_language'])
+    """The release's English changelog section, as the GitHub notes."""
+    source = os.path.join(config['changelog_dir'], '%s.txt' % config['release_language'])
     for release_version, _, body in common.parse_changelog(source):
         if release_version == version:
             # The first line is the package address, which the GitHub page shows

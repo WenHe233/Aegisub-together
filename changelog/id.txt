@@ -1,5 +1,5 @@
 Versi 4.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Pembekuan brush dalam mode pipet pengeditan masker
 - Transformasi seperti di Photoshop, bahkan dengan memilih beberapa baris:
     - Transformasi bebas
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - Pencerminan Vertikal dan Horizontal
 
 Versi 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - Pemilih font mendukung banyak bahasa dan berkat logika cache yang diubah menjadi jauh lebih cepat, hanya ada satu kali pemuatan
 - Pemeriksaan AI dan review mendukung banyak bahasa
 - Changelog dalam bahasa kita sendiri, dengan pemilih bahasa, perubahan diterjemahkan ke dalam 30 bahasa
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Bentuk vector clip dapat diubah dengan klik ganda, agar seleksi tidak rusak
 
 Versi 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - Pengoperasian kuas pada Vector clip disempurnakan, dapat menangani persimpangan
 - Mode pipet
     - rentang juga dapat digambar dengan tangan bebas
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - pengoptimalan
 
 Versi 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - Pembatalan juga dapat dilakukan saat membuat masker
 - Masalah pembesaran ikon saat membuat bentuk
 
 Versi 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - perintah "open/video/recent"
 - opsi "Open MKV" di menu file, yang sekaligus membuka mkvt sebagai subtitle dan video
 Pembaruan lainnya berkisar pada visual tool:
@@ -68,14 +68,14 @@ Pembaruan lainnya berkisar pada visual tool:
     - dapat membuat gambar bebas (misalnya untuk melingkari sesuatu)
 
 Versi 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - Cara kerja pemeriksaan terjemahan untuk banyak baris
 - Fitur AI terkait karaoke (pengenalan suara, kanji, pengaturan waktu)
 - Pencarian dalam subtitle yang terdapat di folder (terdapat di menu penyuntingan)
 - Solusi pembaruan di dalam Aegisub
 
 Versi 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - Perbaikan hilangnya baris sumber, semoga tidak akan ada masalah lagi
 - Jika ada banyak materi dalam MKV, file tidak dapat dimuat; hal itu juga telah diperbaiki
 - Kemungkinan menghubungkan AI (pengaturan model, memasukkan token, dll.)
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - Pemeriksaan akhir seluruh subtitle atau baris yang dipilih (minimal 100) dengan AI
 
 Versi 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - Baris gambar PS yang digabung
     - terbuka dan tertutup saat diklik dengan roda mouse
     - tidak menandai dirinya sendiri dengan warna merah
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - jika tombol yang di-bind ke skrip terakhir ditekan 2x dengan cepat, daftar opsi terakhir akan muncul
 
 Versi 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - rendering folder untuk berkas sumber, dan memuat video/audio dari folder tersebut (sehingga video dapat berada di mana saja, akan dimuat berdasarkan nama yang sama)
 - memasukkan/mengeluarkan bagian teks yang dipilih ke/dari komentar
 - sesekali crash saat membuka subtitle baru
 
 Versi 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - fold tidak menyusut dan tetap ada saat ditempel
 - penyempurnaan pemilih font
     - daftar font yang baru-baru ini diinstal (font yang lebih dari tiga hari lalu mungkin tidak akan muncul di awal)
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - editor gaya sekarang juga membukanya
 
 Versi 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - baris sumber tetap ada saat menyalin/menempel
 - pemilihan baris gambar PS yang digabung dan fungsi panah normal
 
 Versi 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - baris sumber tetap ada saat penggabungan
 - saat penggabungan, pemformatan pada baris kedua tidak ditambahkan (mis. \i dan/atau \blurt di awal baris tidak perlu dihapus)
 - saat pemisahan, pemformatan ditambahkan ke baris baru (mis. \i dan/atau \blurt tidak perlu ditambahkan sebagai pemformat untuk membagi baris)
 
 Versi 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - pengodean baris sumber
 - baris sumber dapat diperbesar di pengaturan
 
 Versi 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - nama font yang panjang
 - kecepatan pemutaran 3x, 5x, 6x
 - saat mengeklik ganda baris terakhir, drag tidak boleh memilih baris di atasnya
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - 2 maske gambar tidak digabungkan jika waktunya tidak sama
 
 Versi 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - mencatat dan menampilkan baris sumber di samping tanda centang asli
 
 Versi 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - gambar yang disisipkan hanya ditampilkan dalam satu baris dan dapat dibuka-tutup dengan klik dua kali
 - pengubahan kecepatan pemutaran antara 0.25x - 10x, hanya kompatibel dengan audio DirectSound
 
 Versi 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - penyempurnaan pemilih font
     - pengoptimalan
     - opsi penyimpanan sementara (misalnya saat mencari, menyisihkan font yang tampak bagus)
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - alih-alih tombol tengah mouse, dengan menahan klik kanan fungsi-fungsi di layar akan disembunyikan (sehingga lebih nyaman digunakan)
 
 Versi 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - pemilih font
     - perbaikan dialog error saat menambahkan font
     - penanda font yang ditandai sebagai favorit di dalam daftar
     - daftar yang telah digulir ke bawah tidak boleh melompat ke atas saat menambahkan ke daftar
 
 Versi 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - pemilih font
     - sekarang dapat mengubah nilai fs, fscx, fscy dan fsp juga
     - menu Semua font, Terbaru, Paling sering digunakan, Favorit dan Daftar sendiri
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - perubahan sekarang juga mencakup terjemahan ke bahasa Hungaria
 
 Versi 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - Penggantian teks
         - klik kanan pada baris -> Change text
         - juga mendukung gradient dan mencoba menyesuaikan teks secara proporsional
         - saat menyalin beberapa baris, alih-alih CTRL + H
 
 Versi 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - penyempurnaan tool posisi
         - penguncian horizontal/vertikal
         - pengaturan penguncian dengan click + roda mouse naik/turun pada kotak posisi kecil

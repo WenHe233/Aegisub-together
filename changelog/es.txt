@@ -1,5 +1,5 @@
 Versión 4.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Congelación del pincel en el modo cuentagotas de edición de máscaras
 - Transformación al estilo de Photoshop, incluso seleccionando varias líneas:
     - Transformación libre
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - Espejo vertical y horizontal
 
 Versión 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - El selector de fuentes admite varios idiomas y, gracias a la lógica de caché modificada, ahora es mucho más rápido; solo se carga una vez
 - La comprobación y la revisión mediante IA admiten varios idiomas
 - Registro de cambios en nuestro propio idioma, con selector de idioma y los cambios traducidos a 30 idiomas
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - La forma del recorte vectorial se puede cambiar con un doble clic para no estropear la selección
 
 Versión 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - Funcionamiento del pincel refinado para los clips vectoriales, puede manejar intersecciones
 - Modo cuentagotas
     - también podemos dibujar el área a mano alzada
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - optimización
 
 Versión 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - Ahora también se puede deshacer al crear una máscara
 - Problema de crecimiento de los iconos al crear formas
 
 Versión 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - comando "open/video/recent"
 - opción "Open MKV" en el menú de archivos, que abre el mkvt a la vez como subtítulo y como vídeo
 El resto de las actualizaciones giró en torno a las herramientas visuales:
@@ -68,14 +68,14 @@ El resto de las actualizaciones giró en torno a las herramientas visuales:
     - también se puede hacer un dibujo a mano alzada (p. ej., para rodear algo)
 
 Versión 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - Funcionamiento de la comprobación de la traducción en el caso de muchas líneas
 - Funciones de IA relacionadas con el karaoke (reconocimiento de voz, kanji, sincronización)
 - Búsqueda en los subtítulos de una carpeta (se encuentra en el menú de edición)
 - Solución de la actualización dentro de Aegisub
 
 Versión 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - Corrección de la desaparición de la línea de origen; esperemos que ya no haya problemas con ello
 - En los MKV con mucho contenido no se podía cargar el archivo; también se ha corregido
 - Posibilidad de conectar con una IA (configuración del modelo, introducción del token, etc.)
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - Revisión posterior mediante IA de todo el subtítulo o de las líneas seleccionadas (mínimo 100)
 
 Versión 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - Líneas de imagen PS combinadas
     - se abren y se cierran al hacer clic con la rueda del ratón
     - no se marca a sí misma en rojo
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - si pulsamos dos veces rápidamente el botón asignado al último script, aparece una lista con las últimas opciones
 
 Versión 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - renderizado de carpetas para archivos fuente y carga de vídeo/audio desde ellas (de este modo, el vídeo puede estar en cualquier lugar y se carga según el nombre coincidente)
 - poner/quitar la parte de texto seleccionada como comentario
 - crash ocasional al abrir un subtítulo nuevo
 
 Versión 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - los pliegues no se contraen y se conservan al pegar
 - mejoras en el selector de fuentes
     - lista de fuentes instaladas recientemente (las de hace más de tres días; al principio no será del todo fiable)
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - el editor de estilos ahora también abre esto
 
 Versión 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - las líneas de origen se conservan al copiar/pegar
 - selección de líneas de imagen PS combinadas y funcionamiento normal de las flechas
 
 Versión 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - las líneas de origen se conservan al unirlas
 - al unirlas no añade los formatos de la segunda línea (p. ej., no es necesario eliminar \i y/o \blurt al principio de la línea)
 - al separarlas añade los formatos a la nueva línea (p. ej., no es necesario añadir \i y/o \blurt como formatos para dividir las líneas)
 
 Versión 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - codificación de las líneas de origen
 - que se pueda ampliar la línea de origen en la configuración
 
 Versión 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - nombres de fuente largos
 - velocidades de reproducción de 3x, 5x y 6x
 - al hacer doble clic en la última línea, que el arrastre no seleccione la línea de encima
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - que no combine 2 máscaras de imagen si no están en el mismo momento
 
 Versión 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - guardar y mostrar las líneas de origen junto a la casilla original
 
 Versión 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - las imágenes insertadas solo aparecen en una fila y se pueden abrir y cerrar con un doble clic
 - cambio de la velocidad de reproducción entre 0.25x y 10x, compatible solo con audio DirectSound
 
 Versión 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - mejoras del selector de fuentes
     - optimización
     - posibilidad de guardado temporal (p. ej., apartar las fuentes que parecen buenas al buscar)
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - en lugar del botón central del ratón, manteniendo pulsado el botón derecho del ratón se ocultan las funciones de la pantalla (así es más cómodo de usar)
 
 Versión 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - selector de fuentes
     - corrección del diálogo de error al añadir una fuente
     - indicación en la lista de las fuentes marcadas como favoritas
     - en la lista desplazada hacia abajo, que no salte al añadir a la lista
 
 Versión 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - selector de fuentes
     - también se pueden cambiar los valores de fs, fscx, fscy y fsp
     - menús Todos los tipos de letra, Recientes, Más frecuentes, Favoritos y Personalizadas
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - las modificaciones ahora también incluyen la traducción al húngaro
 
 Versión 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - Reemplazo de texto
         - clic derecho en las líneas -> Change text
         - también admite gradientes e intenta ajustar el texto proporcionalmente
         - al copiar varias líneas, en lugar de CTRL + H
 
 Versión 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - mejoras de la herramienta de posición
         - bloqueo horizontal/vertical
         - ajustar el bloqueo con clic + rueda arriba/abajo en el pequeño cuadrado de posición

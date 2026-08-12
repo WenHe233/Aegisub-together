@@ -1,5 +1,5 @@
 版本 4.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - 修复蒙版编辑中的吸管模式画笔冻结问题
 - 仿照 Photoshop 进行变换，可同时选中多行：
     - 自由变换
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - 垂直和水平翻转
 
 版本 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - 字体选择器支持多种语言，并且得益于改进后的缓存逻辑，速度大幅提升，仅需加载一次
 - AI 检查和审阅支持多种语言
 - 使用我们自己的语言显示变更日志，并提供语言选择器，变更内容已翻译成 30 种语言
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - 双击即可切换矢量剪辑形状，避免破坏选择区域
 
 版本 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - 优化 Vector clip 中画笔的操作，能够处理交叉部分
 - 吸管模式
     - 可以手绘范围
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - 优化
 
 版本 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - 制作蒙版时也可以撤销
 - 制作形状时图标不断变大的问题
 
 版本 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - "open/video/recent" command
 - 文件菜单中的 "Open MKV" 选项，可同时将 mkv 作为字幕和视频打开
 其他更新主要围绕 visual 工具展开：
@@ -68,14 +68,14 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
     - 还可以进行自由手绘（例如用于圈选）
 
 版本 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - 多行时翻译检查功能的运行
 - 与卡拉 OK 相关的 AI 功能（语音识别、汉字、时间轴）
 - 在文件夹中的字幕内进行搜索（位于编辑菜单中）
 - 在 Aegisub 内完成更新
 
 版本 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - 修复源行消失的问题，希望以后不再出现此问题
 - MKV 中素材较多时无法加载的问题也已修复
 - 支持连接 AI（模型设置、令牌输入等）
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - 使用 AI 对完整字幕或选中行（至少 100 行）进行后期检查
 
 版本 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - 合并的 PS 图像行
     - 点击鼠标滚轮即可展开和折叠
     - 不再用红色标记自身
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - 如果快速按下两次绑定了最后一个脚本的按键，将显示一个包含最近选项的列表
 
 版本 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - 为源文件渲染文件夹，并从中加载视频/音频（因此视频可以位于任意位置，会根据相同名称加载）
 - 将选中的文本部分设为注释/取消注释
 - 打开新字幕时偶尔崩溃
 
 版本 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - 折叠不会收起，并且在粘贴时会保留
 - 字体选择器改进
     - 最近安装的字体列表（早于三天前安装的字体不一定会显示在最前面）
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - 样式编辑器现在也会打开这个窗口
 
 版本 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - 复制/粘贴源行时得以保留
 - 可选择合并的 PS 图像行，并正常使用箭头
 
 版本 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - 合并时保留源行
 - 合并时不添加第二行的格式（例如不需要删除行首的 \i 和/或 \blurt）
 - 分割时将格式添加到新行（例如无需添加 \i 和/或 \blurt 等格式来将行拆分）
 
 版本 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - 源行编码
 - 可在设置中放大源行
 
 版本 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - 长字体名称
 - 3x、5x、6x 播放速度
 - 双击最后一行时，drag 不要选择它上面的一行
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - 如果不在同一时间，不要合并 2 个图像蒙版
 
 版本 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - 源行的注释和显示，位于原始复选框旁边
 
 版本 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - 粘贴的图像仅显示在一行中，并可通过双击展开或收起
 - 播放速度可在 0.25x - 10x 之间切换，仅兼容 DirectSound 音频
 
 版本 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - 字体选择器改进
     - 优化
     - 临时保存选项（例如搜索时将看起来不错的字体暂存起来）
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - 不再使用鼠标中键，而是通过按住右键将功能从屏幕上隐藏（这样使用起来更方便）
 
 版本 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - 字体选择器
     - 修复添加字体时的错误对话框
     - 在列表中标示标记为收藏的字体
     - 在已滚动的列表中添加时不要跳回列表顶部
 
 版本 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - 字体选择器
     - 现在也可以修改 fs、fscx、fscy 和 fsp 值
     - “所有字体”、“最近使用”、“最常用”、“收藏夹”和“自定义列表”菜单项
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - 修改内容现在也包含匈牙利语翻译
 
 版本 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - 文本替换
         - 在行上右键 -> Change text
         - 也支持 gradient，并尝试按比例设置文本
         - 复制多行时替代 CTRL + H
 
 版本 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - 位置工具优化
         - 水平/垂直锁定
         - 在小位置方框上点击 + 滚轮上下调整锁定

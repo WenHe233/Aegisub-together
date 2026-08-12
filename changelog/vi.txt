@@ -1,5 +1,5 @@
 Phiên bản 4.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Khắc phục lỗi đóng băng cọ trong chế độ ống nhỏ giọt khi chỉnh sửa mặt nạ
 - Các phép biến đổi theo mẫu Photoshop, có thể chọn nhiều dòng:
     - Biến đổi tự do
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - Lật dọc và lật ngang
 
 Phiên bản 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - Bộ chọn phông chữ hỗ trợ nhiều ngôn ngữ và nhờ logic bộ nhớ đệm được thay đổi nên nhanh hơn nhiều, chỉ cần tải một lần
 - Kiểm tra và đánh giá bằng AI hỗ trợ nhiều ngôn ngữ
 - Nhật ký thay đổi bằng ngôn ngữ của chúng ta, có bộ chọn ngôn ngữ, các thay đổi được dịch sang 30 ngôn ngữ
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Có thể chuyển đổi hình dạng vector clip bằng cách nhấp đúp để không làm hỏng vùng chọn
 
 Phiên bản 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - Tinh chỉnh hoạt động của cọ khi tạo Vector clip, có thể xử lý các giao điểm
 - Chế độ ống hút màu
     - có thể vẽ vùng bằng tay
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - tối ưu hóa
 
 Phiên bản 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - Có thể hoàn tác ngay cả khi đang tạo mặt nạ
 - Lỗi phóng to các biểu tượng tạo hình dạng
 
 Phiên bản 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - lệnh "open/video/recent"
 - tùy chọn "Open MKV" trong menu tệp, đồng thời mở mkvt dưới dạng phụ đề và video
 Các cập nhật còn lại xoay quanh các công cụ visual:
@@ -68,14 +68,14 @@ Các cập nhật còn lại xoay quanh các công cụ visual:
     - cũng có thể vẽ tự do (ví dụ: để khoanh tròn)
 
 Phiên bản 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - Cải thiện hoạt động kiểm tra bản dịch khi có nhiều dòng
 - Các chức năng AI liên quan đến karaoke (nhận dạng giọng nói, kanji, căn thời gian)
 - Tìm kiếm trong các phụ đề nằm trong thư mục (có trong mục menu chỉnh sửa)
 - Cập nhật ngay trong Aegisub
 
 Phiên bản 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - Khắc phục lỗi dòng nguồn bị biến mất, hy vọng sẽ không còn gặp vấn đề này
 - Nếu có quá nhiều nội dung trong MKV thì không thể tải lên, lỗi này cũng đã được khắc phục
 - Khả năng kết nối AI (thiết lập mô hình, nhập token, v.v.)
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - Hậu kiểm toàn bộ phụ đề hoặc các dòng được chọn (tối thiểu 100 dòng) bằng AI
 
 Phiên bản 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - Các dòng ảnh PS được gộp
     - mở ra và đóng lại khi nhấp con lăn chuột
     - không tự đánh dấu chính mình bằng màu đỏ
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - nếu nhấn nhanh 2 lần nút đã bind cho script cuối cùng, một danh sách các tùy chọn gần đây sẽ xuất hiện
 
 Phiên bản 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - render thư mục cho các tệp nguồn, và tải video/audio từ đó (nhờ vậy video có thể nằm ở bất kỳ đâu, chương trình sẽ tải dựa trên tên giống nhau)
 - đưa phần văn bản được chọn vào/ra khỏi chú thích
 - đôi khi bị crash khi mở phụ đề mới
 
 Phiên bản 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - các fold không bị thu gọn và vẫn được giữ nguyên khi dán
 - tinh chỉnh bộ chọn font
     - danh sách các font được cài đặt gần đây (các font được cài từ hơn ba ngày trước có thể chưa được liệt kê chính xác lúc đầu)
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - trình chỉnh sửa kiểu giờ đây cũng mở mục này
 
 Phiên bản 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - các dòng nguồn được giữ nguyên khi sao chép/dán
 - chọn các dòng hình ảnh PS đã hợp nhất và hoạt động mũi tên bình thường
 
 Phiên bản 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - các dòng nguồn được giữ lại khi hợp nhất
 - khi hợp nhất, không thêm các định dạng của dòng thứ hai (ví dụ: không cần xóa \i và/hoặc \blurt ở đầu dòng)
 - khi tách, thêm các định dạng vào dòng mới (ví dụ: không cần thêm \i và/hoặc \blurt để định dạng và chia dòng)
 
 Phiên bản 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - mã hóa các dòng nguồn
 - cho phép phóng to dòng nguồn trong phần cài đặt
 
 Phiên bản 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - tên font dài
 - tốc độ phát 3x, 5x, 6x
 - khi nhấp đúp vào dòng cuối, thao tác kéo không chọn dòng phía trên
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - không gộp 2 mặt nạ hình ảnh nếu chúng không cùng thời điểm
 
 Phiên bản 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - ghi chú và hiển thị các dòng nguồn bên cạnh ô chọn bản gốc
 
 Phiên bản 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - hình ảnh được chèn chỉ hiển thị trên một dòng và có thể mở rộng/thu gọn bằng cách nhấp đúp
 - chuyển đổi tốc độ phát từ 0.25x - 10x, chỉ tương thích với âm thanh DirectSound
 
 Phiên bản 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - tinh chỉnh bộ chọn font
     - tối ưu hóa
     - tùy chọn lưu tạm thời (ví dụ: cất riêng những font có vẻ phù hợp khi tìm kiếm)
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - thay vì nút chuột giữa, nhấn giữ chuột phải để ẩn các chức năng khỏi màn hình (như vậy sẽ thuận tiện hơn khi sử dụng)
 
 Phiên bản 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - bộ chọn font
     - sửa hộp thoại lỗi khi thêm font
     - hiển thị các font được đánh dấu yêu thích trong danh sách
     - khi thêm vào danh sách đã cuộn, không nhảy lên đầu danh sách
 
 Phiên bản 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - bộ chọn phông chữ
     - giờ đây cũng có thể thay đổi các giá trị fs, fscx, fscy và fsp
     - mục menu Tất cả phông chữ, Gần đây, Dùng nhiều nhất, Yêu thích và Danh sách riêng
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - các thay đổi giờ đây cũng bao gồm bản dịch sang tiếng Hungary
 
 Phiên bản 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - Thay thế văn bản
         - nhấp chuột phải vào các dòng -> Change text
         - cũng hỗ trợ gradient và cố gắng căn chỉnh văn bản theo tỷ lệ
         - khi sao chép nhiều dòng, thay cho CTRL + H
 
 Phiên bản 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - tinh chỉnh tool định vị
         - khóa ngang/dọc
         - điều chỉnh khóa bằng click + cuộn con lăn lên/xuống trên ô vuông định vị nhỏ

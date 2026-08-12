@@ -1,5 +1,5 @@
 4.4 bertsioa ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Maskak editatzeko pipeta moduan brotxa izoztea
 - Photoshopen antzeko eraldaketa, hainbat lerro hautatuta ere:
     - Forma libreko eraldaketa
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - Bertikalki eta horizontalki islatzea
 
 Bertsioa 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - Letra-tipoen hautatzaileak hainbat hizkuntza onartzen ditu eta, cachearen logika aldatuari esker, askoz azkarragoa da; karga bakarra egiten da
 - AI egiaztapenak eta berrikuspenak hainbat hizkuntza onartzen dituzte
 - Aldaketen erregistroa gure hizkuntzan, hizkuntza-hautatzailearekin; aldaketak 30 hizkuntzatara itzulita
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Vector clip forma klik bikoitzarekin alda daiteke, hautapena hondatu ez dadin
 
 Bertsioa 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - Bektorezko clip-ean pintzelaren funtzionamendua hobetu da, ebakidurak kudea ditzake
 - Pipeta modua
     - barrutia esku hutsez ere marraz dezakegu
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - optimizazioa
 
 Bertsioa 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - Maskak sortzean ere desegin daiteke
 - Formak sortzeko ikonoen handitze-arazoa
 
 Bertsioa 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - "open/video/recent" command
 - "Open MKV" aukera fitxategien menuan, mkv-a azpititulu eta bideo gisa aldi berean irekitzen duena
 Gainerako eguneraketak visual tresnen ingurukoak izan dira:
@@ -68,14 +68,14 @@ Gainerako eguneraketak visual tresnen ingurukoak izan dira:
     - esku hutsez marraztea ere egin daiteke (adib. inguratzeko)
 
 Bertsioa 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - Itzulpenaren egiaztapenaren funtzionamendua lerro askoren kasuan
 - Karaokerako AI funtzioak (ahots-hautematea, kanji-a, denboralizazioa)
 - Karpeta batean dauden azpitituluetan bilatzea (edizio-menuan dago)
 - Aegisub barruan eguneratzea konpontzea
 
 Bertsioa 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - Iturburu-lerroa desagertzearen konponketa, zorionez ez da berriro arazorik izango
 - MKV-n material asko zegoenean ezin zen kargatu; hori ere konpondu da
 - AI integratzeko aukera (modeloa ezartzea, tokena zehaztea, etab.)
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - Azpititulu osoaren edo hautatutako lerroen (gutxienez 100) ondorengo egiaztapena AI bidez
 
 Bertsioa 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - Bateratutako PS irudi-lerroak
     - saguaren gurpilaren klikarekin ireki eta ixten dira
     - ez dezala bere burua gorriz adierazi
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - azken scriptari bindatutako botoia 2 aldiz azkar sakatzen badugu, zerrenda bat agertzen da azken aukerekin
 
 Bertsioa 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - iturburu-fitxategietarako karpetak errendatzea, eta haietatik bideoa/audioa kargatzea (horri esker, bideoa edozein tokitan egon daiteke, eta izen berean oinarrituta kargatuko da)
 - hautatutako testu-zatia iruzkin bihurtzea/iruzkinetik ateratzea
 - noizbehinkako kraskatzea azpititulu berri bat irekitzean
 
 Bertsioa 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - foldak ez dira tolesten eta itsastean mantentzen dira
 - letra-tipoen hautatzailearen hobekuntzak
     - duela gutxi instalatutako letra-tipoen zerrenda (duela hiru egun baino lehenagokoak, hasieran ez dira ziurrak izango)
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - estiloen editoreak ere hau irekitzen du orain
 
 Bertsioa 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - iturburu-lerroak mantentzen dira kopiatzean/itsastean
 - bateratutako PS irudi-lerroak hautatzea eta geziaren funtzionamendu normala
 
 Bertsioa 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - iturburu-lerroak mantentzen dira lerroak elkartzean
 - elkartzean, ez ditu bigarren lerroko formatuak gehitzen (adib. lerroaren hasierako \i eta/edo \blurt ez dira ezabatu behar)
 - banatzean, formatuak lerro berrira gehitzen ditu (adib. ez da \i eta/edo \blurt gehitu behar formatzaile gisa lerroak banatzeko)
 
 Bertsioa 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - iturburu-lerroen kodeketa
 - iturburu-lerroa ezarpenetan handitu ahal izatea
 
 Bertsioa 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - letra-tipoen izen luzeak
 - 3x, 5x, 6x erreprodukzio-abiadura
 - azken lerroan klik bikoitza egitean drag-ek ez dezala haren gaineko lerroa hautatu
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - 2 irudi-maskara ez batzea aldi berean ez badaude
 
 Bertsioa 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - iturburu-lerroen oharra eta bistaratzea jatorrizko kontrol-laukiaren ondoan
 
 Bertsioa 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - itsatsitako irudiak lerro bakarrean soilik bistaratzen dira, eta klik bikoitzarekin ireki eta itxi daitezke
 - erreprodukzio-abiadura 0.25x - 10x artean aldatzea, DirectSound audioarekin soilik bateragarria
 
 Bertsioa 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - letra-tipoen hautatzailearen hobekuntzak
     - optimizazioa
     - aldi baterako gordetzeko aukera (adib. bilaketan itxura ona duten letra-tipoak alde batera uztea)
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - saguaren erdiko botoiaren ordez, eskuineko klikari eutsita funtzioak pantailatik kentzen ditu (horrela erabiltzea erosoagoa da)
 
 Bertsioa 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - letra-tipoen hautatzailea
     - letra-tipoa gehitzean errore-dialogoaren konponketa
     - gogoko gisa markatutako letra-tipoen adierazlea zerrendan
     - beherantz korritutako zerrendan, ez dadila zerrendaren goialdera jauzi gehitzean
 
 Bertsioa 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - letra-tipo hautatzailea
     - fs, fscx, fscy eta fsp balioak ere alda daitezke
     - Letra-tipo guztiak, Azkenak, Ohikoenak, Gogokoak eta Norberaren zerrendak menu-elementuak
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - aldaketek orain hungarierarako itzulpena ere badute
 
 Bertsioa 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - Testu-ordezkapena
         - lerroetan eskuineko klika -> Change text
         - gradientea ere onartzen du eta testua proportzionalki ezartzen saiatzen da
         - hainbat lerro kopiatzean CTRL + H-ren ordez
 
 Bertsioa 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - posizio-tresnaren fintzea
         - blokeatze horizontala/bertikala
         - blokeatzea click + gurpila gora/behera erabiliz ezartzea posizio-koadro txikian

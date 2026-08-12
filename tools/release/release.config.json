@@ -5,6 +5,9 @@
   "changelog_dir": "C:\\Users\\croni\\Aegisub\\changelog",
   "source_language": "hu",
   "fallback_language": "en",
+  "release_language": "en",
+  "release_asset_template": "aegisub-nyaa-edition-v{version}.zip",
+  "release_name_template": "nyaa's edition v{version}",
   "openai_model": "gpt-5.6-luna",
   "vcvars": "D:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat",
   "github_repo": "croni1012/Aegisub"

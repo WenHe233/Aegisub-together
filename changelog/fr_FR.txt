@@ -1,5 +1,5 @@
 Version 4.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Gel du pinceau en mode pipette de l’édition des masques
 - Transformation à la manière de Photoshop, même en sélectionnant plusieurs lignes :
     - Transformation libre
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - Miroir vertical et horizontal
 
 Version 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - Le sélecteur de polices prend en charge plusieurs langues et est devenu beaucoup plus rapide grâce à la logique de cache modifiée, il n’y a qu’un seul chargement
 - La vérification et la review par IA prennent en charge plusieurs langues
 - Journal des modifications dans notre propre langue, avec un sélecteur de langue, les modifications traduites en 30 langues
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - La forme du vector clip peut être modifiée par double-clic afin de ne pas altérer la sélection
 
 Version 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - Fonctionnement du pinceau affiné pour les vector clips, prise en charge des intersections
 - Mode pipette
     - possibilité de dessiner la zone à main levée
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - optimisation
 
 Version 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - Il est également possible d’annuler lors de la création d’un masque
 - Problème d’agrandissement des icônes de création de formes
 
 Version 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - "open/video/recent" command
 - option "Open MKV" dans le menu Fichier, qui ouvre simultanément le mkv comme sous-titre et comme vidéo
 Les autres mises à jour concernaient les outils visuels :
@@ -68,14 +68,14 @@ Les autres mises à jour concernaient les outils visuels :
     - possibilité de réaliser un dessin à main levée (p. ex. pour entourer quelque chose)
 
 Version 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - Fonctionnement de la vérification de la traduction pour de nombreuses lignes
 - Fonctionnalités d’IA liées au karaoké (reconnaissance vocale, kanji, synchronisation)
 - Recherche dans les sous-titres présents dans un dossier (accessible dans le menu édition)
 - Résolution de la mise à jour depuis Aegisub
 
 Version 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - Correction de la disparition de la ligne source, espérons qu'il n'y aura plus de problème
 - Dans les MKV contenant beaucoup de contenu, le chargement était impossible ; cela a également été corrigé
 - Possibilité de connecter une IA (réglage du modèle, indication du token, etc.)
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - Vérification finale de l'intégralité des sous-titres ou des lignes sélectionnées (minimum 100) par IA
 
 Version 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - Lignes d’images PS regroupées
     - s’ouvrent et se ferment avec un clic de la molette de la souris
     - ne s’indiquent pas elles-mêmes en rouge
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - si l’on appuie rapidement 2 fois sur la touche liée au dernier script, une liste des dernières options s’affiche
 
 Version 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - rendu de dossiers pour les fichiers source, et chargement de la vidéo/de l’audio depuis ceux-ci (ainsi, la vidéo peut se trouver n’importe où, elle sera chargée en fonction de son nom)
 - mise en commentaire/suppression du commentaire de la partie de texte sélectionnée
 - plantage occasionnel lors de l’ouverture d’un nouveau sous-titre
 
 Version 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - les replis ne se réduisent pas et sont conservés lors du collage
 - améliorations du sélecteur de polices
     - liste des polices installées récemment (celles d'il y a plus de trois jours ne seront pas fiables au début)
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - l'éditeur de styles ouvre désormais également celui-ci
 
 Version 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - les lignes sources sont conservées lors de la copie/du collage
 - sélection des lignes d’image PS fusionnées et fonctionnement normal des flèches
 
 Version 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - les lignes sources sont conservées lors de la fusion
 - lors de la fusion, les mises en forme de la deuxième ligne ne sont pas ajoutées (p. ex. il n’est pas nécessaire de supprimer \i et/ou \blurt en début de ligne)
 - lors de la séparation, les mises en forme sont ajoutées à la nouvelle ligne (p. ex. il n’est pas nécessaire d’ajouter \i et/ou \blurt comme mises en forme pour diviser les lignes)
 
 Version 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - encodage des lignes sources
 - possibilité d’agrandir la ligne source dans les paramètres
 
 Version 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - noms de polices longs
 - vitesses de lecture 3x, 5x, 6x
 - lors d'un double-clic sur la dernière ligne, le drag ne doit pas sélectionner celle située au-dessus
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - ne pas fusionner 2 masques d'image s'ils ne sont pas synchronisés
 
 Version 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - commentaire et affichage des lignes sources à côté de la coche d’origine
 
 Version 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - les images insérées s'affichent sur une seule ligne et peuvent être déployées ou réduites par double-clic
 - changement de la vitesse de lecture entre 0.25x et 10x, compatible uniquement avec l'audio DirectSound
 
 Version 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - améliorations du sélecteur de polices
     - optimisation
     - possibilité de sauvegarde temporaire (p. ex. mettre de côté les polices qui semblent bonnes lors d'une recherche)
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - au lieu du bouton central de la souris, maintenez le clic droit pour faire disparaître les fonctions de l'écran (ainsi, l'utilisation est plus confortable)
 
 Version 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - sélecteur de police
     - correction de la boîte de dialogue d’erreur lors de l’ajout d’une police
     - indication des polices marquées comme favorites dans la liste
     - la liste déroulée ne doit pas remonter lors de l’ajout à la liste
 
 Version 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - sélecteur de polices
     - possibilité de modifier également les valeurs fs, fscx, fscy et fsp
     - éléments de menu Toutes les polices, Récentes, Les plus fréquentes, Favoris et Personnalisées
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - les modifications incluent désormais la traduction en hongrois
 
 Version 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - Remplacement de texte
         - clic droit sur les lignes -> Change text
         - prend également en charge les dégradés et essaie de régler le texte proportionnellement
         - lors de la copie de plusieurs lignes, à la place de CTRL + H
 
 Version 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - amélioration de l’outil de position
         - verrouillage horizontal/vertical
         - réglage du verrouillage avec un clic + la molette vers le haut/bas sur le petit carré de position

@@ -30,6 +30,9 @@ DEFAULT_CONFIG = {
     'github_repo': 'croni1012/Aegisub',
     'source_language': 'hu',
     'fallback_language': 'en',
+    'release_language': 'en',
+    'release_asset_template': 'aegisub-nyaa-edition-v{version}.zip',
+    'release_name_template': "nyaa's edition v{version}",
     'openai_model': 'gpt-5.6-terra',
     # Keys belong in release.config.apikey.json; this stays empty in the
     # committed file, and is only read as a fallback.
@@ -390,12 +393,12 @@ def github_release_id(token, repo, tag):
     fail('GitHub returned %d looking up %s: %s' % (status, tag, body.get('message')))
 
 
-def github_create_release(token, repo, tag, notes):
+def github_create_release(token, repo, tag, name, notes):
     status, body = github_request(
         token, 'POST', '%s/repos/%s/releases' % (GITHUB_API, repo),
         data=json.dumps({
             'tag_name': tag,
-            'name': tag,
+            'name': name,
             'body': notes,
             'draft': False,
             'prerelease': False,
@@ -428,16 +431,24 @@ def github_delete_asset(token, repo, asset_id):
         fail('GitHub returned %d deleting an asset: %s' % (status, body.get('message')))
 
 
-def github_update_notes(token, repo, release_id, notes):
+def github_update_release(token, repo, release_id, name, notes):
     status, body = github_request(
         token, 'PATCH', '%s/repos/%s/releases/%s' % (GITHUB_API, repo, release_id),
-        data=json.dumps({'body': notes}).encode('utf-8'),
+        data=json.dumps({'name': name, 'body': notes}).encode('utf-8'),
         content_type='application/json')
     if status != 200:
-        fail('GitHub returned %d updating the notes: %s' % (status, body.get('message')))
+        fail('GitHub returned %d updating the release metadata: %s' % (status, body.get('message')))
 
 
-def publish_release(token, repo, version, package, notes, replace=False):
+def release_asset_name(config, version):
+    return config['release_asset_template'].format(version=version)
+
+
+def release_name(config, version):
+    return config['release_name_template'].format(version=version)
+
+
+def publish_release(token, repo, version, name, package, notes, replace=False):
     """Make sure the release for this version exists and carries its package.
 
     Without `replace` an existing package is left alone, so the function is safe to
@@ -449,8 +460,11 @@ def publish_release(token, repo, version, package, notes, replace=False):
     tag = 'v%s' % version
     release_id, assets = github_release_id(token, repo, tag)
     if release_id is None:
-        release_id = github_create_release(token, repo, tag, notes)
+        release_id = github_create_release(token, repo, tag, name, notes)
         print('    %s: release created' % tag)
+    else:
+        github_update_release(token, repo, release_id, name, notes)
+        print('    %s: title and English notes updated' % tag)
 
     name = os.path.basename(package)
     if name in assets:
@@ -458,7 +472,6 @@ def publish_release(token, repo, version, package, notes, replace=False):
             print('    %s: package already uploaded, left alone' % tag)
             return
         github_delete_asset(token, repo, assets[name])
-        github_update_notes(token, repo, release_id, notes)
         print('    %s: previous %s removed' % (tag, name))
 
     github_upload_asset(token, repo, release_id, package)

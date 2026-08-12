@@ -1,5 +1,5 @@
 Sürüm 4.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Maske düzenleme pipet modunda fırçanın donması
 - Photoshop benzeri dönüşüm, birden fazla satır seçiliyken bile:
     - Serbest dönüştürme
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - Dikey ve Yatay Aynalama
 
 Sürüm 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - Yazı tipi seçici artık birden fazla dili destekliyor ve değiştirilen önbellek mantığı sayesinde çok daha hızlı; yalnızca bir kez yükleme yapılıyor
 - AI kontrolü ve inceleme artık birden fazla dili destekliyor
 - Değişiklik günlüğü kendi dilimizde, dil seçiciyle birlikte; değişiklikler 30 dile çevrildi
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Seçimi bozmaması için vector clip şekli çift tıklamayla değiştirilebilir
 
 Sürüm 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - Vector clip'te fırçanın çalışması iyileştirildi, kesişimleri işleyebilir
 - Damlalık modu
     - alanı serbest elle de çizebiliriz
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - optimizasyon
 
 Sürüm 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - Maske oluştururken de geri alma yapılabilir
 - Şekil oluşturma simgelerinin büyüme sorunu
 
 Sürüm 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - "open/video/recent" command
 - Dosya menüsünde, mkv'yi hem altyazı hem de video olarak aynı anda açan "Open MKV" seçeneği
 Diğer güncellemeler visual tool'lar etrafında gerçekleşti:
@@ -68,14 +68,14 @@ Diğer güncellemeler visual tool'lar etrafında gerçekleşti:
     - serbest çizim de yapılabilir (örn. daire içine alma için)
 
 Sürüm 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - Çok sayıda satırda çeviri denetiminin çalışması
 - Karaoke ile ilgili AI özellikleri (ses tanıma, kanji, zamanlama)
 - Klasörde bulunan altyazılarda arama (düzenleme menüsünde bulunur)
 - Aegisub içinde güncelleme yapılması
 
 Sürüm 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - Kaynak satırının kaybolması sorunu düzeltildi, umarız artık sorun yaşanmaz
 - MKV'de çok fazla içerik olduğunda yüklenemiyordu, bu da düzeltildi
 - AI bağlantısı kurma olanağı (model ayarlama, token girme vb.)
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - Tüm altyazının veya seçili satırların (en az 100) AI ile son kontrolü
 
 Sürüm 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - Birleştirilmiş PS resim satırları
     - fare tekerleğine tıklayınca açılır ve kapanır
     - kendisini kırmızı renkle işaretlemez
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - son script'e bind edilmiş tuşa hızlıca 2x basarsak, son seçeneklerin bulunduğu bir liste görüntülenir
 
 Sürüm 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - kaynak dosyalar için klasörlerin işlenmesi ve bunlardan video/ses yüklenmesi (böylece video herhangi bir yerde olabilir, aynı ada göre yüklenir)
 - seçili metin bölümünü yoruma alma/yorumdan çıkarma
 - yeni altyazı açılırken ara sıra çökme
 
 Sürüm 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - foldlar artık daralmıyor ve yapıştırma sırasında korunuyor
 - font seçicide iyileştirmeler
     - yakın zamanda yüklenen fontların listesi (üç günden daha eski olanlar başta kesin olarak görünmeyebilir)
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - stil düzenleyici de artık bunu açıyor
 
 Sürüm 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - kaynak satırlar kopyalama/yapıştırma sırasında korunur
 - birleştirilmiş PS görüntü satırlarının seçimi ve normal ok işlevi
 
 Sürüm 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - kaynak satırlar birleştirme sırasında korunur
 - birleştirme sırasında ikinci satırın biçimlendirmelerini eklemez (ör. satır başındaki \i ve/veya \blurt silinmek zorunda kalmaz)
 - ayırma sırasında biçimlendirmeleri yeni satıra ekler (ör. satırları bölmek için \i ve/veya \blurt eklemek ve biçimlendirmek gerekmez)
 
 Sürüm 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - kaynak satırların kodlaması
 - kaynak satırın ayarlardan büyütülebilmesi
 
 Sürüm 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - uzun font adları
 - 3x, 5x, 6x oynatma hızı
 - son satıra çift tıklandığında drag üstündeki satırı seçmesin
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - aynı zamanda değillerse 2 görüntü maskesini birleştirmesin
 
 Sürüm 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - kaynak satırlarının not edilmesi ve orijinal onay kutusunun yanında görüntülenmesi
 
 Sürüm 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - eklenen resimler yalnızca tek bir satırda görüntülenir ve çift tıklamayla açılıp kapatılabilir
 - 0.25x - 10x arasında oynatma hızı değiştirme, yalnızca DirectSound ses ile uyumlu
 
 Sürüm 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - yazı tipi seçicisinde iyileştirmeler
     - optimizasyon
     - geçici kaydetme olanağı (ör. arama sırasında iyi görünen yazı tiplerini bir kenara koymak)
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - orta fare düğmesi yerine sağ tıklamayı basılı tutarak işlevleri ekrandan kaldırır (böylece kullanımı daha kolaydır)
 
 Sürüm 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - yazı tipi seçici
     - yazı tipi ekleme hata iletişim kutusu düzeltildi
     - favori olarak işaretlenen yazı tiplerinin listede belirtilmesi
     - kaydırılmış listede ekleme sırasında listenin yukarı sıçramaması
 
 Sürüm 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - yazı tipi seçici
     - fs, fscx, fscy ve fsp değerleri de değiştirilebilir
     - Tüm yazı tipleri, Son kullanılanlar, En sık kullanılanlar, Favoriler ve Özel listeler menü öğeleri
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - değişiklikler artık Macarcaya çeviriyi de içeriyor
 
 Sürüm 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - Metin değiştirme
         - satırlarda sağ tık -> Change text
         - gradienti de destekler ve metni orantılı olarak ayarlamaya çalışır
         - birden fazla satır kopyalarken CTRL + H yerine
 
 Sürüm 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - pozisyon aracında iyileştirmeler
         - yatay/dikey kilitleme
         - küçük pozisyon karesinde click + tekerlek yukarı/aşağı ile kilitleme ayarı

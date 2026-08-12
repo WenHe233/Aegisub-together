@@ -1,5 +1,5 @@
 Verzió 4.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Maszk szerkesztéses pipettás mód brush fagyás
 - Átalakítás a Photoshop mintájára, akár több sort is kijelölve:
     - Szabad alakítás
@@ -9,7 +9,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-v4.4.zip
     - Függőleges- és Vízszintes Tükrözés
 
 Verzió 4.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-nyaa-edition-v4.3.zip
 - Betűtípus választó támogatja a több nyelvet és a megváltozott cache logikának hála sokkal gyorsabb lett, egyszeri betöltés van csupán
 - AI ellenőrzés és review támogatja a több nyelvet
 - Változásnapló a saját nyelvünkön, nyelvválasztóval, a változtatások 30 nyelvre lefordítva
@@ -17,7 +17,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.3/aegisub-v4.3.zip
 - Vector clip alakzatot dupla kattintással lehet váltani, hogy a kijelölést ne rontsa el
 
 Verzió 4.2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-nyaa-edition-v4.2.2.zip
 - Vector clipnél az ecset működése finomítva, tudja kezelni a keresztmetszeteket
 - Pipettás mód
     - tartományt szabadkézzel is megrajzolhatjuk
@@ -27,12 +27,12 @@ https://github.com/croni1012/Aegisub/releases/download/v4.2.2/aegisub-v4.2.2.zip
     - optimalizálás
 
 Verzió 4.2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-v4.2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2.1/aegisub-nyaa-edition-v4.2.1.zip
 - Maszk készítéskor is lehet visszavonni
 - Alakzatkészítés ikonok növekedési problémája
 
 Verzió 4.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-v4.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.2/aegisub-nyaa-edition-v4.2.zip
 - "open/video/recent" command
 - "Open MKV" opció a fájl menüben, ami egyben megnyitja az mkvt feliratként és videóként
 A többi frissítés a visual toolok körül forgott:
@@ -68,14 +68,14 @@ A többi frissítés a visual toolok körül forgott:
     - szabadkezű rajzot is lehet készíteni (pl. bekarikázáshoz)
 
 Verzió 4.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-v4.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.1/aegisub-nyaa-edition-v4.1.zip
 - Fordítás ellenőrzésének működése sok sor esetén
 - Karaokéhez kapcsolódó AI funkciók (hangfelismerés, kanji, időzítés)
 - Mappában található feliratokban való keresés (szerkesztés menüpontban található)
 - Frissítés megoldása Aegisubon belül
 
 Verzió 4.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-nyaa-edition-v4.0.zip
 - Forrás sor eltűnésének kijavítása, remélhetőleg már nem lesz vele gond
 - MKV-ban ha sok anyag volt, nem lehetett betölteni, az is javításra került
 - AI összekötés lehetősége (modell állítás, token megadás, stb)
@@ -83,7 +83,7 @@ https://github.com/croni1012/Aegisub/releases/download/v4.0/aegisub-v4.0.zip
 - Teljes felirat vagy kijelölt sorok (minimum 100) utóellenőrzése AI-val
 
 Verzió 3.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-nyaa-edition-v3.6.zip
 - Összevont PS kép sorok
     - egér görgő kattra nyílnak ki és csukódnak be
     - piros színnel ne jelezze saját magát
@@ -104,13 +104,13 @@ https://github.com/croni1012/Aegisub/releases/download/v3.6/aegisub-v3.6.zip
     - ha 2x gyorsan megnyomjuk az utolsó scriptre bindelt gombot, egy lista jelenik meg az utolsó opciókkal
 
 Verzió 3.5.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-v3.5.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.5/aegisub-nyaa-edition-v3.5.5.zip
 - forrás fájlokhoz mappák renderelése, és azokból való videó/audió betöltés (ezáltal bárhol lehet a videó, azonos név alapján betölti)
 - kijelölt szövegrész megjegyzésbe rakása/kivétele
 - új felirat megnyitásakor néhai crashelés
 
 Verzió 3.5.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-nyaa-edition-v3.5.4.zip
 - foldok nem esnek össze és megmaradnak beillesztésnél
 - fontválasztó finomítások
     - mostanában telepített fontok listája (három napnál ezelőtti, az elején nem lesz tuti)
@@ -118,23 +118,23 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5.4/aegisub-v3.5.4.zip
     - stílus szerkesztő is ezt nyitja mostmár meg
 
 Verzió 3.5.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-v3.5.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.3/aegisub-nyaa-edition-v3.5.3.zip
 - forrás sorok másolásnál/beillesztésnél megmaradnak
 - összevont PS kép sorok kijelölése és normális nyíl működés
 
 Verzió 3.5.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-v3.5.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.2/aegisub-nyaa-edition-v3.5.2.zip
 - forrás sorok összeillesztésnél megmaradnak
 - összeillesztésnél a második sor formázásait nem adja hozzá (pl. sor eleji \i és/vagy \blurt nem kell törölni)
 - szétválasztásnál a formázásokat hozzáadja az új sorhoz (pl. nem kell \i és/vagy \blurt hozzáadni meg formázóknak sorokra bontáshoz)
 
 Verzió 3.5.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-v3.5.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5.1/aegisub-nyaa-edition-v3.5.1.zip
 - forrás sorok kódolása
 - forrás sort lehessen nagyítani beállításokban
 
 Verzió 3.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-nyaa-edition-v3.5.zip
 - hosszú font nevek
 - 3x, 5x, 6x lejátszási sebesség
 - utolsó sor dupla kattnál ne felette lévőt válassza ki a drag
@@ -144,16 +144,16 @@ https://github.com/croni1012/Aegisub/releases/download/v3.5/aegisub-v3.5.zip
 - 2 kép maszkot ne vonja össze, ha nem egy időben vannak
 
 Verzió 3.4 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-v3.4.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.4/aegisub-nyaa-edition-v3.4.zip
 - forrás sorok megjegyzése és megjelenítése az eredeti pipa mellett
 
 Verzió 3.3 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-v3.3.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.3/aegisub-nyaa-edition-v3.3.zip
 - beillesztett képek csak egy sorban jelennek meg és dupla kattintással lehet ki-be nyitni
 - lejátszási sebesség váltás 0.25x - 10x között, csak DirectSound audioval kompatibilis
 
 Verzió 3.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-nyaa-edition-v3.2.zip
 - fontválasztó finomítások
     - optimalizálás
     - ideiglenes mentési lehetőség (pl keresésnél félrerakni a jónak tűnő fontokat)
@@ -161,14 +161,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.2/aegisub-v3.2.zip
 - középső egér gomb helyett jobb klikk nyomvatartásával tünteti el a funkciókat a képernyőről (így kényelmesebb a használata)
 
 Verzió 3.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-v3.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.1/aegisub-nyaa-edition-v3.1.zip
 - fontválasztó
     - font hozzáadás error dialog fix
     - kedvencnek jelölt fontok jelzése a listában
     - letekert listában ne ugorjon fel listához adáskor
 
 Verzió 3.0 ---
-https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
+https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-nyaa-edition-v3.0.zip
 - fontválasztó
     - lehet változtatni fs, fscx, fscy és fsp értékeket is
     - Minden betűtípus, Legutóbbi, Leggyakoribb, Kedvencek és Saját listák menüpont
@@ -176,14 +176,14 @@ https://github.com/croni1012/Aegisub/releases/download/v3.0/aegisub-v3.0.zip
 - módosítások tartalmazzák mostmár a magyarra fordítást
 
 Verzió 2.2 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-v2.2.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.2/aegisub-nyaa-edition-v2.2.zip
     - Szöveg csere
         - soroknál jobb klikk -> Change text
         - gradientet is támogat és megpróbálja beállítani a szöveget arányosan
         - több sor másolásánál CTRL + H helyett
 
 Verzió 2.1 ---
-https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-v2.1.zip
+https://github.com/croni1012/Aegisub/releases/download/v2.1/aegisub-nyaa-edition-v2.1.zip
     - pozíciós tool finomítás
         - horizontális/vertikális lockolás
         - lockolás állítása click + görgő fel/le a kis pozíciós négyzeten

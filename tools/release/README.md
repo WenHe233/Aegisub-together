@@ -1,6 +1,6 @@
 # Release helpers
 
-Double-clickable helpers for the Muteki Aegisub release flow. Each `.cmd`
+Double-clickable helpers for the Aegisub - nyaa's edition release flow. Each `.cmd`
 just runs its Python script, so they can also be started from a terminal with
 extra arguments.
 
@@ -8,13 +8,18 @@ extra arguments.
 | --- | --- |
 | `release-local.cmd` | Copies the built `aegisub.exe` and the Hungarian catalogue into `C:\aegisub-portable`, for trying a build out immediately. |
 | `translate.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages. It does not build or pack anything. |
-| `release.cmd` | Builds, packs `aegisub-v<version>.zip` into `.releases/`, and offers to publish it as a GitHub release. It does not run translations. |
+| `release.cmd` | Builds, packs `aegisub-nyaa-edition-v<version>.zip` into `.releases/`, and offers to publish it as `nyaa's edition v<version>` with the English changelog as its GitHub notes. It does not run translations. |
 
 ## Settings
 
 `release.config.json` next to these scripts holds the paths. It is created with
 defaults on the first run; edit it and re-run. It is committed, so **no keys
 belong in it**.
+
+`source_language` remains the source used by the translation helper, while
+`release_language` independently selects the changelog used for package versions
+and GitHub release notes. The package and release title formats are controlled by
+`release_asset_template` and `release_name_template`.
 
 `release.config.apikey.json` holds the keys and is kept out of git. It is created
 empty on the first run:
