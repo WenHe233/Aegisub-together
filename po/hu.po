@@ -8767,3 +8767,182 @@ msgstr "A ferde, radiális és alakzatos sávok oldalankénti átfedése script-
 #: ../src/typesetting_gradient.cpp
 msgid "apply gradient"
 msgstr "színátmenet alkalmazása"
+
+#: ../src/dialog_gradient.cpp
+msgid "Move colors"
+msgstr "Színek mozgatása"
+
+#: ../src/dialog_gradient.cpp
+msgid "Motion type:"
+msgstr "Mozgás típusa:"
+
+#: ../src/dialog_gradient.cpp
+msgid "Once"
+msgstr "Egyszer"
+
+#: ../src/dialog_gradient.cpp
+msgid "Loop until line end"
+msgstr "Ismétlés a sor végéig"
+
+#: ../src/dialog_gradient.cpp
+msgid "Ping-pong until line end"
+msgstr "Oda-vissza a sor végéig"
+
+#: ../src/dialog_gradient.cpp
+msgid "Fit once to line"
+msgstr "Egyszer, a sor hosszához igazítva"
+
+#: ../src/dialog_gradient.cpp
+msgid "Outside:"
+msgstr "Kívül:"
+
+#: ../src/dialog_gradient.cpp
+msgid "Clamp edge colors"
+msgstr "Szélső színek folytatása"
+
+#: ../src/dialog_gradient.cpp
+msgid "Repeat gradient"
+msgstr "Gradient ismétlése"
+
+#: ../src/dialog_gradient.cpp
+msgid "First stop color"
+msgstr "Első színpont színe"
+
+#: ../src/dialog_gradient.cpp
+msgid "Start time (ms):"
+msgstr "Kezdés (ms):"
+
+#: ../src/dialog_gradient.cpp
+msgid "End time (ms):"
+msgstr "Befejezés (ms):"
+
+#: ../src/dialog_gradient.cpp
+msgid "Cycle/leg (ms):"
+msgstr "Ciklus/szakasz (ms):"
+
+#: ../src/dialog_gradient.cpp
+msgid "Accel:"
+msgstr "Gyorsítás:"
+
+#: ../src/dialog_gradient.cpp
+msgid "Start position (%):"
+msgstr "Kezdőpozíció (%):"
+
+#: ../src/dialog_gradient.cpp
+msgid "End position (%):"
+msgstr "Végpozíció (%):"
+
+#: ../src/dialog_gradient.cpp
+msgid "Start width (%):"
+msgstr "Kezdő szélesség (%):"
+
+#: ../src/dialog_gradient.cpp
+msgid "End width (%):"
+msgstr "Végső szélesség (%):"
+
+#: ../src/dialog_gradient.cpp
+msgid "Use line end"
+msgstr "Sor végének használata"
+
+#: ../src/dialog_gradient.cpp
+msgid "Before to after"
+msgstr "Előttről utána"
+
+#: ../src/dialog_gradient.cpp
+msgid "After to before"
+msgstr "Utánról előre"
+
+#: ../src/dialog_gradient.cpp
+msgid "Motion"
+msgstr "Mozgás"
+
+#: ../src/dialog_gradient.cpp
+msgid "Copy from..."
+msgstr "Másolás innen..."
+
+#: ../src/dialog_gradient.cpp
+msgid "stops"
+msgstr "színpontok"
+
+#: ../src/dialog_gradient.cpp
+msgid "motion"
+msgstr "mozgás"
+
+#: ../src/dialog_gradient.cpp
+msgid "stops and motion"
+msgstr "színpontok és mozgás"
+
+#: ../src/dialog_gradient.cpp
+msgid "Shared"
+msgstr "Közös"
+
+#: ../src/dialog_gradient.cpp
+msgid "Per color"
+msgstr "Színenként"
+
+#: ../src/dialog_gradient.cpp
+msgid "Motion settings"
+msgstr "Mozgásbeállítások"
+
+#: ../src/dialog_gradient.cpp
+msgid "Middle width (%):"
+msgstr "Középső szélesség (%):"
+
+#: ../src/dialog_gradient.cpp
+msgid "Info"
+msgstr "Információ"
+
+#: ../src/dialog_gradient.cpp
+msgid "Play line once"
+msgstr "Sor egyszeri lejátszása"
+
+#: ../src/dialog_gradient.cpp
+msgid "Play line repeatedly"
+msgstr "Sor ismételt lejátszása"
+
+#: ../src/dialog_gradient.cpp
+msgid "Previous frame"
+msgstr "Előző képkocka"
+
+#: ../src/dialog_gradient.cpp
+msgid "Next frame"
+msgstr "Következő képkocka"
+
+#: ../src/dialog_gradient.cpp
+msgid "Gradient help"
+msgstr "Gradient súgó"
+
+#: ../src/dialog_gradient.cpp
+msgid ""
+"Gradient type\n"
+"Linear follows the selected angle. Radial expands from the center of the selected text.\n\n"
+"Output\n"
+"Clip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\n\n"
+"Pixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\n\n"
+"Color stops\n"
+"Click the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\n\n"
+"Motion\n"
+"Once moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\n\n"
+"Accel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\n\n"
+"Start, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\n\n"
+"Playback\n"
+"The framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
+msgstr ""
+"Gradient típusa\n"
+"A lineáris gradient a kiválasztott szöget követi. A radiális gradient a kijelölt szöveg középpontjából terjed kifelé.\n\n"
+"Kimenet\n"
+"A Clip vágott feliratsor-másolatokat hoz létre. A Karakterenként minden karakterhez külön rendeli a gradientet. Az Alakzatokkal a szöveget, a bordot és az árnyékot clip nélküli, szerkeszthető vektoralakzatokká alakítja.\n\n"
+"A Pixeltávolság sávonként a térbeli részletességet szabályozza. A kisebb érték simább eredményt, de több létrehozott sort jelent. A csíkosság elleni átfedés kissé egymásra húzza a ferde, radiális és alakzatos sávokat; a téglalapos clipek mindig nullát használnak.\n\n"
+"Színpontok\n"
+"Kattints a sávra új színpont hozzáadásához, húzd a négyzetét a pozicionáláshoz, kattints rá a szín és az alpha szerkesztéséhez, vagy jobb kattintással távolítsd el.\n\n"
+"Mozgás\n"
+"Az Egyszer a választott időtartam alatt mozgat a két pozíció között. Az Ismétlés minden ciklusban újraindul. Az Oda-vissza váltogatja az irányt. A sorhoz igazított mód a teljes sorhosszt használja. A Sor végének használata az Egyszer módot a felirat végén fejezi be.\n\n"
+"A Gyorsítás az időgörbét módosítja: az 1 lineáris, az 1 feletti érték lassabban, az 1 alatti gyorsabban indul. A pozíciók a gradient tartományának százalékai; a 0 alatti és 100 feletti értékek a szövegen kívülre helyezik. A mozgó tartományon kívül a legközelebbi szélső szín folytatódik.\n\n"
+"A kezdő, középső és végső szélesség a mozgó gradient méretét adja meg az elején, félidőben és a végén. Így vékony–széles–vékony fénycsóva is készíthető.\n\n"
+"Lejátszás\n"
+"A keretezett Play gomb egyszer játssza le a sort. A sima Play gomb ismétli. A Pause leállítja a lejátszást. A nyílgombok egyetlen videóképkockát lépnek."
+
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Gradient (%d lines, %s, text: %s)"
+msgstr "Gradient (%d sor, %s, szöveg: %s)"

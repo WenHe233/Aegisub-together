@@ -9,9 +9,11 @@
 
 #include "dialog_gradient.h"
 
+#include "command/command.h"
 #include "dialogs.h"
 #include "include/aegisub/context.h"
 #include "typesetting_gradient.h"
+#include "video_controller.h"
 #include "video_display.h"
 
 #include <algorithm>
@@ -23,7 +25,9 @@
 #include <vector>
 
 #include <wx/button.h>
+#include <wx/bmpbuttn.h>
 #include <wx/checkbox.h>
+#include <wx/choice.h>
 #include <wx/collpane.h>
 #include <wx/dcbuffer.h>
 #include <wx/dialog.h>
@@ -43,6 +47,8 @@ namespace {
 
 using typesetting::gradient::Channel;
 using typesetting::gradient::Kind;
+using typesetting::gradient::Motion;
+using typesetting::gradient::MotionMode;
 using typesetting::gradient::Output;
 using typesetting::gradient::Settings;
 using typesetting::gradient::Stop;
@@ -395,6 +401,182 @@ public:
 	}
 };
 
+class MotionEditor {
+	wxCollapsiblePane *pane;
+	Motion& motion;
+	std::function<void()> layout_changed;
+	std::function<void(bool)> settings_changed;
+	wxCheckBox *enabled = nullptr;
+	wxChoice *mode = nullptr;
+	wxCheckBox *end_at_line = nullptr;
+	wxSpinCtrl *start_time = nullptr;
+	wxSpinCtrl *end_time = nullptr;
+	wxSpinCtrl *cycle_time = nullptr;
+	wxSpinCtrlDouble *accel = nullptr;
+	wxSpinCtrlDouble *start_position = nullptr;
+	wxSpinCtrlDouble *end_position = nullptr;
+	wxSpinCtrlDouble *start_width = nullptr;
+	wxSpinCtrlDouble *middle_width = nullptr;
+	wxSpinCtrlDouble *end_width = nullptr;
+	bool syncing = false;
+
+	void UpdateAvailability() {
+		bool active = enabled->GetValue();
+		auto selected = static_cast<MotionMode>(mode->GetSelection());
+		bool once = selected == MotionMode::Once;
+		bool repeating = selected == MotionMode::Loop || selected == MotionMode::PingPong;
+		bool fit = selected == MotionMode::FitLine;
+		mode->Enable(active);
+		start_time->Enable(active && !fit);
+		end_at_line->Enable(active && once);
+		end_time->Enable(active && once && !end_at_line->GetValue());
+		cycle_time->Enable(active && repeating);
+		accel->Enable(active);
+		start_position->Enable(active);
+		end_position->Enable(active);
+		start_width->Enable(active);
+		middle_width->Enable(active);
+		end_width->Enable(active);
+	}
+
+	void Read(bool immediate) {
+		if (syncing) return;
+		motion.enabled = enabled->GetValue();
+		motion.mode = static_cast<MotionMode>(mode->GetSelection());
+		motion.end_at_line = end_at_line->GetValue();
+		motion.start_time = start_time->GetValue();
+		motion.end_time = end_time->GetValue();
+		motion.cycle_time = cycle_time->GetValue();
+		motion.accel = accel->GetValue();
+		motion.start_position = start_position->GetValue();
+		motion.end_position = end_position->GetValue();
+		motion.start_width = start_width->GetValue();
+		motion.middle_width = middle_width->GetValue();
+		motion.end_width = end_width->GetValue();
+		UpdateAvailability();
+		settings_changed(immediate);
+	}
+
+public:
+	MotionEditor(wxWindow *parent, wxString const& title, Motion& motion,
+		bool collapsed, std::function<void()> layout_changed,
+		std::function<void(bool)> settings_changed)
+	: pane(new wxCollapsiblePane(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize,
+		wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE))
+	, motion(motion)
+	, layout_changed(std::move(layout_changed))
+	, settings_changed(std::move(settings_changed)) {
+		auto content = pane->GetPane();
+		auto main = new wxBoxSizer(wxVERTICAL);
+		auto top = new wxBoxSizer(wxHORIZONTAL);
+		enabled = new wxCheckBox(content, wxID_ANY, _("Move colors"));
+		top->Add(enabled, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
+		top->Add(new wxStaticText(content, wxID_ANY, _("Motion type:")), 0,
+			wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+		mode = new wxChoice(content, wxID_ANY);
+		mode->Append(_("Once"));
+		mode->Append(_("Loop until line end"));
+		mode->Append(_("Ping-pong until line end"));
+		mode->Append(_("Fit once to line"));
+		top->Add(mode, 0, wxALIGN_CENTER_VERTICAL);
+		main->Add(top, 0, wxEXPAND | wxBOTTOM, 5);
+
+		auto grid = new wxFlexGridSizer(4, 5, 10);
+		auto spin = [&](wxString const& label, int value, int minimum, int maximum) {
+			grid->Add(new wxStaticText(content, wxID_ANY, label), 0, wxALIGN_CENTER_VERTICAL);
+			auto control = new wxSpinCtrl(content, wxID_ANY, "", wxDefaultPosition,
+				content->FromDIP(wxSize(90, -1)), wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER,
+				minimum, maximum, value);
+			grid->Add(control, 0, wxALIGN_CENTER_VERTICAL);
+			return control;
+		};
+		auto decimal = [&](wxString const& label, double value, double minimum,
+				double maximum, double increment) {
+			grid->Add(new wxStaticText(content, wxID_ANY, label), 0, wxALIGN_CENTER_VERTICAL);
+			auto control = new wxSpinCtrlDouble(content, wxID_ANY, "", wxDefaultPosition,
+				content->FromDIP(wxSize(90, -1)), wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER,
+				minimum, maximum, value, increment);
+			control->SetDigits(2);
+			grid->Add(control, 0, wxALIGN_CENTER_VERTICAL);
+			return control;
+		};
+		start_time = spin(_("Start time (ms):"), motion.start_time, 0, 3600000);
+		end_time = spin(_("End time (ms):"), motion.end_time, 0, 3600000);
+		cycle_time = spin(_("Cycle/leg (ms):"), motion.cycle_time, 1, 3600000);
+		accel = decimal(_("Accel:"), motion.accel, 0.01, 100.0, 0.05);
+		start_position = decimal(_("Start position (%):"), motion.start_position,
+			-1000.0, 1000.0, 1.0);
+		end_position = decimal(_("End position (%):"), motion.end_position,
+			-1000.0, 1000.0, 1.0);
+		start_width = decimal(_("Start width (%):"), motion.start_width, 0.1, 1000.0, 1.0);
+		middle_width = decimal(_("Middle width (%):"), motion.middle_width,
+			0.1, 1000.0, 1.0);
+		end_width = decimal(_("End width (%):"), motion.end_width, 0.1, 1000.0, 1.0);
+		main->Add(grid, 0, wxEXPAND | wxBOTTOM, 5);
+
+		auto bottom = new wxBoxSizer(wxHORIZONTAL);
+		end_at_line = new wxCheckBox(content, wxID_ANY, _("Use line end"));
+		bottom->Add(end_at_line, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
+		auto forward = new wxButton(content, wxID_ANY, _("Before to after"));
+		auto backward = new wxButton(content, wxID_ANY, _("After to before"));
+		bottom->Add(forward, 0, wxRIGHT, 5);
+		bottom->Add(backward, 0);
+		main->Add(bottom, 0, wxEXPAND);
+		content->SetSizer(main);
+		pane->Collapse(collapsed);
+
+		auto changed = [this](auto&) { Read(false); };
+		enabled->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent&) { Read(true); });
+		mode->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) { Read(true); });
+		end_at_line->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent&) { Read(true); });
+		for (auto control : {start_time, end_time, cycle_time}) {
+			control->Bind(wxEVT_SPINCTRL, [this](wxSpinEvent&) { Read(true); });
+			control->Bind(wxEVT_TEXT, changed);
+			control->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent&) { Read(true); });
+		}
+		for (auto control : {accel, start_position, end_position, start_width,
+				middle_width, end_width}) {
+			control->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent&) { Read(true); });
+			control->Bind(wxEVT_TEXT, changed);
+			control->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent&) { Read(true); });
+		}
+		forward->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+			start_position->SetValue(-50.0);
+			end_position->SetValue(150.0);
+			Read(true);
+		});
+		backward->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+			start_position->SetValue(150.0);
+			end_position->SetValue(-50.0);
+			Read(true);
+		});
+		pane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [this](wxCollapsiblePaneEvent&) {
+			this->layout_changed();
+		});
+		RefreshValues();
+	}
+
+	wxCollapsiblePane *Window() const { return pane; }
+	void Show(bool shown) { pane->Show(shown); }
+	void RefreshValues() {
+		syncing = true;
+		enabled->SetValue(motion.enabled);
+		mode->SetSelection(static_cast<int>(motion.mode));
+		end_at_line->SetValue(motion.end_at_line);
+		start_time->SetValue(motion.start_time);
+		end_time->SetValue(motion.end_time);
+		cycle_time->SetValue(motion.cycle_time);
+		accel->SetValue(motion.accel);
+		start_position->SetValue(motion.start_position);
+		end_position->SetValue(motion.end_position);
+		start_width->SetValue(motion.start_width);
+		middle_width->SetValue(motion.middle_width);
+		end_width->SetValue(motion.end_width);
+		syncing = false;
+		UpdateAvailability();
+	}
+};
+
 class GradientBlock {
 	wxCollapsiblePane *pane;
 	wxWindow *content;
@@ -408,7 +590,8 @@ class GradientBlock {
 public:
 	GradientBlock(wxWindow *parent, wxString const& title, Channel& channel, int index,
 		bool collapsed, std::function<void()> layout_changed,
-		std::function<void(int, int)> copy_stops, std::function<void(bool)> settings_changed)
+		std::function<void(int, int)> copy_stops,
+		std::function<void(bool)> settings_changed)
 	: pane(new wxCollapsiblePane(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize,
 		wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE))
 	, content(pane->GetPane())
@@ -433,11 +616,11 @@ public:
 			std::array<wxString, 3> labels = {_("Color"), _("Bord color"),
 				_("Shadow color")};
 			for (int source = 0; source < 3; ++source) {
-				menu.Append(1000 + source, labels[source]);
-				menu.Enable(1000 + source, source != this->index);
+				if (source == this->index) continue;
+				menu.Append(2000 + source, labels[source]);
 			}
 			menu.Bind(wxEVT_MENU, [this](wxCommandEvent& event) {
-				this->copy_stops(event.GetId() - 1000, this->index);
+				this->copy_stops(event.GetId() - 2000, this->index);
 			});
 			copy->PopupMenu(&menu);
 		});
@@ -466,6 +649,7 @@ class DialogGradient final : public wxDialog {
 	Settings settings;
 	typesetting::gradient::PreviewSession preview_session;
 	wxTimer preview_timer;
+	wxTimer playback_timer;
 	wxRadioBox *kind = nullptr;
 	std::array<wxRadioButton *, 3> output_choices{};
 	AngleDial *angle_dial = nullptr;
@@ -473,11 +657,13 @@ class DialogGradient final : public wxDialog {
 	std::array<wxButton *, 4> angle_presets{};
 	wxSpinCtrl *pixels_per_strip = nullptr;
 	wxSpinCtrlDouble *anti_strip_overlap = nullptr;
+	std::unique_ptr<MotionEditor> motion_editor;
 	wxPanel *sections_panel = nullptr;
 	std::array<std::unique_ptr<GradientBlock>, 3> blocks;
 	bool accepted = false;
 	bool preview_pending = false;
 	bool syncing_angle = false;
+	bool loop_playback = false;
 	double non_rect_overlap = 0.4;
 	std::chrono::steady_clock::time_point last_preview;
 
@@ -521,6 +707,40 @@ class DialogGradient final : public wxDialog {
 		channels[target]->stops = channels[source]->stops;
 		blocks[target]->RefreshStops();
 		SchedulePreview(true);
+	}
+
+	void StopPlayback() {
+		loop_playback = false;
+		playback_timer.Stop();
+		context->videoController->Stop();
+	}
+
+	void PlayLine(bool loop) {
+		StopPlayback();
+		loop_playback = loop;
+		context->videoController->PlayLine();
+		if (loop_playback && context->videoController->IsPlaying())
+			playback_timer.Start(25);
+		else if (loop_playback)
+			loop_playback = false;
+	}
+
+	void ShowHelp() {
+		wxMessageBox(_(
+			"Gradient type\n"
+			"Linear follows the selected angle. Radial expands from the center of the selected text.\n\n"
+			"Output\n"
+			"Clip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\n\n"
+			"Pixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\n\n"
+			"Color stops\n"
+			"Click the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\n\n"
+			"Motion\n"
+			"Once moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\n\n"
+			"Accel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\n\n"
+			"Start, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\n\n"
+			"Playback\n"
+			"The framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."),
+			_("Gradient help"), wxOK | wxICON_INFORMATION, this);
 	}
 
 	int OutputSelection() const {
@@ -589,7 +809,9 @@ public:
 	, context(context)
 	, settings(typesetting::gradient::LoadSettingsForSelection(context))
 	, preview_session(context)
-	, preview_timer(this) {
+	, preview_timer(this)
+	, playback_timer(this) {
+		settings.shared_motion = true;
 		bool rectangular = UsesRectangularClip(settings);
 		non_rect_overlap = rectangular ? 0.4 : settings.anti_strip_overlap;
 		if (rectangular) settings.anti_strip_overlap = 0.0;
@@ -680,11 +902,65 @@ public:
 		explanation->Wrap(controls->GetMinSize().x);
 		main->Add(explanation, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
+		auto relayout = [this] { CallAfter([this] { LayoutContent(); }); };
+		auto utility_row = new wxBoxSizer(wxHORIZONTAL);
+		auto info = new wxButton(this, wxID_ANY, _("Info"));
+		info->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { ShowHelp(); });
+		utility_row->Add(info, 0, wxALIGN_CENTER_VERTICAL);
+		utility_row->AddStretchSpacer();
+		auto add_transport = [&](char const *command_name, wxString const& tooltip,
+				std::function<void()> action) {
+			auto button = new wxBitmapButton(this, wxID_ANY, cmd::get(command_name)->Icon(16),
+				wxDefaultPosition, FromDIP(wxSize(30, 28)));
+			button->SetToolTip(tooltip);
+			button->Bind(wxEVT_BUTTON, [action = std::move(action)](wxCommandEvent&) {
+				action();
+			});
+			utility_row->Add(button, 0, wxLEFT, 3);
+		};
+		add_transport("video/play/line", _("Play line once"), [this] { PlayLine(false); });
+		add_transport("video/play", _("Play line repeatedly"), [this] { PlayLine(true); });
+		add_transport("video/stop", _("Stop playback"), [this] { StopPlayback(); });
+		auto add_step = [&](wxString const& label, wxString const& tooltip,
+				std::function<void()> action) {
+			auto button = new wxButton(this, wxID_ANY, label, wxDefaultPosition,
+				FromDIP(wxSize(30, 28)));
+			button->SetToolTip(tooltip);
+			button->Bind(wxEVT_BUTTON, [action = std::move(action)](wxCommandEvent&) {
+				action();
+			});
+			utility_row->Add(button, 0, wxLEFT, 3);
+		};
+		add_step("|<", _("Jump to line start"), [this] {
+			StopPlayback();
+			cmd::call("video/jump/start", this->context);
+		});
+		add_step("<", _("Previous frame"), [this] {
+			StopPlayback();
+			this->context->videoController->PrevFrame();
+		});
+		add_step(">", _("Next frame"), [this] {
+			StopPlayback();
+			this->context->videoController->NextFrame();
+		});
+		add_step(">|", _("Jump to line end"), [this] {
+			StopPlayback();
+			cmd::call("video/jump/end", this->context);
+		});
+		main->Add(utility_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+		motion_editor = std::make_unique<MotionEditor>(this, _("Motion"),
+			settings.motion, !settings.motion.enabled, relayout,
+			[this](bool immediate) { SchedulePreview(immediate); });
+		main->Add(motion_editor->Window(), 0,
+			wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
 		sections_panel = new wxPanel(this, wxID_ANY);
 		auto sections = new wxBoxSizer(wxVERTICAL);
 		sections_panel->SetSizer(sections);
-		auto relayout = [this] { CallAfter([this] { LayoutContent(); }); };
-		auto copier = [this](int source, int target) { CopyStops(source, target); };
+		auto copier = [this](int source, int target) {
+			CopyStops(source, target);
+		};
 		auto preview = [this](bool immediate) { SchedulePreview(immediate); };
 		blocks[0] = std::make_unique<GradientBlock>(sections_panel, _("Color"),
 			settings.primary, 0, false, relayout, copier, preview);
@@ -702,6 +978,11 @@ public:
 
 		preview_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent&) {
 			if (preview_pending) RunPreview();
+		});
+		playback_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent&) {
+			if (!loop_playback || this->context->videoController->IsPlaying()) return;
+			this->context->videoController->PlayLine();
+			if (!this->context->videoController->IsPlaying()) StopPlayback();
 		});
 		kind->Bind(wxEVT_RADIOBOX, [this](wxCommandEvent&) { UpdateControls(true); });
 		for (auto choice : output_choices)
@@ -734,6 +1015,7 @@ public:
 	}
 
 	~DialogGradient() override {
+		StopPlayback();
 		preview_timer.Stop();
 		preview_pending = false;
 		// Restoring the original preview while the application is already closing only

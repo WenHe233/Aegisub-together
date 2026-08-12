@@ -9718,3 +9718,194 @@ msgstr "Độ chồng lấn theo từng cạnh của các dải nghiêng, xuyên
 #: ../src/typesetting_gradient.cpp
 msgid "apply gradient"
 msgstr "Áp dụng chuyển màu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Move colors"
+msgstr "Di chuyển màu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion type:"
+msgstr "Kiểu chuyển động:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Once"
+msgstr "Một lần"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Loop until line end"
+msgstr "Lặp đến cuối dòng"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Ping-pong until line end"
+msgstr "Qua lại đến cuối dòng"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Fit once to line"
+msgstr "Một lần, khớp với độ dài dòng"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Outside:"
+msgstr "Bên ngoài:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Clamp edge colors"
+msgstr "Tiếp tục màu ở mép"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Repeat gradient"
+msgstr "Lặp gradient"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "First stop color"
+msgstr "Màu điểm đầu tiên"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start time (ms):"
+msgstr "Bắt đầu (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End time (ms):"
+msgstr "Kết thúc (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Cycle/leg (ms):"
+msgstr "Chu kỳ/giai đoạn (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Accel:"
+msgstr "Tăng tốc:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start position (%):"
+msgstr "Vị trí bắt đầu (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End position (%):"
+msgstr "Vị trí kết thúc (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start width (%):"
+msgstr "Chiều rộng bắt đầu (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End width (%):"
+msgstr "Chiều rộng kết thúc (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Use line end"
+msgstr "Dùng cuối dòng"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Before to after"
+msgstr "Từ trước đến sau"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "After to before"
+msgstr "Từ sau ra trước"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion"
+msgstr "Chuyển động"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy from..."
+msgstr "Sao chép từ..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops"
+msgstr "điểm màu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "motion"
+msgstr "chuyển động"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops and motion"
+msgstr "điểm màu và chuyển động"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shared"
+msgstr "Chung"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Per color"
+msgstr "Theo màu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion settings"
+msgstr "Cài đặt chuyển động"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Middle width (%):"
+msgstr "Độ rộng giữa (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Info"
+msgstr "Thông tin"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line once"
+msgstr "Phát dòng một lần"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line repeatedly"
+msgstr "Phát lặp lại dòng"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Previous frame"
+msgstr "Khung hình trước"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Next frame"
+msgstr "Khung hình tiếp theo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient help"
+msgstr "Trợ giúp về dải màu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type\\nLinear follows the selected angle. Radial expands from the center of the selected text.\\n\\nOutput\\nClip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\\n\\nPixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\\n\\nColor stops\\nClick the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\\n\\nMotion\\nOnce moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\\n\\nAccel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\\n\\nStart, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\\n\\nPlayback\\nThe framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
+msgstr "Loại dải màu\\nDải màu tuyến tính tuân theo góc đã chọn. Dải màu xuyên tâm lan ra từ tâm của văn bản đã chọn.\\n\\nĐầu ra\\nClip tạo các bản sao dòng phụ đề đã cắt. Karakterenként áp dụng dải màu riêng cho từng ký tự. Alakzatok chuyển văn bản, viền và bóng thành các hình vector có thể chỉnh sửa, không có clip.\\n\\nKhoảng cách pixel kiểm soát độ chi tiết không gian trên mỗi dải. Giá trị nhỏ hơn cho kết quả mượt hơn nhưng tạo ra nhiều dòng hơn. Phần chồng lấn chống sọc kéo nhẹ các dải nghiêng, xuyên tâm và hình dạng chồng lên nhau; clip hình chữ nhật luôn sử dụng giá trị 0.\\n\\nĐiểm màu\\nNhấp vào dải để thêm điểm màu mới, kéo ô vuông của điểm để định vị, nhấp vào điểm để chỉnh sửa màu và alpha, hoặc nhấp chuột phải để xóa.\\n\\nChuyển động\\nEgyszer di chuyển giữa hai vị trí trong khoảng thời gian đã chọn. Ismétlés khởi động lại ở mỗi chu kỳ. Oda-vissza luân phiên hướng chuyển động. Chế độ căn theo dòng sử dụng toàn bộ độ dài dòng. Sử dụng cuối dòng kết thúc chế độ Egyszer ở cuối phụ đề.\\n\\nGia tốc thay đổi đường cong thời gian: 1 là tuyến tính, giá trị trên 1 bắt đầu chậm hơn, giá trị dưới 1 bắt đầu nhanh hơn. Vị trí là phần trăm của phạm vi dải màu; giá trị dưới 0 và trên 100 sẽ đặt vị trí ra ngoài văn bản. Bên ngoài phạm vi chuyển động, màu ở đầu gần nhất sẽ tiếp tục.\\n\\nĐộ rộng đầu, giữa và cuối xác định kích thước dải màu chuyển động ở đầu, giữa và cuối. Nhờ đó có thể tạo hiệu ứng vệt sáng mảnh–rộng–mảnh.\\n\\nPhát lại\\nNút Play có khung phát dòng một lần. Nút Play thường phát lặp lại. Pause dừng phát lại. Các nút mũi tên di chuyển từng khung hình video."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Gradient (%d lines, %s, text: %s)"
+msgstr "Dải màu (%d dòng, %s, văn bản: %s)"

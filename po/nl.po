@@ -9668,3 +9668,194 @@ msgstr "De overlap per zijde van schuine, radiale en vormbanden in scripteenhede
 #: ../src/typesetting_gradient.cpp
 msgid "apply gradient"
 msgstr "Verloop toepassen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Move colors"
+msgstr "Kleuren verplaatsen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion type:"
+msgstr "Bewegingstype:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Once"
+msgstr "Eenmalig"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Loop until line end"
+msgstr "Herhalen tot het einde van de regel"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Ping-pong until line end"
+msgstr "Heen en weer tot het einde van de regel"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Fit once to line"
+msgstr "Eenmalig, aangepast aan de regellengte"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Outside:"
+msgstr "Buiten:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Clamp edge colors"
+msgstr "Buitenste kleuren voortzetten"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Repeat gradient"
+msgstr "Verloop herhalen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "First stop color"
+msgstr "Kleur van het eerste kleurpunt"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start time (ms):"
+msgstr "Begin (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End time (ms):"
+msgstr "Einde (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Cycle/leg (ms):"
+msgstr "Cyclus/fase (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Accel:"
+msgstr "Versnelling:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start position (%):"
+msgstr "Beginpositie (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End position (%):"
+msgstr "Eindpositie (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start width (%):"
+msgstr "Beginbreedte (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End width (%):"
+msgstr "Eindbreedte (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Use line end"
+msgstr "Einde van de regel gebruiken"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Before to after"
+msgstr "Van voor naar achter"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "After to before"
+msgstr "Van achter naar voren"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion"
+msgstr "Beweging"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy from..."
+msgstr "Kopiëren vanaf..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops"
+msgstr "kleurpunten"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "motion"
+msgstr "beweging"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops and motion"
+msgstr "kleurpunten en beweging"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shared"
+msgstr "Algemeen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Per color"
+msgstr "Per kleur"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion settings"
+msgstr "Bewegingsinstellingen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Middle width (%):"
+msgstr "Breedte midden (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Info"
+msgstr "Informatie"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line once"
+msgstr "Regel eenmaal afspelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line repeatedly"
+msgstr "Regel herhaald afspelen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Previous frame"
+msgstr "Vorige frame"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Next frame"
+msgstr "Volgende frame"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient help"
+msgstr "Verloopsuggesties"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type\\nLinear follows the selected angle. Radial expands from the center of the selected text.\\n\\nOutput\\nClip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\\n\\nPixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\\n\\nColor stops\\nClick the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\\n\\nMotion\\nOnce moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\\n\\nAccel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\\n\\nStart, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\\n\\nPlayback\\nThe framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
+msgstr "Verlooptype\\nHet lineaire verloop volgt de geselecteerde hoek. Het radiale verloop verspreidt zich vanuit het midden van de geselecteerde tekst naar buiten.\\n\\nUitvoer\\nClip maakt geknipte kopieën van de ondertitelregel. Per teken wijst het verloop aan elk teken afzonderlijk toe. Met Vormen wordt de tekst, rand en schaduw omgezet in bewerkbare vectorvormen zonder clip.\\n\\nPixelafstand bepaalt de ruimtelijke detaillering per band. Een lagere waarde geeft een gladder resultaat, maar maakt meer regels aan. Overlap tegen strepen laat schuine, radiale en vormbanden elkaar iets overlappen; rechthoekige clips gebruiken altijd nul.\\n\\nKleurpunten\\nKlik op de band om een nieuw kleurpunt toe te voegen, sleep het vierkant om het te positioneren, klik erop om de kleur en alpha te bewerken, of klik met de rechtermuisknop om het te verwijderen.\\n\\nBeweging\\nEenmaal beweegt gedurende de gekozen tijdsduur tussen de twee posities. Herhalen start opnieuw bij elke cyclus. Heen en weer wisselt de richting af. De op regel uitgelijnde modus gebruikt de volledige regellengte. Einde van regel gebruiken beëindigt de modus Eenmaal aan het einde van de ondertitel.\\n\\nVersnelling wijzigt de tijdcurve: 1 is lineair, een waarde boven 1 start langzamer en een waarde onder 1 sneller. De posities zijn percentages van het verloopbereik; waarden onder 0 en boven 100 plaatsen ze buiten de tekst. Buiten het bewegende bereik loopt de dichtstbijzijnde eindkleur door.\\n\\nDe begin-, midden- en eindbreedte bepalen de grootte van het bewegende verloop aan het begin, halverwege en aan het einde. Zo kunt u ook een dunne–brede–dunne lichtbundel maken.\\n\\nAfspelen\\nDe omrande Play-knop speelt de regel eenmaal af. De gewone Play-knop herhaalt het afspelen. Pause stopt het afspelen. Met de pijlknoppen gaat u één videoframe vooruit of achteruit."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Gradient (%d lines, %s, text: %s)"
+msgstr "Verloop (%d regels, %s, tekst: %s)"

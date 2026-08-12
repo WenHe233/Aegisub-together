@@ -10201,3 +10201,189 @@ msgstr "斜线、径向和形状条带的逐边重叠量，以脚本单位计。
 #: ../src/typesetting_gradient.cpp
 msgid "apply gradient"
 msgstr "应用渐变"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Move colors"
+msgstr "移动颜色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion type:"
+msgstr "移动类型："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Once"
+msgstr "一次"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Loop until line end"
+msgstr "重复至行尾"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Ping-pong until line end"
+msgstr "往返至行尾"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Fit once to line"
+msgstr "一次，适应行长度"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Outside:"
+msgstr "外部："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Clamp edge colors"
+msgstr "延续边缘颜色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Repeat gradient"
+msgstr "重复渐变"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "First stop color"
+msgstr "第一个颜色点的颜色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start time (ms):"
+msgstr "开始（ms）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End time (ms):"
+msgstr "结束（ms）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Cycle/leg (ms):"
+msgstr "循环/阶段（ms）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Accel:"
+msgstr "加速："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start position (%):"
+msgstr "起始位置（%）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End position (%):"
+msgstr "结束位置（%）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start width (%):"
+msgstr "起始宽度（%）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End width (%):"
+msgstr "最终宽度（%）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Use line end"
+msgstr "使用行尾"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Before to after"
+msgstr "从前到后"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "After to before"
+msgstr "从后往前"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion"
+msgstr "移动"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy from..."
+msgstr "从此处复制..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops"
+msgstr "颜色点"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "motion"
+msgstr "移动"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops and motion"
+msgstr "颜色点和移动"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shared"
+msgstr "通用"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Per color"
+msgstr "按颜色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion settings"
+msgstr "移动设置"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Middle width (%):"
+msgstr "中间宽度 (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line once"
+msgstr "播放行一次"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line repeatedly"
+msgstr "重复播放行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Previous frame"
+msgstr "上一帧"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Next frame"
+msgstr "下一帧"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient help"
+msgstr "渐变帮助"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type\\nLinear follows the selected angle. Radial expands from the center of the selected text.\\n\\nOutput\\nClip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\\n\\nPixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\\n\\nColor stops\\nClick the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\\n\\nMotion\\nOnce moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\\n\\nAccel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\\n\\nStart, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\\n\\nPlayback\\nThe framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
+msgstr "渐变类型\\n线性渐变遵循选定的角度。径向渐变从选中文本的中心向外扩散。\\n\\n输出\\nClip 会创建裁剪后的字幕行副本。按字符会为每个字符分别应用渐变。使用形状会将文本、边框和阴影转换为不带 clip 的可编辑矢量形状。\\n\\n像素距离控制每条带的空间细节。数值越小，结果越平滑，但生成的行越多。防条纹重叠会使倾斜、径向和形状带略微重叠；矩形 clip 始终使用零值。\\n\\n颜色点\\n点击色带添加新的颜色点，拖动其方块进行定位，点击它编辑颜色和 alpha，或右键点击将其删除。\\n\\n移动\\n单次会在选定的时长内于两个位置之间移动。重复会在每个周期重新开始。往返会切换方向。按行对齐模式使用整行长度。使用行尾会在字幕末尾结束单次模式。\\n\\n加速会修改时间曲线：1 为线性，高于 1 的值开始较慢，低于 1 的值开始较快。位置是渐变范围的百分比；低于 0 和高于 100 的值会将位置置于文本之外。在移动范围之外，会延续最近的边缘颜色。\\n\\n起始、中间和结束宽度表示移动渐变在开始、中途和结束时的大小。这样可以制作细–宽–细的光束效果。\\n\\n播放\\n带边框的 Play 按钮播放该行一次。普通 Play 按钮会重复播放。Pause 停止播放。箭头按钮前进或后退一个视频帧。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Gradient (%d lines, %s, text: %s)"
+msgstr "渐变 (%d 行, %s，文本：%s)"

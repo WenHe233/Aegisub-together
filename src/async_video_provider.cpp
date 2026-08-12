@@ -227,6 +227,14 @@ void AsyncVideoProvider::UpdateSubtitlesPreview(std::vector<AssDialogue const *>
 			}
 
 			if (!subs) continue;
+			// Preview-only lines can sit between real events. Remove the previous set before
+			// using real-file row numbers to apply this preview's replacements.
+			for (auto line : preview_extras) {
+				subs->Events.erase(subs->Events.iterator_to(*line));
+				delete line;
+			}
+			preview_extras.clear();
+
 			std::sort(updates.begin(), updates.end(), [](auto const& left, auto const& right) {
 				return left->Row < right->Row;
 			});
@@ -245,18 +253,23 @@ void AsyncVideoProvider::UpdateSubtitlesPreview(std::vector<AssDialogue const *>
 				current_row = target_row + 1;
 			}
 
-			// Whatever a previous preview added goes first, or a drag would leave a trail
-			// of them behind. The new ones go on the end, which is where a line that is not
-			// in the file yet can sit without disturbing anyone's row number.
-			for (auto line : preview_extras) {
-				subs->Events.erase(subs->Events.iterator_to(*line));
-				delete line;
-			}
-			preview_extras.clear();
+			// Keep generated preview lines at their source row. Appending them to the file
+			// would make them render over later events on the same ASS layer, unlike the
+			// committed result. Stable ordering retains the strip paint order at each row.
+			std::stable_sort(extras.begin(), extras.end(), [](auto const& left, auto const& right) {
+				return left->Row < right->Row;
+			});
+			auto insertion = subs->Events.begin();
+			int original_row = 0;
 			for (auto& extra : extras) {
 				auto line = extra.release();
+				int insert_after = std::max(0, line->Row + 1);
+				while (insertion != subs->Events.end() && original_row < insert_after) {
+					++insertion;
+					++original_row;
+				}
 				preview_extras.push_back(line);
-				subs->Events.push_back(*line);
+				subs->Events.insert(insertion, *line);
 			}
 
 			single_frame = NEW_SUBS_FILE;

@@ -9735,3 +9735,194 @@ msgstr "Sobreposição lateral, em unidades de script, das faixas inclinadas, ra
 #: ../src/typesetting_gradient.cpp
 msgid "apply gradient"
 msgstr "aplicar gradiente"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Move colors"
+msgstr "Mover cores"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion type:"
+msgstr "Tipo de movimento:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Once"
+msgstr "Uma vez"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Loop until line end"
+msgstr "Repetir até ao fim da linha"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Ping-pong until line end"
+msgstr "Para a frente e para trás até ao fim da linha"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Fit once to line"
+msgstr "Uma vez, ajustado ao comprimento da linha"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Outside:"
+msgstr "Exterior:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Clamp edge colors"
+msgstr "Continuar as cores das extremidades"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Repeat gradient"
+msgstr "Repetir o gradiente"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "First stop color"
+msgstr "Cor do primeiro ponto de cor"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start time (ms):"
+msgstr "Início (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End time (ms):"
+msgstr "Fim (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Cycle/leg (ms):"
+msgstr "Ciclo/segmento (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Accel:"
+msgstr "Aceleração:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start position (%):"
+msgstr "Posição inicial (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End position (%):"
+msgstr "Posição final (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start width (%):"
+msgstr "Largura inicial (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End width (%):"
+msgstr "Largura final (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Use line end"
+msgstr "Usar o fim da linha"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Before to after"
+msgstr "Do início ao fim"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "After to before"
+msgstr "De trás para a frente"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion"
+msgstr "Movimento"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy from..."
+msgstr "Copiar daqui..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops"
+msgstr "pontos de cor"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "motion"
+msgstr "movimento"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops and motion"
+msgstr "pontos de cor e movimento"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shared"
+msgstr "Comum"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Per color"
+msgstr "Por cor"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion settings"
+msgstr "Definições de movimento"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Middle width (%):"
+msgstr "Largura central (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Info"
+msgstr "Informações"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line once"
+msgstr "Reproduzir linha uma vez"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line repeatedly"
+msgstr "Repetir reprodução da linha"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Previous frame"
+msgstr "Fotograma anterior"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Next frame"
+msgstr "Fotograma seguinte"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient help"
+msgstr "Ajuda do gradiente"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type\\nLinear follows the selected angle. Radial expands from the center of the selected text.\\n\\nOutput\\nClip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\\n\\nPixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\\n\\nColor stops\\nClick the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\\n\\nMotion\\nOnce moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\\n\\nAccel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\\n\\nStart, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\\n\\nPlayback\\nThe framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
+msgstr "Tipo de gradiente\\nO gradiente linear segue o ângulo selecionado. O gradiente radial expande-se para fora a partir do centro do texto selecionado.\\n\\nSaída\\nO Clip cria cópias recortadas das linhas de legendas. Por Caráter atribui o gradiente separadamente a cada caráter. Com Formas, converte o texto, o contorno e a sombra em formas vetoriais editáveis, sem clip.\\n\\nA Distância entre píxeis controla o nível de detalhe espacial por faixa. Um valor menor produz um resultado mais suave, mas cria mais linhas. A sobreposição antiriscas sobrepõe ligeiramente as faixas inclinadas, radiais e de formas; os clips retangulares utilizam sempre zero.\\n\\nPontos de cor\\nClique na faixa para adicionar um novo ponto de cor, arraste o quadrado para o posicionar, clique nele para editar a cor e o alfa ou clique com o botão direito para o remover.\\n\\nMovimento\\nUma vez move-se entre as duas posições durante o período selecionado. Repetir reinicia em cada ciclo. Ida e volta alterna a direção. O modo alinhado com a linha utiliza todo o comprimento da linha. Usar o fim da linha termina o modo Uma vez no fim da legenda.\\n\\nA Aceleração modifica a curva temporal: 1 é linear, valores superiores a 1 começam mais lentamente e valores inferiores a 1 mais rapidamente. As posições são percentagens do intervalo do gradiente; valores inferiores a 0 e superiores a 100 posicionam-no fora do texto. Fora do intervalo móvel, a cor extrema mais próxima continua.\\n\\nA largura inicial, central e final define o tamanho do gradiente móvel no início, a meio e no fim. Assim, também é possível criar um feixe de luz fino–largo–fino.\\n\\nReprodução\\nO botão Play com moldura reproduz a linha uma vez. O botão Play simples repete-a. O Pause para a reprodução. Os botões de seta avançam um único fotograma de vídeo."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Gradient (%d lines, %s, text: %s)"
+msgstr "Gradiente (%d linhas, %s, texto: %s)"

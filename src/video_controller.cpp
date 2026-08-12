@@ -90,6 +90,10 @@ void VideoController::PreviewSubtitles(std::vector<AssDialogue const *> const& c
 		provider->UpdateSubtitlesPreview(changed, added);
 }
 
+void VideoController::ReloadSubtitles() {
+	if (provider) provider->LoadSubtitles(context->ass.get());
+}
+
 void VideoController::OnActiveLineChanged(AssDialogue *line) {
 	if (line && provider && OPT_GET("Video/Subtitle Sync")->GetBool()) {
 		Stop();

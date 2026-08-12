@@ -1,8 +1,10 @@
 #include "../ass_dialogue.h"
 #include "../compat.h"
+#include "../image_mask_combiner.h"
 #include "../utils.h"
 #include "../selection_controller.h"
 #include "../subs_controller.h"
+#include "../typesetting_gradient.h"
 #include "../include/aegisub/context.h"
 
 #include <wx/dialog.h>
@@ -12,6 +14,7 @@
 #include <wx/button.h>
 
 #include <cmath>
+#include <memory>
 #include <vector>
 #include <string>
 #include <iomanip>
@@ -384,7 +387,26 @@ void EditChangeText(agi::Context *c)
 	if (!line)
 		return;
 
-	std::string text = line->GetStrippedText();
+	bool collapsedGradient = c->imageMask && c->imageMask->IsGradientGroup(line) &&
+		c->imageMask->IsGroupStart(line) && c->imageMask->IsCollapsed(line);
+	std::unique_ptr<AssDialogue> gradientSource;
+	if (collapsedGradient) {
+		auto source = typesetting::gradient::GroupSourceEntry(*c->ass, *line);
+		if (!source.empty()) {
+			try {
+				gradientSource = std::make_unique<AssDialogue>(source);
+			}
+			catch (...) {
+				collapsedGradient = false;
+			}
+		}
+		else {
+			collapsedGradient = false;
+		}
+	}
+
+	std::string text = gradientSource ? gradientSource->GetStrippedText() :
+		line->GetStrippedText();
 
 	wxSize size(600,400);
 	wxPoint parentPos = c->parent->GetScreenPosition();
@@ -437,10 +459,18 @@ void EditChangeText(agi::Context *c)
 
 	if (dialog.ShowModal() != wxID_OK)
 		return;
+	std::string replacement = from_wx(textCtrl->GetValue());
+	if (collapsedGradient && gradientSource) {
+		gradientSource->Text = ReplaceTextKeepGradient(gradientSource.get(), replacement,
+			keepGradients->GetValue());
+		if (typesetting::gradient::RegenerateGroupText(c, *line, *gradientSource))
+			return;
+	}
 
 	auto const& sel = c->selectionController->GetSelectedSet();
-	for (auto line : sel) {
-		line->Text = ReplaceTextKeepGradient(line, from_wx(textCtrl->GetValue()), keepGradients->GetValue());
+	for (auto selectedLine : sel) {
+		selectedLine->Text = ReplaceTextKeepGradient(selectedLine, replacement,
+			keepGradients->GetValue());
 	}
 
 	c->ass->Commit(_("change text"), AssFile::COMMIT_DIAG_TEXT);

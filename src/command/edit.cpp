@@ -801,6 +801,20 @@ static void copy_lines(agi::Context *c) {
 
 static void delete_lines(agi::Context *c, wxString const& commit_message) {
 	auto const& sel = c->selectionController->GetSelectedSet();
+	bool transferred_gradient_metadata = false;
+	if (c->imageMask) {
+		for (auto line : sel) {
+			if (!c->imageMask->IsGroupStart(line) ||
+				!c->imageMask->IsGradientGroup(line)) continue;
+			auto const& group = c->imageMask->GetGroupLines(line);
+			auto survivor = std::find_if(group.begin(), group.end(), [&](AssDialogue *candidate) {
+				return !sel.count(candidate);
+			});
+			if (survivor != group.end())
+				transferred_gradient_metadata |= typesetting::gradient::TransferGroupMetadata(
+					*c->ass, *line, **survivor);
+		}
+	}
 
 	// Find a line near the active line not being deleted to make the new active line
 	AssDialogue *pre_sel = nullptr;
@@ -839,7 +853,9 @@ static void delete_lines(agi::Context *c, wxString const& commit_message) {
 		c->ass->Events.push_back(*new_active);
 	}
 
-	c->ass->Commit(commit_message, AssFile::COMMIT_DIAG_ADDREM);
+	int commit_type = AssFile::COMMIT_DIAG_ADDREM;
+	if (transferred_gradient_metadata) commit_type |= AssFile::COMMIT_EXTRADATA;
+	c->ass->Commit(commit_message, commit_type);
 	c->selectionController->SetSelectionAndActive({ new_active }, new_active);
 }
 

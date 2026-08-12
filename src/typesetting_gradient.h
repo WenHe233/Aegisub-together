@@ -11,6 +11,7 @@
 
 #include <libaegisub/color.h>
 
+#include <array>
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -33,6 +34,35 @@ enum class Output {
 	Shapes
 };
 
+enum class MotionMode {
+	Once,
+	Loop,
+	PingPong,
+	FitLine
+};
+
+enum class MotionOutside {
+	Clamp,
+	Repeat,
+	BaseColor
+};
+
+struct Motion {
+	bool enabled = false;
+	MotionMode mode = MotionMode::Once;
+	MotionOutside outside = MotionOutside::Clamp;
+	bool end_at_line = true;
+	int start_time = 0;
+	int end_time = 1000;
+	int cycle_time = 1000;
+	double accel = 1.0;
+	double start_position = -50.0;
+	double end_position = 150.0;
+	double start_width = 100.0;
+	double middle_width = 100.0;
+	double end_width = 100.0;
+};
+
 struct Stop {
 	int position = 0; // percent, 0..100
 	agi::Color colour;
@@ -41,6 +71,16 @@ struct Stop {
 struct Channel {
 	bool enabled = false;
 	std::vector<Stop> stops;
+	Motion motion;
+};
+
+struct GeometrySnapshot {
+	bool valid = false;
+	int script_w = 1;
+	int script_h = 1;
+	double centre_x = 0;
+	double centre_y = 0;
+	std::array<double, 8> corners{};
 };
 
 struct Settings {
@@ -49,6 +89,9 @@ struct Settings {
 	int angle = 0;
 	int pixels_per_strip = 3;
 	double anti_strip_overlap = 0.4;
+	bool shared_motion = true;
+	Motion motion;
+	GeometrySnapshot geometry;
 	Channel primary;
 	Channel outline;
 	Channel shadow;
@@ -85,5 +128,26 @@ agi::Color Sample(std::vector<Stop> const& stops, double position);
 std::string ClipboardMetadata(AssFile const& file, AssDialogue const& line);
 /// Remove clipboard markers from a pasted row and recreate its gradient extradata.
 bool RestoreClipboardMetadata(AssFile& file, AssDialogue& line);
+
+/// Move the settings and original-source metadata from a gradient group's deleted
+/// header row to its first surviving generated row.
+bool TransferGroupMetadata(AssFile& file, AssDialogue const& from, AssDialogue& to);
+
+/// Serialized original subtitle row used to edit a generated gradient as text.
+std::string GroupSourceEntry(AssFile const& file, AssDialogue const& line);
+/// Replace one generated gradient group from an edited original source row. Geometry,
+/// motion and all output rows are recalculated and committed as one change.
+bool RegenerateGroupText(agi::Context *c, AssDialogue const& anchor,
+	AssDialogue const& edited_source);
+
+/// Compact description for a collapsed gradient group in the subtitle grid, listing
+/// the colour/alpha channels which actually vary and whether motion is enabled.
+std::string GroupDescription(AssFile const& file, AssDialogue const& line);
+
+/// Rebuild time-dependent color transforms when a generated gradient group's timing
+/// changes. Called before the timing edit is committed so it remains one undo step.
+/// Returns true when generated dialogue text or group timing was updated.
+bool RegenerateMotionForTiming(agi::Context *c, int type,
+	AssDialogue const *changed_line);
 
 } // namespace typesetting::gradient

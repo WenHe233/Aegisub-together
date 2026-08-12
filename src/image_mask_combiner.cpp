@@ -1,6 +1,7 @@
 #include "image_mask_combiner.h"
 
 #include "ass_file.h"
+#include "typesetting_gradient.h"
 
 #include <regex>
 #include <unordered_set>
@@ -155,7 +156,10 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile 
             g.start = lines[start];
             g.collapsed = true;
             g.gradient = gradient;
-            if (gradient) g.label = GradientLabel(file, base);
+			if (gradient) {
+				g.label = GradientLabel(file, base);
+				g.gradient_description = typesetting::gradient::GroupDescription(file, *base);
+			}
 
             for (int k = start; k < j; ++k) {
                 g.lines.push_back(lines[k]);
@@ -250,5 +254,12 @@ std::string const& ImageMaskCombiner::GetGroupLabel(const AssDialogue* d) const 
     static std::string empty;
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     if (it == lookup.end()) return empty;
-    return groups[it->second].label;
+	return groups[it->second].label;
+}
+
+std::string const& ImageMaskCombiner::GetGradientDescription(const AssDialogue* d) const {
+	static std::string empty;
+	auto it = lookup.find(const_cast<AssDialogue*>(d));
+	if (it == lookup.end()) return empty;
+	return groups[it->second].gradient_description;
 }

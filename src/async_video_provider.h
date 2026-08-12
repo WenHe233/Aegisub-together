@@ -111,8 +111,9 @@ public:
 
 	/// Update all visible lines changed by a visual-tool drag, and optionally add lines
 	/// that are not in the file at all - which is what lets one line be previewed as
-	/// several. At most one preview worker job is active, and it always consumes the
-	/// newest state. The added lines last until the next preview or the next commit.
+	/// several. Added lines are inserted after their copied source row so same-layer ASS
+	/// ordering matches the committed file. At most one preview worker job is active, and
+	/// it always consumes the newest state. Added lines last until the next preview or commit.
 	void UpdateSubtitlesPreview(std::vector<AssDialogue const *> const& changed,
 	                            std::vector<AssDialogue const *> const& added = {}) throw();
 

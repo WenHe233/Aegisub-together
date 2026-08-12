@@ -22,6 +22,7 @@ public:
     bool IsCollapsed(const AssDialogue* d) const;
 	bool IsGradientGroup(const AssDialogue* d) const;
 	std::string const& GetGroupLabel(const AssDialogue* d) const;
+	std::string const& GetGradientDescription(const AssDialogue* d) const;
 
     int GetGroupSize(const AssDialogue* d) const;
     AssDialogue* GetLastInGroup(const AssDialogue* d) const;
@@ -36,6 +37,7 @@ private:
 		bool gradient = false;
 		AssDialogue* start = nullptr;
 		std::string label;
+		std::string gradient_description;
         std::vector<AssDialogue*> lines;
     };
 

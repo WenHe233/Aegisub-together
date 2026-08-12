@@ -9722,3 +9722,194 @@ msgstr "Seitliche Überlappung der schrägen, radialen und geformten Streifen in
 #: ../src/typesetting_gradient.cpp
 msgid "apply gradient"
 msgstr "Farbverlauf anwenden"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Move colors"
+msgstr "Farben verschieben"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion type:"
+msgstr "Bewegungstyp:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Once"
+msgstr "Einmal"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Loop until line end"
+msgstr "Bis zum Zeilenende wiederholen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Ping-pong until line end"
+msgstr "Bis zum Zeilenende hin und zurück"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Fit once to line"
+msgstr "Einmal, an die Zeilenlänge angepasst"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Outside:"
+msgstr "Außerhalb:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Clamp edge colors"
+msgstr "Randfarben fortsetzen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Repeat gradient"
+msgstr "Farbverlauf wiederholen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "First stop color"
+msgstr "Farbe des ersten Farbpunkts"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start time (ms):"
+msgstr "Start (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End time (ms):"
+msgstr "Ende (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Cycle/leg (ms):"
+msgstr "Zyklus/Abschnitt (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Accel:"
+msgstr "Beschleunigung:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start position (%):"
+msgstr "Startposition (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End position (%):"
+msgstr "Endposition (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start width (%):"
+msgstr "Anfangsbreite (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End width (%):"
+msgstr "Endbreite (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Use line end"
+msgstr "Zeilenende verwenden"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Before to after"
+msgstr "Von vorher nachher"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "After to before"
+msgstr "Von hinten nach vorn"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion"
+msgstr "Bewegung"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy from..."
+msgstr "Kopieren ab..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops"
+msgstr "Farbstopps"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "motion"
+msgstr "Bewegung"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops and motion"
+msgstr "Farbstopps und Bewegung"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shared"
+msgstr "Gemeinsam"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Per color"
+msgstr "Nach Farbe"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion settings"
+msgstr "Bewegungseinstellungen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Middle width (%):"
+msgstr "Mittlere Breite (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Info"
+msgstr "Informationen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line once"
+msgstr "Zeile einmal abspielen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line repeatedly"
+msgstr "Zeile wiederholt abspielen"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Previous frame"
+msgstr "Vorheriges Bild"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Next frame"
+msgstr "Nächstes Bild"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient help"
+msgstr "Hilfe zum Farbverlauf"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type\\nLinear follows the selected angle. Radial expands from the center of the selected text.\\n\\nOutput\\nClip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\\n\\nPixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\\n\\nColor stops\\nClick the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\\n\\nMotion\\nOnce moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\\n\\nAccel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\\n\\nStart, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\\n\\nPlayback\\nThe framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
+msgstr "Farbverlaufstyp\\nDer lineare Farbverlauf folgt dem ausgewählten Winkel. Der radiale Farbverlauf breitet sich vom Mittelpunkt des ausgewählten Textes nach außen aus.\\n\\nAusgabe\\nClip erstellt zugeschnittene Kopien der Untertitelzeile. Mit Nach Zeichen wird der Farbverlauf jedem Zeichen einzeln zugewiesen. Mit Formen wird der Text, der Rand und der Schatten in bearbeitbare Vektorformen ohne Clip umgewandelt.\\n\\nDer Pixelabstand steuert die räumliche Detailgenauigkeit pro Streifen. Ein kleinerer Wert ergibt ein glatteres Ergebnis, erzeugt aber mehr Zeilen. Die Überlappung gegen Streifenbildung lässt schräge, radiale und Formstreifen leicht überlappen; rechteckige Clips verwenden immer null.\\n\\nFarbstopps\\nKlicken Sie auf den Streifen, um einen neuen Farbstopp hinzuzufügen, ziehen Sie das Quadrat zur Positionierung, klicken Sie darauf, um Farbe und Alpha zu bearbeiten, oder entfernen Sie es per Rechtsklick.\\n\\nBewegung\\nEinmal bewegt zwischen den beiden Positionen über die gewählte Dauer. Wiederholen startet bei jedem Zyklus neu. Hin und zurück wechselt die Richtung. Der an die Zeile angepasste Modus verwendet die gesamte Zeilenlänge. Zeilenende verwenden beendet den Einmal-Modus am Ende des Untertitels.\\n\\nBeschleunigung ändert die Zeitkurve: 1 ist linear, Werte über 1 starten langsamer, Werte unter 1 schneller. Die Positionen sind Prozentsätze des Farbverlaufsbereichs; Werte unter 0 und über 100 platzieren sie außerhalb des Textes. Außerhalb des Bewegungsbereichs wird die nächstgelegene Randfarbe fortgesetzt.\\n\\nDie Start-, mittlere und Endbreite geben die Größe des bewegten Farbverlaufs am Anfang, zur Halbzeit und am Ende an. So lässt sich auch ein dünn–breit–dünner Lichtschweif erzeugen.\\n\\nWiedergabe\\nDie umrandete Play-Schaltfläche spielt die Zeile einmal ab. Die einfache Play-Schaltfläche wiederholt sie. Pause beendet die Wiedergabe. Die Pfeiltasten springen jeweils um ein Videobild weiter."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Gradient (%d lines, %s, text: %s)"
+msgstr "Farbverlauf (%d Zeilen, %s, Text: %s)"

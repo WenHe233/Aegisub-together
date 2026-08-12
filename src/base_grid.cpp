@@ -46,6 +46,7 @@
 #include "utils.h"
 #include "selection_controller.h"
 #include "subs_controller.h"
+#include "typesetting_gradient.h"
 #include "video_controller.h"
 
 #include <libaegisub/util.h>
@@ -103,6 +104,10 @@ BaseGrid::BaseGrid(wxWindow* parent, agi::Context *context)
 
 	connections = agi::signal::make_vector({
 		context->ass->AddCommitListener(&BaseGrid::OnSubtitlesCommit, this),
+		context->ass->AddPreCommitListener([this](int type, AssDialogue const *line) {
+			if (typesetting::gradient::RegenerateMotionForTiming(this->context, type, line) && line)
+				this->context->videoController->ReloadSubtitles();
+		}),
 
 		context->selectionController->AddActiveLineListener(&BaseGrid::OnActiveLineChanged, this),
 		context->selectionController->AddSelectionListener([&]{ Refresh(false); }),
@@ -618,8 +623,14 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 					wxString text;
 					if (gradient) {
 						auto const& label = context->imageMask->GetGroupLabel(curDiag);
-						text = "--- " + fmt_tl("Gradient (%d lines, text: %s)",
-							context->imageMask->GetGroupSize(curDiag), to_wx(label)) + " ---";
+						auto const& description =
+							context->imageMask->GetGradientDescription(curDiag);
+						text = description.empty() ?
+							"--- " + fmt_tl("Gradient (%d lines, text: %s)",
+								context->imageMask->GetGroupSize(curDiag), to_wx(label)) + " ---" :
+							"--- " + fmt_tl("Gradient (%d lines, %s, text: %s)",
+								context->imageMask->GetGroupSize(curDiag),
+								to_wx(description), to_wx(label)) + " ---";
 					}
 					else {
 						text = "--- " + fmt_tl("Image Mask (%d lines)",

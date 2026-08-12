@@ -9709,3 +9709,194 @@ msgstr "Перакрыцце нахіленых, радыяльных і фіг�
 #: ../src/typesetting_gradient.cpp
 msgid "apply gradient"
 msgstr "ужыць градыент"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Move colors"
+msgstr "Перамяшчэнне колераў"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion type:"
+msgstr "Тып руху:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Once"
+msgstr "Адзін раз"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Loop until line end"
+msgstr "Паўтараць да канца радка"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Ping-pong until line end"
+msgstr "Туды-назад да канца радка"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Fit once to line"
+msgstr "Адзін раз, з улікам працягласці радка"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Outside:"
+msgstr "Звонку:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Clamp edge colors"
+msgstr "Працягваць крайнія колеры"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Repeat gradient"
+msgstr "Паўтараць градыент"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "First stop color"
+msgstr "Колер першай каляровай кропкі"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start time (ms):"
+msgstr "Пачатак (мс):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End time (ms):"
+msgstr "Канец (мс):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Cycle/leg (ms):"
+msgstr "Цыкл/этап (мс):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Accel:"
+msgstr "Паскарэнне:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start position (%):"
+msgstr "Пачатковая пазіцыя (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End position (%):"
+msgstr "Канчатковая пазіцыя (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start width (%):"
+msgstr "Пачатковая шырыня (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End width (%):"
+msgstr "Канчатковая шырыня (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Use line end"
+msgstr "Выкарыстоўваць канец радка"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Before to after"
+msgstr "Ад пачатку да канца"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "After to before"
+msgstr "Ад канца да пачатку"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion"
+msgstr "Рух"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy from..."
+msgstr "Капіяваць адсюль..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops"
+msgstr "каляровыя кропкі"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "motion"
+msgstr "рух"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops and motion"
+msgstr "каляровыя кропкі і рух"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shared"
+msgstr "Агульныя"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Per color"
+msgstr "Па колерах"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion settings"
+msgstr "Налады руху"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Middle width (%):"
+msgstr "Шырыня ў сярэдзіне (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Info"
+msgstr "Інфармацыя"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line once"
+msgstr "Аднаразовае прайграванне радка"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line repeatedly"
+msgstr "Паўторнае прайграванне радка"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Previous frame"
+msgstr "Папярэдні кадр"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Next frame"
+msgstr "Наступны кадр"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient help"
+msgstr "Даведка па градыенце"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type\\nLinear follows the selected angle. Radial expands from the center of the selected text.\\n\\nOutput\\nClip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\\n\\nPixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\\n\\nColor stops\\nClick the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\\n\\nMotion\\nOnce moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\\n\\nAccel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\\n\\nStart, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\\n\\nPlayback\\nThe framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
+msgstr "Тып градыенту\\nЛінейны градыент ідзе пад выбраным вуглом. Радыяльны градыент распаўсюджваецца вонкі ад цэнтра выбранага тэксту.\\n\\nВывад\\nClip стварае абрэзаныя копіі радка субцітраў. Карактары прызначае градыент асобна кожнаму сімвалу. Фігуры пераўтвараюць тэкст, абводку і цень у рэдагуемыя вектарныя фігуры без clip.\\n\\nПіксельная адлегласць рэгулюе прасторавую дэталізацыю па палосах. Меншае значэнне дае больш гладкі вынік, але стварае больш радкоў. Накладанне супраць палоснасці крыху накладвае нахіленыя, радыяльныя і фігурныя палосы адна на адну; прамавугольныя кліпы заўсёды выкарыстоўваюць нуль.\\n\\nКаляровыя кропкі\\nНацісніце на паласу, каб дадаць новую каляровую кропку, перацягніце яе квадрат для пазіцыянавання, націсніце на яе, каб рэдагаваць колер і альфу, або пстрыкніце правай кнопкай, каб выдаліць.\\n\\nРух\\nАднаразовае перамяшчае паміж двума пазіцыямі на працягу выбранай працягласці. Паўтор запускае рух нанова ў кожным цыкле. Туды-назад чаргуе напрамак. Рэжым, выраўнаваны па радку, выкарыстоўвае поўную даўжыню радка. Выкарыстоўваць канец радка завяршае рэжым «Аднаразовае» ў канцы субцітраў.\\n\\nПаскарэнне змяняе часовую крывую: 1 — лінейны рух, значэнне больш за 1 пачынаецца павольней, а менш за 1 — хутчэй. Пазіцыі — гэта працэнты дыяпазону градыенту; значэнні ніжэй за 0 і вышэй за 100 размяшчаюць іх за межамі тэксту. Па-за рухомым дыяпазонам працягваецца найбліжэйшы крайні колер.\\n\\nПачатковая, сярэдняя і канчатковая шырыня задаюць памер рухомага градыенту ў пачатку, у сярэдзіне і ў канцы. Так можна стварыць светлавы след «вузкі–шырокі–вузкі».\\n\\nПрайграванне\\nКнопка Play з рамкай прайгравае радок адзін раз. Звычайная кнопка Play паўтарае прайграванне. Pause спыняе прайграванне. Кнопкі са стрэлкамі пераходзяць на адзін відэакадр."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Gradient (%d lines, %s, text: %s)"
+msgstr "Градыент (%d радкоў, %s, тэкст: %s)"

@@ -13,6 +13,7 @@
 #include "ass_file.h"
 #include "ass_style.h"
 #include "include/aegisub/context.h"
+#include "project.h"
 #include "selection_controller.h"
 #include "typesetting_transform.h"
 #include "video_controller.h"
@@ -100,13 +101,94 @@ std::string SerializeStops(std::vector<Stop> const& stops) {
 	return out;
 }
 
+std::string SerializeMotion(Motion const& motion) {
+	return agi::format("%d,%d,%d,%d,%d,%d,%d,%.8g,%.8g,%.8g,%.8g,%.8g,%.8g",
+		motion.enabled, static_cast<int>(motion.mode),
+		static_cast<int>(MotionOutside::Clamp),
+		motion.end_at_line, motion.start_time, motion.end_time, motion.cycle_time,
+		motion.accel, motion.start_position, motion.end_position,
+		motion.start_width, motion.middle_width, motion.end_width);
+}
+
+std::optional<Motion> DeserializeMotion(std::string const& encoded, Motion fallback) {
+	std::vector<std::string> fields;
+	size_t at = 0;
+	for (;;) {
+		size_t end = encoded.find(',', at);
+		fields.push_back(encoded.substr(at,
+			end == std::string::npos ? std::string::npos : end - at));
+		if (end == std::string::npos) break;
+		at = end + 1;
+	}
+	if (fields.size() != 12 && fields.size() != 13) return std::nullopt;
+	try {
+		fallback.enabled = std::stoi(fields[0]) != 0;
+		fallback.mode = static_cast<MotionMode>(std::clamp(std::stoi(fields[1]), 0, 3));
+		fallback.outside = MotionOutside::Clamp;
+		fallback.end_at_line = std::stoi(fields[3]) != 0;
+		fallback.start_time = std::clamp(std::stoi(fields[4]), 0, 3600000);
+		fallback.end_time = std::clamp(std::stoi(fields[5]), 0, 3600000);
+		fallback.cycle_time = std::clamp(std::stoi(fields[6]), 1, 3600000);
+		fallback.accel = std::clamp(std::stod(fields[7]), 0.01, 100.0);
+		fallback.start_position = std::clamp(std::stod(fields[8]), -1000.0, 1000.0);
+		fallback.end_position = std::clamp(std::stod(fields[9]), -1000.0, 1000.0);
+		fallback.start_width = std::clamp(std::stod(fields[10]), 0.1, 1000.0);
+		if (fields.size() == 13) {
+			fallback.middle_width = std::clamp(std::stod(fields[11]), 0.1, 1000.0);
+			fallback.end_width = std::clamp(std::stod(fields[12]), 0.1, 1000.0);
+		}
+		else {
+			fallback.end_width = std::clamp(std::stod(fields[11]), 0.1, 1000.0);
+			fallback.middle_width = (fallback.start_width + fallback.end_width) * .5;
+		}
+		return fallback;
+	}
+	catch (...) { return std::nullopt; }
+}
+
+std::string SerializeGeometry(GeometrySnapshot const& geometry) {
+	return agi::format("%d,%d,%d,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g,%.12g",
+		geometry.valid, geometry.script_w, geometry.script_h, geometry.centre_x,
+		geometry.centre_y, geometry.corners[0], geometry.corners[1], geometry.corners[2],
+		geometry.corners[3], geometry.corners[4], geometry.corners[5],
+		geometry.corners[6], geometry.corners[7]);
+}
+
+std::optional<GeometrySnapshot> DeserializeGeometry(std::string const& encoded) {
+	std::vector<std::string> fields;
+	size_t at = 0;
+	for (;;) {
+		size_t end = encoded.find(',', at);
+		fields.push_back(encoded.substr(at,
+			end == std::string::npos ? std::string::npos : end - at));
+		if (end == std::string::npos) break;
+		at = end + 1;
+	}
+	if (fields.size() != 13) return std::nullopt;
+	try {
+		GeometrySnapshot out;
+		out.valid = std::stoi(fields[0]) != 0;
+		out.script_w = std::max(1, std::stoi(fields[1]));
+		out.script_h = std::max(1, std::stoi(fields[2]));
+		out.centre_x = std::stod(fields[3]);
+		out.centre_y = std::stod(fields[4]);
+		for (size_t i = 0; i < out.corners.size(); ++i)
+			out.corners[i] = std::stod(fields[i + 5]);
+		return out;
+	}
+	catch (...) { return std::nullopt; }
+}
+
 std::string SerializeSettings(Settings const& settings) {
-	return agi::format("2|%d|%d|%d|%d|%.6g|%d|%s|%d|%s|%d|%s",
+	return agi::format("5|%d|%d|%d|%d|%.6g|1|%s|%s|%d|%s|%s|%d|%s|%s|%d|%s|%s",
 		static_cast<int>(settings.kind), static_cast<int>(settings.output), settings.angle,
-		settings.pixels_per_strip, settings.anti_strip_overlap, settings.primary.enabled,
-		SerializeStops(settings.primary.stops), settings.outline.enabled,
-		SerializeStops(settings.outline.stops), settings.shadow.enabled,
-		SerializeStops(settings.shadow.stops));
+		settings.pixels_per_strip, settings.anti_strip_overlap,
+		SerializeMotion(settings.motion), SerializeGeometry(settings.geometry),
+		settings.primary.enabled,
+		SerializeStops(settings.primary.stops), SerializeMotion(settings.primary.motion),
+		settings.outline.enabled, SerializeStops(settings.outline.stops),
+		SerializeMotion(settings.outline.motion), settings.shadow.enabled,
+		SerializeStops(settings.shadow.stops), SerializeMotion(settings.shadow.motion));
 }
 
 std::vector<std::string> SplitSettings(std::string const& encoded) {
@@ -124,6 +206,52 @@ std::vector<std::string> SplitSettings(std::string const& encoded) {
 
 std::optional<Settings> DeserializeSettings(std::string const& encoded, Settings fallback) {
 	auto fields = SplitSettings(encoded);
+	if (fields[0] == "3" || fields[0] == "4" || fields[0] == "5") {
+		bool has_geometry = fields[0] == "4" || fields[0] == "5";
+		if (fields.size() != (has_geometry ? 18 : 17)) return std::nullopt;
+		try {
+			int kind = std::stoi(fields[1]);
+			int output = std::stoi(fields[2]);
+			fallback.kind = kind == 1 ? Kind::Radial : Kind::Linear;
+			fallback.output = output == 1 ? Output::Characters :
+				output == 2 ? Output::Shapes : Output::Clips;
+			fallback.angle = std::clamp(std::stoi(fields[3]), 0, 359);
+			fallback.pixels_per_strip = std::clamp(std::stoi(fields[4]), 1, 100);
+			fallback.anti_strip_overlap = std::clamp(std::stod(fields[5]), 0.0, 100.0);
+			bool was_shared = std::stoi(fields[6]) != 0;
+			fallback.shared_motion = true;
+			auto shared = DeserializeMotion(fields[7], fallback.motion);
+			size_t channel = has_geometry ? 9 : 8;
+			if (has_geometry) {
+				auto geometry = DeserializeGeometry(fields[8]);
+				if (!geometry) return std::nullopt;
+				fallback.geometry = *geometry;
+			}
+			auto primary = DeserializeMotion(fields[channel + 2], fallback.primary.motion);
+			auto outline = DeserializeMotion(fields[channel + 5], fallback.outline.motion);
+			auto shadow = DeserializeMotion(fields[channel + 8], fallback.shadow.motion);
+			if (!shared || !primary || !outline || !shadow) return std::nullopt;
+			fallback.motion = *shared;
+			fallback.motion.outside = MotionOutside::Clamp;
+			fallback.primary.enabled = std::stoi(fields[channel]) != 0;
+			fallback.primary.stops = ParseStops(fields[channel + 1], fallback.primary.stops);
+			fallback.primary.motion = *primary;
+			fallback.outline.enabled = std::stoi(fields[channel + 3]) != 0;
+			fallback.outline.stops = ParseStops(fields[channel + 4], fallback.outline.stops);
+			fallback.outline.motion = *outline;
+			fallback.shadow.enabled = std::stoi(fields[channel + 6]) != 0;
+			fallback.shadow.stops = ParseStops(fields[channel + 7], fallback.shadow.stops);
+			fallback.shadow.motion = *shadow;
+			if (!was_shared) {
+				if (fallback.primary.enabled && primary->enabled) fallback.motion = *primary;
+				else if (fallback.outline.enabled && outline->enabled) fallback.motion = *outline;
+				else if (fallback.shadow.enabled && shadow->enabled) fallback.motion = *shadow;
+			}
+			fallback.motion.outside = MotionOutside::Clamp;
+			return fallback;
+		}
+		catch (...) { return std::nullopt; }
+	}
 	if (fields.size() != 12 || (fields[0] != "1" && fields[0] != "2")) return std::nullopt;
 	try {
 		int kind = std::stoi(fields[1]);
@@ -142,6 +270,8 @@ std::optional<Settings> DeserializeSettings(std::string const& encoded, Settings
 		fallback.outline.stops = ParseStops(fields[9], fallback.outline.stops);
 		fallback.shadow.enabled = std::stoi(fields[10]) != 0;
 		fallback.shadow.stops = ParseStops(fields[11], fallback.shadow.stops);
+		fallback.shared_motion = true;
+		fallback.motion.outside = MotionOutside::Clamp;
 		return fallback;
 	}
 	catch (...) {
@@ -428,10 +558,214 @@ std::string ChannelPaintTags(PreparedChannel const& channel, int index, double f
 		index, Alpha(colour));
 }
 
-std::string IsolationTags(ColourChannel visible) {
+std::string ColourTags(int index, agi::Color const& colour) {
+	return agi::format("\\%dc%s\\%da%s", index, colour.GetAssOverrideFormatted(),
+		index, Alpha(colour));
+}
+
+Motion const& ChannelMotion(Settings const& settings, ColourChannel channel) {
+	(void)channel;
+	return settings.motion;
+}
+
+int LineDuration(AssDialogue const& line) {
+	return std::max(0, static_cast<int>(line.End) - static_cast<int>(line.Start));
+}
+
+std::vector<int> MotionSampleTimes(agi::Context *c, AssDialogue const& line,
+		Motion const& motion) {
+	int duration = LineDuration(line);
+	std::vector<int> times = {0, duration};
+	if (duration <= 0) return times;
+
+	auto const& fps = c->project->Timecodes();
+	if (fps.IsLoaded()) {
+		int first = fps.FrameAtTime(line.Start, agi::vfr::START);
+		int last = fps.FrameAtTime(line.End, agi::vfr::END) + 1;
+		int stride = std::max(1, static_cast<int>(std::ceil(
+			std::max(0, last - first) / 4096.0)));
+		for (int frame = first; frame <= last; frame += stride) {
+			int relative = fps.TimeAtFrame(frame, agi::vfr::START) -
+				static_cast<int>(line.Start);
+			if (relative > 0 && relative < duration) times.push_back(relative);
+		}
+	}
+	else {
+		int step = std::max(20, static_cast<int>(std::ceil(duration / 4096.0)));
+		for (int at = step; at < duration; at += step) times.push_back(at);
+	}
+
+	auto add_boundary = [&](int at) {
+		if (at > 0 && at < duration) {
+			times.push_back(at);
+			times.push_back(at - 1);
+		}
+	};
+	if (motion.mode == MotionMode::FitLine) {
+		add_boundary(duration);
+	}
+	else {
+		add_boundary(motion.start_time);
+		if (motion.mode == MotionMode::Once)
+			add_boundary(motion.end_at_line ? duration : motion.end_time);
+		else {
+			int cycle = std::max(1, motion.cycle_time);
+			for (int at = motion.start_time + cycle, count = 0;
+				at < duration && count < 4096; at += cycle, ++count)
+				add_boundary(at);
+		}
+	}
+
+	std::sort(times.begin(), times.end());
+	times.erase(std::unique(times.begin(), times.end()), times.end());
+	return times;
+}
+
+struct MotionFrame {
+	double position = 0;
+	double width = 1;
+};
+
+MotionFrame MotionAt(Motion const& motion, int time, int duration) {
+	double progress = 0;
+	if (motion.mode == MotionMode::FitLine) {
+		progress = duration <= 0 ? 1.0 : static_cast<double>(time) / duration;
+	}
+	else if (motion.mode == MotionMode::Once) {
+		int start = std::clamp(motion.start_time, 0, duration);
+		int end = motion.end_at_line ? duration : std::clamp(motion.end_time, start, duration);
+		progress = end <= start ? (time >= end ? 1.0 : 0.0) :
+			std::clamp(static_cast<double>(time - start) / (end - start), 0.0, 1.0);
+	}
+	else if (time > motion.start_time) {
+		double leg = static_cast<double>(time - motion.start_time) /
+			std::max(1, motion.cycle_time);
+		double fraction = leg - std::floor(leg);
+		if (motion.mode == MotionMode::PingPong &&
+			static_cast<long long>(std::floor(leg)) % 2) fraction = 1.0 - fraction;
+		progress = fraction;
+	}
+
+	progress = std::pow(std::clamp(progress, 0.0, 1.0),
+		std::clamp(motion.accel, 0.01, 100.0));
+	double position = motion.start_position +
+		(motion.end_position - motion.start_position) * progress;
+	double width = progress < .5 ?
+		motion.start_width + (motion.middle_width - motion.start_width) * progress * 2.0 :
+		motion.middle_width + (motion.end_width - motion.middle_width) * (progress - .5) * 2.0;
+	return {position / 100.0, std::max(0.001, width / 100.0)};
+}
+
+agi::Color MotionColour(PreparedChannel const& channel, Motion const& motion,
+		double spatial_position, int time, int duration) {
+	auto frame = MotionAt(motion, time, duration);
+	double sample = 0.5 + (spatial_position - frame.position) / frame.width;
+	return SampleSorted(channel.stops, sample);
+}
+
+bool SameColour(agi::Color const& left, agi::Color const& right) {
+	return left.r == right.r && left.g == right.g && left.b == right.b && left.a == right.a;
+}
+
+bool MergePrimaryAndOutline(Settings const& settings) {
+	if (!settings.primary.enabled || !settings.outline.enabled) return false;
+	auto primary = SortedStops(settings.primary.stops);
+	auto outline = SortedStops(settings.outline.stops);
+	std::set<int> positions;
+	for (auto const& stop : primary) positions.insert(stop.position);
+	for (auto const& stop : outline) positions.insert(stop.position);
+	return std::all_of(positions.begin(), positions.end(), [&](int position) {
+		return SameColour(SampleSorted(primary, position / 100.0),
+			SampleSorted(outline, position / 100.0));
+	});
+}
+
+struct TimedColour {
+	int time = 0;
+	agi::Color colour;
+};
+
+int ColourInterpolationError(TimedColour const& left, TimedColour const& middle,
+		TimedColour const& right) {
+	if (right.time <= left.time) return SameColour(left.colour, middle.colour) ? 0 : 255;
+	double factor = static_cast<double>(middle.time - left.time) / (right.time - left.time);
+	auto error = [&](unsigned char a, unsigned char b, unsigned char actual) {
+		return std::abs(static_cast<int>(actual) - static_cast<int>(std::lround(
+			a + (static_cast<int>(b) - a) * factor)));
+	};
+	return std::max({error(left.colour.r, right.colour.r, middle.colour.r),
+		error(left.colour.g, right.colour.g, middle.colour.g),
+		error(left.colour.b, right.colour.b, middle.colour.b),
+		error(left.colour.a, right.colour.a, middle.colour.a)});
+}
+
+void KeepColourKeys(std::vector<TimedColour> const& points, size_t first, size_t last,
+		std::vector<bool>& keep) {
+	if (last <= first + 1) return;
+	int largest = 1;
+	size_t selected = first;
+	for (size_t i = first + 1; i < last; ++i) {
+		int error = ColourInterpolationError(points[first], points[i], points[last]);
+		if (error > largest) {
+			largest = error;
+			selected = i;
+		}
+	}
+	if (selected == first) return;
+	keep[selected] = true;
+	KeepColourKeys(points, first, selected, keep);
+	KeepColourKeys(points, selected, last, keep);
+}
+
+std::string AnimatedChannelPaint(agi::Context *c, AssDialogue const& line,
+		Settings const& settings, ColourChannel colour_channel,
+		PreparedChannel const& channel, int index, double factor) {
+	auto const& motion = ChannelMotion(settings, colour_channel);
+	if (!motion.enabled)
+		return ChannelPaintTags(channel, index, factor);
+
+	int duration = LineDuration(line);
+	auto times = MotionSampleTimes(c, line, motion);
+	std::vector<TimedColour> points;
+	points.reserve(times.size());
+	for (int time : times)
+		points.push_back({time, MotionColour(channel, motion, factor, time, duration)});
+	if (points.empty()) return ChannelPaintTags(channel, index, factor);
+
+	std::vector<bool> keep(points.size(), false);
+	keep.front() = keep.back() = true;
+	KeepColourKeys(points, 0, points.size() - 1, keep);
+	std::string tags = ColourTags(index, points.front().colour);
+	int previous_time = points.front().time;
+	agi::Color previous_colour = points.front().colour;
+	for (size_t i = 1; i < points.size(); ++i) {
+		if (!keep[i]) continue;
+		if (!SameColour(previous_colour, points[i].colour))
+			tags += agi::format("\\t(%d,%d,1,%s)", previous_time, points[i].time,
+				ColourTags(index, points[i].colour));
+		previous_time = points[i].time;
+		previous_colour = points[i].colour;
+	}
+	return tags;
+}
+
+std::string AnimatedPaintTags(agi::Context *c, AssDialogue const& line,
+		Settings const& settings, PreparedPaint const& paint, double factor) {
 	std::string tags;
 	for (auto channel : {ColourChannel::Primary, ColourChannel::Outline, ColourChannel::Shadow}) {
-		if (channel != visible) tags += agi::format("\\%da&HFF&", AssChannelIndex(channel));
+		if (!ChannelEnabled(settings, channel)) continue;
+		tags += AnimatedChannelPaint(c, line, settings, channel, PaintChannel(paint, channel),
+			AssChannelIndex(channel), factor);
+	}
+	return tags;
+}
+
+std::string IsolationTags(ColourChannel visible, bool primary_with_outline = false) {
+	std::string tags;
+	for (auto channel : {ColourChannel::Primary, ColourChannel::Outline, ColourChannel::Shadow}) {
+		bool shown = channel == visible || (primary_with_outline &&
+			(channel == ColourChannel::Primary || channel == ColourChannel::Outline));
+		if (!shown) tags += agi::format("\\%da&HFF&", AssChannelIndex(channel));
 	}
 	return tags;
 }
@@ -455,11 +789,6 @@ PreparedChannel const& ShapeChannel(PreparedPaint const& paint,
 	if (kind == typesetting::ShapeEditor::LayerKind::Outline) return paint.outline;
 	if (kind == typesetting::ShapeEditor::LayerKind::Shadow) return paint.shadow;
 	return paint.primary;
-}
-
-std::string ShapePaintTags(PreparedChannel const& channel, double factor) {
-	auto colour = SampleSorted(channel.stops, factor);
-	return "\\1c" + colour.GetAssOverrideFormatted() + "\\1a" + Alpha(colour);
 }
 
 bool IsRemovedTag(std::string const& name, Settings const& settings, bool clips) {
@@ -811,6 +1140,30 @@ struct Geometry {
 		editor.Build([](Vector2D point) { return point; }, false, false, true);
 		shapes_built = true;
 	}
+
+	GeometrySnapshot Snapshot() const {
+		GeometrySnapshot out;
+		out.valid = true;
+		out.script_w = script_w;
+		out.script_h = script_h;
+		out.centre_x = centre.x;
+		out.centre_y = centre.y;
+		for (size_t i = 0; i < 4 && i < corners.size(); ++i) {
+			out.corners[i * 2] = corners[i].x;
+			out.corners[i * 2 + 1] = corners[i].y;
+		}
+		return out;
+	}
+
+	void ApplySnapshot(GeometrySnapshot const& snapshot) {
+		if (!snapshot.valid) return;
+		script_w = std::max(1, snapshot.script_w);
+		script_h = std::max(1, snapshot.script_h);
+		centre = {snapshot.centre_x, snapshot.centre_y};
+		corners.clear();
+		for (size_t i = 0; i < 4; ++i)
+			corners.push_back({snapshot.corners[i * 2], snapshot.corners[i * 2 + 1]});
+	}
 };
 
 std::vector<Band> MakeBands(Settings const& settings, double low, double high) {
@@ -855,8 +1208,8 @@ GradientRange FindRange(Settings const& settings, Geometry const& geometry) {
 	return range;
 }
 
-std::vector<PaintedClip> MakePaintedClips(Settings const& settings,
-		Geometry const& geometry, ColourChannel channel) {
+std::vector<PaintedClip> MakePaintedClips(agi::Context *c, AssDialogue const& source,
+		Settings const& settings, Geometry const& geometry, ColourChannel channel) {
 	if (!ChannelEnabled(settings, channel)) return {};
 	auto range = FindRange(settings, geometry);
 	bool rectangular = settings.kind == Kind::Linear &&
@@ -869,10 +1222,16 @@ std::vector<PaintedClip> MakePaintedClips(Settings const& settings,
 	PreparedPaint prepared(settings);
 	auto const& channel_paint = PaintChannel(prepared, channel);
 	int channel_index = AssChannelIndex(channel);
+	bool primary_with_outline = channel == ColourChannel::Primary &&
+		MergePrimaryAndOutline(settings);
 	struct PaintedBand { double low, high, factor; std::string paint; };
 	std::vector<PaintedBand> bands;
 	for (auto const& raw : raw_bands) {
-		auto paint = ChannelPaintTags(channel_paint, channel_index, raw.factor);
+		auto paint = AnimatedChannelPaint(c, source, settings, channel, channel_paint,
+			channel_index, raw.factor);
+		if (primary_with_outline)
+			paint += AnimatedChannelPaint(c, source, settings, ColourChannel::Outline,
+				PaintChannel(prepared, ColourChannel::Outline), 3, raw.factor);
 		// With 8-bit ASS colours, narrow neighbouring strips are often exactly the same.
 		// Joining them loses nothing and can remove hundreds of redundant dialogue lines.
 		if (!rectangular && !bands.empty() && bands.back().paint == paint)
@@ -1116,7 +1475,7 @@ struct PaintedShape {
 	std::string text;
 };
 
-std::vector<PaintedShape> PaintShapes(Settings const& settings,
+std::vector<PaintedShape> PaintShapes(agi::Context *c, Settings const& settings,
 		PreparedShapes const& prepared) {
 	PreparedPaint paint(settings);
 	std::set<AssDialogue *> eligible;
@@ -1132,7 +1491,12 @@ std::vector<PaintedShape> PaintShapes(Settings const& settings,
 		if (channel.enabled) {
 			for (auto const& slice : layer.slices)
 				output.push_back({layer.source, InjectLineTags(slice.text,
-					ShapePaintTags(channel, slice.factor))});
+					AnimatedChannelPaint(c, *layer.source, settings,
+						layer.kind == typesetting::ShapeEditor::LayerKind::Outline ?
+							ColourChannel::Outline :
+						layer.kind == typesetting::ShapeEditor::LayerKind::Shadow ?
+							ColourChannel::Shadow : ColourChannel::Primary,
+						channel, 1, slice.factor))});
 		}
 		else if (!(layer.kind == typesetting::ShapeEditor::LayerKind::Primary && layer.covered))
 			output.push_back({layer.source, layer.whole_text});
@@ -1167,7 +1531,7 @@ bool IsWhitespaceUnit(std::string const& unit) {
 	return codepoint >= 0 && u_isUWhiteSpace(codepoint);
 }
 
-bool CharacterGradient(AssDialogue& line, Settings const& settings) {
+bool CharacterGradient(agi::Context *c, AssDialogue& line, Settings const& settings) {
 	AssDialogue clean(line);
 	clean.Text = CleanText(line, settings, false);
 	auto blocks = clean.ParseTags();
@@ -1188,13 +1552,76 @@ bool CharacterGradient(AssDialogue& line, Settings const& settings) {
 		}
 		for (auto const& unit : PlainUnits(block->GetText())) {
 			double factor = total == 1 ? .5 : static_cast<double>(index) / (total - 1);
-			if (!IsWhitespaceUnit(unit)) out += "{" + PaintTags(prepared, factor) + "}";
+			if (!IsWhitespaceUnit(unit))
+				out += "{" + AnimatedPaintTags(c, line, settings, prepared, factor) + "}";
 			out += unit;
 			++index;
 		}
 	}
 	line.Text = std::move(out);
 	return true;
+}
+
+std::vector<std::vector<std::string>> GenerateOutputs(agi::Context *c,
+		std::vector<AssDialogue *> const& sources, Settings const& settings,
+		Geometry *given_geometry = nullptr) {
+	std::unique_ptr<Geometry> owned_geometry;
+	if (!given_geometry) {
+		owned_geometry = std::make_unique<Geometry>(c, sources);
+		given_geometry = owned_geometry.get();
+	}
+	auto& geometry = *given_geometry;
+	std::vector<std::vector<std::string>> output(sources.size());
+	if (settings.output == Output::Characters) {
+		for (size_t i = 0; i < sources.size(); ++i) {
+			AssDialogue generated(*sources[i]);
+			if (CharacterGradient(c, generated, settings))
+				output[i].push_back(NormalizeGeneratedText(*c->ass, *sources[i],
+					generated.Text.get(), false));
+		}
+	}
+	else if (settings.output == Output::Shapes) {
+		auto painted = PaintShapes(c, settings, PrepareShapes(settings, geometry));
+		for (auto& shape : painted) {
+			auto found = std::find(sources.begin(), sources.end(), shape.source);
+			if (found != sources.end())
+				output[std::distance(sources.begin(), found)].push_back(
+					NormalizeGeneratedText(*c->ass, *shape.source, std::move(shape.text), true));
+		}
+	}
+	else {
+		for (size_t i = 0; i < sources.size(); ++i) {
+			bool primary_with_outline = MergePrimaryAndOutline(settings);
+			std::array<std::vector<PaintedClip>, 3> painted;
+			for (auto channel : paint_order)
+				if (ChannelEnabled(settings, channel) &&
+					!(primary_with_outline && channel == ColourChannel::Outline))
+					painted[ChannelIndex(channel)] =
+						MakePaintedClips(c, *sources[i], settings, geometry, channel);
+			auto appearance = EffectiveLineColours(c, sources[i]);
+			for (auto channel : paint_order) {
+				if (primary_with_outline && channel == ColourChannel::Outline) continue;
+				bool merged = primary_with_outline && channel == ColourChannel::Primary;
+				std::string isolation = IsolationTags(channel, merged);
+				if (ChannelEnabled(settings, channel)) {
+					auto channel_settings = merged ? settings : ChannelSettings(settings, channel);
+					if (merged) channel_settings.shadow.enabled = false;
+					auto clean = CleanText(*sources[i], channel_settings, true);
+					for (auto const& band : painted[ChannelIndex(channel)])
+						output[i].push_back(NormalizeGeneratedText(*c->ass, *sources[i],
+							InjectLineTags(clean, band.paint + isolation +
+								"\\clip(" + band.clip + ")", true), false));
+				}
+				else if (ChannelVisible(appearance, channel)) {
+					auto no_channels = ChannelSettings(settings, std::nullopt);
+					auto clean = CleanText(*sources[i], no_channels, true);
+					output[i].push_back(NormalizeGeneratedText(*c->ass, *sources[i],
+						InjectLineTags(clean, isolation, true), false));
+				}
+			}
+		}
+	}
+	return output;
 }
 
 } // namespace
@@ -1232,6 +1659,59 @@ bool RestoreClipboardMetadata(AssFile& file, AssDialogue& line) {
 	std::sort(ids.begin(), ids.end());
 	line.ExtradataIds = std::move(ids);
 	return true;
+}
+
+bool TransferGroupMetadata(AssFile& file, AssDialogue const& from, AssDialogue& to) {
+	auto settings = GradientData(file, from);
+	auto source = GradientSourceData(file, from);
+	if (!settings || !source) return false;
+
+	file.SetExtradataValue(to, gradient_data_key, *settings);
+	file.SetExtradataValue(to, gradient_source_key, *source);
+	auto ids = to.ExtradataIds.get();
+	std::sort(ids.begin(), ids.end());
+	to.ExtradataIds = std::move(ids);
+	return true;
+}
+
+std::string GroupSourceEntry(AssFile const& file, AssDialogue const& line) {
+	auto source = GradientSourceData(file, line);
+	return source ? *source : std::string();
+}
+
+std::string GroupDescription(AssFile const& file, AssDialogue const& line) {
+	auto encoded = GradientData(file, line);
+	if (!encoded) return {};
+	auto parsed = DeserializeSettings(*encoded, Settings{});
+	if (!parsed) return {};
+
+	std::vector<std::string> tags;
+	auto add = [&](Channel const& channel, char const *colour_tag, char const *alpha_tag) {
+		if (!channel.enabled || channel.stops.empty()) return;
+		auto const& first = channel.stops.front().colour;
+		bool colour_varies = false;
+		bool alpha_varies = false;
+		for (auto const& stop : channel.stops) {
+			colour_varies |= stop.colour.r != first.r || stop.colour.g != first.g ||
+				stop.colour.b != first.b;
+			alpha_varies |= stop.colour.a != first.a;
+		}
+		// An enabled constant channel is still deliberately painted by the Gradient tool,
+		// so identify its colour tag even though only one value is present.
+		if (colour_varies || !alpha_varies) tags.emplace_back(colour_tag);
+		if (alpha_varies) tags.emplace_back(alpha_tag);
+	};
+	add(parsed->primary, "\\c", "\\1a");
+	add(parsed->outline, "\\3c", "\\3a");
+	add(parsed->shadow, "\\4c", "\\4a");
+	if (parsed->motion.enabled) tags.emplace_back("Motion");
+
+	std::string out;
+	for (auto const& tag : tags) {
+		if (!out.empty()) out += ' ';
+		out += tag;
+	}
+	return out;
 }
 
 Settings LoadSettingsForSelection(agi::Context *c) {
@@ -1302,6 +1782,9 @@ struct PreviewSession::Impl {
 			Clear();
 			return;
 		}
+		if (settings.geometry.valid && std::all_of(groups.begin(), groups.end(),
+			[](SourceGroup const& group) { return group.editing; }))
+			geometry.ApplySnapshot(settings.geometry);
 
 		std::vector<AssDialogue> changed;
 		std::vector<AssDialogue> added;
@@ -1314,7 +1797,7 @@ struct PreviewSession::Impl {
 		if (settings.output == Output::Characters) {
 			for (auto source : geometry.selected) {
 				AssDialogue generated(*source);
-				if (!CharacterGradient(generated, settings)) continue;
+				if (!CharacterGradient(context, generated, settings)) continue;
 				generated.Comment = false;
 				generated.Effect = gradient_effect;
 				generated.Text = NormalizeGeneratedText(*context->ass, *source,
@@ -1324,7 +1807,7 @@ struct PreviewSession::Impl {
 			if (added.empty()) { Clear(); return; }
 		}
 		else if (settings.output == Output::Shapes) {
-			auto painted_shapes = PaintShapes(settings, Shapes(settings));
+			auto painted_shapes = PaintShapes(context, settings, Shapes(settings));
 			if (painted_shapes.empty()) {
 				Clear();
 				return;
@@ -1340,24 +1823,23 @@ struct PreviewSession::Impl {
 			}
 		}
 		else {
-			std::array<std::vector<PaintedClip>, 3> painted_clips;
-			for (auto channel : paint_order)
-				if (ChannelEnabled(settings, channel))
-					painted_clips[ChannelIndex(channel)] =
-						MakePaintedClips(settings, geometry, channel);
-			bool have_clips = std::any_of(painted_clips.begin(), painted_clips.end(),
-				[](auto const& clips) { return !clips.empty(); });
-			if (!have_clips) {
-				Clear();
-				return;
-			}
 			for (size_t source_index = 0; source_index < geometry.selected.size(); ++source_index) {
 				auto source = geometry.selected[source_index];
+				bool primary_with_outline = MergePrimaryAndOutline(settings);
+				std::array<std::vector<PaintedClip>, 3> painted_clips;
+				for (auto channel : paint_order)
+					if (ChannelEnabled(settings, channel) &&
+						!(primary_with_outline && channel == ColourChannel::Outline))
+						painted_clips[ChannelIndex(channel)] =
+							MakePaintedClips(context, *source, settings, geometry, channel);
 				auto appearance = EffectiveLineColours(context, source);
 				for (auto channel : paint_order) {
-					std::string isolation = IsolationTags(channel);
+					if (primary_with_outline && channel == ColourChannel::Outline) continue;
+					bool merged = primary_with_outline && channel == ColourChannel::Primary;
+					std::string isolation = IsolationTags(channel, merged);
 					if (ChannelEnabled(settings, channel)) {
-						auto channel_settings = ChannelSettings(settings, channel);
+						auto channel_settings = merged ? settings : ChannelSettings(settings, channel);
+						if (merged) channel_settings.shadow.enabled = false;
 						auto const& clean = CleanClipText(channel_settings)[source_index];
 						for (auto const& band : painted_clips[ChannelIndex(channel)]) {
 							AssDialogue generated(*source);
@@ -1407,56 +1889,167 @@ void PreviewSession::Clear() {
 	impl->Clear();
 }
 
+bool RegenerateMotionForTiming(agi::Context *c, int type,
+		AssDialogue const *changed_line) {
+	if (!(type & AssFile::COMMIT_DIAG_TIME)) return false;
+
+	std::vector<AssDialogue *> rows;
+	rows.reserve(c->ass->Events.size());
+	for (auto& line : c->ass->Events) rows.push_back(&line);
+
+	bool updated = false;
+	for (size_t i = 0; i < rows.size();) {
+		AssDialogue *anchor = rows[i];
+		if (!IsGradientSource(*c->ass, anchor)) {
+			++i;
+			continue;
+		}
+
+		std::vector<AssDialogue *> existing = {anchor};
+		size_t next = i + 1;
+		while (next < rows.size() && IsGradientEffect(rows[next]) &&
+			!IsGradientSource(*c->ass, rows[next]))
+			existing.push_back(rows[next++]);
+		i = next;
+
+		auto changed = changed_line && std::find(existing.begin(), existing.end(),
+			changed_line) != existing.end();
+		if (changed_line && !changed) continue;
+		auto encoded_settings = GradientData(*c->ass, *anchor);
+		auto encoded_source = GradientSourceData(*c->ass, *anchor);
+		if (!encoded_settings || !encoded_source) continue;
+
+		try {
+			AssDialogue source(*encoded_source);
+			AssDialogue const *timing = changed ? changed_line : anchor;
+			if (!changed && source.Start == timing->Start && source.End == timing->End)
+				continue;
+			auto parsed = DeserializeSettings(*encoded_settings, DefaultSettings(c, &source));
+			if (!parsed) continue;
+			auto const& settings = *parsed;
+			bool moving = false;
+			for (auto channel : {ColourChannel::Primary, ColourChannel::Outline,
+					ColourChannel::Shadow})
+				moving |= ChannelEnabled(settings, channel) &&
+					ChannelMotion(settings, channel).enabled;
+			if (!moving) continue;
+
+			source.Start = timing->Start;
+			source.End = timing->End;
+			std::vector<AssDialogue *> sources = {&source};
+			Geometry geometry(c, sources);
+			geometry.ApplySnapshot(settings.geometry);
+			auto output = GenerateOutputs(c, sources, settings, &geometry);
+			if (output.empty() || output.front().size() != existing.size()) continue;
+
+			for (size_t row = 0; row < existing.size(); ++row) {
+				existing[row]->Start = source.Start;
+				existing[row]->End = source.End;
+				existing[row]->Text = std::move(output.front()[row]);
+			}
+			c->ass->SetExtradataValue(*anchor, gradient_source_key, source.GetEntryData());
+			auto ids = anchor->ExtradataIds.get();
+			std::sort(ids.begin(), ids.end());
+			anchor->ExtradataIds = std::move(ids);
+			updated = true;
+		}
+		catch (...) {
+			// Damaged or obsolete metadata must not make an ordinary timing edit fail.
+		}
+	}
+	if (updated) c->ass->CleanExtradata();
+	return updated;
+}
+
+bool RegenerateGroupText(agi::Context *c, AssDialogue const& given_anchor,
+		AssDialogue const& edited_source) {
+	auto anchor = const_cast<AssDialogue *>(&given_anchor);
+	if (!IsGradientSource(*c->ass, anchor)) return false;
+	auto encoded = GradientData(*c->ass, *anchor);
+	if (!encoded) return false;
+
+	AssDialogue source(edited_source);
+	source.Row = anchor->Row;
+	auto parsed = DeserializeSettings(*encoded, DefaultSettings(c, &source));
+	if (!parsed) return false;
+	Settings settings = *parsed;
+	// A changed string can have entirely different bounds and outlines. The saved snapshot
+	// describes the old text, so measure the edited source again before repainting it.
+	settings.geometry.valid = false;
+	std::vector<AssDialogue *> sources = {&source};
+	Geometry geometry(c, sources);
+	auto output = GenerateOutputs(c, sources, settings, &geometry);
+	Settings stored_settings = settings;
+	stored_settings.geometry = geometry.Snapshot();
+
+	std::vector<AssDialogue *> existing = {anchor};
+	auto after = c->ass->Events.iterator_to(*anchor);
+	++after;
+	while (after != c->ass->Events.end() && IsGradientEffect(&*after) &&
+		after->Start == anchor->Start && after->End == anchor->End &&
+		!IsGradientSource(*c->ass, &*after))
+		existing.push_back(&*after++);
+
+	c->ass->DeleteExtradataValue(source, gradient_data_key);
+	c->ass->DeleteExtradataValue(source, gradient_source_key);
+	std::string source_entry = source.GetEntryData();
+	auto insert_at = c->ass->Events.iterator_to(*anchor);
+	Selection new_selection;
+	AssDialogue *new_active = nullptr;
+
+	if (!output.empty()) {
+		for (size_t index = 0; index < output.front().size(); ++index) {
+			auto generated = new AssDialogue(source);
+			generated->Comment = false;
+			generated->Effect = gradient_effect;
+			generated->Text = std::move(output.front()[index]);
+			if (index == 0) {
+				c->ass->SetExtradataValue(*generated, gradient_data_key,
+					SerializeSettings(stored_settings));
+				c->ass->SetExtradataValue(*generated, gradient_source_key, source_entry);
+				auto ids = generated->ExtradataIds.get();
+				std::sort(ids.begin(), ids.end());
+				generated->ExtradataIds = std::move(ids);
+				new_active = generated;
+			}
+			c->ass->Events.insert(insert_at, *generated);
+			new_selection.insert(generated);
+		}
+	}
+
+	// An empty result becomes an ordinary empty source row rather than leaving behind
+	// hundreds of stale gradient fragments which no longer describe its text.
+	if (!new_active) {
+		auto replacement = new AssDialogue(source);
+		if (replacement->Effect.get() == gradient_effect) replacement->Effect = "";
+		c->ass->Events.insert(insert_at, *replacement);
+		new_selection.insert(replacement);
+		new_active = replacement;
+	}
+
+	std::vector<std::unique_ptr<AssDialogue>> removed;
+	for (auto line : existing) {
+		c->ass->Events.erase(c->ass->Events.iterator_to(*line));
+		removed.emplace_back(line);
+	}
+	c->selectionController->SetSelectionAndActive(std::move(new_selection), new_active);
+	c->ass->CleanExtradata();
+	c->ass->Commit(_("change text"), AssFile::COMMIT_DIAG_ADDREM |
+		AssFile::COMMIT_DIAG_FULL | AssFile::COMMIT_EXTRADATA);
+	return true;
+}
+
 size_t Apply(agi::Context *c, Settings const& settings) {
 	auto groups = CollectSourceGroups(c);
 	if (groups.empty()) return 0;
 	auto sources = GroupSources(groups);
 	Geometry geometry(c, sources);
-	std::vector<std::vector<std::string>> output(sources.size());
-
-	if (settings.output == Output::Characters) {
-		for (size_t i = 0; i < sources.size(); ++i) {
-			AssDialogue generated(*sources[i]);
-			if (CharacterGradient(generated, settings))
-				output[i].push_back(NormalizeGeneratedText(*c->ass, *sources[i],
-					generated.Text.get(), false));
-		}
-	}
-	else if (settings.output == Output::Shapes) {
-		auto painted = PaintShapes(settings, PrepareShapes(settings, geometry));
-		for (auto& shape : painted) {
-			auto found = std::find(sources.begin(), sources.end(), shape.source);
-			if (found != sources.end())
-				output[std::distance(sources.begin(), found)].push_back(
-					NormalizeGeneratedText(*c->ass, *shape.source, std::move(shape.text), true));
-		}
-	}
-	else {
-		std::array<std::vector<PaintedClip>, 3> painted;
-		for (auto channel : paint_order)
-			if (ChannelEnabled(settings, channel))
-				painted[ChannelIndex(channel)] = MakePaintedClips(settings, geometry, channel);
-		for (size_t i = 0; i < sources.size(); ++i) {
-			auto appearance = EffectiveLineColours(c, sources[i]);
-			for (auto channel : paint_order) {
-				std::string isolation = IsolationTags(channel);
-				if (ChannelEnabled(settings, channel)) {
-					auto channel_settings = ChannelSettings(settings, channel);
-					auto clean = CleanText(*sources[i], channel_settings, true);
-					for (auto const& band : painted[ChannelIndex(channel)])
-						output[i].push_back(NormalizeGeneratedText(*c->ass, *sources[i],
-							InjectLineTags(clean, band.paint + isolation +
-								"\\clip(" + band.clip + ")", true), false));
-				}
-				else if (ChannelVisible(appearance, channel)) {
-					auto no_channels = ChannelSettings(settings, std::nullopt);
-					auto clean = CleanText(*sources[i], no_channels, true);
-					output[i].push_back(NormalizeGeneratedText(*c->ass, *sources[i],
-						InjectLineTags(clean, isolation, true), false));
-				}
-			}
-		}
-	}
+	if (settings.geometry.valid && std::all_of(groups.begin(), groups.end(),
+		[](SourceGroup const& group) { return group.editing; }))
+		geometry.ApplySnapshot(settings.geometry);
+	auto output = GenerateOutputs(c, sources, settings, &geometry);
+	Settings stored_settings = settings;
+	stored_settings.geometry = geometry.Snapshot();
 
 	Selection new_selection;
 	AssDialogue *new_active = nullptr;
@@ -1490,7 +2083,7 @@ size_t Apply(agi::Context *c, Settings const& settings) {
 			c->ass->DeleteExtradataValue(*generated, gradient_source_key);
 			if (text_index == 0) {
 				c->ass->SetExtradataValue(*generated, gradient_data_key,
-					SerializeSettings(settings));
+					SerializeSettings(stored_settings));
 				c->ass->SetExtradataValue(*generated, gradient_source_key, source_entry);
 				auto ids = generated->ExtradataIds.get();
 				std::sort(ids.begin(), ids.end());

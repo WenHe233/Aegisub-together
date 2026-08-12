@@ -130,6 +130,9 @@ public:
 	/// not in the file, which is how one line can be previewed as several.
 	void PreviewSubtitles(std::vector<AssDialogue const *> const& changed,
 	                      std::vector<AssDialogue const *> const& added = {});
+	/// Reload the current subtitle file after a pre-commit operation changed more than
+	/// the single dialogue row reported by the original edit.
+	void ReloadSubtitles();
 
 	/// Get the actual aspect ratio from a predefined AR type
 	double GetARFromType(AspectRatio type) const;

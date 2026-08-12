@@ -9593,3 +9593,194 @@ msgstr "التداخل الجانبي للأشرطة المائلة والشعا
 #: ../src/typesetting_gradient.cpp
 msgid "apply gradient"
 msgstr "تطبيق التدرج اللوني"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Move colors"
+msgstr "تحريك الألوان"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion type:"
+msgstr "نوع الحركة:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Once"
+msgstr "مرة واحدة"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Loop until line end"
+msgstr "تكرار حتى نهاية السطر"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Ping-pong until line end"
+msgstr "ذهابًا وإيابًا حتى نهاية السطر"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Fit once to line"
+msgstr "مرة واحدة، مع ضبطها حسب طول السطر"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Outside:"
+msgstr "خارج النطاق:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Clamp edge colors"
+msgstr "تمديد الألوان الطرفية"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Repeat gradient"
+msgstr "تكرار التدرج"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "First stop color"
+msgstr "لون نقطة اللون الأولى"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start time (ms):"
+msgstr "البداية (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End time (ms):"
+msgstr "النهاية (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Cycle/leg (ms):"
+msgstr "الدورة/المرحلة (ms):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Accel:"
+msgstr "التسارع:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start position (%):"
+msgstr "الموضع الابتدائي (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End position (%):"
+msgstr "الموضع النهائي (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Start width (%):"
+msgstr "العرض الابتدائي (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "End width (%):"
+msgstr "العرض النهائي (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Use line end"
+msgstr "استخدام نهاية السطر"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Before to after"
+msgstr "من البداية إلى النهاية"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "After to before"
+msgstr "من الخلف إلى الأمام"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion"
+msgstr "حركة"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Copy from..."
+msgstr "النسخ من..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops"
+msgstr "نقاط الألوان"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "motion"
+msgstr "الحركة"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "stops and motion"
+msgstr "نقاط اللون والحركة"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Shared"
+msgstr "مشترك"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Per color"
+msgstr "حسب اللون"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Motion settings"
+msgstr "إعدادات الحركة"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Middle width (%):"
+msgstr "عرض المنتصف (%):"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Info"
+msgstr "معلومات"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line once"
+msgstr "تشغيل السطر مرة واحدة"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Play line repeatedly"
+msgstr "تكرار تشغيل السطر"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Previous frame"
+msgstr "الإطار السابق"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Next frame"
+msgstr "الإطار التالي"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient help"
+msgstr "مساعدة التدرج اللوني"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Gradient type\\nLinear follows the selected angle. Radial expands from the center of the selected text.\\n\\nOutput\\nClip creates clipped subtitle copies. By character assigns the gradient separately to characters. With shapes converts text, border and shadow to editable vector shapes without clips.\\n\\nPixels per strip controls spatial detail. Smaller values are smoother but create more generated rows. Anti-strip overlap slightly overlaps oblique, radial and shape bands; rectangular clips always use zero.\\n\\nColor stops\\nClick the bar to add a stop, drag its square to position it, click the square to edit color and alpha, or right-click it to remove it.\\n\\nMotion\\nOnce moves between the two positions during the chosen interval. Loop restarts each cycle. Ping-pong alternates direction. Fit once to line uses the full line duration. Use line end makes Once finish at the subtitle end.\\n\\nAccel changes the timing curve: 1 is linear, above 1 starts slower, and below 1 starts faster. Positions are percentages of the gradient range; values below 0 or above 100 place it outside the text. Colors outside the moving range keep the nearest edge color.\\n\\nStart, middle and end width set the size of the moving gradient at the beginning, halfway point and end. This can create a thin-wide-thin light beam.\\n\\nPlayback\\nThe framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
+msgstr "نوع التدرج\\nيتبع التدرج الخطي الزاوية المحددة. وينتشر التدرج الشعاعي إلى الخارج من مركز النص المحدد.\\n\\nالإخراج\\nينشئ Clip نسخًا مقصوصة من أسطر الترجمة. يطبّق Karakterenként التدرج بشكل منفصل على كل حرف. يحوّل Alakzatok النص والحد والظل إلى أشكال متجهية قابلة للتحرير من دون قص.\\n\\nتتحكم مسافة البكسل في كل شريط بدرجة التفاصيل المكانية. تنتج القيمة الأصغر نتيجة أكثر سلاسة، لكنها تنشئ أسطرًا أكثر. يؤدي التداخل المضاد للتخطط إلى تداخل بسيط بين الأشرطة المائلة والشعاعية وأشرطة الأشكال؛ وتستخدم القصاصات المستطيلة دائمًا القيمة صفر.\\n\\nنقاط الألوان\\nانقر على الشريط لإضافة نقطة لون جديدة، واسحب مربعها لتغيير موضعها، وانقر عليها لتحرير اللون وشفافيته، أو انقر بزر الفأرة الأيمن لإزالتها.\\n\\nالحركة\\nيحرك Egyszer بين الموضعين خلال المدة المحددة. يعيد Ismétlés التشغيل في كل دورة. يبدّل Oda-vissza الاتجاه. يستخدم الوضع المتوافق مع السطر طول السطر بالكامل. ينهي استخدام نهاية السطر وضع Egyszer عند نهاية الترجمة.\\n\\nيعدّل التسارع منحنى الزمن: القيمة 1 خطية، والقيمة الأكبر من 1 تبدأ ببطء أكبر، بينما تبدأ القيمة الأصغر من 1 بسرعة أكبر. المواضع هي نسب مئوية من نطاق التدرج؛ وتضع القيم الأقل من 0 والأكبر من 100 الموضع خارج النص. خارج النطاق المتحرك، يستمر أقرب لون طرفي.\\n\\nيحدد العرض الابتدائي والأوسط والنهائي حجم التدرج المتحرك في البداية ومنتصف المدة والنهاية. وبذلك يمكن إنشاء شعاع ضوئي رفيع–عريض–رفيع.\\n\\nالتشغيل\\nيشغّل زر Play المحاط بإطار السطر مرة واحدة. يكرر زر Play العادي التشغيل. يوقف Pause التشغيل. تنتقل أزرار الأسهم إطار فيديو واحدًا في كل مرة."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Gradient (%d lines, %s, text: %s)"
+msgstr "تدرّج (%d سطر، %s، النص: %s)"
