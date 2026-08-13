@@ -854,6 +854,8 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 
 	struct Prepared {
 		HFONT font = nullptr;
+		LOGFONTW request{};
+		bool owns_fonts = false;
 		/// The same font without the bold the face itself does not have. GDI makes one up, and its
 		/// made-up bold walks the letters further apart than the real face would; the renderers
 		/// thicken the outline and leave the advances alone. So the letters are measured and drawn
@@ -898,7 +900,24 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 		wcsncpy_s(lf.lfFaceName, wxString::FromUTF8(piece.style.face).wc_str(),
 			LF_FACESIZE - 1);
 
-		ready.font = CreateFontIndirectW(&lf);
+		Prepared const *shared = nullptr;
+		for (size_t previous_at = 0; previous_at < at; ++previous_at) {
+			auto const& candidate = prepared[previous_at];
+			if (std::memcmp(&candidate.request, &lf, sizeof(LOGFONTW)) == 0) {
+				shared = &candidate;
+				break;
+			}
+		}
+		ready.request = lf;
+		if (shared) {
+			ready.font = shared->font;
+			ready.plain = shared->plain;
+			ready.slant = shared->slant;
+		}
+		else {
+			ready.font = CreateFontIndirectW(&lf);
+			ready.owns_fonts = true;
+		}
 		if (!ready.font) { ok = false; break; }
 
 		HFONT previous = (HFONT)SelectObject(dc, ready.font);
@@ -907,12 +926,18 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 		// weight it found, so the font file is asked instead - and asked twice, because the answer
 		// to "is this bold invented" is not in one face's table but in the difference between two.
 		unsigned short weight = 0, selection = 0;
-		bool read = ReadFontStyle(dc, weight, selection);
-		int asked_weight = FaceWeight(weight, (selection & 0x20) != 0);
-		bool postscript = FontIsPostScript(dc);
-
+		bool read = false;
+		int asked_weight = 0;
+		bool postscript = false;
 		bool drop_bold = false;
-		if (piece.style.bold && read) {
+		bool drop_italic = false;
+		if (!shared) {
+			read = ReadFontStyle(dc, weight, selection);
+			asked_weight = FaceWeight(weight, (selection & 0x20) != 0);
+			postscript = FontIsPostScript(dc);
+		}
+
+		if (!shared && piece.style.bold && read) {
 			// The same request without the bold. If it lands on a face that says the same about
 			// itself, then the family has no bolder member and what GDI is showing is its own
 			// invention - either on a face that is already bold enough (a family whose own name is
@@ -936,9 +961,10 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 		// - but the matrix it says that about is the TrueType one. A PostScript face is slanted by
 		// tan(10 degrees) instead, where GDI uses tan(18.77), so there the slant is taken off GDI
 		// and put back by hand; otherwise GDI's is exactly right and is kept.
-		bool drop_italic = piece.style.italic && read && !(selection & 0x01) && postscript;
+		if (!shared)
+			drop_italic = piece.style.italic && read && !(selection & 0x01) && postscript;
 
-		if (drop_bold || drop_italic) {
+		if (!shared && (drop_bold || drop_italic)) {
 			LOGFONTW plain = lf;
 			if (drop_bold) plain.lfWeight = FW_NORMAL;
 			if (drop_italic) plain.lfItalic = FALSE;
@@ -1005,8 +1031,8 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 
 	auto clean_up = [&]() {
 		for (auto& ready : prepared) {
-			if (ready.font) DeleteObject(ready.font);
-			if (ready.plain) DeleteObject(ready.plain);
+			if (ready.owns_fonts && ready.font) DeleteObject(ready.font);
+			if (ready.owns_fonts && ready.plain) DeleteObject(ready.plain);
 		}
 		DeleteDC(dc);
 	};
@@ -1266,6 +1292,45 @@ bool Available() {
 #ifdef __WXMSW__
 	return true;
 #else
+	return false;
+#endif
+}
+
+bool UsesSyntheticBold(std::string const& face, bool italic) {
+#ifdef __WXMSW__
+	HDC screen = GetDC(nullptr);
+	HDC dc = CreateCompatibleDC(screen);
+	ReleaseDC(nullptr, screen);
+	if (!dc) return false;
+
+	auto selected_weight = [&](LONG requested, int& actual) {
+		LOGFONTW font_request{};
+		font_request.lfHeight = UPSCALE;
+		font_request.lfWeight = requested;
+		font_request.lfItalic = italic ? TRUE : FALSE;
+		font_request.lfCharSet = DEFAULT_CHARSET;
+		font_request.lfOutPrecision = OUT_TT_PRECIS;
+		wcsncpy_s(font_request.lfFaceName, wxString::FromUTF8(face).wc_str(),
+			LF_FACESIZE - 1);
+		HFONT font = CreateFontIndirectW(&font_request);
+		if (!font) return false;
+		HFONT previous = (HFONT)SelectObject(dc, font);
+		unsigned short weight = 0, selection = 0;
+		bool read = ReadFontStyle(dc, weight, selection);
+		if (read) actual = FaceWeight(weight, (selection & 0x20) != 0);
+		SelectObject(dc, previous);
+		DeleteObject(font);
+		return read;
+	};
+
+	int bold_weight = 0, regular_weight = 0;
+	bool synthetic = selected_weight(FW_BOLD, bold_weight) &&
+		selected_weight(FW_NORMAL, regular_weight) && bold_weight == regular_weight;
+	DeleteDC(dc);
+	return synthetic;
+#else
+	(void)face;
+	(void)italic;
 	return false;
 #endif
 }

@@ -479,6 +479,13 @@ void VideoDisplay::OnSizeEvent(wxSizeEvent &) {
 }
 
 void VideoDisplay::OnMouseEvent(wxMouseEvent& event) {
+	if (event.LeftDClick() && std::chrono::steady_clock::now() < suppress_double_click_until) {
+		wxPoint delta = event.GetPosition() - suppress_double_click_position;
+		if (std::abs(delta.x) <= 6 && std::abs(delta.y) <= 6) {
+			suppress_double_click_until = {};
+			return;
+		}
+	}
 	if (event.RightDown()) {
 		isRightHold = false;
 		rightClickTimer.StartOnce(150);
@@ -789,4 +796,10 @@ void VideoDisplay::Unload() {
 	tool.reset();
 	glContext.reset();
 	pending_frame.reset();
+}
+
+void VideoDisplay::SuppressTextboxDoubleClick(wxPoint position) {
+	suppress_double_click_position = position;
+	suppress_double_click_until = std::chrono::steady_clock::now() +
+		std::chrono::milliseconds(750);
 }

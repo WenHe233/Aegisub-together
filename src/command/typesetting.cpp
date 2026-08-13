@@ -33,6 +33,7 @@
 #include "../typesetting_transform.h"
 #include "../video_display.h"
 #include "../visual_tool_transform.h"
+#include "../visual_tool_textbox.h"
 
 #include <string>
 #include <typeinfo>
@@ -55,7 +56,7 @@ namespace {
 			return remembered_tool;
 
 		static const char *tools[] = {
-			"video/tool/cross", "video/tool/drag", "video/tool/rotate/z",
+			"video/tool/textbox", "video/tool/cross", "video/tool/drag", "video/tool/rotate/z",
 			"video/tool/rotate/xy", "video/tool/perspective", "video/tool/scale",
 			"video/tool/clip", "video/tool/vector_clip", "video/tool/mask_edit",
 			"video/tool/mask", "video/tool/shape"
@@ -195,6 +196,26 @@ struct typesetting_gradient final : public Command {
 	}
 };
 
+struct typesetting_textbox final : public Command {
+	CMD_NAME("typesetting/textbox")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Textbox")
+	STR_DISP("Textbox")
+	STR_HELP("Put the selected lines into a wrapping textbox drawn on the video")
+
+	bool Validate(const agi::Context *c) override {
+		return !!c->project->VideoProvider() &&
+			!c->selectionController->GetSelectedSet().empty();
+	}
+
+	void operator()(agi::Context *c) override {
+		if (RefusedForMask(c, _("Textbox"))) return;
+		std::string back = previous_tool(c);
+		c->videoDisplay->SetTool(std::make_unique<VisualToolTextBox>(
+			c->videoDisplay, c, true, std::move(back)));
+	}
+};
+
 }
 
 namespace cmd {
@@ -206,5 +227,6 @@ namespace cmd {
 		reg(std::make_unique<typesetting_flip_horizontal>());
 		reg(std::make_unique<typesetting_flip_vertical>());
 		reg(std::make_unique<typesetting_gradient>());
+		reg(std::make_unique<typesetting_textbox>());
 	}
 }

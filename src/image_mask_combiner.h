@@ -21,6 +21,7 @@ public:
     bool IsInGroup(const AssDialogue* d) const;
     bool IsCollapsed(const AssDialogue* d) const;
 	bool IsGradientGroup(const AssDialogue* d) const;
+	bool IsTextBoxGroup(const AssDialogue* d) const;
 	std::string const& GetGroupLabel(const AssDialogue* d) const;
 	std::string const& GetGradientDescription(const AssDialogue* d) const;
 
@@ -35,6 +36,7 @@ private:
     struct ImageMaskGroup {
         bool collapsed = true;
 		bool gradient = false;
+		bool textbox = false;
 		AssDialogue* start = nullptr;
 		std::string label;
 		std::string gradient_description;

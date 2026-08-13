@@ -1081,6 +1081,10 @@ OrientedBox SmallestBox(std::vector<Vector2D> const& points) {
 struct Collected {
 	Drawing drawing;
 	std::vector<Segment> original;
+	std::vector<Segment> subdivided;
+	std::vector<Segment> widened;
+	std::vector<Segment> widened_subdivided;
+	bool widened_ready = false;
 };
 
 /// Everything needed to rebuild one line of output: where it starts from, and which of its
@@ -1104,6 +1108,10 @@ struct LineWork {
 	/// Whether the fill is painted the border's own colour, in which case the widened shape holds it
 	/// already and the result itself is left out.
 	bool covered = false;
+	text_to_shape::DecorPaint paint;
+	bool decorations_ready = false;
+	bool want_border = false;
+	bool want_shadow = false;
 };
 
 /// Flatten a cubic into a few straight pieces, for drawing the preview.
@@ -1413,7 +1421,8 @@ ShapeEditor::Preview ShapeEditor::PreviewLines() const {
 	return out;
 }
 
-void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, bool decorations) {
+void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, bool decorations,
+		bool collect_geometry) {
 	double span = impl->box.half.X() * 2;
 	impl->contours.clear();
 	impl->layers.clear();
@@ -1453,11 +1462,17 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 		text_to_shape::DecorPaint paint;
 		bool want_border = false, want_shadow = false;
 		if (decorations) {
-			AssDialogue reading(*work.line);
-			reading.Text = work.source;
-			paint = text_to_shape::ReadDecorations(impl->c, &reading);
-			want_border = paint.pen.Len() > .01f;
-			want_shadow = paint.offset.Len() > .01f;
+			if (!work.decorations_ready) {
+				AssDialogue reading(*work.line);
+				reading.Text = work.source;
+				work.paint = text_to_shape::ReadDecorations(impl->c, &reading);
+				work.want_border = work.paint.pen.Len() > .01f;
+				work.want_shadow = work.paint.offset.Len() > .01f;
+				work.decorations_ready = true;
+			}
+			paint = work.paint;
+			want_border = work.want_border;
+			want_shadow = work.want_shadow;
 			work.covered = want_border && paint.covers;
 		}
 
@@ -1469,7 +1484,10 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 		for (auto& shape : work.shapes) {
 			// Always from the original, never from the last result: a drag applies dozens
 			// of mappings, and chaining them would let the shape creep.
-			auto pieces = MapShape(shape.original, map, impl->box, fold, subdivide, span, step);
+			if (subdivide && shape.subdivided.empty())
+				shape.subdivided = Subdivide(shape.original, span);
+			auto const& source = subdivide ? shape.subdivided : shape.original;
+			auto pieces = MapShape(source, map, impl->box, fold, false, span, step);
 
 			// And the same shape widened by its own pen, through the same mapping - which is what
 			// makes the border bend with the letters instead of being stroked around them.
@@ -1480,23 +1498,29 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 			// the letters were scaled.
 			std::vector<Segment> wide_pieces;
 			if (want_border || want_shadow) {
-				auto rings = RingsOf(shape.original);
-				auto wide = rings;
-				if (want_border) {
-					auto added = text_to_shape::WidenRings(rings, paint.pen.X(), paint.pen.Y());
-					// The shape is part of its own border: what the pen adds is a band around it,
-					// and the middle has to stay solid or the seam would show along every edge.
-					wide.insert(wide.end(), added.begin(), added.end());
+				if (!shape.widened_ready) {
+					auto rings = RingsOf(shape.original);
+					auto wide = rings;
+					if (want_border) {
+						auto added = text_to_shape::WidenRings(rings, paint.pen.X(), paint.pen.Y());
+						// The shape is part of its own border: what the pen adds is a band around it,
+						// and the middle has to stay solid or the seam would show along every edge.
+						wide.insert(wide.end(), added.begin(), added.end());
+					}
+					shape.widened = SegmentsOf(wide);
+					shape.widened_ready = true;
 				}
-				wide_pieces = MapShape(SegmentsOf(wide), map, impl->box, fold, subdivide, span,
-					step);
+				if (subdivide && shape.widened_subdivided.empty())
+					shape.widened_subdivided = Subdivide(shape.widened, span);
+				auto const& wide_source = subdivide ? shape.widened_subdivided : shape.widened;
+				wide_pieces = MapShape(wide_source, map, impl->box, fold, false, span, step);
 			}
-			{
+			if (collect_geometry) {
 				auto rings = RingsOf(pieces);
 				fill_contours.insert(fill_contours.end(),
 					std::make_move_iterator(rings.begin()), std::make_move_iterator(rings.end()));
 			}
-			if (!wide_pieces.empty()) {
+			if (collect_geometry && !wide_pieces.empty()) {
 				auto rings = RingsOf(wide_pieces);
 				wide_contours.insert(wide_contours.end(),
 					std::make_move_iterator(rings.begin()), std::make_move_iterator(rings.end()));
@@ -1509,24 +1533,26 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 
 			// The same points again as plain polylines, which is what gets drawn over the
 			// video while the reshaping is only a preview.
-			std::vector<Vector2D> contour;
-			for (auto const& segment : pieces) {
-				if (segment.points.empty()) continue;
-				if (segment.command == 'm' || segment.command == 'n') {
-					if (contour.size() > 1) impl->contours.push_back(contour);
-					contour.clear();
-					contour.push_back(segment.points.back());
+			if (collect_geometry) {
+				std::vector<Vector2D> contour;
+				for (auto const& segment : pieces) {
+					if (segment.points.empty()) continue;
+					if (segment.command == 'm' || segment.command == 'n') {
+						if (contour.size() > 1) impl->contours.push_back(contour);
+						contour.clear();
+						contour.push_back(segment.points.back());
+					}
+					else if (segment.command == 'b' && segment.points.size() == 3 &&
+						!contour.empty()) {
+						FlattenCubic(contour, contour.back(), segment.points[0],
+							segment.points[1], segment.points[2]);
+					}
+					else {
+						contour.push_back(segment.points.back());
+					}
 				}
-				else if (segment.command == 'b' && segment.points.size() == 3 &&
-					!contour.empty()) {
-					FlattenCubic(contour, contour.back(), segment.points[0],
-						segment.points[1], segment.points[2]);
-				}
-				else {
-					contour.push_back(segment.points.back());
-				}
+				if (contour.size() > 1) impl->contours.push_back(contour);
 			}
-			if (contour.size() > 1) impl->contours.push_back(contour);
 
 			if (shape.drawing.block_index >= blocks.size()) continue;
 			if (blocks[shape.drawing.block_index]->GetType() != AssBlockType::DRAWING) continue;
@@ -1601,13 +1627,13 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 			if (!work.shadow_result.empty())
 				work.shadow_result = MapClips(work.shadow_result, map, impl->box, span);
 		}
-		if (!work.shadow_result.empty())
+		if (collect_geometry && !work.shadow_result.empty())
 			impl->layers.push_back({work.line, LayerKind::Shadow, work.shadow_result,
 				shadow_centre, std::move(shadow_contours), false});
-		if (!work.border_result.empty())
+		if (collect_geometry && !work.border_result.empty())
 			impl->layers.push_back({work.line, LayerKind::Outline, work.border_result,
 				centre, wide_contours, false});
-		if (!work.result.empty())
+		if (collect_geometry && !work.result.empty())
 			impl->layers.push_back({work.line, LayerKind::Primary, work.result,
 				centre, std::move(fill_contours), work.covered});
 	}
@@ -1728,6 +1754,40 @@ PointMap QuadMap(OrientedBox const& box, Vector2D const corners[4]) {
 		if (std::abs(w) < 1e-9) return point;
 		return Vector2D((float)((a * u + b * v + cc) / w),
 		                (float)((d * u + e * v + f) / w));
+	};
+}
+
+PointMap QuadInverseMap(OrientedBox const& box, Vector2D const corners[4]) {
+	double span_x = box.half.X() * 2;
+	double span_y = box.half.Y() * 2;
+	if (span_x <= 0 || span_y <= 0)
+		return [](Vector2D point) { return point; };
+
+	auto found = QuadFrom(corners);
+	if (!found.ok) return [](Vector2D point) { return point; };
+
+	// Invert the homogeneous 3x3 matrix of QuadFrom. Keeping this as a projective
+	// inverse (rather than iterating towards an answer) makes caret hit-testing stable
+	// even when the textbox has a strong perspective.
+	double i00 = found.e - found.f * found.h;
+	double i01 = found.c * found.h - found.b;
+	double i02 = found.b * found.f - found.c * found.e;
+	double i10 = found.f * found.g - found.d;
+	double i11 = found.a - found.c * found.g;
+	double i12 = found.c * found.d - found.a * found.f;
+	double i20 = found.d * found.h - found.e * found.g;
+	double i21 = found.b * found.g - found.a * found.h;
+	double i22 = found.a * found.e - found.b * found.d;
+
+	return [=](Vector2D point) {
+		double x = point.X(), y = point.Y();
+		double w = i20 * x + i21 * y + i22;
+		if (std::abs(w) < 1e-9) return point;
+		double u = (i00 * x + i01 * y + i02) / w;
+		double v = (i10 * x + i11 * y + i12) / w;
+		return box.ToScript(Vector2D(
+			static_cast<float>(u * span_x - box.half.X()),
+			static_cast<float>(v * span_y - box.half.Y())));
 	};
 }
 
@@ -1952,13 +2012,21 @@ PointMap WarpMap(OrientedBox const& box, WarpNet const& net) {
 
 	Vector2D control[16];
 	WarpControls(net, control);
-	std::vector<Vector2D> net_points(control, control + 16);
+	WarpNet source;
+	WarpReset(box, source);
+	Vector2D original[16];
+	WarpControls(source, original);
+	std::vector<Vector2D> delta(16);
+	for (int i = 0; i < 16; ++i) delta[i] = control[i] - original[i];
 
 	return [=](Vector2D point) {
 		Vector2D local = box.ToLocal(point);
 		double u = std::clamp((local.X() + box.half.X()) / span_x, 0.0, 1.0);
 		double v = std::clamp((local.Y() + box.half.Y()) / span_y, 0.0, 1.0);
-		return WarpPoint(net_points.data(), u, v);
+		// Apply the patch's displacement to the original point. The nearest boundary
+		// displacement continues outside the box, so glyph overhang, borders and shadows
+		// do not collapse onto its edge.
+		return point + WarpPoint(delta.data(), u, v);
 	};
 }
 

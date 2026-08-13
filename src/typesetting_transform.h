@@ -134,7 +134,7 @@ public:
 	/// becomes up to three - the shadow, the border over it, and the fill over both - and the fill
 	/// is left out when it is painted the border's own colour, since the widened shape holds it.
 	void Build(PointMap const& map, bool subdivide = true, bool map_clips = true,
-	           bool decorations = false);
+	           bool decorations = false, bool collect_geometry = true);
 
 	/// The outline of the last Build, as closed polylines in script coordinates.
 	std::vector<std::vector<Vector2D>> const& contours() const;
@@ -174,6 +174,10 @@ public:
 /// stay straight, which is what makes it a distort rather than a warp. Corners are
 /// ordered the way OrientedBox::Corners gives them.
 PointMap QuadMap(OrientedBox const& box, Vector2D const corners[4]);
+
+/// The inverse of QuadMap: from the visible quadrilateral back into the box's own
+/// coordinates. Used by editors whose caret and wrapping remain in local box space.
+PointMap QuadInverseMap(OrientedBox const& box, Vector2D const corners[4]);
 
 /// How far a point is from where that same map sends the plane to infinity.
 ///

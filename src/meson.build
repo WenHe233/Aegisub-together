@@ -161,7 +161,8 @@ aegisub_src = files(
     'text_to_shape.cpp',
     'typesetting_perspective.cpp',
     'typesetting_gradient.cpp',
-    'typesetting_transform.cpp',
+      'typesetting_transform.cpp',
+	  'typesetting_textbox.cpp',
     'video_color_pick.cpp',
     'video_controller.cpp',
     'video_display.cpp',
@@ -185,6 +186,7 @@ aegisub_src = files(
     'visual_tool_rotatez.cpp',
     'visual_tool_scale.cpp',
     'visual_tool_transform.cpp',
+	'visual_tool_textbox.cpp',
     'visual_tool_vector_clip.cpp',
 )
 

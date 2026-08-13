@@ -32,6 +32,7 @@
 #include "include/aegisub/context.h"
 #include "include/aegisub/hotkey.h"
 #include "include/aegisub/menu.h"
+#include "command/command.h"
 
 #include "ass_dialogue.h"
 #include "ass_file.h"
@@ -620,8 +621,14 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 
 				if (context->imageMask->IsGroupStart(curDiag) && context->imageMask->IsCollapsed(curDiag) && j == columns.size() - 1) {
 					bool gradient = context->imageMask->IsGradientGroup(curDiag);
+					bool textbox = context->imageMask->IsTextBoxGroup(curDiag);
 					wxString text;
-					if (gradient) {
+					if (textbox) {
+						auto const& label = context->imageMask->GetGroupLabel(curDiag);
+						text = "--- " + fmt_tl("Textbox (%d lines, text: %s)",
+							context->imageMask->GetGroupSize(curDiag), to_wx(label)) + " ---";
+					}
+					else if (gradient) {
 						auto const& label = context->imageMask->GetGroupLabel(curDiag);
 						auto const& description =
 							context->imageMask->GetGradientDescription(curDiag);
@@ -824,11 +831,14 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 
 		// Normal click
 		if ((click || dclick) && !shift && !ctrl && !alt) {
+			bool textbox = context->imageMask->IsTextBoxGroup(dlg);
 			if (dclick) {
 				context->audioBox->ScrollToActiveLine();
 				context->videoController->JumpToTime(dlg->Start);
 			}
 			SelectRow(row, false);
+			if (textbox)
+				cmd::call(dclick ? "video/tool/textbox" : "video/tool/cross", context);
 			return;
 		}
 

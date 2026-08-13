@@ -2,6 +2,7 @@
 
 #include "ass_file.h"
 #include "typesetting_gradient.h"
+#include "typesetting_textbox.h"
 
 #include <regex>
 #include <unordered_set>
@@ -107,6 +108,7 @@ static bool IsSameGroup(const std::vector<AssDialogue*>& old_lines, const std::v
 void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile const& file) {
     struct OpenGroup {
         bool gradient = false;
+		bool textbox = false;
         std::vector<AssDialogue*> lines;
     };
 
@@ -114,7 +116,7 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile 
 
     for (auto& g : groups) {
         if (!g.collapsed && !g.lines.empty())
-            open_groups.push_back({ g.gradient, g.lines });
+            open_groups.push_back({ g.gradient, g.textbox, g.lines });
     }
 
     groups.clear();
@@ -126,7 +128,8 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile 
 
     while (i < n) {
         bool gradient = IsGradientStart(file, lines[i]);
-        if (!gradient && !IsImageMaskLine(lines[i])) {
+		bool textbox = typesetting::textbox::IsSource(file, lines[i]);
+        if (!gradient && !textbox && !IsImageMaskLine(lines[i])) {
             i++;
             continue;
         }
@@ -142,13 +145,20 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile 
                    !IsGradientStart(file, lines[j]))
                 ++j;
         }
+        else if (textbox) {
+			++j;
+			while (j < n && HasSameTiming(base, lines[j]) &&
+				typesetting::textbox::IsEffect(lines[j]) &&
+				!typesetting::textbox::IsSource(file, lines[j]))
+				++j;
+		}
         else {
             while (j < n && HasSameTiming(base, lines[j]) && IsImageMaskLine(lines[j]))
                 j++;
         }
 
         int count = j - start;
-        if (count >= (gradient ? 1 : MIN_SEQUENCE)) {
+        if (count >= (gradient || textbox ? 1 : MIN_SEQUENCE)) {
             groups.emplace_back();
             int idx = (int)groups.size() - 1;
 
@@ -156,10 +166,13 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile 
             g.start = lines[start];
             g.collapsed = true;
             g.gradient = gradient;
+			g.textbox = textbox;
 			if (gradient) {
 				g.label = GradientLabel(file, base);
 				g.gradient_description = typesetting::gradient::GroupDescription(file, *base);
 			}
+			else if (textbox)
+				g.label = typesetting::textbox::Label(file, *base);
 
             for (int k = start; k < j; ++k) {
                 g.lines.push_back(lines[k]);
@@ -167,7 +180,8 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile 
             }
 
             for (auto& old : open_groups) {
-                if (old.gradient == g.gradient && IsSameGroup(old.lines, g.lines)) {
+                if (old.gradient == g.gradient && old.textbox == g.textbox &&
+					IsSameGroup(old.lines, g.lines)) {
                     g.collapsed = false;
                     break;
                 }
@@ -248,6 +262,11 @@ void ImageMaskCombiner::Toggle(AssDialogue* d) {
 bool ImageMaskCombiner::IsGradientGroup(const AssDialogue* d) const {
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     return it != lookup.end() && groups[it->second].gradient;
+}
+
+bool ImageMaskCombiner::IsTextBoxGroup(const AssDialogue* d) const {
+	auto it = lookup.find(const_cast<AssDialogue*>(d));
+	return it != lookup.end() && groups[it->second].textbox;
 }
 
 std::string const& ImageMaskCombiner::GetGroupLabel(const AssDialogue* d) const {
