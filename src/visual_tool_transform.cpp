@@ -25,7 +25,9 @@
 #include "ass_style.h"
 #include "command/command.h"
 #include "compat.h"
+#include "frame_main.h"
 #include "gl_text.h"
+#include "image_mask_combiner.h"
 #include "include/aegisub/context.h"
 #include "options.h"
 #include "selection_controller.h"
@@ -229,11 +231,40 @@ VisualToolTransform::~VisualToolTransform() {
 bool VisualToolTransform::WindowGoing() const {
 	// The window has begun to come apart, so anything drawn or handed to the video from here would
 	// only be one more frame nobody asked to see.
-	return c->parent && c->parent->IsBeingDeleted();
+	return (c->frame && c->frame->IsClosing()) ||
+		(c->parent && c->parent->IsBeingDeleted());
 }
 
 bool VisualToolTransform::TagsMode() const {
 	return mode == VisualToolTransformMode::Free || mode == VisualToolTransformMode::Distort;
+}
+
+bool VisualToolTransform::CollectTextBox() {
+	textbox_document.reset();
+	textbox_lines.clear();
+	AssDialogue *line = c->selectionController->GetActiveLine();
+	if (!line || !c->imageMask || !c->imageMask->IsTextBoxGroup(line)) return false;
+	textbox_lines = c->imageMask->GetGroupLines(line);
+	if (textbox_lines.empty()) return false;
+	auto loaded = typesetting::textbox::Load(*c->ass, *textbox_lines.front());
+	if (!loaded) {
+		textbox_lines.clear();
+		return false;
+	}
+	textbox_document = std::move(*loaded);
+	typesetting::textbox::Corners(*textbox_document, textbox_original_corners);
+	return true;
+}
+
+typesetting::textbox::Document VisualToolTransform::TransformedTextBox() const {
+	auto transformed = *textbox_document;
+	Vector2D target[4];
+	if (mode == VisualToolTransformMode::Distort)
+		std::copy(corners, corners + 4, target);
+	else
+		for (int i = 0; i < 4; ++i) target[i] = MapPoint(textbox_original_corners[i]);
+	typesetting::textbox::SetCorners(transformed, target);
+	return transformed;
 }
 
 bool VisualToolTransform::Active() const {
@@ -248,6 +279,8 @@ bool VisualToolTransform::LinesAlive() const {
 
 	for (auto const& found : tag_lines)
 		if (!live.count(found.line)) return false;
+	for (auto line : textbox_lines)
+		if (!live.count(line)) return false;
 	if (editor)
 		for (auto line : editor->lines())
 			if (!live.count(line)) return false;
@@ -264,6 +297,8 @@ void VisualToolTransform::OnFileReplaced(int type) {
 	shear_split = false;
 	split_built = false;
 	editor.reset();
+	textbox_document.reset();
+	textbox_lines.clear();
 	features.clear();
 	sel_features.clear();
 	ExitTool();
@@ -272,6 +307,22 @@ void VisualToolTransform::OnFileReplaced(int type) {
 void VisualToolTransform::SendPreview() {
 	if (!LinesAlive() || WindowGoing()) return;
 	if (TagsMode()) {
+		if (TextBoxMode()) {
+			auto transformed = TransformedTextBox();
+			auto generated = typesetting::textbox::Generate(c, *textbox_lines.front(), transformed);
+			std::vector<AssDialogue> hidden;
+			hidden.reserve(textbox_lines.size());
+			for (auto line : textbox_lines) {
+				AssDialogue copy(*line);
+				copy.Comment = true;
+				hidden.push_back(std::move(copy));
+			}
+			std::vector<AssDialogue const *> changed, added;
+			for (auto const& line : hidden) changed.push_back(&line);
+			for (auto const& line : generated) added.push_back(&line);
+			c->videoController->PreviewSubtitles(changed, added);
+			return;
+		}
 		if (maintain_decor) EnsureDecor();
 		auto const& lines = Lines();
 
@@ -357,6 +408,11 @@ void VisualToolTransform::SendPreview() {
 
 void VisualToolTransform::ClearPreview() {
 	if (!LinesAlive()) return;
+	if (TextBoxMode()) {
+		std::vector<AssDialogue const *> pointers(textbox_lines.begin(), textbox_lines.end());
+		if (!pointers.empty()) c->videoController->PreviewSubtitles(pointers);
+		return;
+	}
 	if (TagsMode()) {
 		std::vector<AssDialogue const *> pointers;
 		for (auto const& found : tag_lines) pointers.push_back(found.line);
@@ -388,7 +444,8 @@ bool VisualToolTransform::CollectTags() {
 	frame_linear = TransformMatrix2();
 	frame_offset = Vector2D(0.f, 0.f);
 
-	for (auto line : c->selectionController->GetSortedSelection()) {
+	auto lines = TextBoxMode() ? textbox_lines : c->selectionController->GetSortedSelection();
+	for (auto line : lines) {
 		if (!IsDisplayed(line)) continue;
 		tag_lines.push_back(ReadLine(line));
 	}
@@ -1414,22 +1471,33 @@ void VisualToolTransform::Collect() {
 		return;
 	}
 
+	CollectTextBox();
+
 	// These modes say everything in tags, so they need no drawings and convert nothing: they
 	// read the lines as they are.
 	if (TagsMode()) {
 		bool had_lines = !tag_lines.empty();
-		bool was_touched = touched;
-		auto old_box = box;
-		Vector2D old_corners[4];
-		for (int i = 0; i < 4; ++i) old_corners[i] = corners[i];
 
 		tag_lines.clear();
 		if (!CollectTags()) return;
+		if (TextBoxMode()) {
+			Vector2D edge = textbox_original_corners[1] - textbox_original_corners[0];
+			box.angle = static_cast<float>(std::atan2(edge.Y(), edge.X()) * 180.0 / pi);
+			box.centre = (textbox_original_corners[0] + textbox_original_corners[1] +
+				textbox_original_corners[2] + textbox_original_corners[3]) / 4;
+			box.half = Vector2D(
+				(textbox_original_corners[1] - textbox_original_corners[0]).Len() * .25f +
+					(textbox_original_corners[2] - textbox_original_corners[3]).Len() * .25f,
+				(textbox_original_corners[3] - textbox_original_corners[0]).Len() * .25f +
+					(textbox_original_corners[2] - textbox_original_corners[1]).Len() * .25f);
+			box.half = box.half.Max(Vector2D(4.f, 4.f));
+		}
 
 		// The corners start on the untouched box, so nothing moves until one is dragged -
 		// unless the same box came back, which means the same lines did, and then they go back
 		// where the user left them. This is what keeps a distort alive through a zoom or a pan.
-		box.Corners(corners);
+		if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, corners);
+		else box.Corners(corners);
 		if (mode == VisualToolTransformMode::Distort && had_lines && was_touched &&
 			(old_box.centre - box.centre).Len() < .01 &&
 			(old_box.half - box.half).Len() < .01 &&
@@ -1442,7 +1510,7 @@ void VisualToolTransform::Collect() {
 		// a lean - which the renderer applies to each row from that row's own corner, not from
 		// the top of the line. So the rows would slide against one another whatever is dragged,
 		// and there is nothing to wait for: the lines are broken up as the tool opens.
-		if (mode == VisualToolTransformMode::Distort) {
+		if (mode == VisualToolTransformMode::Distort && !TextBoxMode()) {
 			EnsureShearSplit();
 			// A distort is a lean, and a lean is exactly what an upright pen cannot follow - so
 			// the pair are kept as shapes from the start here, and the two switches that answer
@@ -1459,7 +1527,8 @@ void VisualToolTransform::Collect() {
 		return;
 	}
 
-	typesetting::ShapeEditor found(c);
+	typesetting::ShapeEditor found = TextBoxMode() ?
+		typesetting::ShapeEditor(c, textbox_lines) : typesetting::ShapeEditor(c);
 	if (!found.ok()) {
 		// Nothing usable at all is worth saying out loud, once.
 		if (!reported && !found.refusals().empty()) {
@@ -1809,7 +1878,10 @@ void VisualToolTransform::Rebuild() {
 	// The border and the shadow always become shapes of their own here: a pen stays upright whatever
 	// happens to the shape, so under a bend there is nothing else they could be - and nothing to
 	// decide either, which is why there is no switch for it in these modes.
-	editor->Build(typesetting::WarpMap(box, net), true, recalc_clip, true);
+	auto map = typesetting::WarpMap(box, net);
+	// The visual transform only consumes the generated preview rows. Contour and layer
+	// extraction is for gradient geometry and used to duplicate the entire glyph walk here.
+	editor->Build(map, true, recalc_clip, true, false);
 	SendPreview();
 	parent->Render();
 }
@@ -1879,6 +1951,20 @@ void VisualToolTransform::Accept() {
 		return;
 	}
 	if (TagsMode()) {
+		if (TextBoxMode()) {
+			auto transformed = TransformedTextBox();
+			AssDialogue prototype(*textbox_lines.front());
+			auto originals = textbox_lines;
+			// Apply changes both the file and the selection. Neither listener may rebuild this
+			// tool halfway through replacing the generated rows.
+			selection_connection.Block();
+			file_changed_connection.Block();
+			typesetting::textbox::Apply(c, prototype, std::move(originals), transformed);
+			file_changed_connection.Unblock();
+			selection_connection.Unblock();
+			ExitTool();
+			return;
+		}
 		wxString what = mode == VisualToolTransformMode::Distort ?
 			_("distort") : _("free transform");
 		if (maintain_decor) EnsureDecor();
@@ -1973,18 +2059,38 @@ void VisualToolTransform::Accept() {
 	// and the drawings are what the user will want to carry on with, so they end up
 	// selected.
 	auto added = editor->applied();
+	bool removing_textbox = TextBoxMode();
+	std::vector<std::unique_ptr<AssDialogue>> removed_textbox_lines;
+	if (removing_textbox) {
+		// Arch and Warp bake the words into drawings. They no longer have a rectangular
+		// text-flow model, so do not leave an Effect marker or textbox source metadata behind.
+		for (auto line : added) {
+			line->Effect = "";
+			c->ass->DeleteExtradataValue(*line, typesetting::textbox::data_key);
+		}
+		removed_textbox_lines.reserve(textbox_lines.size());
+		for (auto line : textbox_lines) {
+			c->ass->Events.erase(c->ass->Events.iterator_to(*line));
+			removed_textbox_lines.emplace_back(line);
+		}
+		c->ass->CleanExtradata();
+	}
 	wxString message = mode == VisualToolTransformMode::Arch ? _("arch") :
 		mode == VisualToolTransformMode::Distort ? _("distort") : _("warp");
 	// Blocked around the commit for the same reason the base blocks it: the listener would
 	// send us back through Collect in the middle of finishing up.
 	file_changed_connection.Block();
-	c->ass->Commit(message, AssFile::COMMIT_DIAG_ADDREM | AssFile::COMMIT_DIAG_FULL);
-	file_changed_connection.Unblock();
-
+	if (removing_textbox) selection_connection.Block();
+	// The active line must never point at one of the detached textbox sources while commit
+	// listeners inspect the file. This was the list.hpp:1310 assertion captured in the dump.
 	if (!added.empty()) {
 		Selection selection(added.begin(), added.end());
 		c->selectionController->SetSelectionAndActive(std::move(selection), added.front());
 	}
+	c->ass->Commit(message, AssFile::COMMIT_DIAG_ADDREM | AssFile::COMMIT_DIAG_FULL |
+		(removing_textbox ? AssFile::COMMIT_EXTRADATA : 0));
+	file_changed_connection.Unblock();
+	if (removing_textbox) selection_connection.Unblock();
 
 	ExitTool();
 }
@@ -1999,6 +2105,7 @@ void VisualToolTransform::ExitTool() {
 	if (leaving) return;
 	leaving = true;
 	LockEditing(false);
+	if (WindowGoing()) return;
 
 	// However the session ends, the video has to stop showing the preview copies. After
 	// Apply that means handing over lines that already carry the result, which is what
@@ -2006,6 +2113,8 @@ void VisualToolTransform::ExitTool() {
 	ClearPreview();
 
 	editor.reset();
+	textbox_document.reset();
+	textbox_lines.clear();
 	features.clear();
 	sel_features.clear();
 	undo_history.clear();
@@ -2482,7 +2591,8 @@ bool VisualToolTransform::InitializeHold() {
 		// Tested against the box as it stands, not as it started: after a turn the two are
 		// different shapes, and the one on screen is the one being grabbed.
 		Vector2D original[4], quad[4];
-		box.Corners(original);
+		if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, original);
+		else box.Corners(original);
 		for (int i = 0; i < 4; ++i) quad[i] = MapPoint(original[i]);
 		bool inside = true;
 		for (int i = 0; i < 4 && inside; ++i) {
@@ -2709,7 +2819,8 @@ void VisualToolTransform::Draw() {
 		// Only where the box is now. Showing where it was as well left a stale rectangle
 		// lying about on screen with nothing to say.
 		Vector2D original[4], now[4];
-		box.Corners(original);
+		if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, original);
+		else box.Corners(original);
 		for (int i = 0; i < 4; ++i) now[i] = MapPoint(original[i]);
 
 		gl.SetLineColour(mesh_colour, 1.f, 1);
@@ -2719,7 +2830,8 @@ void VisualToolTransform::Draw() {
 	else if (mode == VisualToolTransformMode::Distort) {
 		// The box the drawings started in, and the quadrilateral the corners now describe.
 		Vector2D outline[4];
-		box.Corners(outline);
+		if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, outline);
+		else box.Corners(outline);
 		gl.SetLineColour(line_colour, .6f, 1);
 		for (int i = 0; i < 4; ++i)
 			gl.DrawDashedLine(screen(outline[i]), screen(outline[(i + 1) % 4]), 6.f);

@@ -37,6 +37,7 @@
 #include "vector2d.h"
 #include "visual_tool_vector_clip.h"
 
+#include <chrono>
 #include <memory>
 #include <typeinfo>
 #include <vector>
@@ -141,6 +142,8 @@ class VideoDisplay final : public wxGLCanvas {
 	wxTimer rightClickTimer;
 	bool isRightHold = false;
 	bool angle_measure_line_visible = false;
+	std::chrono::steady_clock::time_point suppress_double_click_until{};
+	wxPoint suppress_double_click_position;
 	wxPoint angle_measure_line_start;
 	wxPoint angle_measure_line_end;
 
@@ -265,6 +268,9 @@ public:
 	Vector2D GetMousePosition() const;
 
 	void SetTool(std::unique_ptr<VisualToolBase> new_tool);
+	/// Prevent the second click of a textbox-dismissal double click from being
+	/// interpreted by the fallback cross tool as a positioning command.
+	void SuppressTextboxDoubleClick(wxPoint position);
 
 	void SetSubTool(int subtool) const { tool->SetSubTool(subtool); };
 

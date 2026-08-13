@@ -17,22 +17,80 @@
 #include "command.h"
 
 #include "../include/aegisub/context.h"
+#include "../image_mask_combiner.h"
 #include "../libresrc/libresrc.h"
 #include "../project.h"
+#include "../selection_controller.h"
 #include "../video_display.h"
 #include "../visual_tool_clip.h"
 #include "../visual_tool_cross.h"
 #include "../visual_tool_drag.h"
 #include "../visual_tool_mask.h"
 #include "../visual_tool_shape.h"
+#include "../visual_tool_textbox.h"
 #include "../visual_tool_perspective.h"
 #include "../visual_tool_rotatexy.h"
 #include "../visual_tool_rotatez.h"
 #include "../visual_tool_scale.h"
 #include "../visual_tool_vector_clip.h"
 
+#include <algorithm>
+
+#include <wx/image.h>
+#include <wx/settings.h>
+
 namespace {
 	using cmd::Command;
+
+	wxBitmap MakeTextboxBitmap(int requested_size) {
+		int size = std::max(requested_size, 8);
+		wxImage image(size, size, true);
+		image.InitAlpha();
+		std::fill(image.GetAlpha(), image.GetAlpha() + size * size, 0);
+		wxColour colour = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT);
+		auto set_pixel = [&](int x, int y) {
+			if (x < 0 || y < 0 || x >= size || y >= size) return;
+			image.SetRGB(x, y, colour.Red(), colour.Green(), colour.Blue());
+			image.SetAlpha(x, y, 255);
+		};
+
+		int margin = std::max(2, size / 5);
+		int last = size - margin - 1;
+		int dash = std::max(2, size / 6);
+		int gap = std::max(1, size / 10);
+		int thickness = std::max(1, size / 16);
+		for (int at = margin; at <= last; at += dash + gap) {
+			for (int along = at; along <= std::min(last, at + dash - 1); ++along) {
+				for (int stroke = 0; stroke < thickness; ++stroke) {
+					set_pixel(along, margin + stroke);
+					set_pixel(along, last - stroke);
+					set_pixel(margin + stroke, along);
+					set_pixel(last - stroke, along);
+				}
+			}
+		}
+		int line_left = margin + std::max(2, size / 8);
+		int line_right = last - std::max(2, size / 8);
+		for (int y : {margin + (last - margin) * 2 / 5, margin + (last - margin) * 3 / 5})
+			for (int x = line_left; x <= line_right; ++x)
+				for (int stroke = 0; stroke < thickness; ++stroke)
+					set_pixel(x, y + stroke);
+		return wxBitmap(image);
+	}
+
+	std::string CurrentVisualTool(const agi::Context *c) {
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolDrag))) return "video/tool/drag";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolRotateZ))) return "video/tool/rotate/z";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolRotateXY))) return "video/tool/rotate/xy";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolPerspective))) return "video/tool/perspective";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolScale))) return "video/tool/scale";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolClip))) return "video/tool/clip";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolVectorClip))) return "video/tool/vector_clip";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolMaskEdit))) return "video/tool/mask_edit";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolMask))) return "video/tool/mask";
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolShape))) return "video/tool/shape";
+		return "video/tool/cross";
+	}
 
 	template<class T>
 	struct visual_tool_command : public Command {
@@ -125,6 +183,33 @@ namespace {
 		STR_MENU("Standard")
 		STR_DISP("Standard")
 		STR_HELP("Standard mode, double click sets position")
+	};
+
+	struct visual_mode_textbox final : public Command {
+		CMD_NAME("video/tool/textbox")
+		wxBitmapBundle Icon(int height, wxLayoutDirection = wxLayout_LeftToRight) const override {
+			return wxBitmapBundle::FromBitmap(MakeTextboxBitmap(height));
+		}
+		CMD_TYPE(COMMAND_VALIDATE | COMMAND_RADIO | COMMAND_HIDE_INVALID)
+		STR_MENU("Textbox")
+		STR_DISP("Textbox")
+		STR_HELP("Show and edit the selected textbox")
+
+		bool Validate(const agi::Context *c) override {
+			auto line = c->selectionController->GetActiveLine();
+			return !!c->project->VideoProvider() && line && c->imageMask->IsTextBoxGroup(line);
+		}
+
+		bool IsActive(const agi::Context *c) override {
+			return c->videoDisplay->ToolIsType(typeid(VisualToolTextBox));
+		}
+
+		void operator()(agi::Context *c) override {
+			if (!Validate(c)) return;
+			std::string return_tool = CurrentVisualTool(c);
+			c->videoDisplay->SetTool(std::make_unique<VisualToolTextBox>(
+				c->videoDisplay, c, false, std::move(return_tool)));
+		}
 	};
 
 	struct visual_mode_drag final : public visual_tool_command<VisualToolDrag> {
@@ -529,6 +614,7 @@ namespace {
 
 namespace cmd {
 	void init_visual_tools() {
+		reg(std::make_unique<visual_mode_textbox>());
 		reg(std::make_unique<visual_mode_cross>());
 		reg(std::make_unique<visual_mode_drag>());
 		reg(std::make_unique<visual_mode_rotate_z>());

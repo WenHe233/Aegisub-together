@@ -20,9 +20,11 @@
 
 #include "command/command.h"
 #include "compat.h"
+#include "include/aegisub/context.h"
 #include "include/aegisub/hotkey.h"
 #include "libresrc/libresrc.h"
 #include "options.h"
+#include "selection_controller.h"
 
 #include <libaegisub/hotkey.h>
 #include <libaegisub/json.h>
@@ -56,6 +58,8 @@ namespace {
 		agi::Context *context;
 		/// Commands for each of the buttons
 		std::vector<cmd::Command *> commands;
+		/// Commands whose toolbar presence follows their validation state
+		std::vector<std::pair<cmd::Command *, bool>> conditional_commands;
 		/// Hotkey context
 		std::string ht_context;
 
@@ -67,15 +71,38 @@ namespace {
 
 		/// Listener for hotkey change signal
 		agi::signal::Connection hotkeys_changed_slot;
+		/// Listener for changes which can show or hide contextual toolbar commands
+		agi::signal::Connection active_line_slot;
+
+		bool RefreshConditionalVisibility() {
+			for (auto const& [command, shown] : conditional_commands) {
+				if (shown != command->Validate(context)) {
+					RegenerateToolbar();
+					return true;
+				}
+			}
+			return false;
+		}
 
 		/// Enable/disable the toolbar buttons
 		void OnIdle(wxIdleEvent &) {
+			if (RefreshConditionalVisibility()) return;
 			for (size_t i = 0; i < commands.size(); ++i) {
 				if (commands[i]->Type() & cmd::COMMAND_VALIDATE)
 					EnableTool(TOOL_ID_BASE + i, commands[i]->Validate(context));
 				if (commands[i]->Type() & cmd::COMMAND_TOGGLE || commands[i]->Type() & cmd::COMMAND_RADIO)
 					ToggleTool(TOOL_ID_BASE + i, commands[i]->IsActive(context));
 			}
+		}
+
+		void OnActiveLineChanged(AssDialogue *) {
+			RefreshConditionalVisibility();
+		}
+
+		void BindConditionalContextUpdates() {
+			if (!conditional_commands.empty())
+				active_line_slot = context->selectionController->AddActiveLineListener(
+					&Toolbar::OnActiveLineChanged, this);
 		}
 
 		/// Toolbar button click handler
@@ -94,6 +121,7 @@ namespace {
 			Unbind(wxEVT_IDLE, &Toolbar::OnIdle, this);
 			ClearTools();
 			commands.clear();
+			conditional_commands.clear();
 			Populate();
 		}
 
@@ -109,13 +137,12 @@ namespace {
 			json::Array const& arr = root_it->second;
 			commands.reserve(arr.size());
 			bool needs_onidle = false;
-			bool last_was_sep = false;
+			bool have_tool = false;
+			bool pending_separator = false;
 
 			for (json::String const& command_name : arr) {
 				if (command_name.empty()) {
-					if (!last_was_sep)
-						AddSeparator();
-					last_was_sep = true;
+					pending_separator = have_tool;
 					continue;
 				}
 
@@ -128,9 +155,15 @@ namespace {
 					continue;
 				}
 
-				last_was_sep = false;
-
 				int flags = command->Type();
+				if (flags & cmd::COMMAND_HIDE_INVALID) {
+					bool shown = command->Validate(context);
+					conditional_commands.emplace_back(command, shown);
+					needs_onidle = true;
+					if (!shown) continue;
+				}
+				if (pending_separator && have_tool) AddSeparator();
+				pending_separator = false;
 				wxItemKind kind =
 					flags & cmd::COMMAND_RADIO ? wxITEM_RADIO :
 					flags & cmd::COMMAND_TOGGLE ? wxITEM_CHECK :
@@ -139,6 +172,7 @@ namespace {
 				AddTool(TOOL_ID_BASE + commands.size(), command->StrDisplay(context), command->Icon(icon_size, GetLayoutDirection()), command->GetTooltip(ht_context), kind);
 
 				commands.push_back(command);
+				have_tool = true;
 				needs_onidle = needs_onidle || flags != cmd::COMMAND_NORMAL;
 			}
 
@@ -148,6 +182,7 @@ namespace {
 			}
 
 			Realize();
+			if (GetParent()) GetParent()->Layout();
 		}
 
 	public:
@@ -161,6 +196,7 @@ namespace {
 		, hotkeys_changed_slot(hotkey::inst->AddHotkeyChangeListener(&Toolbar::RegenerateToolbar, this))
 		{
 			Populate();
+			BindConditionalContextUpdates();
 			Bind(wxEVT_TOOL, &Toolbar::OnClick, this);
 			Bind(wxEVT_DPI_CHANGED, [this] (wxDPIChangedEvent &e) { RegenerateToolbar(); e.Skip(); });
 		}
@@ -180,6 +216,7 @@ namespace {
 		{
 			parent->SetToolBar(this);
 			Populate();
+			BindConditionalContextUpdates();
 			Bind(wxEVT_TOOL, &Toolbar::OnClick, this);
 			Bind(wxEVT_DPI_CHANGED, [this] (wxDPIChangedEvent &e) { RegenerateToolbar(); e.Skip(); });
 		}

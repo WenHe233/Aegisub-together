@@ -18,6 +18,7 @@
 #pragma once
 
 #include "text_to_shape.h"
+#include "typesetting_textbox.h"
 #include "typesetting_transform.h"
 #include "visual_feature.h"
 #include "visual_tool.h"
@@ -81,6 +82,11 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// The drawings being reshaped. Holds the original shapes, the result of the last
 	/// mapping, and the outline that is drawn while it is only a preview.
 	std::optional<typesetting::ShapeEditor> editor;
+	/// A textbox stays live under the tag-based transforms. Its generated rows are only a
+	/// rendering of this document, so transform the document boundary instead of each row.
+	std::optional<typesetting::textbox::Document> textbox_document;
+	std::vector<AssDialogue *> textbox_lines;
+	Vector2D textbox_original_corners[4];
 
 	/// The box the drawings lie in, at whatever angle they lie at.
 	typesetting::OrientedBox box;
@@ -299,6 +305,9 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Whether this mode says what it does in tags rather than in an outline. The free
 	/// transform and the distort do; the arch and the warp bend curves no tag can describe.
 	bool TagsMode() const;
+	bool TextBoxMode() const { return textbox_document.has_value(); }
+	bool CollectTextBox();
+	typesetting::textbox::Document TransformedTextBox() const;
 
 	/// Whether there is anything to work on. The shape modes hold an editor; the modes that
 	/// speak in tags hold the lines themselves.

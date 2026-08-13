@@ -84,7 +84,10 @@ DEFINE_EXCEPTION(CommandNotFound, CommandError);
 		COMMAND_DYNAMIC_HELP = 16,
 
 		/// This command's icon may change based on the state of the project
-		COMMAND_DYNAMIC_ICON = 32
+		COMMAND_DYNAMIC_ICON = 32,
+
+		/// Toolbar entries for this command are hidden while Validate returns false
+		COMMAND_HIDE_INVALID = 64
 	};
 
 	/// Holds an individual Command

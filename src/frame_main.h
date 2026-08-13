@@ -51,6 +51,7 @@ class FrameMain : public wxFrame {
 
 	bool showVideo = true; ///< Is the video display shown?
 	bool showAudio = true; ///< Is the audio display shown?
+	bool closing = false;  ///< The close workflow has started, including its save prompt.
 	wxTimer StatusClear;   ///< Status bar timeout timer
 
 	void InitContents();
@@ -93,6 +94,7 @@ public:
 
 	bool IsVideoShown() const { return showVideo; }
 	bool IsAudioShown() const { return showAudio; }
+	bool IsClosing() const { return closing; }
 
 	DECLARE_EVENT_TABLE()
 };

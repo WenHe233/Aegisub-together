@@ -36,6 +36,11 @@ namespace text_to_shape {
 /// Windows one, so elsewhere the answer is no rather than a wrong shape.
 bool Available();
 
+/// Whether Windows has to synthesize the requested bold face. Renderers thicken such a
+/// face without widening its advances, while GDI's synthesized font widens them as well.
+/// This lets layout code measure the same advances the subtitle renderer will use.
+bool UsesSyntheticBold(std::string const& face, bool italic);
+
 /// Why this line cannot be converted, or an empty string if it can.
 ///
 /// The conversion is deliberately narrow to begin with, and says which case it is

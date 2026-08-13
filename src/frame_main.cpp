@@ -312,12 +312,14 @@ END_EVENT_TABLE()
 
 void FrameMain::OnCloseWindow(wxCloseEvent &event) {
 	wxEventBlocker blocker(this, wxEVT_CLOSE_WINDOW);
+	closing = true;
 
 	context->videoController->Stop();
 	context->audioController->Stop();
 
 	// Ask user if he wants to save first
 	if (context->subsController->TryToClose(event.CanVeto()) == wxCANCEL) {
+		closing = false;
 		event.Veto();
 		return;
 	}

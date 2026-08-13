@@ -70,6 +70,8 @@
         "video/toggle_mask"
     ],
     "visual_tools" : [
+		"video/tool/textbox",
+		"",
         "video/tool/cross",
         "video/tool/drag",
         "video/tool/rotate/z",
