@@ -1,3 +1,16 @@
+버전 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- 서식 메뉴에 그라디언트 기능
+    - 각도 설정 또는 방사형
+    - 여러 종류의 output
+    - 색상별로 각각 비율을 설정하여 슬라이더로 한 번에 쉽게 조절
+    - 애니메이션/이동 효과
+- 텍스트 수정 선택 버그
+- 텍스트 상자 선택 시 우클릭 버그
+- 위치 드래그 시 마우스를 끌어 여러 줄을 동시에 선택할 수 있도록 수정
+- 스타일 편집기의 글꼴 선택기를 더블 클릭하면 글꼴이 변경되도록 수정
+- 분리된 비디오에서 밝기 버그
+
 버전 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - 마스크 편집의 스포이트 모드 브러시 멈춤

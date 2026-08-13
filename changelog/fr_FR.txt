@@ -1,3 +1,16 @@
+Version 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Fonction Gradient dans le menu Formázás
+    - réglage de l’angle ou radial
+    - plusieurs types d’output
+    - réglage individuel des proportions des couleurs simultanément, facilement avec un curseur
+    - effet d’animation/déplacement
+- Bug de sélection lors de la modification du texte
+- Bug du clic droit lors de la sélection de la zone de texte
+- La sélection de plusieurs lignes à la fois lors du déplacement de la position par glisser-déposer avec la souris
+- Le sélecteur de police de l’éditeur de styles doit changer de police par double-clic
+- Bug de luminosité avec la vidéo détachée
+
 Version 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Gel du pinceau en mode pipette de l’édition des masques

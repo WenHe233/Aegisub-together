@@ -1,3 +1,16 @@
+Verze 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Funkce gradientu v nabídce Formátování
+    - nastavení úhlu nebo radiální
+    - více typů outputu
+    - snadné nastavení poměrů pro jednotlivé barvy současně pomocí posuvníku
+    - efekt animace/pohybu
+- Bug při výběru úpravy textu
+- Bug při výběru textového boxu pravým kliknutím
+- Při tažení myší při posouvání pozice lze vybrat více řádků najednou
+- Výběr fontu v editoru stylů změní font dvojklikem
+- Bug jasu u odpojeného videa
+
 Verze 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Zamrzání štětce v režimu kapátka při úpravě masky

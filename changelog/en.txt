@@ -1,3 +1,16 @@
+Version 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Gradient function in the Formatting menu
+    - angle setting or radial
+    - multiple types of output
+    - easily adjust separate ratios for each color simultaneously with a slider
+    - animation/movement effect
+- Text modification selection bug
+- Text box selection right-click bug
+- Position drag can select multiple lines at once when dragging the mouse
+- Style editor font selector changes the font with a double click
+- Brightness bug with detached video
+
 Version 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Brush freezing in mask editing eyedropper mode

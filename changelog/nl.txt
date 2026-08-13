@@ -1,3 +1,16 @@
+Versie 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Gradient-functie in het menu Formattering
+    - hoekinstelling of radiaal
+    - meerdere soorten output
+    - voor kleuren afzonderlijk verhoudingen instellen en ze tegelijk eenvoudig met een schuifregelaar aanpassen
+    - animatie-/bewegingseffect
+- Bug bij selectie van tekstwijzigingen
+- Bug bij rechtsklikken op een tekstselectievak
+- Bij positioneel slepen kunnen meerdere regels tegelijk worden geselecteerd door met de muis te slepen
+- In de stijleditor verandert de fontkeuze de font bij dubbelklikken
+- Bug met helderheid bij losgekoppelde video
+
 Versie 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Vastlopen van de brush in de pipetmodus voor maskbewerking

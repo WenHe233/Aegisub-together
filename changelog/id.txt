@@ -1,3 +1,16 @@
+Versi 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Fungsi Gradient di menu Formázás
+    - pengaturan sudut atau radial
+    - beberapa jenis output
+    - rasio terpisah untuk setiap warna, dapat diatur dengan mudah secara bersamaan menggunakan penggeser
+    - efek animasi/pergerakan
+- Bug pemilihan modifikasi teks
+- Bug klik kanan pada pemilihan kotak teks
+- Drag posisi dapat memilih beberapa baris sekaligus saat menyeret dengan mouse
+- Pemilih font di editor gaya mengubah font dengan klik ganda
+- Bug kecerahan dengan video yang dipisahkan
+
 Versi 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Pembekuan brush dalam mode pipet pengeditan masker

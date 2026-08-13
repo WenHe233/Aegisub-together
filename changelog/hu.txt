@@ -1,3 +1,16 @@
+Verzió 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Gradient funckió a Formázás menüben
+    - szögbeállítás vagy sugaras
+    - több féle output
+    - színekre külön-külön arányokkal egyszerre könnyedén csúszkával
+    - animálási/mozgatási effekt
+- Szövegmódosítás kijelölés bug
+- Szöveg box kijelölés jobb klikk bug
+- Pozíciós drag egyszerre több sort is kijelölhessen egér húzásra
+- Stílus szerkesztő font választó dupla kattintással változzon a font
+- Fényerő leválasztott videóval bug
+
 Verzió 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Maszk szerkesztéses pipettás mód brush fagyás

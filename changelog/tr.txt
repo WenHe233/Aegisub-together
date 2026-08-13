@@ -1,3 +1,16 @@
+Sürüm 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Biçimlendirme menüsünde Gradyan işlevi
+    - açı ayarı veya radyal
+    - çeşitli output seçenekleri
+    - renkler için ayrı ayrı oranlarla aynı anda kolayca kaydırıcıyla
+    - animasyon/hareket efekti
+- Metin değiştirme seçim bug'ı
+- Metin kutusu seçimi sağ tıklama bug'ı
+- Pozisyon sürüklemesi, fareyle sürükleme sırasında aynı anda birden fazla satırın da seçilebilmesini sağlasın
+- Stil düzenleyicide font seçiciye çift tıklayarak font değiştirilsin
+- Ayrılmış video ile parlaklık bug'ı
+
 Sürüm 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Maske düzenleme pipet modunda fırçanın donması

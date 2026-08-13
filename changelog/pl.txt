@@ -1,3 +1,16 @@
+Wersja 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Funkcja gradientu w menu Formatowanie
+    - ustawienie kąta lub promieniowe
+    - kilka rodzajów outputu
+    - możliwość łatwego jednoczesnego ustawienia proporcji dla poszczególnych kolorów za pomocą suwaka
+    - efekt animowania/przesuwania
+- Bug zaznaczania przy modyfikacji tekstu
+- Bug zaznaczania pola tekstowego prawym przyciskiem myszy
+- Możliwość zaznaczenia kilku wierszy jednocześnie podczas przeciągania pozycji myszą
+- Zmiana czcionki w selektorze czcionki edytora stylu po dwukrotnym kliknięciu
+- Bug jasności przy odłączonym wideo
+
 Wersja 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Zawieszanie się pędzla w trybie pipety z edycją maski

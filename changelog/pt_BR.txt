@@ -1,3 +1,16 @@
+Versão 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Função de gradiente no menu Formatação
+    - configuração angular ou radial
+    - vários tipos de output
+    - ajuste fácil com um controle deslizante, simultaneamente, com proporções individuais para cada cor
+    - efeito de animação/movimento
+- Bug de seleção na modificação de texto
+- Bug do clique direito na seleção da caixa de texto
+- Permitir selecionar várias linhas de uma só vez ao arrastar a posição com o mouse
+- No editor de estilos, alterar a fonte com um clique duplo no seletor de fontes
+- Bug de brilho com vídeo desanexado
+
 Versão 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Congelamento do pincel no modo de conta-gotas da edição de máscaras

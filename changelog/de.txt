@@ -1,3 +1,16 @@
+Version 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Gradient-Funktion im Formatierungsmenü
+    - Winkel-Einstellung oder radial
+    - mehrere Ausgabearten
+    - für Farben jeweils eigene Verhältnisse gleichzeitig bequem mit dem Schieberegler
+    - Animations-/Bewegungseffekt
+- Bug bei der Auswahl zur Textänderung
+- Bug beim Rechtsklick auf die Textfeldauswahl
+- Beim Ziehen mit der Maus sollen bei der Positionsverschiebung gleichzeitig mehrere Zeilen ausgewählt werden können
+- Die Schriftart im Schriftartauswahlfeld des Stil-Editors soll sich per Doppelklick ändern
+- Bug bei der Helligkeit mit abgetrenntem Video
+
 Version 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Pinsel-Einfrieren im Pipettenmodus der Maskenbearbeitung

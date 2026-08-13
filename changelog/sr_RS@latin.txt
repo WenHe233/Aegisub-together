@@ -1,3 +1,16 @@
+Verzija 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Gradient funkcija u meniju Formatiranje
+    - podešavanje ugla ili radijalno
+    - više vrsta outputa
+    - za svaku boju posebno sa odnosima, istovremeno jednostavno pomoću klizača
+    - efekat animiranja/pomeranja
+- Bag pri označavanju izmene teksta
+- Bag pri kliku desnim tasterom za označavanje okvira teksta
+- Omogućeno označavanje više redova istovremeno pri prevlačenju mišem kod pozicioniranja
+- Birač fonta u uređivaču stilova menja font dvostrukim klikom
+- Bag sa osvetljenošću pri odvojenom videu
+
 Verzija 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Zamrzavanje brush-a u režimu pipete za uređivanje maski

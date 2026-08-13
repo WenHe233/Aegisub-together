@@ -1,3 +1,16 @@
+Bertsioa 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Gradient funtzioa Formázás menuan
+    - angelu-ezarpena edo erradiala
+    - hainbat output mota
+    - koloreetarako proportzio bereiziekin, aldi berean erraz doitu daiteke graduatzailearekin
+    - animazio/mugimendu efektua
+- Testu-aldaketaren hautapen bug-a
+- Testu-koadroaren hautapenaren eskuin-klik bug-a
+- Posizioaren drag-ak hainbat lerro aldi berean hautatzeko aukera izan dezala saguarekin arrastatzean
+- Estilo-editoreko font-hautatzailean, klik bikoitzarekin font-a alda dadila
+- Bideo desmuntatuarekin distiraren bug-a
+
 4.4 bertsioa ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Maskak editatzeko pipeta moduan brotxa izoztea

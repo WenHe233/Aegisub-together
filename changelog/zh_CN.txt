@@ -1,3 +1,16 @@
+版本 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- 格式菜单中的渐变功能
+    - 角度设置或径向
+    - 多种输出
+    - 可同时轻松使用滑块为各个颜色设置不同的比例
+    - 动画/移动效果
+- 文本修改选择 bug
+- 文本框选择右键 bug
+- 位置拖动时可通过鼠标拖动同时选择多行
+- 样式编辑器中的字体选择器双击即可更改字体
+- 分离视频时的亮度 bug
+
 版本 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - 修复蒙版编辑中的吸管模式画笔冻结问题

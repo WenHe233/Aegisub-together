@@ -1,3 +1,16 @@
+Versió 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Funció de degradat al menú Format
+    - ajust d’angle o radial
+    - diversos tipus de sortida
+    - ajustar fàcilment alhora les proporcions de cada color amb el control lliscant
+    - efecte d’animació/moviment
+- Bug de selecció en la modificació del text
+- Bug de clic dret en la selecció del quadre de text
+- Que l’arrossegament de posició permeti seleccionar diverses línies alhora arrossegant el ratolí
+- Que el selector de fonts de l’editor d’estils canviï la font amb un doble clic
+- Bug de brillantor amb el vídeo separat
+
 Versió 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Congelació del pinzell en el mode comptagotes d’edició de màscares

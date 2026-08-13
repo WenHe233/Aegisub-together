@@ -1,3 +1,16 @@
+Versión 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Función de gradiente no menú Formázás
+    - axuste angular ou radial
+    - varios tipos de saída
+    - axustes independentes para cada cor, facilmente mediante o control deslizante
+    - efecto de animación/movemento
+- Erro na selección da modificación de texto
+- Erro ao facer clic dereito na selección da caixa de texto
+- O arrastre de posición permite seleccionar varias liñas á vez ao arrastrar co rato
+- O tipo de letra do editor de estilos cambia ao facer dobre clic
+- Erro no brillo co vídeo separado
+
 Versión 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Conxelación do pincel no modo contagotas da edición de máscaras

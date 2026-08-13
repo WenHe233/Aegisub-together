@@ -1,3 +1,16 @@
+Versión 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Función de degradado en el menú Formato
+    - ajuste angular o radial
+    - varios tipos de salida
+    - ajustar fácilmente al mismo tiempo los colores por separado con proporciones individuales mediante el deslizador
+    - efecto de animación/movimiento
+- Error de selección al modificar texto
+- Error de selección del cuadro de texto con el botón derecho
+- Al arrastrar con el ratón, poder seleccionar varias líneas a la vez con el arrastre de posición
+- En el editor de estilos, cambiar la fuente del selector de fuentes con un doble clic
+- Error de brillo con el vídeo desacoplado
+
 Versión 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Congelación del pincel en el modo cuentagotas de edición de máscaras

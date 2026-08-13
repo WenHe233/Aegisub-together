@@ -1,3 +1,16 @@
+Versio 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Gradient-toiminto Formázás-valikossa
+    - kulma-asetus tai säteittäinen
+    - useita erilaisia output-vaihtoehtoja
+    - väreille voi säätää erilliset suhteet samanaikaisesti helposti liukusäätimellä
+    - animointi-/liiketehoste
+- Tekstin muokkauksen valintabugi
+- Tekstiruudun valinnan hiiren oikean painikkeen bugi
+- Sijainnin raahaus mahdollistaa useiden rivien valinnan samanaikaisesti hiirellä raahatessa
+- Tyylieditorin fontinvalitsin vaihtaa fontin kaksoisnapsautuksella
+- Kirkkausbugin korjaus irrotetulla videolla
+
 Versio 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Siveltimen jäätyminen maskin muokkaustilan pipettitilassa

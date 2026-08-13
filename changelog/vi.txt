@@ -1,3 +1,16 @@
+Phiên bản 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- Chức năng Gradient trong menu Định dạng
+    - thiết lập góc hoặc hướng tâm
+    - nhiều kiểu output
+    - dễ dàng điều chỉnh đồng thời bằng thanh trượt, với tỷ lệ riêng cho từng màu
+    - hiệu ứng hoạt ảnh/di chuyển
+- Bug chọn sửa đổi văn bản
+- Bug nhấp chuột phải khi chọn box văn bản
+- Khi kéo vị trí bằng chuột, có thể chọn nhiều dòng cùng lúc
+- Trong trình chỉnh sửa kiểu, thay đổi font bằng cách nhấp đúp vào bộ chọn font
+- Bug độ sáng với video đã tách ly- doh?
+
 Phiên bản 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - Khắc phục lỗi đóng băng cọ trong chế độ ống nhỏ giọt khi chỉnh sửa mặt nạ

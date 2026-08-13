@@ -1,3 +1,16 @@
+版本 4.5 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+- 「漸層」功能於格式選單
+    - 角度設定或放射狀
+    - 多種輸出
+    - 各色可分別設定比例，同時輕鬆以滑桿調整
+    - 動畫／移動效果
+- 文字修改選取錯誤
+- 文字框選取按右鍵錯誤
+- 位置拖曳時可透過滑鼠拖曳一次選取多行
+- 樣式編輯器的字型選擇器雙擊即可變更字型
+- 分離影片時亮度錯誤
+
 版本 4.4 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.4/aegisub-nyaa-edition-v4.4.zip
 - 遮罩編輯的滴管模式筆刷凍結
