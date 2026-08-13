@@ -1,4 +1,4 @@
-#include "image_mask_combiner.h"
+#include "subtitle_line_combiner.h"
 
 #include "ass_file.h"
 #include "typesetting_gradient.h"
@@ -105,18 +105,20 @@ static bool IsSameGroup(const std::vector<AssDialogue*>& old_lines, const std::v
     return matches >= min_size * 0.7;
 }
 
-void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile const& file) {
+void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile const& file) {
     struct OpenGroup {
         bool gradient = false;
 		bool textbox = false;
         std::vector<AssDialogue*> lines;
+		int start_row = -1;
     };
 
     std::vector<OpenGroup> open_groups;
 
     for (auto& g : groups) {
         if (!g.collapsed && !g.lines.empty())
-            open_groups.push_back({ g.gradient, g.textbox, g.lines });
+			open_groups.push_back({ g.gradient, g.textbox, g.lines,
+				g.start ? g.start->Row : -1 });
     }
 
     groups.clear();
@@ -179,23 +181,66 @@ void ImageMaskCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile 
                 lookup[lines[k]] = idx;
             }
 
-            for (auto& old : open_groups) {
-                if (old.gradient == g.gradient && old.textbox == g.textbox &&
-					IsSameGroup(old.lines, g.lines)) {
-                    g.collapsed = false;
-                    break;
-                }
-            }
-
             i = j;
         }
         else {
             i = j;
         }
     }
+
+	// Preserve expanded state one-to-one. First use surviving row pointers, which
+	// keeps identical adjacent gradients distinct across ordinary metadata edits.
+	// If a tool regenerated all rows, fall back to the content match and nearest
+	// position, still consuming each new group at most once.
+	std::vector<bool> restored(groups.size(), false);
+	std::vector<bool> matched_open(open_groups.size(), false);
+	for (size_t old_index = 0; old_index < open_groups.size(); ++old_index) {
+		auto const& old = open_groups[old_index];
+		std::unordered_set<AssDialogue*> old_lines(old.lines.begin(), old.lines.end());
+		size_t best = groups.size();
+		size_t best_shared = 0;
+		for (size_t group_index = 0; group_index < groups.size(); ++group_index) {
+			auto const& group = groups[group_index];
+			if (restored[group_index] || old.gradient != group.gradient ||
+				old.textbox != group.textbox) continue;
+			size_t shared = 0;
+			for (auto line : group.lines)
+				if (old_lines.count(line)) ++shared;
+			if (shared > best_shared) {
+				best = group_index;
+				best_shared = shared;
+			}
+		}
+		if (best != groups.size()) {
+			groups[best].collapsed = false;
+			restored[best] = true;
+			matched_open[old_index] = true;
+		}
+	}
+	for (size_t old_index = 0; old_index < open_groups.size(); ++old_index) {
+		if (matched_open[old_index]) continue;
+		auto const& old = open_groups[old_index];
+		size_t best = groups.size();
+		int best_distance = 0;
+		for (size_t group_index = 0; group_index < groups.size(); ++group_index) {
+			auto const& group = groups[group_index];
+			if (restored[group_index] || old.gradient != group.gradient ||
+				old.textbox != group.textbox || !IsSameGroup(old.lines, group.lines)) continue;
+			int row = group.start ? group.start->Row : -1;
+			int distance = old.start_row > row ? old.start_row - row : row - old.start_row;
+			if (best == groups.size() || distance < best_distance) {
+				best = group_index;
+				best_distance = distance;
+			}
+		}
+		if (best != groups.size()) {
+			groups[best].collapsed = false;
+			restored[best] = true;
+		}
+	}
 }
 
-bool ImageMaskCombiner::IsVisible(const AssDialogue* d) const {
+bool SubtitleLineCombiner::IsVisible(const AssDialogue* d) const {
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     if (it == lookup.end())
         return true;
@@ -208,28 +253,28 @@ bool ImageMaskCombiner::IsVisible(const AssDialogue* d) const {
     return d == g.start;
 }
 
-bool ImageMaskCombiner::IsGroupStart(const AssDialogue* d) const {
+bool SubtitleLineCombiner::IsGroupStart(const AssDialogue* d) const {
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     return it != lookup.end() && groups[it->second].start == d;
 }
 
-bool ImageMaskCombiner::IsInGroup(const AssDialogue* d) const {
+bool SubtitleLineCombiner::IsInGroup(const AssDialogue* d) const {
     return lookup.find(const_cast<AssDialogue*>(d)) != lookup.end();
 }
 
-bool ImageMaskCombiner::IsCollapsed(const AssDialogue* d) const {
+bool SubtitleLineCombiner::IsCollapsed(const AssDialogue* d) const {
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     if (it == lookup.end()) return false;
     return groups[it->second].collapsed;
 }
 
-int ImageMaskCombiner::GetGroupSize(const AssDialogue* d) const {
+int SubtitleLineCombiner::GetGroupSize(const AssDialogue* d) const {
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     if (it == lookup.end()) return 1;
     return (int)groups[it->second].lines.size();
 }
 
-AssDialogue* ImageMaskCombiner::GetLastInGroup(const AssDialogue* d) const {
+AssDialogue* SubtitleLineCombiner::GetLastInGroup(const AssDialogue* d) const {
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     if (it == lookup.end())
         return nullptr;
@@ -241,7 +286,7 @@ AssDialogue* ImageMaskCombiner::GetLastInGroup(const AssDialogue* d) const {
     return lines.back();
 }
 
-const std::vector<AssDialogue*>& ImageMaskCombiner::GetGroupLines(const AssDialogue* d) const {
+const std::vector<AssDialogue*>& SubtitleLineCombiner::GetGroupLines(const AssDialogue* d) const {
     static std::vector<AssDialogue*> empty;
 
     auto it = lookup.find(const_cast<AssDialogue*>(d));
@@ -251,7 +296,18 @@ const std::vector<AssDialogue*>& ImageMaskCombiner::GetGroupLines(const AssDialo
     return groups[it->second].lines;
 }
 
-void ImageMaskCombiner::Toggle(AssDialogue* d) {
+void SubtitleLineCombiner::ExpandTypesettingSelection(std::set<AssDialogue*>& selection) const {
+	std::vector<AssDialogue*> selected(selection.begin(), selection.end());
+	for (auto line : selected) {
+		auto it = lookup.find(line);
+		if (it == lookup.end()) continue;
+		auto const& group = groups[it->second];
+		if (!group.gradient && !group.textbox) continue;
+		selection.insert(group.lines.begin(), group.lines.end());
+	}
+}
+
+void SubtitleLineCombiner::Toggle(AssDialogue* d) {
     auto it = lookup.find(d);
     if (it == lookup.end()) return;
 
@@ -259,24 +315,24 @@ void ImageMaskCombiner::Toggle(AssDialogue* d) {
     g.collapsed = !g.collapsed;
 }
 
-bool ImageMaskCombiner::IsGradientGroup(const AssDialogue* d) const {
+bool SubtitleLineCombiner::IsGradientGroup(const AssDialogue* d) const {
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     return it != lookup.end() && groups[it->second].gradient;
 }
 
-bool ImageMaskCombiner::IsTextBoxGroup(const AssDialogue* d) const {
+bool SubtitleLineCombiner::IsTextBoxGroup(const AssDialogue* d) const {
 	auto it = lookup.find(const_cast<AssDialogue*>(d));
 	return it != lookup.end() && groups[it->second].textbox;
 }
 
-std::string const& ImageMaskCombiner::GetGroupLabel(const AssDialogue* d) const {
+std::string const& SubtitleLineCombiner::GetGroupLabel(const AssDialogue* d) const {
     static std::string empty;
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     if (it == lookup.end()) return empty;
 	return groups[it->second].label;
 }
 
-std::string const& ImageMaskCombiner::GetGradientDescription(const AssDialogue* d) const {
+std::string const& SubtitleLineCombiner::GetGradientDescription(const AssDialogue* d) const {
 	static std::string empty;
 	auto it = lookup.find(const_cast<AssDialogue*>(d));
 	if (it == lookup.end()) return empty;

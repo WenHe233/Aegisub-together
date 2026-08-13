@@ -14,7 +14,7 @@
 #include "frame_main.h"
 #include "format.h"
 #include "gl_text.h"
-#include "image_mask_combiner.h"
+#include "subtitle_line_combiner.h"
 #include "include/aegisub/context.h"
 #include "line_change_flags.h"
 #include "libresrc/libresrc.h"

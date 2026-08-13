@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ass_dialogue.h"
+#include <set>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -14,7 +15,7 @@ class AssFile;
 /// own, so anything that reshapes drawings has to leave it alone.
 bool IsImageMaskLine(const AssDialogue* d);
 
-class ImageMaskCombiner {
+class SubtitleLineCombiner {
 public:
     bool IsVisible(const AssDialogue* d) const;
     bool IsGroupStart(const AssDialogue* d) const;
@@ -28,6 +29,8 @@ public:
     int GetGroupSize(const AssDialogue* d) const;
     AssDialogue* GetLastInGroup(const AssDialogue* d) const;
     const std::vector<AssDialogue*>& GetGroupLines(const AssDialogue* d) const;
+	/// Add every row belonging to a selected gradient or textbox object.
+	void ExpandTypesettingSelection(std::set<AssDialogue*>& selection) const;
 
 	void Rebuild(const std::vector<AssDialogue*>& lines, AssFile const& file);
     void Toggle(AssDialogue* d);

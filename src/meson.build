@@ -109,7 +109,7 @@ aegisub_src = files(
     'help_button.cpp',
     'hotkey.cpp',
     'hotkey_data_view_model.cpp',
-    'image_mask_combiner.cpp',
+    'subtitle_line_combiner.cpp',
     'initial_line_state.cpp',
     'main.cpp',
     'menu.cpp',

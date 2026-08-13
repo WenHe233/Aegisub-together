@@ -26,7 +26,7 @@
 #include "../ass_file.h"
 #include "../compat.h"
 #include "../dialog_gradient.h"
-#include "../image_mask_combiner.h"
+#include "../subtitle_line_combiner.h"
 #include "../include/aegisub/context.h"
 #include "../selection_controller.h"
 #include "../project.h"

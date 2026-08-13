@@ -1,6 +1,6 @@
 #include "../ass_dialogue.h"
 #include "../compat.h"
-#include "../image_mask_combiner.h"
+#include "../subtitle_line_combiner.h"
 #include "../utils.h"
 #include "../selection_controller.h"
 #include "../subs_controller.h"

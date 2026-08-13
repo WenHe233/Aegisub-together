@@ -42,7 +42,7 @@
 #include "../dialogs.h"
 #include "../font_size_object.h"
 #include "../format.h"
-#include "../image_mask_combiner.h"
+#include "../subtitle_line_combiner.h"
 #include "../include/aegisub/context.h"
 #include "../initial_line_state.h"
 #include "../libresrc/libresrc.h"
@@ -776,8 +776,14 @@ struct edit_find_in_folder final : public Command {
 };
 
 static void copy_lines(agi::Context *c) {
+	auto selection = c->selectionController->GetSelectedSet();
+	if (c->imageMask) c->imageMask->ExpandTypesettingSelection(selection);
+	std::vector<AssDialogue *> sorted(selection.begin(), selection.end());
+	std::sort(sorted.begin(), sorted.end(), [](AssDialogue *a, AssDialogue *b) {
+		return a->Row < b->Row;
+	});
 	std::string clipboard;
-	for (auto d : c->selectionController->GetSortedSelection()) {
+	for (auto d : sorted) {
 		if (!clipboard.empty()) clipboard += "\r\n";
 		std::string str = d->GetEntryData(false);
 
@@ -806,7 +812,8 @@ static void copy_lines(agi::Context *c) {
 }
 
 static void delete_lines(agi::Context *c, wxString const& commit_message) {
-	auto const& sel = c->selectionController->GetSelectedSet();
+	auto sel = c->selectionController->GetSelectedSet();
+	if (c->imageMask) c->imageMask->ExpandTypesettingSelection(sel);
 	bool transferred_gradient_metadata = false;
 	if (c->imageMask) {
 		for (auto line : sel) {

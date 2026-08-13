@@ -27,7 +27,7 @@
 #include "compat.h"
 #include "frame_main.h"
 #include "gl_text.h"
-#include "image_mask_combiner.h"
+#include "subtitle_line_combiner.h"
 #include "include/aegisub/context.h"
 #include "options.h"
 #include "selection_controller.h"

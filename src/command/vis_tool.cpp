@@ -17,7 +17,7 @@
 #include "command.h"
 
 #include "../include/aegisub/context.h"
-#include "../image_mask_combiner.h"
+#include "../subtitle_line_combiner.h"
 #include "../libresrc/libresrc.h"
 #include "../project.h"
 #include "../selection_controller.h"

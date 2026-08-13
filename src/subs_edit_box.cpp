@@ -43,6 +43,7 @@
 #include "flyweight_hash.h"
 #include "include/aegisub/context.h"
 #include "include/aegisub/hotkey.h"
+#include "subtitle_line_combiner.h"
 #include "initial_line_state.h"
 #include "options.h"
 #include "placeholder_ctrl.h"
@@ -664,7 +665,13 @@ void SubsEditBox::OnEffectChange(wxCommandEvent &evt) {
 }
 
 void SubsEditBox::OnCommentChange(wxCommandEvent &evt) {
-	SetSelectedRows(&AssDialogue::Comment, !!evt.GetInt(), _("comment change"), AssFile::COMMIT_DIAG_META);
+	auto selection = c->selectionController->GetSelectedSet();
+	if (c->imageMask) c->imageMask->ExpandTypesettingSelection(selection);
+	bool comment = !!evt.GetInt();
+	for (auto line : selection)
+		line->Comment = comment;
+	Commit(_("comment change"), AssFile::COMMIT_DIAG_META, false,
+		selection.size() == 1 ? *selection.begin() : nullptr);
 }
 
 void SubsEditBox::CallCommand(const char *cmd_name) {

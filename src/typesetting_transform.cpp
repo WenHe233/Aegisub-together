@@ -21,7 +21,7 @@
 #include "ass_file.h"
 #include "ass_style.h"
 #include "compat.h"
-#include "image_mask_combiner.h"
+#include "subtitle_line_combiner.h"
 #include "include/aegisub/context.h"
 #include "options.h"
 #include "selection_controller.h"

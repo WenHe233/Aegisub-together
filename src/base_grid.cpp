@@ -41,7 +41,7 @@
 #include "fold_controller.h"
 #include "format.h"
 #include "grid_column.h"
-#include "image_mask_combiner.h"
+#include "subtitle_line_combiner.h"
 #include "options.h"
 #include "project.h"
 #include "utils.h"

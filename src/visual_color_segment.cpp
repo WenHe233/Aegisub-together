@@ -2589,8 +2589,13 @@ std::vector<std::vector<Vector2D>> VisualColorSegmenter::Extract(double toleranc
 }
 
 wxCursor MakeVisualColorPickerCursor() {
+	// The named cursor is a Windows resource declared in res.rc. On the other
+	// platforms wxCursor treats the name as a file path and reports a failed
+	// image load before we can fall back to the generated cursor below.
+#ifdef __WXMSW__
 	wxCursor resource_cursor("eyedropper_cursor");
 	if (resource_cursor.IsOk()) return resource_cursor;
+#endif
 
 	constexpr int size = 32;
 	wxImage image(size, size, true);

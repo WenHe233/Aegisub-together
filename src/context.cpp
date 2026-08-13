@@ -21,7 +21,7 @@
 #include "auto4_base.h"
 #include "dialog_manager.h"
 #include "fold_controller.h"
-#include "image_mask_combiner.h"
+#include "subtitle_line_combiner.h"
 #include "initial_line_state.h"
 #include "options.h"
 #include "project.h"
@@ -42,7 +42,7 @@ Context::Context()
 , project(std::make_unique<Project>(this))
 , local_scripts(std::make_unique<Automation4::LocalScriptManager>(this))
 , selectionController(std::make_unique<SelectionController>(this))
-, imageMask(std::make_unique<ImageMaskCombiner>())
+, imageMask(std::make_unique<SubtitleLineCombiner>())
 , foldController(std::make_unique<FoldController>(this))
 , sourceLineController(std::make_unique<SourceLineController>(this))
 , videoController(std::make_unique<VideoController>(this))

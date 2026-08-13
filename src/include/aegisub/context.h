@@ -25,7 +25,7 @@ class DialogManager;
 class FrameMain;
 class Project;
 class SearchReplaceEngine;
-class ImageMaskCombiner;
+class SubtitleLineCombiner;
 class InitialLineState;
 class SelectionController;
 class FoldController;
@@ -50,7 +50,7 @@ struct Context {
 	std::unique_ptr<Project> project;
 	std::unique_ptr<Automation4::ScriptManager> local_scripts;
 	std::unique_ptr<SelectionController> selectionController;
-	std::unique_ptr<ImageMaskCombiner> imageMask;
+	std::unique_ptr<SubtitleLineCombiner> imageMask;
 	std::unique_ptr<FoldController> foldController;
 	std::unique_ptr<SourceLineController> sourceLineController;
 	std::unique_ptr<VideoController> videoController;

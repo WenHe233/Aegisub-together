@@ -38,7 +38,7 @@
 #include "../dialog_search_replace.h"
 #include "../dialogs.h"
 #include "../frame_main.h"
-#include "../image_mask_combiner.h"
+#include "../subtitle_line_combiner.h"
 #include "../include/aegisub/context.h"
 #include "../libresrc/libresrc.h"
 #include "../main.h"
