@@ -1,6 +1,7 @@
 #include "subtitle_line_combiner.h"
 
 #include "ass_file.h"
+#include "imagemask_codec.h"
 #include "typesetting_gradient.h"
 #include "typesetting_textbox.h"
 
@@ -64,19 +65,7 @@ static std::string GradientLabel(AssFile const& file, AssDialogue const* d) {
 }
 
 bool IsImageMaskLine(const AssDialogue* d) {
-    const std::string& raw = d->Text.get();
-
-    if (raw.find("\\p1") == std::string::npos)
-        return false;
-
-    const std::string text = StripOverrides(raw);
-
-    if (text.find("m 0 0 l 0 ") == std::string::npos)
-        return false;
-
-    static const std::regex pattern(R"(m 0 0 l 0 \d+(?:\.\d+)? \d+(?:\.\d+)? \d+(?:\.\d+)? \d+(?:\.\d+)? 0)");
-
-    return std::regex_search(text, pattern);
+	return imagemask::IsLine(d);
 }
 
 static bool IsSameGroup(const std::vector<AssDialogue*>& old_lines, const std::vector<AssDialogue*>& new_lines) {
@@ -131,6 +120,7 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
     while (i < n) {
         bool gradient = IsGradientStart(file, lines[i]);
 		bool textbox = typesetting::textbox::IsSource(file, lines[i]);
+		bool native_imagemask = lines[i]->Effect.get() == "imagemask-fx";
         if (!gradient && !textbox && !IsImageMaskLine(lines[i])) {
             i++;
             continue;
@@ -160,7 +150,7 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
         }
 
         int count = j - start;
-        if (count >= (gradient || textbox ? 1 : MIN_SEQUENCE)) {
+        if (count >= (gradient || textbox || native_imagemask ? 1 : MIN_SEQUENCE)) {
             groups.emplace_back();
             int idx = (int)groups.size() - 1;
 

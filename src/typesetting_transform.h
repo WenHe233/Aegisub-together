@@ -179,6 +179,11 @@ PointMap QuadMap(OrientedBox const& box, Vector2D const corners[4]);
 /// coordinates. Used by editors whose caret and wrapping remain in local box space.
 PointMap QuadInverseMap(OrientedBox const& box, Vector2D const corners[4]);
 
+/// Carry every rectangular or vector clip in a line through the same screen map.
+/// This is shared by interactive transforms and frame-by-frame motion.
+std::string TransformClips(std::string const& text, PointMap const& map,
+	OrientedBox const& bounds, double subdivision_span = 8.0);
+
 /// How far a point is from where that same map sends the plane to infinity.
 ///
 /// One at the top left corner of the box and falling away towards the vanishing line, which is

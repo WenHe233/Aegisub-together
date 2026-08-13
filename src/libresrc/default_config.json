@@ -618,6 +618,15 @@
 			"Maximized" : false,
 			"Skip Whitespace" : true
 		},
+		"Motion" : {
+			"Trim" : {
+				"Configured" : false,
+				"Format" : 0,
+				"Directory" : "?video",
+				"FFmpeg" : "",
+				"CRF" : 18
+			}
+		},
 		"Visual" : {
 			"Perspective": {
 				"Outer": false,
