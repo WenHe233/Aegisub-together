@@ -46,6 +46,8 @@
 #include <sstream>
 #include <iomanip>
 #include <regex>
+#include <wx/clipbrd.h>
+#include <wx/dataobj.h>
 
 
 namespace {

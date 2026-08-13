@@ -40,7 +40,9 @@
 #include <wx/sizer.h>
 #include <wx/spinctrl.h>
 #include <wx/settings.h>
+#include <wx/statbox.h>
 #include <wx/stattext.h>
+#include <wx/textctrl.h>
 #include <wx/timer.h>
 
 namespace {

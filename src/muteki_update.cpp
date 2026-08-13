@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <wx/button.h>
+#include <wx/choice.h>
 #include <wx/choicdlg.h>
 #include <wx/dialog.h>
 #include <wx/msgdlg.h>

@@ -1,4 +1,5 @@
 #include <wx/wx.h>
+#include <wx/spinbutt.h>
 #include <vector>
 #include <cmath>
 #include <algorithm>

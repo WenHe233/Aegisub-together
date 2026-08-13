@@ -37,6 +37,7 @@
 #include <wx/filename.h>
 #include <wx/gauge.h>
 #include <wx/msgdlg.h>
+#include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
 #include <wx/stattext.h>

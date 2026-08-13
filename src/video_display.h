@@ -42,12 +42,14 @@
 #include <typeinfo>
 #include <vector>
 #include <wx/glcanvas.h>
+#include <wx/timer.h>
 
 // Prototypes
 class VideoController;
 class VideoOutGL;
 class VisualToolBase;
 class wxComboBox;
+class wxSlider;
 class wxTextCtrl;
 class wxToolBar;
 struct FrameReadyEvent;

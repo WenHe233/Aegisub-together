@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cmath>
-#include <commctrl.h>
 #include <ctime>
 #include <cwctype>
 #include <functional>
@@ -21,7 +20,15 @@
 #include <wx/treectrl.h>
 #include <wx/vlbox.h>
 #include <wx/wx.h>
+
+#ifdef __WXMSW__
+#include <commctrl.h>
 #include <windows.h>
+#elif defined(__APPLE__)
+#include <CoreText/CoreText.h>
+#else
+#include <fontconfig/fontconfig.h>
+#endif
 
 #include "ass_file.h"
 #include "ass_dialogue.h"
@@ -1291,20 +1298,62 @@ public:
         if (it != cache.end())
             return it->second;
 
-        HDC hdc = GetDC(NULL);
-
+#ifdef __WXMSW__
+        HDC hdc = GetDC(nullptr);
         LOGFONTW lf{};
         wcsncpy_s(lf.lfFaceName, face.wc_str(), LF_FACESIZE - 1);
-
         HFONT font = CreateFontIndirectW(&lf);
-        HFONT old_font = (HFONT)SelectObject(hdc, font);
+        HFONT old_font = font ? (HFONT)SelectObject(hdc, font) : nullptr;
 
-        auto has_char = [&](wchar_t ch)
-        {
-            WORD glyph;
+        auto has_char = [&](wchar_t ch) {
+            if (!hdc || !font) return false;
+            WORD glyph = 0xFFFF;
             GetGlyphIndicesW(hdc, &ch, 1, &glyph, GGI_MARK_NONEXISTING_GLYPHS);
             return glyph != 0xFFFF;
         };
+#elif defined(__APPLE__)
+        auto face_utf8 = face.utf8_str();
+        CFStringRef face_name = CFStringCreateWithCString(kCFAllocatorDefault,
+            face_utf8.data(), kCFStringEncodingUTF8);
+        CTFontRef font = face_name ? CTFontCreateWithName(face_name, 12.0, nullptr) : nullptr;
+        if (face_name) CFRelease(face_name);
+
+        auto has_char = [&](wchar_t ch) {
+            if (!font) return false;
+            wxString text(wxUniChar(ch));
+            auto utf8 = text.utf8_str();
+            CFStringRef value = CFStringCreateWithCString(kCFAllocatorDefault,
+                utf8.data(), kCFStringEncodingUTF8);
+            if (!value) return false;
+            CFIndex length = CFStringGetLength(value);
+            std::vector<UniChar> characters(static_cast<size_t>(length));
+            std::vector<CGGlyph> glyphs(static_cast<size_t>(length));
+            CFStringGetCharacters(value, CFRangeMake(0, length), characters.data());
+            bool present = CTFontGetGlyphsForCharacters(font, characters.data(),
+                glyphs.data(), length);
+            CFRelease(value);
+            return present;
+        };
+#else
+        auto face_utf8 = face.utf8_str();
+        FcPattern *request = FcPatternCreate();
+        if (request)
+            FcPatternAddString(request, FC_FAMILY,
+                reinterpret_cast<FcChar8 const *>(face_utf8.data()));
+        if (request) {
+            FcConfigSubstitute(nullptr, request, FcMatchPattern);
+            FcDefaultSubstitute(request);
+        }
+        FcResult result = FcResultNoMatch;
+        FcPattern *font = request ? FcFontMatch(nullptr, request, &result) : nullptr;
+        FcCharSet *charset = nullptr;
+        if (font)
+            FcPatternGetCharSet(font, FC_CHARSET, 0, &charset);
+
+        auto has_char = [&](wchar_t ch) {
+            return charset && FcCharSetHasChar(charset, static_cast<FcChar32>(ch));
+        };
+#endif
 
         bool ok = false;
         for (auto const& group : filter.groups) {
@@ -1314,9 +1363,16 @@ public:
             if (all) { ok = true; break; }
         }
 
-        SelectObject(hdc, old_font);
-        DeleteObject(font);
-        ReleaseDC(NULL, hdc);
+#ifdef __WXMSW__
+        if (old_font) SelectObject(hdc, old_font);
+        if (font) DeleteObject(font);
+        if (hdc) ReleaseDC(nullptr, hdc);
+#elif defined(__APPLE__)
+        if (font) CFRelease(font);
+#else
+        if (font) FcPatternDestroy(font);
+        if (request) FcPatternDestroy(request);
+#endif
 
         cache[key] = ok;
         g_font_cache_dirty = true;

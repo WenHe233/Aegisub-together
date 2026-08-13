@@ -21,6 +21,7 @@
 
 #include <functional>
 #include <string>
+#include <wx/font.h>
 #include <wx/string.h>
 
 class AssFile;
