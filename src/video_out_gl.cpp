@@ -158,22 +158,6 @@ void VideoOutGL::InitTextures(int width, int height, GLenum format, int bpp, boo
 	CHECK_ERROR(dl = glGenLists(1));
 	CHECK_ERROR(glNewList(dl, GL_COMPILE));
 
-	CHECK_ERROR(glClearColor(0,0,0,0));
-	CHECK_ERROR(glClearStencil(0));
-	CHECK_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
-
-	CHECK_ERROR(glShadeModel(GL_FLAT));
-	CHECK_ERROR(glDisable(GL_BLEND));
-
-	// Switch to video coordinates
-	CHECK_ERROR(glMatrixMode(GL_PROJECTION));
-	if (frameFlipped) {
-		CHECK_ERROR(glOrtho(0.0f, frameWidth, 0.0f, frameHeight, -1000.0f, 1000.0f));
-	}
-	else {
-		CHECK_ERROR(glOrtho(0.0f, frameWidth, frameHeight, 0.0f, -1000.0f, 1000.0f));
-	}
-
 	CHECK_ERROR(glEnable(GL_TEXTURE_2D));
 
 	// Calculate the position information for each texture
@@ -218,7 +202,6 @@ void VideoOutGL::InitTextures(int width, int height, GLenum format, int bpp, boo
 			textureSizes.push_back(make_pair(textureWidth, textureHeight));
 
 			CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, ti.textureID));
-			CHECK_ERROR(glColor4f(1.0f, 1.0f, 1.0f, 1.0f));
 
 			// Place the texture
 			glBegin(GL_QUADS);
@@ -247,7 +230,7 @@ void VideoOutGL::InitTextures(int width, int height, GLenum format, int bpp, boo
 	}
 }
 
-void VideoOutGL::UploadFrameData(VideoFrame const& frame, float brightness) {
+void VideoOutGL::UploadFrameData(VideoFrame const& frame) {
 	if (frame.height == 0 || frame.width == 0) return;
 
 	InitTextures(frame.width, frame.height, GL_BGRA_EXT, 4, frame.flipped);
@@ -255,28 +238,21 @@ void VideoOutGL::UploadFrameData(VideoFrame const& frame, float brightness) {
 	// Set the row length, needed to be able to upload partial rows
 	CHECK_ERROR(glPixelStorei(GL_UNPACK_ROW_LENGTH, frame.pitch / 4));
 
-	if (brightness != 1.0f) {
-		CHECK_ERROR(glPixelTransferf(GL_RED_SCALE,   brightness));
-		CHECK_ERROR(glPixelTransferf(GL_GREEN_SCALE, brightness));
-		CHECK_ERROR(glPixelTransferf(GL_BLUE_SCALE,  brightness));
-	}
-
 	for (auto& ti : textureList) {
 		CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, ti.textureID));
 		CHECK_ERROR(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.sourceW,
 			ti.sourceH, GL_BGRA_EXT, GL_UNSIGNED_BYTE, &frame.data[ti.dataOffset]));
 	}
 
-	if (brightness != 1.0f) {
-		CHECK_ERROR(glPixelTransferf(GL_RED_SCALE,   1.0f));
-		CHECK_ERROR(glPixelTransferf(GL_GREEN_SCALE, 1.0f));
-		CHECK_ERROR(glPixelTransferf(GL_BLUE_SCALE,  1.0f));
-	}
-
 	CHECK_ERROR(glPixelStorei(GL_UNPACK_ROW_LENGTH, 0));
 }
 
-void VideoOutGL::Render(int client_width, int client_height, int dx1, int dy1, int dx2, int dy2) {
+void VideoOutGL::Render(int client_width, int client_height, int dx1, int dy1, int dx2, int dy2, float brightness) {
+	CHECK_ERROR(glClearColor(0, 0, 0, 0));
+	CHECK_ERROR(glClearStencil(0));
+	CHECK_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+	CHECK_ERROR(glShadeModel(GL_FLAT));
+
 	CHECK_ERROR(glMatrixMode(GL_PROJECTION));
 	CHECK_ERROR(glLoadIdentity());
 	CHECK_ERROR(glPushMatrix());
@@ -294,7 +270,38 @@ void VideoOutGL::Render(int client_width, int client_height, int dx1, int dy1, i
 	};
 	CHECK_ERROR(glMultMatrixf(matrix));
 
+	if (frameFlipped) {
+		CHECK_ERROR(glOrtho(0.0f, frameWidth, 0.0f, frameHeight, -1000.0f, 1000.0f));
+	}
+	else {
+		CHECK_ERROR(glOrtho(0.0f, frameWidth, frameHeight, 0.0f, -1000.0f, 1000.0f));
+	}
+
+	CHECK_ERROR(glPushAttrib(GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT));
+	CHECK_ERROR(glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE));
+
+	brightness = std::max(0.0f, brightness);
+	float pass_brightness = std::min(1.0f, brightness);
+	CHECK_ERROR(glDisable(GL_BLEND));
+	CHECK_ERROR(glColor4f(pass_brightness, pass_brightness, pass_brightness, 1.0f));
 	CHECK_ERROR(glCallList(dl));
+
+	// OpenGL clamps glColor values to 1.0, so brightness above 100% is
+	// rendered with additive passes. This works on OpenGL 1.1 contexts as
+	// well as modern drivers and avoids context-dependent glPixelTransfer.
+	float remaining_brightness = brightness - pass_brightness;
+	if (remaining_brightness > 0.0f) {
+		CHECK_ERROR(glEnable(GL_BLEND));
+		CHECK_ERROR(glBlendFunc(GL_ONE, GL_ONE));
+		while (remaining_brightness > 0.0f) {
+			pass_brightness = std::min(1.0f, remaining_brightness);
+			CHECK_ERROR(glColor4f(pass_brightness, pass_brightness, pass_brightness, 1.0f));
+			CHECK_ERROR(glCallList(dl));
+			remaining_brightness -= pass_brightness;
+		}
+	}
+
+	CHECK_ERROR(glPopAttrib());
 
 	CHECK_ERROR(glPopMatrix());
 	CHECK_ERROR(glMatrixMode(GL_MODELVIEW));

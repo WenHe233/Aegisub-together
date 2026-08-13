@@ -66,7 +66,7 @@ class VideoOutGL {
 public:
 	/// @brief Set the frame to be displayed when Render() is called
 	/// @param frame The frame to be displayed
-	void UploadFrameData(VideoFrame const& frame, float brightness);
+	void UploadFrameData(VideoFrame const& frame);
 
 	/// @brief Render a frame
 	/// @param client_width Width in physical pixels of client window
@@ -75,7 +75,8 @@ public:
 	/// @param y Bottom left y coordinate of the target area
 	/// @param width Width in pixels of the target area
 	/// @param height Height in pixels of the target area
-	void Render(int client_width, int client_height, int x, int y, int width, int height);
+	/// @param brightness Brightness multiplier to apply while rendering
+	void Render(int client_width, int client_height, int x, int y, int width, int height, float brightness);
 
 	VideoOutGL();
 	~VideoOutGL();

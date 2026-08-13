@@ -209,7 +209,7 @@ void VideoDisplay::Render() try {
 
 	try {
 		if (pending_frame) {
-			videoOut->UploadFrameData(*pending_frame, brightnessSlider->GetValue() / 100.0f);
+			videoOut->UploadFrameData(*pending_frame);
 			pending_frame.reset();
 		}
 	}
@@ -237,7 +237,8 @@ void VideoDisplay::Render() try {
 	int fb_h = client_size.GetHeight() * scale_factor;
 
 	E(glViewport(0, 0, fb_w, fb_h));
-	videoOut->Render(fb_w, fb_h, content_left, content_bottom, content_width, content_height);
+	videoOut->Render(fb_w, fb_h, content_left, content_bottom, content_width, content_height,
+		brightnessSlider->GetValue() / 100.0f);
 
 	E(glMatrixMode(GL_PROJECTION));
 	E(glLoadIdentity());
@@ -740,14 +741,14 @@ void VideoDisplay::OnSpeedBoxReset(wxMouseEvent &) {
 void VideoDisplay::OnBrightnessSlider(wxCommandEvent &) {
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", brightnessSlider->GetValue()) + " (" + _("Right click to reset") + ")");
 
-	con->videoController->JumpToFrame(con->videoController->GetFrameN());
+	Render();
 }
 
 void VideoDisplay::OnBrightnessReset(wxMouseEvent &) {
 	brightnessSlider->SetValue(100);
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", brightnessSlider->GetValue()) + " (" + _("Right click to reset") + ")");
 
-	con->videoController->JumpToFrame(con->videoController->GetFrameN());
+	Render();
 }
 
 void VideoDisplay::SetTool(std::unique_ptr<VisualToolBase> new_tool) {
