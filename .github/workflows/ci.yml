@@ -5,7 +5,6 @@ permissions:
 
 on:
   push:
-    branches: [ 'migration*' ]
     tags: [ 'v*' ]
   pull_request:
     branches: [ master ]
