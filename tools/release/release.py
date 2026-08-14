@@ -143,13 +143,14 @@ def start_cross_platform_release(config, version):
                 (branch, default_branch, default_branch))
 
     head = git_output('rev-parse', 'HEAD')
-    upstream = git_result('rev-parse', '@{upstream}')
-    if upstream.returncode:
-        common.fail('The current branch has no upstream. Push it before releasing.')
-    if head != upstream.stdout.strip():
+    origin_branch = 'refs/remotes/origin/%s' % branch
+    pushed = git_result('rev-parse', '--verify', origin_branch)
+    if pushed.returncode:
+        common.fail('The current branch has not been pushed to origin. Push it before releasing.')
+    if head != pushed.stdout.strip():
         common.fail(
-            'The current commit is not the commit on the upstream branch. '
-            'Push the branch before creating %s.' % tag)
+            'The current commit is not the commit on origin/%s. '
+            'Push the branch before creating %s.' % (branch, tag))
 
     if git_result('show-ref', '--verify', '--quiet', 'refs/tags/%s' % tag).returncode == 0:
         common.fail('%s already exists locally. Use a new version tag.' % tag)
