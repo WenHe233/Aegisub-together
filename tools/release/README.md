@@ -8,7 +8,7 @@ extra arguments.
 | --- | --- |
 | `release-local.cmd` | Copies the built `aegisub.exe` and the Hungarian catalogue into `C:\aegisub-portable`, for trying a build out immediately. |
 | `translate.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages. It does not build or pack anything. |
-| `release.cmd` | Builds, packs `aegisub-nyaa-edition-v<version>.zip` into `.releases/`, and offers to publish it as `nyaa's edition v<version>` with the English changelog as its GitHub notes. It does not run translations. |
+| `release.cmd` | Builds, packs `aegisub-nyaa-edition-v<version>-update.zip` into `.releases/`, and offers to publish it as `nyaa's edition v<version>` with the English changelog as its GitHub notes. It does not run translations. |
 
 ## Settings
 
@@ -82,3 +82,10 @@ The upload needs a GitHub token in `release.config.apikey.json` as
 
 Both translation passes and the release publishing step skip what is already
 done, so either script can be re-run after a failure part way through.
+
+Pushing a `v*` tag also creates the complete cross-platform release in GitHub
+Actions. The release contains the Windows installer, a full Windows portable
+ZIP, the smaller `-update.zip` used only by the Windows in-program updater,
+Intel and Apple Silicon macOS DMGs, a Linux x86_64 AppImage, and the source
+tarball. The workflow creates a missing GitHub release or updates the assets of
+an existing release without replacing hand-written release notes.

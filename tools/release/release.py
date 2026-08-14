@@ -4,7 +4,7 @@ Three steps, each of which skips whatever is already done:
 
 1. build Aegisub and compile every catalogue
 2. pack aegisub.exe plus locale/ into
-   <release_dir>/aegisub-nyaa-edition-v<version>.zip
+   <release_dir>/aegisub-nyaa-edition-v<version>-update.zip
 3. optionally publish the package as a GitHub release
 """
 

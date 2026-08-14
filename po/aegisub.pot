@@ -7160,6 +7160,12 @@ msgstr ""
 msgid "Do you want to download and install this version?"
 msgstr ""
 
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr ""
+
+msgid "Could not open the release page."
+msgstr ""
+
 msgid "The update was cancelled because Aegisub could not be closed."
 msgstr ""
 
@@ -7170,6 +7176,12 @@ msgid "No newer version is available.\n\nInstalled version: %s\nLatest published
 msgstr ""
 
 msgid "Select the version to install:"
+msgstr ""
+
+msgid "Select the version whose release page you want to open:"
+msgstr ""
+
+msgid "Open a release page"
 msgstr ""
 
 msgid "The selected version is older than the installed version. Do you want to continue?"
@@ -7187,7 +7199,19 @@ msgstr ""
 msgid "Check for and install the latest Muteki Aegisub version"
 msgstr ""
 
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr ""
+
+msgid "Open a specific &release..."
+msgstr ""
+
+msgid "Open a specific release"
+msgstr ""
+
 msgid "Select and install a Muteki Aegisub version"
+msgstr ""
+
+msgid "Select a Muteki Aegisub version and open its release page"
 msgstr ""
 
 msgid "Show the Muteki Aegisub changelog"

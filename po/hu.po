@@ -7629,6 +7629,12 @@ msgstr "Nem érhető el változásleírás."
 msgid "Do you want to download and install this version?"
 msgstr "Szeretnéd letölteni és telepíteni ezt a verziót?"
 
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Ezen a platformon nem érhető el az automatikus telepítés. Megnyitod a kiadás oldalát a verzió letöltéséhez és telepítéséhez?"
+
+msgid "Could not open the release page."
+msgstr "Nem sikerült megnyitni a kiadás oldalát."
+
 msgid "The update was cancelled because Aegisub could not be closed."
 msgstr "A frissítés megszakadt, mert az Aegisubot nem sikerült bezárni."
 
@@ -7640,6 +7646,12 @@ msgstr "Nem érhető el újabb verzió.\n\nTelepített verzió: %s\nLegújabb k�
 
 msgid "Select the version to install:"
 msgstr "Válaszd ki a telepítendő verziót:"
+
+msgid "Select the version whose release page you want to open:"
+msgstr "Válaszd ki, melyik verzió kiadási oldalát szeretnéd megnyitni:"
+
+msgid "Open a release page"
+msgstr "Kiadási oldal megnyitása"
 
 msgid "The selected version is older than the installed version. Do you want to continue?"
 msgstr "A kiválasztott verzió régebbi a telepítettnél. Szeretnéd folytatni?"
@@ -7656,8 +7668,20 @@ msgstr "A Muteki Automation scriptek sikeresen frissültek.\n\nCélmappa: %s"
 msgid "Check for and install the latest Muteki Aegisub version"
 msgstr "A legújabb Muteki Aegisub-verzió keresése és telepítése"
 
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "A legújabb Muteki Aegisub-verzió keresése és kiadási oldalának megnyitása"
+
+msgid "Open a specific &release..."
+msgstr "Egy adott &kiadás megnyitása..."
+
+msgid "Open a specific release"
+msgstr "Egy adott kiadás megnyitása"
+
 msgid "Select and install a Muteki Aegisub version"
 msgstr "Muteki Aegisub-verzió kiválasztása és telepítése"
+
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Muteki Aegisub-verzió kiválasztása és kiadási oldalának megnyitása"
 
 msgid "Show the Muteki Aegisub changelog"
 msgstr "A Muteki Aegisub változáslistájának megjelenítése"

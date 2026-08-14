@@ -1,5 +1,5 @@
 Version 4.5 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5-update.zip
 - Gradient function in the Formatting menu
     - angle setting or radial
     - multiple types of output

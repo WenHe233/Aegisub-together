@@ -35,6 +35,7 @@
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
+#include <wx/utils.h>
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
 
@@ -59,6 +60,7 @@ namespace fs = std::filesystem;
 /// whatever the repository's default branch is, so renaming the branch, or
 /// pointing the default at another one, does not break the address.
 constexpr char CHANGELOG_BASE[] = "https://raw.githubusercontent.com/croni1012/Aegisub/HEAD";
+constexpr char RELEASE_PAGE_BASE[] = "https://github.com/croni1012/Aegisub/releases/tag/v";
 
 /// The automation package is served by a script rather than being a static file,
 /// so it is the one thing that cannot live in the repository beside the rest.
@@ -106,6 +108,10 @@ std::string Trim(std::string value) {
 
 std::string ChangelogUrl(std::string const& language) {
 	return std::string(CHANGELOG_BASE) + "/" + ChangelogName(language);
+}
+
+std::string ReleasePageUrl(std::string const& version) {
+	return std::string(RELEASE_PAGE_BASE) + version;
 }
 
 size_t AppendString(char *data, size_t size, size_t count, void *target) {
@@ -443,7 +449,12 @@ bool ConfirmInstall(wxWindow *parent, Release const& release, std::string const&
 		all_changes.empty() ? _("No change description is available.") : to_wx(all_changes),
 		wxDefaultPosition, wxSize(600, 260), wxTE_MULTILINE | wxTE_READONLY);
 	outer->Add(changes, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
-	outer->Add(new wxStaticText(&dialog, -1, _("Do you want to download and install this version?")),
+	#ifdef _WIN32
+	auto question = _("Do you want to download and install this version?");
+	#else
+	auto question = _("Automatic installation is not available on this platform. Open the release page to download and install this version?");
+	#endif
+	outer->Add(new wxStaticText(&dialog, -1, question),
 		0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 	auto buttons = new wxBoxSizer(wxHORIZONTAL);
 	buttons->Add(MakeChangelogLanguageRow(&dialog, changes, CHANGELOG_DEFAULT_LANGUAGE), 0,
@@ -694,6 +705,7 @@ std::vector<fs::path> RestartFiles(agi::Context *context) {
 void InstallRelease(agi::Context *context, Release const& release, std::string const& changes,
 	bool already_confirmed = false) {
 	if (!already_confirmed && !ConfirmInstall(context->parent, release, changes)) return;
+	#ifdef _WIN32
 	StageProgramUpdate(release, context->parent);
 	pending_update->restart_files = RestartFiles(context);
 	agi::signal::Connection file_saved(context->subsController->AddFileSaveListener([context] {
@@ -705,6 +717,10 @@ void InstallRelease(agi::Context *context, Release const& release, std::string c
 		wxMessageBox(_("The update was cancelled because Aegisub could not be closed."),
 			_("Muteki update"), wxOK | wxICON_INFORMATION);
 	}
+	#else
+	if (!wxLaunchDefaultBrowser(to_wx(ReleasePageUrl(release.version))))
+		throw UpdateError(from_wx(_("Could not open the release page.")));
+	#endif
 }
 
 std::pair<std::string, std::vector<Release>> LoadReleases() {
@@ -791,11 +807,18 @@ void InstallSelectedVersion(agi::Context *context) {
 		auto [text, releases] = LoadReleases();
 		wxArrayString choices;
 		for (auto const& release : releases) choices.Add(to_wx(release.version));
-		wxSingleChoiceDialog dialog(context->parent, _("Select the version to install:"),
-			_("Install a specific version"), choices);
+		#ifdef _WIN32
+		auto prompt = _("Select the version to install:");
+		auto title = _("Install a specific version");
+		#else
+		auto prompt = _("Select the version whose release page you want to open:");
+		auto title = _("Open a release page");
+		#endif
+		wxSingleChoiceDialog dialog(context->parent, prompt, title, choices);
 		if (dialog.ShowModal() != wxID_OK) return;
 		auto index = static_cast<size_t>(dialog.GetSelection());
 		auto comparison = CompareVersions(releases[index].version, GetMutekiVersionString());
+		#ifdef _WIN32
 		if (comparison < 0) {
 			if (wxMessageBox(_("The selected version is older than the installed version. Do you want to continue?"),
 				_("Confirm downgrade"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING, context->parent) != wxYES) return;
@@ -807,6 +830,12 @@ void InstallSelectedVersion(agi::Context *context) {
 				: releases[index].changes;
 			InstallRelease(context, releases[index], changes);
 		}
+		#else
+		auto changes = comparison > 0
+			? ChangesBetween(releases, GetMutekiVersionString(), releases[index].version)
+			: releases[index].changes;
+		InstallRelease(context, releases[index], changes);
+		#endif
 	}
 	catch (std::exception const& e) { ShowError(context->parent, e); }
 }

@@ -9,15 +9,25 @@ struct check final : Command {
 	CMD_NAME("muteki-update/check")
 	STR_MENU("&Update...")
 	STR_DISP("Update")
+	#ifdef _WIN32
 	STR_HELP("Check for and install the latest Muteki Aegisub version")
+	#else
+	STR_HELP("Check for the latest Muteki Aegisub version and open its release page")
+	#endif
 	void operator()(agi::Context *c) override { muteki_update::CheckForUpdates(c); }
 };
 
 struct install_version final : Command {
 	CMD_NAME("muteki-update/install-version")
+	#ifdef _WIN32
 	STR_MENU("Install a specific &version...")
 	STR_DISP("Install a specific version")
 	STR_HELP("Select and install a Muteki Aegisub version")
+	#else
+	STR_MENU("Open a specific &release...")
+	STR_DISP("Open a specific release")
+	STR_HELP("Select a Muteki Aegisub version and open its release page")
+	#endif
 	void operator()(agi::Context *c) override { muteki_update::InstallSelectedVersion(c); }
 };
 

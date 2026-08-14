@@ -17,9 +17,10 @@ set -e
 
 SRC_DIR="${1}"
 BUILD_DIR="${2}"
-AEGI_VER="${3}"
+AEGI_VER="${AEGISUB_PACKAGE_VERSION:-${3}}"
+AEGI_ARCH="$(uname -m)"
 
-PKG_NAME="Aegisub-${AEGI_VER}"
+PKG_NAME="Aegisub-${AEGI_VER}-${AEGI_ARCH}"
 PKG_NAME_VOLUME="${PKG_NAME}"
 
 PKG_DIR="${BUILD_DIR}/Aegisub.app"
