@@ -1,3 +1,16 @@
+バージョン 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
+- フォーマットメニューにテキストボックス機能を追加
+    - 独立した要素として存在するテキストボックス。動画上で編集でき、一般的な書式設定（テキスト選択対応）が可能
+    - 選択範囲内でのテキスト配置。左揃え|中央揃え|右揃え|両端揃えに対応
+    - 行間を変更可能
+    - 遠近法でも動作
+- 複数のグラデーションを上下に配置した場合の削除/commentバグを修正
+- 結合された行でのCTRL + X、複製、ALT + 矢印による移動のバグを修正
+- Linux & MAC リリース
+- Clip + スポイトモードの修正と改善
+- フォント選択の設定に専用の場所を追加
+
 バージョン 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - 「フォーマット」メニューにグラデーション機能

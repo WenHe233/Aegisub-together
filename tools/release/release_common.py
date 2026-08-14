@@ -31,7 +31,7 @@ DEFAULT_CONFIG = {
     'source_language': 'hu',
     'fallback_language': 'en',
     'release_language': 'en',
-    'release_asset_template': 'aegisub-nyaa-edition-v{version}.zip',
+    'release_asset_template': 'Aegisub-nyaa-edition-v{version}-update.zip',
     'release_name_template': "nyaa's edition v{version}",
     'openai_model': 'gpt-5.6-terra',
     # Keys belong in release.config.apikey.json; this stays empty in the

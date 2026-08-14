@@ -36,6 +36,7 @@
 #include "../audio_controller.h"
 #include "../audio_timing.h"
 #include "../fold_controller.h"
+#include "../subtitle_line_combiner.h"
 #include "../frame_main.h"
 #include "../include/aegisub/context.h"
 #include "../libresrc/libresrc.h"
@@ -46,6 +47,8 @@
 #include <sstream>
 #include <iomanip>
 #include <regex>
+#include <wx/clipbrd.h>
+#include <wx/dataobj.h>
 
 
 namespace {
@@ -348,6 +351,36 @@ static bool move_one(T begin, T end, U const& to_move, bool swap) {
 	return move_count > 0;
 }
 
+static Selection expanded_grid_selection(agi::Context *c) {
+	Selection selection = c->selectionController->GetSelectedSet();
+	if (!c->imageMask) return selection;
+	std::vector<AssDialogue *> selected(selection.begin(), selection.end());
+	for (auto line : selected) {
+		auto const& group = c->imageMask->GetGroupLines(line);
+		selection.insert(group.begin(), group.end());
+	}
+	return selection;
+}
+
+static size_t visible_move_distance(agi::Context *c, Selection const& selection, bool down) {
+	if (selection.empty() || !c->imageMask) return 1;
+	AssDialogue *boundary = *selection.begin();
+	for (auto line : selection) {
+		if ((down && line->Row > boundary->Row) || (!down && line->Row < boundary->Row))
+			boundary = line;
+	}
+	auto position = c->ass->Events.iterator_to(*boundary);
+	if (down) {
+		if (++position == c->ass->Events.end()) return 1;
+	}
+	else {
+		if (position == c->ass->Events.begin()) return 1;
+		--position;
+	}
+	auto const& adjacent_group = c->imageMask->GetGroupLines(&*position);
+	return std::max<size_t>(1, adjacent_group.size());
+}
+
 struct grid_move_up final : public Command {
 	CMD_NAME("grid/move/up")
 	STR_MENU("Move line up")
@@ -360,7 +393,11 @@ struct grid_move_up final : public Command {
 	}
 
 	void operator()(agi::Context *c) override {
-		if (move_one(c->ass->Events.begin(), c->ass->Events.end(), c->selectionController->GetSelectedSet(), false))
+		auto selection = expanded_grid_selection(c);
+		bool moved = false;
+		for (size_t step = visible_move_distance(c, selection, false); step; --step)
+			moved = move_one(c->ass->Events.begin(), c->ass->Events.end(), selection, false) || moved;
+		if (moved)
 			c->ass->Commit(_("move lines"), AssFile::COMMIT_ORDER);
 	}
 };
@@ -377,7 +414,11 @@ struct grid_move_down final : public Command {
 	}
 
 	void operator()(agi::Context *c) override {
-		if (move_one(c->ass->Events.rbegin(), c->ass->Events.rend(), c->selectionController->GetSelectedSet(), true))
+		auto selection = expanded_grid_selection(c);
+		bool moved = false;
+		for (size_t step = visible_move_distance(c, selection, true); step; --step)
+			moved = move_one(c->ass->Events.rbegin(), c->ass->Events.rend(), selection, true) || moved;
+		if (moved)
 			c->ass->Commit(_("move lines"), AssFile::COMMIT_ORDER);
 	}
 };

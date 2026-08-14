@@ -365,23 +365,12 @@ void SubsTextEditCtrl::Paste() {
 
 void SubsTextEditCtrl::OnRightDown(wxMouseEvent &event) {
 	right_click_pending = true;
-	right_click_selection_start = GetSelectionStart();
-	right_click_selection_end = GetSelectionEnd();
+	right_click_anchor = GetAnchor();
+	right_click_caret = GetCurrentPos();
 	right_click_position = PositionFromPoint(event.GetPosition());
-	if (right_click_selection_start == right_click_selection_end) {
-		event.Skip();
-		return;
-	}
-
-	bool on_selection = right_click_position >= right_click_selection_start &&
-		right_click_position < right_click_selection_end;
-	if (on_selection)
-		SetSelection(right_click_selection_start, right_click_selection_end);
-	else
-		SetSelection(right_click_selection_end, right_click_selection_end);
-	// Do not pass a selected-text right click to Scintilla: its native handler first
-	// moves the caret to the visual line end, which creates a visible one-frame flash.
-	// WM_CONTEXTMENU still arrives normally and opens our existing popup menu.
+	SetSelection(right_click_anchor, right_click_caret);
+	// Do not pass the click to Scintilla: its native handler can move the caret or
+	// discard the selection before WM_CONTEXTMENU opens our existing popup menu.
 }
 
 void SubsTextEditCtrl::OnContextMenu(wxContextMenuEvent &event) {
@@ -389,14 +378,7 @@ void SubsTextEditCtrl::OnContextMenu(wxContextMenuEvent &event) {
 	int activePos;
 	if (right_click_pending) {
 		activePos = right_click_position;
-		if (right_click_selection_start != right_click_selection_end) {
-			bool on_selection = activePos >= right_click_selection_start &&
-				activePos < right_click_selection_end;
-			if (on_selection)
-				SetSelection(right_click_selection_start, right_click_selection_end);
-			else
-				SetSelection(right_click_selection_end, right_click_selection_end);
-		}
+		SetSelection(right_click_anchor, right_click_caret);
 		right_click_pending = false;
 	}
 	else if (pos == wxDefaultPosition)

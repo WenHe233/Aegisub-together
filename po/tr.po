@@ -9876,7 +9876,7 @@ msgstr "çift tıklamayla rengi kabul et"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&Biçimlendirme"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
@@ -10499,3 +10499,73 @@ msgstr "Degrade türü\\nDoğrusal degrade, seçilen açıyı izler. Radyal degr
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Degrade (%d satır, %s, metin: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API anahtarı güvenli bir şekilde işletim sistemi kimlik bilgisi deposunda saklanır."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Anahtarı işletim sistemi kimlik bilgisi deposunda güvenli bir şekilde saklama"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "API sırrı güvenli bir şekilde işletim sistemi kimlik bilgisi deposunda saklanır."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "API sırrını işletim sistemi kimlik bilgisi deposunda güvenli bir şekilde saklama"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Çift Alt: ekleme/silme arasında geçiş"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Birleştirilmiş satırların arka planı"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Bu platformda otomatik yükleme kullanılamıyor. Sürümü indirip yüklemek için sürüm sayfası açılsın mı?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Sürüm sayfası açılamadı."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Hangi sürümün yayın sayfasını açmak istediğinizi seçin:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Sürüm sayfasını aç"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "En yeni Muteki Aegisub sürümünü bul ve sürüm sayfasını aç"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Belirli bir &sürümü aç..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Belirli bir sürümü aç"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Muteki Aegisub sürümünü seçin ve sürüm sayfasını açın"

@@ -543,7 +543,10 @@ class DialogFolderSearch final : public wxDialog {
 		if (!result->groups.empty()) append_groups(result->groups);
 		set_status(wxString::Format(_("%zu subtitle files searched, %zu matches found"), files, hits));
 		if (!result->done) return;
-		if (worker.joinable()) worker.join(); set_running(false);
+		if (worker.joinable()) {
+			worker.join();
+		}
+		set_running(false);
 		if (!result->error.empty()) wxMessageBox(fmt_tl("Folder search failed:\n%s", result->error), _("Find in Folder"), wxOK | wxICON_ERROR, this);
 		else if (result->cancelled) set_status(wxString::Format(_("Search stopped: %zu subtitle files searched, %zu matches found"), files, hits));
 		else set_status(wxString::Format(_("Search complete: %zu subtitle files searched, %zu matches found"), files, hits));

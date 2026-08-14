@@ -9156,7 +9156,7 @@ msgstr "قبول اللون بالنقر المزدوج"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&التنسيق"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
@@ -9784,3 +9784,73 @@ msgstr "نوع التدرج\\nيتبع التدرج الخطي الزاوية ا
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "تدرّج (%d سطر، %s، النص: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "يُخزَّن مفتاح API بأمان في مخزن بيانات اعتماد نظام التشغيل."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "تخزين المفتاح بأمان في مخزن بيانات اعتماد نظام التشغيل"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "يُخزَّن سر API بأمان في مخزن بيانات اعتماد نظام التشغيل."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "تخزين سر API بأمان في مخزن بيانات اعتماد نظام التشغيل"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Alt مرتين: تبديل الإضافة/الحذف"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "خلفية الأسطر المدمجة"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "التثبيت التلقائي غير متاح على هذه المنصة. هل تريد فتح صفحة الإصدار لتنزيل الإصدار وتثبيته؟"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "تعذّر فتح صفحة الإصدار."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "اختر صفحة إصدار النسخة التي تريد فتحها:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "فتح صفحة الإصدار"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "البحث عن أحدث إصدار من Muteki Aegisub وفتح صفحة الإصدار"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "فتح &إصدار محدد..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "فتح إصدار محدد"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "اختيار إصدار Muteki Aegisub وفتح صفحة الإصدار"

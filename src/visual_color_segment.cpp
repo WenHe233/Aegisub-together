@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <deque>
 #include <limits>
+#include <map>
 #include <mutex>
 #include <numeric>
 #include <unordered_map>
@@ -135,6 +136,60 @@ namespace {
 		return result.size() >= 3 ? result : corners;
 	}
 
+	std::vector<Vector2D> simplify_closed_stable(std::vector<Vector2D> const& points,
+		double epsilon) {
+		if (points.size() < 4) return points;
+
+		// Ordinary closed RDP chooses a farthest opposite point for the whole loop.
+		// A one-pixel brush edit can change that point and consequently move the
+		// simplified outline far away from the stroke. Fixed world-space grid
+		// crossings split the loop into local RDP sections, limiting every change to
+		// the cells touched by the edit while retaining the same point reduction.
+		constexpr int anchor_grid = 8;
+		std::vector<size_t> anchors;
+		anchors.reserve(points.size() / anchor_grid + 4);
+		for (size_t i = 0; i < points.size(); ++i) {
+			int x = static_cast<int>(std::lround(points[i].X()));
+			int y = static_cast<int>(std::lround(points[i].Y()));
+			if (x % anchor_grid == 0 || y % anchor_grid == 0)
+				anchors.push_back(i);
+		}
+		if (anchors.size() < 2) return simplify_closed(points, epsilon);
+
+		std::vector<Vector2D> result;
+		result.reserve(points.size());
+		for (size_t anchor = 0; anchor < anchors.size(); ++anchor) {
+			size_t first = anchors[anchor];
+			size_t last = anchors[(anchor + 1) % anchors.size()];
+			std::vector<Vector2D> section;
+			section.push_back(points[first]);
+			for (size_t i = (first + 1) % points.size(); i != last;
+				i = (i + 1) % points.size())
+				section.push_back(points[i]);
+			section.push_back(points[last]);
+			std::vector<unsigned char> keep(section.size());
+			keep.front() = keep.back() = 1;
+			simplify_open(section, 0, section.size() - 1, epsilon, keep);
+			// The final point is the next section's first point.
+			for (size_t i = 0; i + 1 < section.size(); ++i)
+				if (keep[i]) result.push_back(section[i]);
+		}
+		if (result.size() < 3) return simplify_closed(points, epsilon);
+
+		// Grid anchors can be adjacent along a straight boundary. Removing those
+		// exact collinear points changes neither the shape nor locality.
+		std::vector<Vector2D> corners;
+		corners.reserve(result.size());
+		for (size_t i = 0; i < result.size(); ++i) {
+			Vector2D previous = result[(i + result.size() - 1) % result.size()];
+			Vector2D current = result[i];
+			Vector2D next = result[(i + 1) % result.size()];
+			if (std::abs((current - previous).Cross(next - current)) > 1e-5f)
+				corners.push_back(current);
+		}
+		return corners.size() >= 3 ? corners : result;
+	}
+
 	double polygon_area(std::vector<Vector2D> const& polygon) {
 		double area = 0.0;
 		for (size_t i = 0; i < polygon.size(); ++i) {
@@ -218,10 +273,10 @@ namespace {
 				current = next_edge;
 			}
 			if (contour.size() < 4 || std::abs(polygon_area(contour)) < 1.5) continue;
-			auto simplified = simplify_closed(std::move(contour), simplify_epsilon);
+			auto simplified = simplify_closed_stable(contour, simplify_epsilon);
 			if (simplified.size() >= 3) contours.push_back(std::move(simplified));
 		}
-		return contours;
+		return SplitSelfTouchingContours(std::move(contours));
 	}
 
 	struct RasterContour {
@@ -2139,6 +2194,39 @@ std::vector<VisualColorTemplate>& VisualColorTemplates() {
 	return templates;
 }
 
+std::vector<std::vector<Vector2D>> SplitSelfTouchingContours(
+	std::vector<std::vector<Vector2D>> contours) {
+	std::vector<std::vector<Vector2D>> pending = std::move(contours);
+	std::vector<std::vector<Vector2D>> result;
+	while (!pending.empty()) {
+		auto contour = std::move(pending.back());
+		pending.pop_back();
+		if (contour.size() < 3) continue;
+
+		std::map<std::pair<float, float>, size_t> seen;
+		bool split = false;
+		for (size_t i = 0; i < contour.size(); ++i) {
+			auto key = std::make_pair(contour[i].X(), contour[i].Y());
+			auto [found, inserted] = seen.emplace(key, i);
+			if (inserted) continue;
+
+			size_t first = found->second;
+			std::vector<Vector2D> inner(contour.begin() + first, contour.begin() + i);
+			std::vector<Vector2D> outer(contour.begin() + i, contour.end());
+			outer.insert(outer.end(), contour.begin(), contour.begin() + first);
+			if (inner.size() >= 3 && std::abs(polygon_area(inner)) > 1e-6)
+				pending.push_back(std::move(inner));
+			if (outer.size() >= 3 && std::abs(polygon_area(outer)) > 1e-6)
+				pending.push_back(std::move(outer));
+			split = true;
+			break;
+		}
+		if (!split && std::abs(polygon_area(contour)) > 1e-6)
+			result.push_back(std::move(contour));
+	}
+	return result;
+}
+
 std::vector<SplineCurve> SmoothClosedContour(std::vector<Vector2D> points,
 	double tolerance, double angle_threshold) {
 	if (points.size() < 3) return {};
@@ -2336,7 +2424,10 @@ void VisualColorSegmenter::SetContours(std::vector<std::vector<Vector2D>> const&
 		}
 	}
 	if (normalize_to_pixels) {
-		auto normalized = trace_binary_mask(base_selected, width, height, left, top, .65);
+		// Manual painting must begin from the exact same pixel boundary which will
+		// be traced after the stroke. Approximate RDP contours choose points based on
+		// the whole loop, so the first local edit can otherwise move distant points.
+		auto normalized = trace_binary_mask(base_selected, width, height, left, top, 0.0);
 		if (!normalized.empty()) stored_contours = std::move(normalized);
 	}
 	contours_are_pristine = !stored_contours.empty();
@@ -2394,6 +2485,20 @@ void VisualColorSegmenter::Paint(int frame_x, int frame_y, float radius, bool ad
 	if (changed) {
 		stored_contours.clear();
 		contours_are_pristine = false;
+	}
+}
+
+void VisualColorSegmenter::PaintStroke(Vector2D from, Vector2D to, float radius, bool add) {
+	if (painted.empty() || radius <= 0.f) return;
+	float distance = (to - from).Len();
+	float spacing = std::max(1.f, radius * .3f);
+	int steps = distance > .01f ?
+		std::max(1, static_cast<int>(std::ceil(distance / spacing))) : 0;
+	for (int step = 0; step <= steps; ++step) {
+		Vector2D point = from + (to - from) *
+			(steps ? static_cast<float>(step) / steps : 0.f);
+		Paint(static_cast<int>(std::lround(point.X())),
+			static_cast<int>(std::lround(point.Y())), radius, add);
 	}
 }
 
@@ -2585,7 +2690,10 @@ std::vector<std::vector<Vector2D>> VisualColorSegmenter::Extract(double toleranc
 		if (ranged && !range_mask[i]) selected[i] = 0;
 	}
 
-	return trace_binary_mask(selected, width, height, left, top, .85);
+	// Keep colour-selection editing on the exact pixel boundary. Collinear runs
+	// are still removed by the tracer, while untouched pixels now produce exactly
+	// the same distant vertices before and after every brush stroke.
+	return trace_binary_mask(selected, width, height, left, top, 0.0);
 }
 
 wxCursor MakeVisualColorPickerCursor() {

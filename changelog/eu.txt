@@ -1,3 +1,16 @@
+Bertsioa 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
+- Testu-koadroaren funtzioa Formázás menuan
+    - elementu bereizi gisa dagoen testu-koadroa, bideoan edita daitekeena, formatu orokorrekin (testu-hautapenarekin)
+    - testuaren kokapena hautatutako eremuaren barruan, ezkerrera|erdira|eskuinera|justifikatuta lerrokatuta
+    - lerroartea alda daiteke
+    - perspektiban ere funtzionatzen du
+- Elkarren azpiko gradienten ezabatze/comment akatsa
+- Bateratutako lerroen CTRL + X, bikoizketa eta ALT + geziekin mugitzeko akatsa
+- Linux & MAC bertsioa
+- Clip + pipeta moduaren konponketak eta hobekuntzak
+- Letra-tipoaren hautagailuaren ezarpenek beren lekua dute
+
 Bertsioa 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Gradient funtzioa Formázás menuan

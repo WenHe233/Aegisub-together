@@ -1,3 +1,16 @@
+Verzija 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
+- Funkcija tekstualnog okvira u meniju Formázás
+    - tekstualni okvir koji postoji kao zaseban element i može se uređivati na videu, uz opšta formatiranja (sa označavanjem teksta)
+    - postavljanje teksta unutar označenog područja, poravnanje nalevo|centrirano|nadesno|obostrano
+    - može se menjati prored
+    - funkcioniše i u perspektivi
+- Ispravka greške pri brisanju/komentarisanju više gradijenata jedan ispod drugog
+- Ispravka greške pri spajanju redova pomoću CTRL + X, dupliranju i pomeranju pomoću ALT + strelica
+- Linux & MAC izdanje
+- Ispravke i dorade Clip + pipetta režima
+- Podešavanja birača fontova dobila su zasebno mesto
+
 Верзија 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Функција градијента у менију Форматирање

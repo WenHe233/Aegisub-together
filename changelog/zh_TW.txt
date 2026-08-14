@@ -1,3 +1,16 @@
+版本 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
+- 「文字方塊」功能位於「格式」選單中
+    - 以獨立元素存在的文字方塊，可在影片上編輯，並支援一般格式設定（含文字選取）
+    - 文字可在選取區域內放置，並可設定靠左|置中|靠右|左右對齊
+    - 可調整行距
+    - 也可在透視模式下使用
+- 多個漸層彼此相鄰時刪除／註解的錯誤
+- 合併行、CTRL + X、複製，以及使用 ALT + 方向鍵移動時的錯誤
+- Linux & MAC 發行版
+- Clip + 吸管模式的修正與微調
+- 字型選擇器的設定現在有了專屬位置
+
 版本 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - 「漸層」功能於格式選單

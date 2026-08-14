@@ -1,3 +1,16 @@
+Version 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
+- Textfeld-Funktion im Menü Formatierung
+    - ein als separates Element vorhandenes Textfeld, das im Video mit allgemeinen Formatierungen (durch Textauswahl) bearbeitet werden kann
+    - Textausrichtung innerhalb des ausgewählten Bereichs mit links|zentriert|rechts|Blocksatz
+    - der Zeilenabstand kann geändert werden
+    - funktioniert auch in Perspektive
+- Fehler beim Löschen/Kommentieren mehrerer übereinanderliegender Farbverläufe
+- Fehler beim Zusammenführen von Zeilen mit CTRL + X, beim Duplizieren und beim Verschieben mit ALT + Pfeiltasten
+- Linux- & MAC-Release
+- Verbesserungen und Feinschliff am Clip- und Pipettenmodus
+- Die Einstellungen des Fontwählers haben einen eigenen Platz erhalten
+
 Version 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Gradient-Funktion im Formatierungsmenü

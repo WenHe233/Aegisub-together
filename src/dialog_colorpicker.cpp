@@ -29,6 +29,7 @@
 
 #include "colorspace.h"
 #include "compat.h"
+#include "dialogs.h"
 #include "help_button.h"
 #include "libresrc/libresrc.h"
 #include "options.h"
@@ -253,6 +254,17 @@ public:
 
 wxDEFINE_EVENT(EVT_RECENT_SELECT, ValueEvent<agi::Color>);
 
+void MoveColorToFront(std::vector<agi::Color>& colors, agi::Color color, size_t maximum) {
+	auto existing = find(colors.begin(), colors.end(), color);
+	if (existing != colors.end())
+		rotate(colors.begin(), existing, existing + 1);
+	else {
+		colors.insert(colors.begin(), color);
+		if (colors.size() > maximum)
+			colors.resize(maximum);
+	}
+}
+
 /// @class ColorPickerRecent
 /// @brief A grid of recently used colors which can be selected by clicking on them
 class ColorPickerRecent final : public wxControl {
@@ -322,14 +334,7 @@ public:
 
 	/// Add a color to the beginning of the recent list
 	void AddColor(agi::Color color) {
-		auto existing = find(colors.begin(), colors.end(), color);
-		if (existing != colors.end())
-			rotate(colors.begin(), existing, existing + 1);
-		else {
-			colors.insert(colors.begin(), color);
-			colors.pop_back();
-		}
-
+		MoveColorToFront(colors, color, static_cast<size_t>(rows * cols));
 		Refresh(false);
 	}
 };
@@ -1186,6 +1191,12 @@ void DialogColorPicker::OnOsDropperClick(wxCommandEvent&) {
 
 #endif // WITH_LIBPORTAL
 
+}
+
+void AddColorToRecent(agi::Color color) {
+	auto colors = OPT_GET("Tool/Colour Picker/Recent Colours")->GetListColor();
+	MoveColorToFront(colors, color, 32);
+	OPT_SET("Tool/Colour Picker/Recent Colours")->SetListColor(colors);
 }
 
 bool GetColorFromUser(wxWindow* parent, agi::Color original, bool alpha, std::function<void (agi::Color)> callback) {

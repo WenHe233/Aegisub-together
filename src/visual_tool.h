@@ -172,7 +172,7 @@ public:
 	virtual void SetSubTool([[maybe_unused]] int subtool) { }
 	virtual void UpdateTool([[maybe_unused]] int subtool) { }
 	virtual int GetSubTool() { return 0; }
-	virtual ~VisualToolBase() = default;
+	virtual ~VisualToolBase();
 	virtual void ResetTool() { OnFrameChanged(); }
 };
 

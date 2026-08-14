@@ -280,6 +280,12 @@ void VisualToolTextBox::Accept(bool preserve_selection) {
 	if (preserve_selection) {
 		restore_selection = c->selectionController->GetSelectedSet();
 		restore_active = c->selectionController->GetActiveLine();
+		// BaseGrid announces its new active row before it replaces the selected
+		// set. That announcement makes the textbox accept and regenerate its rows
+		// reentrantly, so the selected set captured here can still consist solely
+		// of the old textbox rows. Preserve the newly active row explicitly; unlike
+		// the regenerated source rows, its pointer remains live across Apply().
+		if (restore_active) restore_selection.insert(restore_active);
 	}
 	leaving = true;
 	active = false;

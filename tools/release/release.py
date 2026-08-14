@@ -1,16 +1,16 @@
-"""Build and publish a release.
+"""Build and start a cross-platform release.
 
 Three steps, each of which skips whatever is already done:
 
 1. build Aegisub and compile every catalogue
 2. pack aegisub.exe plus locale/ into
-   <release_dir>/aegisub-nyaa-edition-v<version>.zip
-3. optionally publish the package as a GitHub release
+   <release_dir>/Aegisub-nyaa-edition-v<version>-update.zip
+3. optionally create and push the version tag which makes GitHub Actions build
+   and publish every platform package
 """
 
-import io
 import os
-import shutil
+import subprocess
 import sys
 import zipfile
 
@@ -106,6 +106,72 @@ def pack(config, version):
     return archive
 
 
+def git_result(*args):
+    return subprocess.run(
+        ['git', '-C', common.REPO] + list(args),
+        capture_output=True, text=True, encoding='utf-8', errors='replace')
+
+
+def git_output(*args):
+    result = git_result(*args)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        common.fail('Git failed while running "git %s": %s' % (' '.join(args), detail))
+    return result.stdout.strip()
+
+
+def start_cross_platform_release(config, version):
+    """Validate and push the tag consumed by the cross-platform release workflow."""
+    tag = 'v%s' % version
+    dirty = git_output('status', '--porcelain', '--untracked-files=normal')
+    if dirty:
+        common.fail(
+            'Commit and push every release change before creating %s.\n%s' %
+            (tag, dirty))
+
+    git_output('fetch', '--quiet', 'origin')
+    branch = git_output('branch', '--show-current')
+    if not branch:
+        common.fail('A release tag cannot be created from a detached HEAD.')
+
+    default_ref = git_result('symbolic-ref', '--quiet', 'refs/remotes/origin/HEAD')
+    if default_ref.returncode == 0:
+        default_branch = default_ref.stdout.strip().split('/')[-1]
+        if branch != default_branch:
+            common.fail(
+                '%s is not the default branch (%s). Switch to %s before releasing.' %
+                (branch, default_branch, default_branch))
+
+    head = git_output('rev-parse', 'HEAD')
+    origin_branch = 'refs/remotes/origin/%s' % branch
+    pushed = git_result('rev-parse', '--verify', origin_branch)
+    if pushed.returncode:
+        common.fail('The current branch has not been pushed to origin. Push it before releasing.')
+    if head != pushed.stdout.strip():
+        common.fail(
+            'The current commit is not the commit on origin/%s. '
+            'Push the branch before creating %s.' % (branch, tag))
+
+    if git_result('show-ref', '--verify', '--quiet', 'refs/tags/%s' % tag).returncode == 0:
+        common.fail('%s already exists locally. Use a new version tag.' % tag)
+    if git_result('ls-remote', '--exit-code', '--tags', 'origin',
+                  'refs/tags/%s' % tag).returncode == 0:
+        common.fail(
+            '%s already exists on GitHub. Pushing it again would not start a new '
+            'workflow; use a new version tag.' % tag)
+
+    git_output('tag', '--annotate', tag, '--message', common.release_name(config, version))
+    pushed = git_result('push', 'origin', tag)
+    if pushed.returncode:
+        detail = (pushed.stderr or pushed.stdout).strip()
+        common.fail(
+            'The local %s tag was created, but pushing it failed: %s\n'
+            'After fixing the problem, run: git push origin %s' % (tag, detail, tag))
+
+    print('\n%s was pushed. GitHub Actions is now building all seven release assets.' % tag)
+    print('Follow the build at https://github.com/%s/actions' % config['github_repo'])
+
+
 def main():
     config = common.load_config()
     source_changelog = os.path.join(config['changelog_dir'],
@@ -122,39 +188,16 @@ def main():
 
     archive = pack(config, version)
 
-    print('')
-    if common.ask_yes_no('Publish %s as a GitHub release?' % version):
-        token = common.github_token()
-        repo = config['github_repo']
-
-        # Rebuilding a version that is already out is the normal case for a fix, so
-        # ask rather than silently leaving the old package in place.
-        _, assets = common.github_release_id(token, repo, 'v%s' % version)
-        replace = False
-        if os.path.basename(archive) in assets:
-            replace = common.ask_yes_no(
-                '%s is already published. Replace the attached package and notes?'
-                % version)
-            if not replace:
-                print('Left as it is.')
-
-        common.publish_release(token, repo, version, common.release_name(config, version), archive,
-                               release_notes(config, version), replace)
-        print('\nDone. Commit changelog/ so the program can see the new release.')
+    tag = 'v%s' % version
+    print('\nThe local Windows updater package is ready: %s' % archive)
+    print('The installer, portable ZIP, macOS DMGs, AppImage, tarball, and updater ZIP')
+    print('are built and published by GitHub Actions after pushing %s.' % tag)
+    print('For a fork, enable workflows once on https://github.com/%s/actions' %
+          config['github_repo'])
+    if common.ask_yes_no('Create and push %s now?' % tag):
+        start_cross_platform_release(config, version)
     else:
-        print('\nDone. %s is built but not published.' % archive)
-
-
-def release_notes(config, version):
-    """The release's English changelog section, as the GitHub notes."""
-    source = os.path.join(config['changelog_dir'], '%s.txt' % config['release_language'])
-    for release_version, _, body in common.parse_changelog(source):
-        if release_version == version:
-            # The first line is the package address, which the GitHub page shows
-            # anyway as the attached file.
-            lines = [line for line in body if line.strip()]
-            return '\n'.join(lines[1:]) if lines else ''
-    return ''
+        print('\nNo tag was pushed; no GitHub release was started.')
 
 
 if __name__ == '__main__':

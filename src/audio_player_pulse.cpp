@@ -39,9 +39,13 @@
 #include "audio_controller.h"
 #include "utils.h"
 
+#include <libaegisub/audio/playback_renderer.h>
 #include <libaegisub/audio/provider.h>
 #include <libaegisub/log.h>
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <cstdio>
 #include <pulse/pulseaudio.h>
 
@@ -171,14 +175,17 @@ public:
 class PulseAudioPlayer final : public AudioPlayer {
 	float volume = 1.f;
 	bool is_playing = false;
+	bool draining = false;
+	double playback_speed = 1.0;
 
-	unsigned long start_frame = 0;
-	unsigned long cur_frame = 0;
-	unsigned long end_frame = 0;
+	int64_t start_frame = 0;
+	int64_t end_frame = 0;
 
-	unsigned long bpf = 0; // bytes per frame
+	size_t bpf = 0; // bytes per frame
+	agi::AudioPlaybackRenderer renderer;
 
 	int stream_success_val;
+	pa_operation *drain_operation = nullptr;
 
 	PAThreadedMainloop mainloop; // pulseaudio mainloop handle
 	PAContext context; // connection context
@@ -191,10 +198,16 @@ class PulseAudioPlayer final : public AudioPlayer {
 	static void PAContextNotifyCB(pa_context *c, pa_threaded_mainloop *mainloop);
 	/// Called by PA when a stream operation completes
 	static void PAStreamSuccessCB(pa_stream *p, int success, PulseAudioPlayer *thread);
+	/// Called by PA when all queued playback data has been heard
+	static void PAStreamDrainCB(pa_stream *p, int success, PulseAudioPlayer *thread);
 	/// Called by PA to request more data written to stream
 	static void PAStreamWriteCB(pa_stream *p, size_t length, PulseAudioPlayer *thread);
 	/// Called by PA to notify about other stream-related stuff
 	static void PAStreamNotifyCB(pa_stream *p, pa_threaded_mainloop *mainloop);
+
+	void CancelDrain();
+	void BeginDrain(pa_stream *p);
+	int64_t GetCurrentPositionUnlocked();
 
 public:
 	PulseAudioPlayer(agi::AudioProvider *provider);
@@ -202,16 +215,21 @@ public:
 
 	void Play(int64_t start,int64_t count);
 	void Stop();
-	bool IsPlaying() { return is_playing; }
+	bool IsPlaying();
 
-	int64_t GetEndPosition() { return end_frame; }
+	int64_t GetEndPosition();
 	int64_t GetCurrentPosition();
 	void SetEndPosition(int64_t pos);
 
-	void SetVolume(double vol) { volume = vol; }
+	void SetVolume(double vol);
+	void SetPlaybackSpeed(double speed) override;
+	bool SupportsPlaybackSpeed() const override { return true; }
 };
 
-PulseAudioPlayer::PulseAudioPlayer(agi::AudioProvider *provider) : AudioPlayer(provider) {
+PulseAudioPlayer::PulseAudioPlayer(agi::AudioProvider *provider)
+: AudioPlayer(provider)
+, renderer(provider)
+{
 	// Initialise a mainloop
 	mainloop.reset(pa_threaded_mainloop_new());
 	if (!mainloop)
@@ -286,16 +304,39 @@ PulseAudioPlayer::PulseAudioPlayer(agi::AudioProvider *provider) : AudioPlayer(p
 
 PulseAudioPlayer::~PulseAudioPlayer()
 {
-	PAThreadedMainloopLock lock{mainloop.get()};
-	if (is_playing) Stop();
+	Stop();
+}
+
+void PulseAudioPlayer::CancelDrain()
+{
+	if (drain_operation) {
+		pa_operation_cancel(drain_operation);
+		pa_operation_unref(drain_operation);
+		drain_operation = nullptr;
+	}
+	draining = false;
+}
+
+void PulseAudioPlayer::BeginDrain(pa_stream *p)
+{
+	if (draining)
+		return;
+
+	draining = true;
+	drain_operation = pa_stream_drain(p, (pa_stream_success_cb_t)PAStreamDrainCB, this);
+	if (!drain_operation) {
+		draining = false;
+		is_playing = false;
+	}
 }
 
 void PulseAudioPlayer::Play(int64_t start,int64_t count)
 {
 	PAThreadedMainloopLock lock{mainloop.get()};
-	if (is_playing) {
+	if (is_playing || draining) {
 		// If we're already playing, do a quick "reset"
 		is_playing = false;
+		CancelDrain();
 
 		PAOperation op{pa_stream_flush(stream.get(), (pa_stream_success_cb_t)PAStreamSuccessCB, this)};
 
@@ -308,17 +349,22 @@ void PulseAudioPlayer::Play(int64_t start,int64_t count)
 		}
 	}
 
-	start_frame = start;
-	cur_frame = start;
-	end_frame = start + count;
+	renderer.Reset(start, count, playback_speed);
+	start_frame = renderer.GetStartPosition();
+	end_frame = renderer.GetEndPosition();
 
 	is_playing = true;
+	draining = false;
 
 	play_start_time = 0;
 	if (int paerror = pa_stream_get_time(stream.get(), (pa_usec_t*) &play_start_time))
 		LOG_E("audio/player/pulse") << "Error getting stream time: " << pa_strerror(paerror) << "(" << paerror << ")";
 
-	PulseAudioPlayer::PAStreamWriteCB(stream.get(), pa_stream_writable_size(stream.get()), this);
+	auto writable = pa_stream_writable_size(stream.get());
+	if (writable != static_cast<size_t>(-1))
+		PulseAudioPlayer::PAStreamWriteCB(stream.get(), writable, this);
+	else
+		LOG_E("audio/player/pulse") << "Error querying writable stream size";
 
 	PAOperation op{pa_stream_trigger(stream.get(), (pa_stream_success_cb_t)PAStreamSuccessCB, this)};
 
@@ -334,12 +380,12 @@ void PulseAudioPlayer::Play(int64_t start,int64_t count)
 void PulseAudioPlayer::Stop()
 {
 	PAThreadedMainloopLock lock{mainloop.get()};
-	if (!is_playing) return;
+	if (!is_playing && !draining) return;
 
 	is_playing = false;
+	CancelDrain();
 
 	start_frame = 0;
-	cur_frame = 0;
 	end_frame = 0;
 
 	// Flush the stream of data
@@ -357,25 +403,73 @@ void PulseAudioPlayer::Stop()
 void PulseAudioPlayer::SetEndPosition(int64_t pos)
 {
 	PAThreadedMainloopLock lock{mainloop.get()};
-	end_frame = pos;
+	renderer.SetEndPosition(pos);
+	end_frame = renderer.GetEndPosition();
 }
 
-int64_t PulseAudioPlayer::GetCurrentPosition()
+int64_t PulseAudioPlayer::GetCurrentPositionUnlocked()
 {
-	PAThreadedMainloopLock lock{mainloop.get()};
-
 	if (!is_playing) return 0;
 
 	// FIXME: this should be based on not duration played but actual sample being heard
 	// (during video playback, cur_frame might get changed to resync)
 
 	// Calculation duration we have played, in microseconds
-	pa_usec_t play_cur_time;
-	if (int paerror = pa_stream_get_time(stream.get(), &play_cur_time))
+	pa_usec_t play_cur_time = play_start_time;
+	if (int paerror = pa_stream_get_time(stream.get(), &play_cur_time)) {
 		LOG_E("audio/player/pulse") << "Error getting stream time: " << pa_strerror(paerror) << "(" << paerror << ")";
-	pa_usec_t playtime = play_cur_time - play_start_time;
+		return start_frame;
+	}
+	pa_usec_t playtime = play_cur_time >= play_start_time ? play_cur_time - play_start_time : 0;
 
-	return start_frame + playtime * provider->GetSampleRate() / (1000*1000);
+	auto output_frames = static_cast<int64_t>(playtime * provider->GetSampleRate() / (1000 * 1000));
+	return renderer.SourceFrameAtOutputFrame(output_frames);
+}
+
+int64_t PulseAudioPlayer::GetCurrentPosition()
+{
+	PAThreadedMainloopLock lock{mainloop.get()};
+	return GetCurrentPositionUnlocked();
+}
+
+int64_t PulseAudioPlayer::GetEndPosition()
+{
+	PAThreadedMainloopLock lock{mainloop.get()};
+	return end_frame;
+}
+
+bool PulseAudioPlayer::IsPlaying()
+{
+	PAThreadedMainloopLock lock{mainloop.get()};
+	return is_playing;
+}
+
+void PulseAudioPlayer::SetVolume(double vol)
+{
+	PAThreadedMainloopLock lock{mainloop.get()};
+	volume = vol;
+}
+
+void PulseAudioPlayer::SetPlaybackSpeed(double speed)
+{
+	speed = std::max(0.01, speed);
+	int64_t restart_from = 0;
+	int64_t restart_count = 0;
+
+	{
+		PAThreadedMainloopLock lock{mainloop.get()};
+		if (std::abs(playback_speed - speed) <= 0.0001)
+			return;
+
+		if (is_playing && !draining) {
+			restart_from = GetCurrentPositionUnlocked();
+			restart_count = std::max<int64_t>(0, end_frame - restart_from);
+		}
+		playback_speed = speed;
+	}
+
+	if (restart_count > 0)
+		Play(restart_from, restart_count);
 }
 
 /// @brief Called by PA to notify about other context-related stuff
@@ -391,35 +485,44 @@ void PulseAudioPlayer::PAStreamSuccessCB(pa_stream *, int success, PulseAudioPla
 	pa_threaded_mainloop_signal(thread->mainloop.get(), 0);
 }
 
+void PulseAudioPlayer::PAStreamDrainCB(pa_stream *, int, PulseAudioPlayer *thread)
+{
+	if (thread->drain_operation) {
+		pa_operation_unref(thread->drain_operation);
+		thread->drain_operation = nullptr;
+	}
+	thread->draining = false;
+	thread->is_playing = false;
+	pa_threaded_mainloop_signal(thread->mainloop.get(), 0);
+}
+
 /// @brief Called by PA to request more data (and other things?)
 void PulseAudioPlayer::PAStreamWriteCB(pa_stream *p, size_t length, PulseAudioPlayer *thread)
 {
-	if (!thread->is_playing) return;
+	if (!thread->is_playing || thread->draining) return;
 
-	if (thread->cur_frame >= thread->end_frame + thread->provider->GetSampleRate()) {
-		// More than a second past end of stream
-		thread->is_playing = false;
-		PAOperation op{pa_stream_drain(p, nullptr, nullptr)};
+	size_t frames = length / thread->bpf;
+	if (frames == 0)
 		return;
 
-	} else if (thread->cur_frame >= thread->end_frame) {
-		// Past end of stream, but not a full second, add some silence
-		void *buf = calloc(length, 1);
-		if (pa_stream_write(p, buf, length, free, 0, PA_SEEK_RELATIVE))
-			LOG_E("audio/player/pulse") << "Error writing to stream";
-		thread->cur_frame += length / thread->bpf;
+	void *buf = malloc(frames * thread->bpf);
+	if (!buf) {
+		LOG_E("audio/player/pulse") << "Failed to allocate playback buffer";
 		return;
 	}
+	auto rendered = thread->renderer.Render(static_cast<int16_t *>(buf), frames, thread->volume);
+	if (rendered > 0) {
+		if (pa_stream_write(p, buf, rendered * thread->bpf, free, 0, PA_SEEK_RELATIVE)) {
+			free(buf);
+			LOG_E("audio/player/pulse") << "Error writing to stream";
+		}
+	}
+	else {
+		free(buf);
+	}
 
-	unsigned long bpf = thread->bpf;
-	unsigned long frames = length / thread->bpf;
-	unsigned long maxframes = thread->end_frame - thread->cur_frame;
-	if (frames > maxframes) frames = maxframes;
-	void *buf = malloc(frames * bpf);
-	thread->provider->GetAudioWithVolume(buf, thread->cur_frame, frames, thread->volume);
-	if (pa_stream_write(p, buf, frames*bpf, free, 0, PA_SEEK_RELATIVE))
-		LOG_E("audio/player/pulse") << "Error writing to stream";
-	thread->cur_frame += frames;
+	if (thread->renderer.IsFinished())
+		thread->BeginDrain(p);
 }
 
 /// @brief Called by PA to notify about other stuff

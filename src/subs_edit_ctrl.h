@@ -80,12 +80,11 @@ class SubsTextEditCtrl final : public wxStyledTextCtrl {
 	/// Tokenized version of line_text
 	std::vector<agi::ass::DialogueToken> tokenized_line;
 
-	/// Selection and hit position captured before Windows applies its native right-click
-	/// caret behavior. The context-menu handler uses these to make selection handling
-	/// consistent over text and over the otherwise empty part of the editor.
+	/// Caret, anchor, and hit position captured before the native right-click handler can
+	/// move them. Opening the context menu must never alter the text selection.
 	bool right_click_pending = false;
-	int right_click_selection_start = 0;
-	int right_click_selection_end = 0;
+	int right_click_anchor = 0;
+	int right_click_caret = 0;
 	int right_click_position = -1;
 
 	void OnContextMenu(wxContextMenuEvent &);

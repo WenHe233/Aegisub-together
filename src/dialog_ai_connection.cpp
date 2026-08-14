@@ -56,7 +56,7 @@ class AIConnectionDialog final : public wxDialog {
 			case ai::ApiKeySource::Environment:
 				openai_text = _("API key is provided by the OPENAI_API_KEY environment variable."); break;
 			case ai::ApiKeySource::CredentialManager:
-				openai_text = _("API key is stored securely in Windows Credential Manager."); break;
+				openai_text = _("API key is stored securely in the operating system credential store."); break;
 			case ai::ApiKeySource::None:
 				openai_text = _("No API key is configured."); break;
 		}
@@ -66,7 +66,7 @@ class AIConnectionDialog final : public wxDialog {
 		wxString cloudinary_text;
 		if (!ai::GetCloudinarySecret().empty())
 			cloudinary_text = ai::HasStoredCloudinarySecret() ?
-				_("API secret is stored securely in Windows Credential Manager.") :
+				_("API secret is stored securely in the operating system credential store.") :
 				_("API secret is available for this Aegisub session.");
 		else
 			cloudinary_text = _("No Cloudinary API secret is configured.");
@@ -214,7 +214,7 @@ public:
 		openai->Add(new wxHyperlinkCtrl(this, wxID_ANY, _("Available OpenAI models and pricing"),
 			"https://developers.openai.com/api/docs/models"), wxSizerFlags().Border(wxBOTTOM, 8));
 		remember_openai = new wxCheckBox(this, wxID_ANY,
-			_("Store the key securely in Windows Credential Manager"));
+			_("Store the key securely in the operating system credential store"));
 		remember_openai->SetValue(true);
 		openai->Add(remember_openai, wxSizerFlags().Border(wxBOTTOM, 8));
 		auto openai_actions = new wxBoxSizer(wxHORIZONTAL);
@@ -252,7 +252,7 @@ public:
 		cloudinary->Add(new wxHyperlinkCtrl(this, wxID_ANY, _("Register a Cloudinary account"),
 			"https://cloudinary.com/users/register_free"), wxSizerFlags().Border(wxBOTTOM, 8));
 		remember_cloudinary = new wxCheckBox(this, wxID_ANY,
-			_("Store the API secret securely in Windows Credential Manager"));
+			_("Store the API secret securely in the operating system credential store"));
 		remember_cloudinary->SetValue(true);
 		cloudinary->Add(remember_cloudinary, wxSizerFlags().Border(wxBOTTOM, 8));
 		auto cloud_actions = new wxBoxSizer(wxHORIZONTAL);

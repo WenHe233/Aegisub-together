@@ -25,6 +25,8 @@
 #include <unicode/uchar.h>
 #include <unicode/utf8.h>
 
+#include <wx/intl.h>
+
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>

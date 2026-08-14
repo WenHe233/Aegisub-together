@@ -9208,7 +9208,7 @@ msgstr "accetta il colore con un doppio clic"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&Formattazione"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
@@ -9836,3 +9836,73 @@ msgstr "Tipo di Gradient\\nIl gradient lineare segue l'angolo selezionato. Il gr
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d righe, %s, testo: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "La chiave API è archiviata in modo sicuro nell'archivio delle credenziali del sistema operativo."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Archiviazione sicura della chiave nell'archivio delle credenziali del sistema operativo"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Il segreto API è archiviato in modo sicuro nell'archivio delle credenziali del sistema operativo."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Archiviazione sicura del segreto API nell'archivio delle credenziali del sistema operativo"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Doppio Alt: attiva/disattiva aggiunta/rimozione"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Sfondo delle righe unite"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Su questa piattaforma l'installazione automatica non è disponibile. Aprire la pagina della release per scaricare e installare la versione?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Impossibile aprire la pagina della release."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Selezionare la pagina della release della versione da aprire:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Apri pagina della release"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Cerca l'ultima versione di Muteki Aegisub e apri la pagina della release"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Apri una &release specifica..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Apri una release specifica"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Seleziona una versione di Muteki Aegisub e apri la pagina della release"

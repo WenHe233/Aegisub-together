@@ -65,6 +65,16 @@ VisualToolBase::VisualToolBase(VideoDisplay *parent, agi::Context *context)
 	parent->Bind(wxEVT_MOUSE_CAPTURE_LOST, &VisualToolBase::OnMouseCaptureLost, this);
 }
 
+VisualToolBase::~VisualToolBase() {
+	if (!parent) return;
+	// A tool can be replaced while a gesture is in progress. Release the mouse
+	// while our handler is still alive, then remove the handler so wxWidgets can
+	// never dispatch a capture-lost event to the destroyed tool.
+	if (parent->HasCapture())
+		parent->ReleaseMouse();
+	parent->Unbind(wxEVT_MOUSE_CAPTURE_LOST, &VisualToolBase::OnMouseCaptureLost, this);
+}
+
 void VisualToolBase::SetResolutions() {
 	int script_w, script_h, layout_w, layout_h;
 	c->ass->GetResolution(script_w, script_h);
@@ -296,8 +306,6 @@ void VisualTool<FeatureType>::OnMouseEvent(wxMouseEvent &event) {
 			bool canChangeSelection = true;
 
 			if (!ctrl_down) {
-				auto const& selectedSet = c->selectionController->GetSelectedSet();
-
 				// do not change selection if we try dragging at least one of the currently selected lines
 				for (auto sel : sel_features)
 					if (hoveringFeatures.count(sel)) {

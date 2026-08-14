@@ -17,6 +17,7 @@ tests_src = [
 
     'tests/access.cpp',
     'tests/audio.cpp',
+    'tests/audio_playback_renderer.cpp',
     'tests/cajun.cpp',
     'tests/calltip_provider.cpp',
     'tests/character_count.cpp',
@@ -66,7 +67,14 @@ runner = executable(
     link_with: libaegisub,
 )
 
-test('gtest main', runner)
+test_env = environment()
+if host_machine.system() == 'linux'
+    # Keep filesystem path conversions deterministic on minimal CI images.
+    test_env.set('LANG', 'C.UTF-8')
+    test_env.set('LC_ALL', 'C.UTF-8')
+endif
+
+test('gtest main', runner, env: test_env)
 test('luajit-52', executable('luajit-52', 'tests/luajit_52.c', dependencies: luajit))
 
 # setup test env

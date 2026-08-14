@@ -219,8 +219,6 @@ elif host_machine.system() == 'windows'
         error('Missing Windows SDK DirectWrite Library (dwrite.h / dwrite.lib)')
     endif
 
-    deps += rubberband_dep
-
     res_inc = include_directories('bitmaps/windows')
     res_dep_files = files(
         'bitmaps/windows/icon.ico',

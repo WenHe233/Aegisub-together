@@ -9198,7 +9198,7 @@ msgstr "přijmout barvu dvojím kliknutím"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&Formátování"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
@@ -9826,3 +9826,73 @@ msgstr "Typ gradientu\\nLineární gradient sleduje vybraný úhel. Radiální g
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d řádků, %s, text: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "Klíč API je bezpečně uložen v úložišti přihlašovacích údajů operačního systému."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Bezpečné uložení klíče v úložišti přihlašovacích údajů operačního systému"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Tajemství API je bezpečně uloženo v úložišti přihlašovacích údajů operačního systému."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Bezpečné uložení tajemství API v úložišti přihlašovacích údajů operačního systému"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Dvojitý Alt: přepnutí přidání/odebrání"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Pozadí sloučených řádků"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Na této platformě není automatická instalace dostupná. Otevřít stránku vydání pro stažení a instalaci verze?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Stránku vydání se nepodařilo otevřít."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Vyberte, stránku vydání které verze chcete otevřít:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Otevřít stránku vydání"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Vyhledat nejnovější verzi Muteki Aegisub a otevřít její stránku vydání"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Otevřít konkrétní &vydání..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Otevřít konkrétní vydání"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Vybrat verzi Muteki Aegisub a otevřít její stránku vydání"

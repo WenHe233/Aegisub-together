@@ -37,6 +37,7 @@
 
 #include <libaegisub/log.h>
 
+#include <array>
 #include <cmath>
 
 #include <wx/colour.h>
@@ -57,24 +58,14 @@ enum VisualToolPerspectiveFeatureType {
 	FEATURE_ORG = 3,
 };
 
-void Solve2x2(float a11, float a12, float a21, float a22, float b1, float b2, float &x1, float &x2) {
-	// Simple pivoting
-	if (abs(a11) < abs(a21)) {
-		std::swap(b1, b2);
-		std::swap(a11, a21);
-		std::swap(a12, a22);
-	}
-	// LU decomposition
-	// i = 1
-	a21 = a21 / a11;
-	// i = 2
-	a22 = a22 - a21 * a12;
-	// forward substitution
-	float z1 = b1;
-	float z2 = b2 - a21 * z1;
-	// backward substitution
-	x2 = z2 / a22;
-	x1 = (z1 - a12 * x2) / a11;
+bool Solve2x2(float a11, float a12, float a21, float a22, float b1, float b2, float &x1, float &x2) {
+	float determinant = a11 * a22 - a12 * a21;
+	float scale = std::max({abs(a11), abs(a12), abs(a21), abs(a22), 1.f});
+	if (!isfinite(determinant) || abs(determinant) <= 1e-6f * scale * scale)
+		return false;
+	x1 = (b1 * a22 - a12 * b2) / determinant;
+	x2 = (a11 * b2 - b1 * a21) / determinant;
+	return isfinite(x1) && isfinite(x2);
 }
 
 Vector2D QuadMidpoint(std::vector<Vector2D> quad) {
@@ -82,7 +73,8 @@ Vector2D QuadMidpoint(std::vector<Vector2D> quad) {
 	Vector2D diag2 = quad[1] - quad[3];
 	Vector2D b = quad[3] - quad[0];
 	float center_la1, center_la2;
-	Solve2x2(diag1.X(), diag2.X(), diag1.Y(), diag2.Y(), b.X(), b.Y(), center_la1, center_la2);
+	if (!Solve2x2(diag1.X(), diag2.X(), diag1.Y(), diag2.Y(), b.X(), b.Y(), center_la1, center_la2))
+		return (quad[0] + quad[1] + quad[2] + quad[3]) / 4.f;
 	return quad[0] + center_la1 * diag1;
 }
 
@@ -105,7 +97,7 @@ Vector2D XYToUV(std::vector<Vector2D> quad, Vector2D xy) {
 	// Dumped from Mathematica
 	float u = -(((x3*y2 - x2*y3)*(x4*y - x*y4)*(x4*(-y2 + y3) + x3*(y2 - y4) + x2*(-y3 + y4)))/(x3*x3*(x4*y2*y2*(-y + y4) + y4*(x*y2*(y2 - y4) + x2*(y - y2)*y4)) + x3*(x4*x4*y2*y2*(y - y3) + 2*x4*(x2*y*y3*(y2 - y4) + x*y2*(-y2 + y3)*y4) + x2*y4*(x2*(-y + y3)*y4 + 2*x*y2*(-y3 + y4))) + y3*(x*x4*x4*y2*(y2 - y3) + x2*x4*x4*(y2*y3 + y*(-2*y2 + y3)) - x2*x2*(x4*y*(y3 - 2*y4) + x4*y3*y4 + x*y4*(-y3 + y4)))));
 	float v = ((x2*y - x*y2)*(x4*y3 - x3*y4)*(x4*(y2 - y3) + x2*(y3 - y4) + x3*(-y2 + y4)))/(x3*(x4*x4*y2*y2*(-y + y3) + x2*y4*(2*x*y2*(y3 - y4) + x2*(y - y3)*y4) - 2*x4*(x2*y*y3*(y2 - y4) + x*y2*(-y2 + y3)*y4)) + x3*x3*(x4*y2*y2*(y - y4) + y4*(x2*(-y + y2)*y4 + x*y2*(-y2 + y4))) + y3*(x*x4*x4*y2*(-y2 + y3) + x2*x4*x4*(2*y*y2 - y*y3 - y2*y3) + x2*x2*(x4*y*(y3 - 2*y4) + x4*y3*y4 + x*y4*(-y3 + y4))));
-	return Vector2D(u, v);
+	return isfinite(u) && isfinite(v) ? Vector2D(u, v) : Vector2D(.5f, .5f);
 }
 
 Vector2D UVToXY(std::vector<Vector2D> quad, Vector2D uv) {
@@ -115,9 +107,12 @@ Vector2D UVToXY(std::vector<Vector2D> quad, Vector2D uv) {
 	float v = uv.Y();
 	// Also dumped from Mathematica
 	float d = (x4*((-1 + u + v)*y2 + y3 - v*y3) + x3*(y2 - u*y2 + (-1 + v)*y4) + x2*((-1 + u)*y3 - (-1 + u + v)*y4));
+	if (!isfinite(d) || abs(d) <= 1e-6f)
+		return (quad[0] + quad[1] + quad[2] + quad[3]) / 4.f;
 	float x = (v*x4*(x3*y2 - x2*y3) + u*x2*(x4*y3 - x3*y4)) / d;
 	float y = (v*y4*(x3*y2 - x2*y3) + u*y2*(x4*y3 - x3*y4)) / d;
-	return Vector2D(x + x1, y + y1);
+	return isfinite(x) && isfinite(y) ? Vector2D(x + x1, y + y1) :
+		(quad[0] + quad[1] + quad[2] + quad[3]) / 4.f;
 }
 
 std::vector<Vector2D> MakeRect(Vector2D a, Vector2D b) {
@@ -130,7 +125,11 @@ std::vector<Vector2D> MakeRect(Vector2D a, Vector2D b) {
 }
 
 float VisualToolPerspective::screenZ() const {
-	return default_screen_z * script_res.Y() / layout_res.Y();
+	float layout_height = layout_res.Y();
+	if (!std::isfinite(layout_height) || std::abs(layout_height) <= 1e-6f)
+		return default_screen_z;
+	float result = default_screen_z * script_res.Y() / layout_height;
+	return std::isfinite(result) && std::abs(result) > 1e-6f ? result : default_screen_z;
 }
 
 void VisualToolPerspective::AddTool(std::string command_name, VisualToolPerspectiveSetting setting) {
@@ -463,7 +462,10 @@ void VisualToolPerspective::UpdateDrag(Feature *feature) {
 		Vector2D diag2 = changed_quad[1]->pos - changed_quad[3]->pos;
 		Vector2D b = changed_quad[3]->pos - changed_quad[0]->pos;
 		float center_la1, center_la2;
-		Solve2x2(diag1.X(), diag2.X(), diag1.Y(), diag2.Y(), b.X(), b.Y(), center_la1, center_la2);
+		if (!Solve2x2(diag1.X(), diag2.X(), diag1.Y(), diag2.Y(), b.X(), b.Y(), center_la1, center_la2)) {
+			TextToPersp();
+			return;
+		}
 		if (center_la1 < 0 || center_la1 > 1 || -center_la2 < 0 || -center_la2 > 1) {
 			TextToPersp();
 			return;
@@ -582,7 +584,8 @@ bool VisualToolPerspective::InnerToText() {
 	Vector2D diag = q2 - q0;
 	Vector2D side2 = q1 - q2;
 	Vector2D side3 = q3 - q2;
-	Solve2x2(side2.X(), side3.X(), side2.Y(), side3.Y(), -diag.X(), -diag.Y(), z1, z3);
+	if (!Solve2x2(side2.X(), side3.X(), side2.Y(), side3.Y(), -diag.X(), -diag.Y(), z1, z3))
+		return false;
 
 	Vector2D midpoint = QuadMidpoint(std::vector<Vector2D>({q0, q1, q2, q3}));
 
@@ -651,8 +654,10 @@ bool VisualToolPerspective::InnerToText() {
 	float orgla0, orgla1;
 	Vector3D side0 = r1 - r0;
 	Vector3D side1 = r3 - r0;
-	Solve2x2(side0.X(), side1.X(), side0.Y(), side1.Y(), -r0.X(), -r0.Y(), orgla0, orgla1);
+	if (!Solve2x2(side0.X(), side1.X(), side0.Y(), side1.Y(), -r0.X(), -r0.Y(), orgla0, orgla1))
+		return false;
 	float orgz = (r0 + orgla0 * side0 + orgla1 * side1).Z();
+	if (!std::isfinite(orgz) || std::abs(orgz) <= 1e-6f) return false;
 
 	// Normalize so the origin has z=screenZ, and move the screen plane to z=0
 	for (int i = 0; i < 4; i++)
@@ -660,20 +665,18 @@ bool VisualToolPerspective::InnerToText() {
 
 	// Find the rotations
 	Vector3D n = (r[1] - r[0]).Cross(r[3] - r[0]);
-	float roty = atan(n.X() / n.Z());
-	if (n.Z() < 0)
-		roty += pi;
+	if (!std::isfinite(n.Len()) || n.Len() <= 1e-6f) return false;
+	float roty = atan2(n.X(), n.Z());
 	n = n.RotateY(roty);
-	float rotx = atan(n.Y() / n.Z());
+	float rotx = atan2(n.Y(), n.Z());
 
 	// Rotate into the z=0 plane
 	for (int i = 0; i < 4; i++)
 		r[i] = r[i].RotateY(roty).RotateX(rotx);
 
 	Vector3D ab = r[1] - r[0];
-	float rotz = atan(ab.Y() / ab.X());
-	if (ab.X() < 0)
-		rotz += pi;
+	if (!std::isfinite(ab.Len()) || ab.Len() <= 1e-6f) return false;
+	float rotz = atan2(ab.Y(), ab.X());
 
 	// Rotate to make the top side be horizontal
 	for (int i = 0; i < 4; i++)
@@ -682,12 +685,15 @@ bool VisualToolPerspective::InnerToText() {
 	// We now have a horizontal parallelogram in the plane, so find the shear and the dimensions
 	ab = r[1] - r[0];
 	Vector3D ad = r[3] - r[0];
+	if (!std::isfinite(ad.Y()) || std::abs(ad.Y()) <= 1e-6f) return false;
 	float rawfax = ad.X() / ad.Y();
 
 	float quadwidth = ab.Len();
 	float quadheight = abs(ad.Y());
 	float scalex = quadwidth / std::max(bbox.second.X() - bbox.first.X(), 1.0f);
 	float scaley = quadheight / std::max(bbox.second.Y() - bbox.first.Y(), 1.0f);
+	if (!std::isfinite(scalex) || !std::isfinite(scaley) ||
+		std::abs(scalex) <= 1e-6f || std::abs(scaley) <= 1e-6f) return false;
 	Vector2D scale = Vector2D(scalex, scaley);
 
 	float shiftv = align <= 3 ? 1 : (align <= 6 ? 0.5 : 0);
@@ -701,8 +707,13 @@ bool VisualToolPerspective::InnerToText() {
 	fax = rawfax * scaley / scalex;
 	fay = 0;
 
-	bord = bord * fsc / oldfsc;
-	shad = shad * fsc / oldfsc;
+	auto rescale = [](float value, float current, float previous) {
+		return std::abs(previous) > 1e-6f ? value * current / previous : value;
+	};
+	bord = Vector2D(rescale(bord.X(), fsc.X(), oldfsc.X()),
+		rescale(bord.Y(), fsc.Y(), oldfsc.Y()));
+	shad = Vector2D(rescale(shad.X(), fsc.X(), oldfsc.X()),
+		rescale(shad.Y(), fsc.Y(), oldfsc.Y()));
 
 	// Give up if any of these numbers were invalid
 	std::vector<float> allvalues({fax, fsc.X(), fsc.Y(), angle_z, angle_x, angle_y, bord.X(), bord.Y(), shad.X(), shad.Y(), org.X(), org.Y(), pos.X(), pos.Y()});
@@ -712,6 +723,8 @@ bool VisualToolPerspective::InnerToText() {
 
 	for (auto line : c->selectionController->GetSelectedSet()) {
 		auto style = c->ass->GetStyle(line->Style);
+		AssStyle fallback;
+		if (!style) style = &fallback;
 		// Maybe just set the tags manually so the line doesn't need to be parsed again for every tag?
 		WrapSetOverride(line, "\\fax", fax, 6);
 		WrapSetOverride(line, "\\fay", 0, 6);
@@ -815,6 +828,8 @@ void VisualToolPerspective::TextToPersp() {
 	}
 
 	std::vector<Vector2D> textrect = MakeRect(bbox.first, bbox.second);
+	std::array<Vector2D, 4> projected;
+	float projection_depth = screenZ();
 	for (int i = 0; i < 4; i++) {
 		Vector2D p = textrect[i];
 		// Apply \fax and \fay
@@ -831,11 +846,15 @@ void VisualToolPerspective::TextToPersp() {
 		q = q.RotateX(-angle_x * deg2rad);
 		q = q.RotateY(angle_y * deg2rad);
 		// Project
-		q = (screenZ() / (q.Z() + screenZ())) * q;
+		float denominator = q.Z() + projection_depth;
+		if (!std::isfinite(denominator) || std::abs(denominator) <= 1e-6f) return;
+		q = (projection_depth / denominator) * q;
 		// Move to origin
 		Vector2D r = q.XY() + org;
-		inner_corners[i]->pos = FromScriptCoords(r);
+		projected[i] = FromScriptCoords(r);
+		if (!std::isfinite(projected[i].X()) || !std::isfinite(projected[i].Y())) return;
 	}
+	for (int i = 0; i < 4; ++i) inner_corners[i]->pos = projected[i];
 
 	for (auto const& extra : c->ass->GetExtradata(active_line->ExtradataIds)) {
 		if (extra.key == ambient_plane_key) {

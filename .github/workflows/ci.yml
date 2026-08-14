@@ -1,8 +1,10 @@
 name: Meson CI
 
+permissions:
+  contents: read
+
 on:
   push:
-    branches: [ 'migration*' ]
     tags: [ 'v*' ]
   pull_request:
     branches: [ master ]
@@ -21,6 +23,7 @@ jobs:
             os: windows-latest
             msvc: true
             buildtype: release
+            arch: x86_64
             args: >-
               -Ddefault_library=static
               --force-fallback-for=zlib,harfbuzz,freetype2,fribidi,libpng
@@ -44,36 +47,42 @@ jobs:
             name: Ubuntu Debug,
             os: ubuntu-latest,
             buildtype: debugoptimized,
-            args: -Db_pch=false
+            arch: x86_64,
+            args: -Db_pch=false -Ddefault_library=static --prefix=/usr
           }
           - {
             name: Ubuntu Release,
-            os: ubuntu-latest,
+            os: ubuntu-22.04,
             buildtype: release,
-            args: -Db_pch=false
+            arch: x86_64,
+            args: -Db_pch=false -Ddefault_library=static --prefix=/usr
           }
           - {
             name: macOS x86_64 Debug,
             os: macos-15-intel,
             buildtype: debugoptimized,
+            arch: x86_64,
             args: -Ddefault_library=static -Dbuild_osx_bundle=true -Dlocal_boost=true --force-fallback-for=ffms2
           }
           - {
             name: macOS x86_64 Release,
             os: macos-15-intel,
             buildtype: release,
+            arch: x86_64,
             args: -Ddefault_library=static -Dbuild_osx_bundle=true -Dlocal_boost=true --force-fallback-for=ffms2
           }
           - {
             name: macOS arm64 Debug,
             os: macos-15,
             buildtype: debugoptimized,
+            arch: arm64,
             args: -Ddefault_library=static -Dbuild_osx_bundle=true -Dlocal_boost=true --force-fallback-for=ffms2
           }
           - {
             name: macOS arm64 Release,
             os: macos-15,
             buildtype: release,
+            arch: arm64,
             args: -Ddefault_library=static -Dbuild_osx_bundle=true -Dlocal_boost=true --force-fallback-for=ffms2
           }
 
@@ -85,6 +94,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
+
+      - name: Set package version
+        run: python -c "import os; v = os.environ.get('GITHUB_REF_NAME', 'continuous'); v = v[1:] if os.environ.get('GITHUB_REF_TYPE') == 'tag' and v.startswith('v') else 'continuous'; open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8').write('PACKAGE_VERSION=' + v + '\nPACKAGE_BASENAME=Aegisub-nyaa-edition-v' + v + '\n')"
 
       - name: Setup Meson
         run: |
@@ -98,7 +110,7 @@ jobs:
       - name: Install dependencies (Windows)
         if: matrix.config.os == 'windows-latest'
         run: |
-          choco install ninja innosetup
+          choco install ninja innosetup 7zip -y --no-progress
 
           $moonscripturl = "https://github.com/leafo/moonscript/releases/download/v0.6.0/moonscript-v0.6.0-windows-x86_64.zip"
           mkdir moonscript
@@ -130,7 +142,16 @@ jobs:
         if: startsWith(matrix.config.os, 'ubuntu-')
         run: |
           sudo apt-get update
-          sudo apt-get install ninja-build build-essential libx11-dev libfreetype6-dev pkg-config libfontconfig1-dev libass-dev libasound2-dev libffms2-dev intltool libboost-all-dev libhunspell-dev libcurl4-openssl-dev libuchardet-dev libgtest-dev libgmock-dev libwxgtk3.2-dev libportal-gtk3-dev
+          sudo apt-get install ninja-build build-essential libx11-dev libfreetype6-dev pkg-config libfontconfig1-dev libass-dev libasound2-dev libffms2-dev intltool libboost-all-dev libhunspell-dev libcurl4-openssl-dev libuchardet-dev libgtest-dev libgmock-dev libportal-gtk3-dev libsecret-1-dev
+          if apt-cache show libwxgtk3.2-dev >/dev/null 2>&1; then
+            sudo apt-get install libwxgtk3.2-dev
+          fi
+          if [[ "${{ matrix.config.os }}" == "ubuntu-22.04" ]]; then
+            # GCC 11's libstdc++ cannot convert UTF-8 filesystem paths to wstring.
+            sudo apt-get install gcc-12 g++-12
+            echo "CC=gcc-12" >> "$GITHUB_ENV"
+            echo "CXX=g++-12" >> "$GITHUB_ENV"
+          fi
 
       - name: Configure
         run: meson setup build ${{ matrix.config.args }} -Dbuildtype=${{ matrix.config.buildtype }} ${{ github.ref_type == 'tag' && '-Dofficial_release=true' || '' }}
@@ -143,49 +164,86 @@ jobs:
 
       # Windows artifacts
       - name: Generate Windows installer
-        if: matrix.config.os == 'windows-latest'
+        if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
           meson compile win-installer -C build
 
       - name: Generate Windows portable installer
-        if: matrix.config.os == 'windows-latest'
+        if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
         run: cd build && ninja win-portable
 
-      - name: Upload artifacts - win_installer
+      - name: Prepare Windows release assets
+        if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem build -Filter 'Aegisub-*.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'The Windows installer was not generated.' }
+          $installerTarget = "$env:PACKAGE_BASENAME.exe"
+          if ($installer.Name -ne $installerTarget) {
+            Copy-Item -LiteralPath $installer.FullName -Destination "build/$installerTarget" -Force
+          }
+          Copy-Item -LiteralPath 'build/aegisub-portable-64.zip' -Destination "build/$env:PACKAGE_BASENAME-portable.zip" -Force
+          python tools/release/package_update.py --build-dir build --output "build/$env:PACKAGE_BASENAME-update.zip"
+
+      - name: Upload Windows installer
         uses: actions/upload-artifact@v6
-        if: matrix.config.os == 'windows-latest'
+        if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
         with:
-          name: ${{ matrix.config.name }} - installer
-          path: build/Aegisub-*.exe
+          name: release-windows-installer
+          path: build/${{ env.PACKAGE_BASENAME }}.exe
           if-no-files-found: error
 
-      - name: Upload artifacts - portable.zip
+      - name: Upload Windows portable package
         uses: actions/upload-artifact@v6
-        if: matrix.config.os == 'windows-latest'
+        if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
         with:
-          name: ${{ matrix.config.name }} - portable
-          path: build/aegisub-portable-64.zip
+          name: release-windows-portable
+          path: build/${{ env.PACKAGE_BASENAME }}-portable.zip
+          if-no-files-found: error
+
+      - name: Upload Windows update package
+        uses: actions/upload-artifact@v6
+        if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
+        with:
+          name: release-windows-update
+          path: build/${{ env.PACKAGE_BASENAME }}-update.zip
+          if-no-files-found: error
 
       # macOS artifacts
       - name: Generate macOS installer
-        if: startsWith(matrix.config.os, 'macos-')
+        if: startsWith(matrix.config.os, 'macos-') && matrix.config.buildtype == 'release'
+        env:
+          AEGISUB_PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
         run: |
           meson compile osx-bundle -C build
           meson compile osx-build-dmg -C build
 
-      - name: Upload artifacts - macOS dmg
+      - name: Upload macOS dmg
         uses: actions/upload-artifact@v6
-        if: startsWith(matrix.config.os, 'macos-')
+        if: startsWith(matrix.config.os, 'macos-') && matrix.config.buildtype == 'release'
         with:
-          name: ${{ matrix.config.name }} - installer
-          path: build/Aegisub-*.dmg
+          name: release-macos-${{ matrix.config.arch }}
+          path: build/${{ env.PACKAGE_BASENAME }}-${{ matrix.config.arch }}.dmg
+          if-no-files-found: error
+
+      # Linux AppImage
+      - name: Generate Linux AppImage
+        if: matrix.config.name == 'Ubuntu Release'
+        run: bash tools/build-appimage.sh build "build/${PACKAGE_BASENAME}-x86_64.AppImage"
+
+      - name: Upload Linux AppImage
+        uses: actions/upload-artifact@v6
+        if: matrix.config.name == 'Ubuntu Release'
+        with:
+          name: release-linux-appimage
+          path: build/${{ env.PACKAGE_BASENAME }}-x86_64.AppImage
           if-no-files-found: error
 
       # Tarball
       - name: Generate tarball
-        if: matrix.config.os == 'ubuntu-latest' && matrix.config.buildtype == 'release'
+        if: matrix.config.name == 'Ubuntu Release'
         run: |
           set -e
 
@@ -196,11 +254,84 @@ jobs:
           tar -xJf build/meson-dist/*.tar.xz -C distcheck/
           test -e distcheck/*/subprojects/luabins/meson.build
           test -e distcheck/*/subprojects/LuaJIT*/meson.build
+          cp build/meson-dist/*.tar.xz "build/${PACKAGE_BASENAME}.tar.xz"
 
-      - name: Upload artifacts - tarball
+      - name: Upload source tarball
         uses: actions/upload-artifact@v6
-        if: matrix.config.os == 'ubuntu-latest' && matrix.config.buildtype == 'release'
+        if: matrix.config.name == 'Ubuntu Release'
         with:
-          name: Source Tarball
-          path: build/meson-dist/*.tar.xz
+          name: release-source-tarball
+          path: build/${{ env.PACKAGE_BASENAME }}.tar.xz
           if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub release
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Validate release assets
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          base="Aegisub-nyaa-edition-v${version}"
+          for asset in \
+            "${base}.exe" \
+            "${base}-portable.zip" \
+            "${base}-update.zip" \
+            "${base}-arm64.dmg" \
+            "${base}-x86_64.dmg" \
+            "${base}-x86_64.AppImage" \
+            "${base}.tar.xz"
+          do
+            test -s "release-assets/${asset}"
+          done
+          test "$(find release-assets -maxdepth 1 -type f | wc -l)" -eq 7
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          base="Aegisub-nyaa-edition-v${version}"
+          title="nyaa's edition v${version}"
+          python tools/release/github_release_notes.py \
+            --changelog changelog/en.txt \
+            --version "${version}" \
+            --output release-notes.md
+          if ! gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release create "${TAG}" --verify-tag --title "${title}" --notes-file release-notes.md --repo "${GITHUB_REPOSITORY}"
+          else
+            gh release edit "${TAG}" --title "${title}" --notes-file release-notes.md --repo "${GITHUB_REPOSITORY}"
+          fi
+          gh release upload "${TAG}" release-assets/* --clobber --repo "${GITHUB_REPOSITORY}"
+
+          while IFS= read -r asset; do
+            case "${asset}" in
+              "${base}.exe"|\
+              "${base}-portable.zip"|\
+              "${base}-update.zip"|\
+              "${base}-arm64.dmg"|\
+              "${base}-x86_64.dmg"|\
+              "${base}-x86_64.AppImage"|\
+              "${base}.tar.xz") ;;
+              *) gh release delete-asset "${TAG}" "${asset}" --yes --repo "${GITHUB_REPOSITORY}" ;;
+            esac
+          done < <(gh release view "${TAG}" --json assets --jq '.assets[].name' --repo "${GITHUB_REPOSITORY}")
+
+          test "$(gh release view "${TAG}" --json assets --jq '.assets | length' --repo "${GITHUB_REPOSITORY}")" -eq 7

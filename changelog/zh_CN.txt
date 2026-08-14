@@ -1,3 +1,16 @@
+版本 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
+- 格式菜单中的文本框功能
+    - 可单独存在的文本框，可在视频上进行编辑，并支持常规格式设置（通过选择文本）
+    - 在选定区域内放置文本，支持左对齐|居中|右对齐|两端对齐
+    - 可以修改行间距
+    - 支持透视效果
+- 多个渐变相互堆叠时的删除/comment bug
+- 合并行、CTRL + X、复制、使用 ALT + 方向键移动时的 bug
+- Linux & MAC release
+- Clip + 吸管模式的修复和改进
+- 字体选择器设置现在有了自己的位置
+
 版本 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - 格式菜单中的渐变功能

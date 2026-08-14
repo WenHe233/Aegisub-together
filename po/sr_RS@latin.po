@@ -9179,7 +9179,7 @@ msgstr "prihvatanje boje dvostrukim klikom"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&Formatiranje"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
@@ -9807,3 +9807,73 @@ msgstr "Tip gradijenta\\nLinearni gradijent prati izabrani ugao. Radijalni gradi
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradijent (%d redova, %s, tekst: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API ključ je bezbedno sačuvan u skladištu akreditiva operativnog sistema."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Bezbedno čuvanje ključa u skladištu akreditiva operativnog sistema"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "API tajna je bezbedno sačuvana u skladištu akreditiva operativnog sistema."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Bezbedno čuvanje API tajne u skladištu akreditiva operativnog sistema"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Dvostruki Alt: prebacivanje između dodavanja i brisanja"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Pozadina spojenih redova"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Automatska instalacija nije dostupna na ovoj platformi. Želite li da otvorite stranicu izdanja radi preuzimanja i instalacije verzije?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Otvaranje stranice izdanja nije uspelo."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Izaberite stranicu izdanja verzije koju želite da otvorite:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Otvori stranicu izdanja"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Pronađi najnoviju verziju Muteki Aegisub-a i otvori njenu stranicu izdanja"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Otvori određeno &izdanje..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Otvori određeno izdanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Izaberite verziju Muteki Aegisub-a i otvorite njenu stranicu izdanja"

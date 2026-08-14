@@ -9339,7 +9339,7 @@ msgstr "hyväksy väri kaksoisnapsautuksella"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&Muotoilu"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
@@ -9967,3 +9967,73 @@ msgstr "Gradientin tyyppi\\nLineaarinen gradientti seuraa valittua kulmaa. Radia
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d rivi, %s, teksti: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API-avain on tallennettu turvallisesti käyttöjärjestelmän tunnistetietosäilöön."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Avaimen turvallinen tallennus käyttöjärjestelmän tunnistetietosäilöön"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "API-salaisuus on tallennettu turvallisesti käyttöjärjestelmän tunnistetietosäilöön."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "API-salaisuuden turvallinen tallennus käyttöjärjestelmän tunnistetietosäilöön"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Kaksois-Alt: lisäämisen ja poistamisen vaihto"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Yhdistettyjen rivien tausta"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Automaattinen asennus ei ole käytettävissä tällä alustalla. Avataanko julkaisusivu version lataamista ja asentamista varten?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Julkaisusivun avaaminen epäonnistui."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Valitse avattavan version julkaisusivu:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Avaa julkaisusivu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Etsi uusin Muteki Aegisub -versio ja avaa sen julkaisusivu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Avaa tietty &julkaisu..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Avaa tietty julkaisu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Valitse Muteki Aegisub -versio ja avaa sen julkaisusivu"

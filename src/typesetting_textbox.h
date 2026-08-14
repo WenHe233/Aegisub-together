@@ -77,10 +77,14 @@ inline bool operator!=(Document const& left, Document const& right) {
 struct LayoutRow {
 	size_t start = 0;
 	size_t end = 0;
+	/// End of visible content. Soft-wrap whitespace belongs to the document but
+	/// must not consume or receive justification width at the right edge.
+	size_t visible_end = 0;
 	double y = 0.0;
 	double height = 0.0;
 	double width = 0.0;
-	double justification = 0.0;
+	double word_spacing = 0.0;
+	double letter_spacing = 0.0;
 	bool paragraph_last = true;
 	std::vector<double> carets;
 };

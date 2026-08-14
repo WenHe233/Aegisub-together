@@ -25,6 +25,7 @@ class wxControl;
 class wxFlexGridSizer;
 class wxSizer;
 class wxString;
+class wxTextCtrl;
 class wxTreebook;
 
 struct PageSection {

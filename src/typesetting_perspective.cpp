@@ -37,19 +37,15 @@ double ScreenZ(Vector2D screen_scale) {
 }
 
 /// Two equations, two unknowns, with a pivot so the near-singular case does not blow up.
-void Solve2x2(double a11, double a12, double a21, double a22, double b1, double b2,
+bool Solve2x2(double a11, double a12, double a21, double a22, double b1, double b2,
               double &x1, double &x2) {
-	if (std::abs(a11) < std::abs(a21)) {
-		std::swap(b1, b2);
-		std::swap(a11, a21);
-		std::swap(a12, a22);
-	}
-	a21 = a21 / a11;
-	a22 = a22 - a21 * a12;
-	double z1 = b1;
-	double z2 = b2 - a21 * z1;
-	x2 = z2 / a22;
-	x1 = (z1 - a12 * x2) / a11;
+	double determinant = a11 * a22 - a12 * a21;
+	double scale = std::max({std::abs(a11), std::abs(a12), std::abs(a21), std::abs(a22), 1.0});
+	if (!std::isfinite(determinant) || std::abs(determinant) <= 1e-12 * scale * scale)
+		return false;
+	x1 = (b1 * a22 - a12 * b2) / determinant;
+	x2 = (a11 * b2 - b1 * a21) / determinant;
+	return std::isfinite(x1) && std::isfinite(x2);
 }
 
 /// Where the two diagonals of a quadrilateral cross.
@@ -58,8 +54,9 @@ Vector2D QuadMidpoint(Vector2D const corners[4]) {
 	Vector2D diagonal2 = corners[1] - corners[3];
 	Vector2D to_last = corners[3] - corners[0];
 	double along1, along2;
-	Solve2x2(diagonal1.X(), diagonal2.X(), diagonal1.Y(), diagonal2.Y(),
-	         to_last.X(), to_last.Y(), along1, along2);
+	if (!Solve2x2(diagonal1.X(), diagonal2.X(), diagonal1.Y(), diagonal2.Y(),
+	             to_last.X(), to_last.Y(), along1, along2))
+		return (corners[0] + corners[1] + corners[2] + corners[3]) / 4.f;
 	return corners[0] + diagonal1 * (float)along1;
 }
 
@@ -111,8 +108,15 @@ void PerspectiveQuad(PerspectiveTags const& tags, int alignment,
 		turned = turned.RotateZ((float)(-tags.angle_z * deg2rad));
 		turned = turned.RotateX((float)(-tags.angle_x * deg2rad));
 		turned = turned.RotateY((float)(tags.angle_y * deg2rad));
-		turned = turned * (float)(screen_z / (turned.Z() + screen_z));
-		corners[i] = turned.XY() + tags.org;
+		double depth = turned.Z() + screen_z;
+		if (!std::isfinite(depth) || std::abs(depth) <= 1e-9) {
+			corners[i] = tags.pos;
+			continue;
+		}
+		turned = turned * (float)(screen_z / depth);
+		Vector2D projected = turned.XY() + tags.org;
+		corners[i] = std::isfinite(projected.X()) && std::isfinite(projected.Y()) ?
+			projected : tags.pos;
 	}
 }
 
@@ -121,6 +125,7 @@ PerspectiveTags SolvePerspective(Vector2D const corners[4], int alignment,
                                  Vector2D screen_scale, Vector2D previous_org) {
 	PerspectiveTags out;
 	double screen_z = ScreenZ(screen_scale);
+	if (!std::isfinite(screen_z) || !(std::abs(screen_z) > 1e-9)) return out;
 
 	// A quadrilateral is the projection of a parallelogram, and which one does not depend on
 	// where it sits - so the two depths come out of the corners alone.
@@ -128,8 +133,8 @@ PerspectiveTags SolvePerspective(Vector2D const corners[4], int alignment,
 	Vector2D diagonal = corners[2] - corners[0];
 	Vector2D side2 = corners[1] - corners[2];
 	Vector2D side3 = corners[3] - corners[2];
-	Solve2x2(side2.X(), side3.X(), side2.Y(), side3.Y(),
-	         -diagonal.X(), -diagonal.Y(), depth1, depth3);
+	if (!Solve2x2(side2.X(), side3.X(), side2.Y(), side3.Y(),
+	             -diagonal.X(), -diagonal.Y(), depth1, depth3)) return out;
 
 	// Any origin that reproduces the corners renders the same picture, so the one the line
 	// already had is kept: the tags then stay as close to what they were as they can.
@@ -148,8 +153,8 @@ PerspectiveTags SolvePerspective(Vector2D const corners[4], int alignment,
 	double along0, along1;
 	Vector3D edge0 = corner[1] - corner[0];
 	Vector3D edge1 = corner[3] - corner[0];
-	Solve2x2(edge0.X(), edge1.X(), edge0.Y(), edge1.Y(),
-	         -corner[0].X(), -corner[0].Y(), along0, along1);
+	if (!Solve2x2(edge0.X(), edge1.X(), edge0.Y(), edge1.Y(),
+	             -corner[0].X(), -corner[0].Y(), along0, along1)) return out;
 	double origin_z = (corner[0] + edge0 * (float)along0 + edge1 * (float)along1).Z();
 	if (!(std::abs(origin_z) > 1e-9)) return out;
 
@@ -160,17 +165,17 @@ PerspectiveTags SolvePerspective(Vector2D const corners[4], int alignment,
 
 	// The plane's normal says how far it is turned out of the screen.
 	Vector3D normal = (corner[1] - corner[0]).Cross(corner[3] - corner[0]);
-	double turn_y = std::atan(normal.X() / normal.Z());
-	if (normal.Z() < 0) turn_y += pi;
+	if (!(normal.Len() > 1e-9)) return out;
+	double turn_y = std::atan2(normal.X(), normal.Z());
 	normal = normal.RotateY((float)turn_y);
-	double turn_x = std::atan(normal.Y() / normal.Z());
+	double turn_x = std::atan2(normal.Y(), normal.Z());
 
 	for (int i = 0; i < 4; ++i)
 		corner[i] = corner[i].RotateY((float)turn_y).RotateX((float)turn_x);
 
 	Vector3D top = corner[1] - corner[0];
-	double turn_z = std::atan(top.Y() / top.X());
-	if (top.X() < 0) turn_z += pi;
+	if (!(top.Len() > 1e-9)) return out;
+	double turn_z = std::atan2(top.Y(), top.X());
 
 	for (int i = 0; i < 4; ++i) corner[i] = corner[i].RotateZ((float)-turn_z);
 
@@ -178,6 +183,7 @@ PerspectiveTags SolvePerspective(Vector2D const corners[4], int alignment,
 	// the scale and the lean.
 	top = corner[1] - corner[0];
 	Vector3D side = corner[3] - corner[0];
+	if (!(std::abs(side.Y()) > 1e-9)) return out;
 	double raw_shear = side.X() / side.Y();
 
 	double quad_width = top.Len();

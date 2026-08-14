@@ -9281,7 +9281,7 @@ msgstr "chấp nhận màu bằng cách nhấp đúp"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&Định dạng"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
@@ -9909,3 +9909,73 @@ msgstr "Loại dải màu\\nDải màu tuyến tính tuân theo góc đã chọn
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Dải màu (%d dòng, %s, văn bản: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "Khóa API được lưu trữ an toàn trong kho thông tin xác thực của hệ điều hành."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Lưu trữ khóa an toàn trong kho thông tin xác thực của hệ điều hành"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Bí mật API được lưu trữ an toàn trong kho thông tin xác thực của hệ điều hành."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Lưu trữ bí mật API an toàn trong kho thông tin xác thực của hệ điều hành"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Nhấn Alt hai lần: chuyển đổi thêm/xóa"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Nền các dòng đã gộp"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Tính năng cài đặt tự động không khả dụng trên nền tảng này. Bạn có muốn mở trang phát hành để tải xuống và cài đặt phiên bản không?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Không thể mở trang phát hành."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Chọn trang phát hành của phiên bản bạn muốn mở:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Mở trang phát hành"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Tìm phiên bản Muteki Aegisub mới nhất và mở trang phát hành"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Mở một &bản phát hành cụ thể..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Mở một bản phát hành cụ thể"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Chọn phiên bản Muteki Aegisub và mở trang phát hành"

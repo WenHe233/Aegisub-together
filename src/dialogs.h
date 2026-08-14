@@ -21,6 +21,7 @@
 
 #include <functional>
 #include <string>
+#include <wx/font.h>
 #include <wx/string.h>
 
 class AssFile;
@@ -38,6 +39,9 @@ struct ResampleSettings;
 /// @param callback Function called whenever the selected color changes
 /// @return Did the user accept the new color?
 bool GetColorFromUser(wxWindow *parent, agi::Color original, bool alpha, std::function<void (agi::Color)> callback);
+
+/// Add a color to the shared color picker history.
+void AddColorToRecent(agi::Color color);
 
 /// @brief Get a font from the user via a font picker dialog
 /// @param parent Parent window

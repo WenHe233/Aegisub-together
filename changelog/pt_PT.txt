@@ -1,3 +1,16 @@
+Versão 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
+- Função de caixa de texto no menu Formatação
+    - caixa de texto existente como elemento separado, que pode ser editada no vídeo, com formatações gerais (com seleção de texto)
+    - posicionamento do texto dentro da área selecionada, com alinhamento à esquerda|ao centro|à direita|justificado
+    - é possível alterar o espaçamento entre linhas
+    - também funciona em perspetiva
+- Correção do erro ao eliminar/comentar vários gradients consecutivos
+- Correção do erro ao usar CTRL + X, duplicar e mover com ALT + setas em linhas combinadas
+- Versão para Linux & MAC
+- Correções e melhorias no modo Clip + conta-gotas
+- As definições do seletor de fontes passaram a ter uma localização própria
+
 Versão 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Função de gradiente no menu Formatação

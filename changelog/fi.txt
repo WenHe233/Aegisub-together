@@ -1,3 +1,16 @@
+Versio 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
+- Tekstiruututoiminto Formázás-valikossa
+    - erillisenä elementtinä toimiva tekstiruutu, jota voi muokata videolla yleisillä muotoiluilla (tekstin valinnalla)
+    - tekstin sijoittaminen valitulle alueelle vasemmalle|keskelle|oikealle|tasatulla asettelulla
+    - riviväliä voi muuttaa
+    - toimii myös perspektiivissä
+- Useiden päällekkäisten gradienttien poistamisen/commentoinnin bugi
+- Yhdistettyjen rivien CTRL + X-, monistamis- ja ALT + nuolilla siirtämisen bugi
+- Linux & MAC -julkaisu
+- Clip + pipettitilan korjauksia ja hienosäätöjä
+- Fonttivalitsimen asetukset saivat oman paikkansa
+
 Versio 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Gradient-toiminto Formázás-valikossa

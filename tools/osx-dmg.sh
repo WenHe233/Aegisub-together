@@ -17,9 +17,10 @@ set -e
 
 SRC_DIR="${1}"
 BUILD_DIR="${2}"
-AEGI_VER="${3}"
+AEGI_VER="${AEGISUB_PACKAGE_VERSION:-${3}}"
+AEGI_ARCH="$(uname -m)"
 
-PKG_NAME="Aegisub-${AEGI_VER}"
+PKG_NAME="Aegisub-nyaa-edition-v${AEGI_VER}-${AEGI_ARCH}"
 PKG_NAME_VOLUME="${PKG_NAME}"
 
 PKG_DIR="${BUILD_DIR}/Aegisub.app"
@@ -109,7 +110,16 @@ fi
 echo
 echo "---- Detaching ----"
 echo /usr/bin/hdiutil detach "${DEV_NAME}" -force
-/usr/bin/hdiutil detach "${DEV_NAME}" -force
+i=0
+until /usr/bin/hdiutil detach "${DEV_NAME}" -force; do
+  if [ $i -eq $max_tries ]; then
+    echo "Error: hdiutil detach failed after ${max_tries} retries."
+    exit 1
+  fi
+  i=$((i+1))
+  echo "Disk image is still busy; retrying detach (${i}/${max_tries})..."
+  sleep 2
+done
 
 echo
 echo "---- Compressing ----"

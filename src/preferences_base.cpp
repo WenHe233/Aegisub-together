@@ -42,6 +42,7 @@
 #include <wx/spinctrl.h>
 #include <wx/statbox.h>
 #include <wx/stattext.h>
+#include <wx/settings.h>
 #include <wx/treebook.h>
 
 #undef Bool

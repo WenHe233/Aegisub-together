@@ -74,6 +74,7 @@
 #include <wx/clipbrd.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
+#include <wx/stc/stc.h>
 
 using namespace agi::lua;
 using namespace Automation4;
