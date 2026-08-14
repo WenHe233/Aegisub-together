@@ -11,7 +11,7 @@ $lastSvnRevision = 6962
 $lastSvnHash = '16cd907fe7482cb54a7374cd28b8501f138116be'
 $defineNumberMatch = [regex] '^#define\s+(\w+)\s+(\d+)$'
 $defineStringMatch = [regex] "^#define\s+(\w+)\s+[`"']?(.+?)[`"']?$"
-$semVerMatch = [regex] 'v?(\d+)\.(\d+).(\d+)(?:-(\w+))?'
+$semVerMatch = [regex] '^v?(\d+)\.(\d+)(?:\.(\d+))?(?:-(\w+))?$'
 
 $repositoryRootPath = Join-Path $PSScriptRoot .. | Resolve-Path
 if (!(git -C $repositoryRootPath rev-parse --is-inside-work-tree 2>$null)) {
@@ -54,16 +54,18 @@ if ($gitVersionString -eq $version['BUILD_GIT_VERSION_STRING']) {
 }
 
 if ($exactGitTag -match $semVerMatch) {
+  $versionParts = @($Matches[1], $Matches[2], @($Matches[3], '0')[!$Matches[3]])
   $version['TAGGED_RELEASE'] = $true
-  $version['RESOURCE_BASE_VERSION'] = $Matches[1..3]
-  $version['INSTALLER_VERSION'] = $gitVersionString = ($Matches[1..3] -join '.') + @("-$($Matches[4])",'')[!$Matches[4]]
+  $version['RESOURCE_BASE_VERSION'] = $versionParts
+  $version['INSTALLER_VERSION'] = $gitVersionString = ($versionParts -join '.') + @("-$($Matches[4])",'')[!$Matches[4]]
 } else {
   foreach ($rev in (git -C $repositoryRootPath rev-list --tags 2>$null)) {
     $tag = git -C $repositoryRootPath describe --exact-match --tags $rev 2>$null
     if ($tag -match $semVerMatch) {#
+      $versionParts = @($Matches[1], $Matches[2], @($Matches[3], '0')[!$Matches[3]])
       $version['TAGGED_RELEASE'] = $false
-      $version['RESOURCE_BASE_VERSION'] = $Matches[1..3]
-      $version['INSTALLER_VERSION'] = ($Matches[1..3] -join '.')
+      $version['RESOURCE_BASE_VERSION'] = $versionParts
+      $version['INSTALLER_VERSION'] = ($versionParts -join '.')
       break;
     }
   }

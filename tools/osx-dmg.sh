@@ -110,7 +110,16 @@ fi
 echo
 echo "---- Detaching ----"
 echo /usr/bin/hdiutil detach "${DEV_NAME}" -force
-/usr/bin/hdiutil detach "${DEV_NAME}" -force
+i=0
+until /usr/bin/hdiutil detach "${DEV_NAME}" -force; do
+  if [ $i -eq $max_tries ]; then
+    echo "Error: hdiutil detach failed after ${max_tries} retries."
+    exit 1
+  fi
+  i=$((i+1))
+  echo "Disk image is still busy; retrying detach (${i}/${max_tries})..."
+  sleep 2
+done
 
 echo
 echo "---- Compressing ----"
