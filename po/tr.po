@@ -10529,3 +10529,43 @@ msgstr "Çift Alt: ekleme/silme arasında geçiş"
 #: src
 msgid "Combined Group Background"
 msgstr "Birleştirilmiş satırların arka planı"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Bu platformda otomatik yükleme kullanılamıyor. Sürümü indirip yüklemek için sürüm sayfası açılsın mı?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Sürüm sayfası açılamadı."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Hangi sürümün yayın sayfasını açmak istediğinizi seçin:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Sürüm sayfasını aç"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "En yeni Muteki Aegisub sürümünü bul ve sürüm sayfasını aç"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Belirli bir &sürümü aç..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Belirli bir sürümü aç"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Muteki Aegisub sürümünü seçin ve sürüm sayfasını açın"

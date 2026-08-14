@@ -9850,3 +9850,43 @@ msgstr "Двойное нажатие Alt: переключение добавл
 #: src
 msgid "Combined Group Background"
 msgstr "Фон объединённых строк"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "На этой платформе автоматическая установка недоступна. Открыть страницу релиза для загрузки и установки версии?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Не удалось открыть страницу релиза."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Выберите страницу релиза, которую хотите открыть:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Открыть страницу релиза"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Найти последнюю версию Muteki Aegisub и открыть её страницу релиза"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Открыть определённый &релиз..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Открыть определённый релиз"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Выбрать версию Muteki Aegisub и открыть её страницу релиза"

@@ -9898,3 +9898,43 @@ msgstr "Alt Ganda: alihkan penambahan/penghapusan"
 #: src
 msgid "Combined Group Background"
 msgstr "Latar baris gabungan"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Instalasi otomatis tidak tersedia di platform ini. Buka halaman rilis untuk mengunduh dan menginstal versi tersebut?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Gagal membuka halaman rilis."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Pilih halaman rilis versi yang ingin Anda buka:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Buka halaman rilis"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Cari versi Muteki Aegisub terbaru dan buka halaman rilisnya"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Buka &rilis tertentu..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Buka rilis tertentu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Pilih versi Muteki Aegisub dan buka halaman rilisnya"

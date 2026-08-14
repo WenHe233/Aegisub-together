@@ -9819,3 +9819,43 @@ msgstr "雙重 Alt：切換新增／刪除"
 #: src
 msgid "Combined Group Background"
 msgstr "合併行背景"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "此平台不支援自動安裝。要開啟發行頁面以下載並安裝版本嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "無法開啟發行頁面。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "選擇要開啟其發行頁面的版本："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "開啟發行頁面"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "尋找最新的 Muteki Aegisub 版本並開啟其發行頁面"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "開啟特定的&發行版本..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "開啟特定的發行版本"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "選擇 Muteki Aegisub 版本並開啟其發行頁面"

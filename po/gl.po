@@ -9866,3 +9866,43 @@ msgstr "Alt dobre: alternar engadir/eliminar"
 #: src
 msgid "Combined Group Background"
 msgstr "Fondo das liñas combinadas"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "A instalación automática non está dispoñible nesta plataforma. Quere abrir a páxina da versión para descargala e instalala?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Non se puido abrir a páxina da versión."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Seleccione a páxina da versión que quere abrir:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Abrir a páxina da versión"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Buscar a versión máis recente de Muteki Aegisub e abrir a súa páxina da versión"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Abrir unha &versión específica..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Abrir unha versión específica"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Seleccionar unha versión de Muteki Aegisub e abrir a súa páxina da versión"

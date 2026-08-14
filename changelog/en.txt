@@ -1,3 +1,16 @@
+Version 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Text box function in the Formatting menu
+    - a text box existing as a separate element, which can be edited on the video, with general formatting options (with text selection)
+    - text placement within the selected area, with left|center|right|justified alignment
+    - line spacing can be modified
+    - also works in perspective
+- Bug with deleting/commenting multiple gradients below each other
+- Bug with merged lines using CTRL + X, duplicating, and moving with ALT + arrow keys
+- Linux & MAC release
+- Clip + eyedropper mode fixes and refinements
+- Font selector settings have their own place
+
 Version 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5-update.zip
 - Gradient function in the Formatting menu

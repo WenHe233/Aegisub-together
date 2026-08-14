@@ -1,3 +1,16 @@
+Versión 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Función de caixa de texto no menú Formázás
+    - caixa de texto existente como elemento independente, que se pode editar sobre o vídeo, con formatos xerais (coa selección de texto)
+    - colocación do texto dentro da área seleccionada, con aliñamentos á esquerda|centrado|á dereita|xustificado
+    - pódese modificar o espazamento entre liñas
+    - tamén funciona en perspectiva
+- Corrección do erro ao eliminar/comentar varios gradientes consecutivos
+- Corrección do erro nas liñas combinadas ao usar CTRL + X, duplicar e mover con ALT + frechas
+- Lanzamento para Linux & MAC
+- Correccións e melloras no modo Clip + pipeta
+- As opcións do selector de fontes agora teñen o seu propio lugar
+
 Versión 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Función de gradiente no menú Formázás

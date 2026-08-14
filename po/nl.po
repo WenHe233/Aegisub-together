@@ -9889,3 +9889,43 @@ msgstr "Dubbele Alt: schakelen tussen toevoegen/verwijderen"
 #: src
 msgid "Combined Group Background"
 msgstr "Achtergrond samengevoegde regels"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Automatische installatie is niet beschikbaar op dit platform. Wilt u de releasepagina openen om de versie te downloaden en te installeren?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "De releasepagina kon niet worden geopend."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Kies de releasepagina van welke versie u wilt openen:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Releasepagina openen"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "De nieuwste Muteki Aegisub-versie zoeken en de releasepagina openen"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Een specifieke &release openen..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Een specifieke release openen"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Muteki Aegisub-versie selecteren en de releasepagina openen"

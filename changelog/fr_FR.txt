@@ -1,3 +1,16 @@
+Version 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Fonction de zone de texte dans le menu Formatage
+    - zone de texte existant en tant qu’élément distinct, pouvant être modifiée sur la vidéo, avec des mises en forme générales (avec sélection de texte)
+    - placement du texte à l’intérieur de la zone sélectionnée, avec alignements à gauche|au centre|à droite|justifié
+    - possibilité de modifier l’espacement entre les lignes
+    - fonctionne également en perspective
+- Correction du bug de suppression/commentaire de plusieurs gradients placés les uns sous les autres
+- Correction du bug des lignes fusionnées avec CTRL + X, la duplication et le déplacement avec ALT + flèches
+- Release Linux & MAC
+- Corrections et améliorations du mode Clip + pipette
+- Les paramètres du sélecteur de polices disposent désormais de leur propre emplacement
+
 Version 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Fonction Gradient dans le menu Formázás

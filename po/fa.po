@@ -9761,3 +9761,43 @@ msgstr "Alt دوگانه: تغییر حالت افزودن/حذف"
 #: src
 msgid "Combined Group Background"
 msgstr "پس‌زمینهٔ خطوط ادغام‌شده"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "نصب خودکار در این پلتفرم در دسترس نیست. آیا می‌خواهید صفحهٔ انتشار را برای دانلود و نصب نسخه باز کنید؟"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "باز کردن صفحهٔ انتشار ناموفق بود."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "انتخاب کنید صفحهٔ انتشار کدام نسخه را می‌خواهید باز کنید:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "باز کردن صفحهٔ انتشار"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "جست‌وجوی جدیدترین نسخهٔ Muteki Aegisub و باز کردن صفحهٔ انتشار آن"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "باز کردن یک &انتشار خاص..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "باز کردن یک انتشار خاص"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "انتخاب نسخهٔ Muteki Aegisub و باز کردن صفحهٔ انتشار آن"

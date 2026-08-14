@@ -1,3 +1,16 @@
+Wersja 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Funkcja pola tekstowego w menu Formázás
+    - pole tekstowe istniejące jako osobny element, które można edytować na wideo, z ogólnymi opcjami formatowania (z zaznaczaniem tekstu)
+    - rozmieszczanie tekstu wewnątrz zaznaczonego obszaru, z wyrównaniem do lewej|środka|prawej|wyjustowaniem
+    - możliwość modyfikacji odstępów między wierszami
+    - działa również w perspektywie
+- Naprawiono błąd usuwania/komentowania wielu gradientów znajdujących się jeden pod drugim
+- Naprawiono błąd scalania wierszy, CTRL + X, duplikowania i przenoszenia za pomocą ALT + strzałek
+- Wydanie dla Linux & MAC
+- Poprawki i usprawnienia trybu Clip + pipetta
+- Ustawienia wyboru czcionki otrzymały własne miejsce
+
 Wersja 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Funkcja gradientu w menu Formatowanie

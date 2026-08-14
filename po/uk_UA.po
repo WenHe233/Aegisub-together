@@ -9905,3 +9905,43 @@ msgstr "Подвійне Alt: перемикання додавання/вида
 #: src
 msgid "Combined Group Background"
 msgstr "Фон об’єднаних рядків"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "На цій платформі автоматичне встановлення недоступне. Відкрити сторінку випуску, щоб завантажити й установити версію?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Не вдалося відкрити сторінку випуску."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Виберіть, сторінку випуску якої версії відкрити:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Відкрити сторінку випуску"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Знайти найновішу версію Muteki Aegisub і відкрити її сторінку випуску"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Відкрити певний &випуск..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Відкрити певний випуск"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Вибрати версію Muteki Aegisub і відкрити її сторінку випуску"

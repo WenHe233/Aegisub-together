@@ -9814,3 +9814,43 @@ msgstr "Alt مرتين: تبديل الإضافة/الحذف"
 #: src
 msgid "Combined Group Background"
 msgstr "خلفية الأسطر المدمجة"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "التثبيت التلقائي غير متاح على هذه المنصة. هل تريد فتح صفحة الإصدار لتنزيل الإصدار وتثبيته؟"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "تعذّر فتح صفحة الإصدار."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "اختر صفحة إصدار النسخة التي تريد فتحها:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "فتح صفحة الإصدار"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "البحث عن أحدث إصدار من Muteki Aegisub وفتح صفحة الإصدار"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "فتح &إصدار محدد..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "فتح إصدار محدد"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "اختيار إصدار Muteki Aegisub وفتح صفحة الإصدار"

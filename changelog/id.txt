@@ -1,3 +1,16 @@
+Versi 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Fungsi kotak teks di menu Pemformatan
+    - kotak teks yang berdiri sebagai elemen terpisah, yang dapat diedit pada video, dengan pemformatan umum (dengan pemilihan teks)
+    - penempatan teks di dalam area yang dipilih, dengan perataan kiri|tengah|kanan|rata kiri-kanan
+    - jarak antarbaris dapat diubah
+    - juga berfungsi dalam perspektif
+- Perbaikan bug penghapusan/comment beberapa gradient yang berada di bawah satu sama lain
+- Perbaikan bug pada baris yang digabung dengan CTRL + X, duplikasi, dan pemindahan dengan ALT + panah
+- Rilis Linux & MAC
+- Perbaikan dan penyempurnaan mode Clip + pipet
+- Pengaturan pemilih font kini memiliki tempat tersendiri
+
 Versi 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Fungsi Gradient di menu Formázás

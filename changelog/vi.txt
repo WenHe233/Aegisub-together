@@ -1,3 +1,16 @@
+Phiên bản 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Chức năng hộp văn bản trong menu Định dạng
+    - hộp văn bản tồn tại như một phần tử riêng, có thể chỉnh sửa trên video với các định dạng thông thường (kèm chọn văn bản)
+    - đặt văn bản trong khu vực đã chọn, với các kiểu căn trái|căn giữa|căn phải|căn đều
+    - có thể thay đổi khoảng cách dòng
+    - cũng hoạt động trong phối cảnh
+- Sửa lỗi xóa/comment nhiều gradient nằm bên dưới nhau
+- Sửa lỗi các dòng được gộp khi dùng CTRL + X, nhân bản, di chuyển bằng ALT + các phím mũi tên
+- Bản phát hành Linux & MAC
+- Cải tiến và tinh chỉnh chế độ Clip + pipet
+- Các thiết lập của bộ chọn phông chữ đã có khu vực riêng
+
 Phiên bản 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Chức năng Gradient trong menu Định dạng

@@ -1,3 +1,16 @@
+Versión 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Función de cuadro de texto en el menú Formato
+    - cuadro de texto existente como elemento independiente, que se puede editar sobre el vídeo, con formatos generales (seleccionando el texto)
+    - colocación del texto dentro del área seleccionada, con alineación a la izquierda|centrada|a la derecha|justificada
+    - se puede modificar el interlineado
+    - también funciona en perspectiva
+- Corrección del error al borrar/comentar varios gradientes situados uno debajo de otro
+- Corrección del error de las líneas fusionadas con CTRL + X, al duplicarlas y al moverlas con ALT + flechas
+- Lanzamiento para Linux & MAC
+- Mejoras y ajustes del modo Clip + cuentagotas
+- La configuración del selector de fuentes ahora tiene su propio lugar
+
 Versión 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Función de degradado en el menú Formato

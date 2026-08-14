@@ -9986,3 +9986,43 @@ msgstr "Διπλό Alt: εναλλαγή προσθήκης/διαγραφής"
 #: src
 msgid "Combined Group Background"
 msgstr "Φόντο συγχωνευμένων γραμμών"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Η αυτόματη εγκατάσταση δεν είναι διαθέσιμη σε αυτήν την πλατφόρμα. Θέλετε να ανοίξετε τη σελίδα έκδοσης για λήψη και εγκατάσταση της έκδοσης;"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Δεν ήταν δυνατή η άνοιξη της σελίδας έκδοσης."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Επιλέξτε τη σελίδα έκδοσης που θέλετε να ανοίξετε:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Άνοιγμα σελίδας έκδοσης"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Εύρεση της πιο πρόσφατης έκδοσης του Muteki Aegisub και άνοιγμα της σελίδας έκδοσης"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Άνοιγμα συγκεκριμένης &έκδοσης..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Άνοιγμα συγκεκριμένης έκδοσης"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Επιλέξτε μια έκδοση του Muteki Aegisub και ανοίξτε τη σελίδα έκδοσης"

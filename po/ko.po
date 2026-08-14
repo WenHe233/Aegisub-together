@@ -10525,3 +10525,43 @@ msgstr "Alt 두 번: 추가/삭제 전환"
 #: src
 msgid "Combined Group Background"
 msgstr "병합된 줄 배경"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "이 플랫폼에서는 자동 설치를 사용할 수 없습니다. 버전을 다운로드하고 설치할 수 있도록 릴리스 페이지를 여시겠습니까?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "릴리스 페이지를 열지 못했습니다."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "열려는 버전의 릴리스 페이지를 선택하십시오:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "릴리스 페이지 열기"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "최신 Muteki Aegisub 버전을 확인하고 릴리스 페이지 열기"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "특정 &릴리스 열기..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "특정 릴리스 열기"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Muteki Aegisub 버전을 선택하고 릴리스 페이지 열기"

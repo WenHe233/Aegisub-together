@@ -9837,3 +9837,43 @@ msgstr "Dvostruki Alt: prebacivanje dodavanja/brisanja"
 #: src
 msgid "Combined Group Background"
 msgstr "Pozadina spojenih redova"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "Automatska instalacija nije dostupna na ovoj platformi. Da li želite da otvorite stranicu izdanja radi preuzimanja i instalacije verzije?"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "Otvaranje stranice izdanja nije uspelo."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "Izaberite stranicu izdanja koje želite da otvorite:"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "Otvori stranicu izdanja"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "Pronađi najnoviju verziju programa Muteki Aegisub i otvori njenu stranicu izdanja"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "Otvori određeno &izdanje..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "Otvori određeno izdanje"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Izaberite verziju programa Muteki Aegisub i otvorite njenu stranicu izdanja"

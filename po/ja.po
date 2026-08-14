@@ -9785,3 +9785,43 @@ msgstr "Altキーを2回押す：追加/削除を切り替え"
 #: src
 msgid "Combined Group Background"
 msgstr "結合行の背景"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Automatic installation is not available on this platform. Open the release page to download and install this version?"
+msgstr "このプラットフォームでは自動インストールを利用できません。バージョンをダウンロードしてインストールするため、リリースページを開きますか？"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Could not open the release page."
+msgstr "リリースページを開けませんでした。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select the version whose release page you want to open:"
+msgstr "開くリリースページのバージョンを選択してください："
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a release page"
+msgstr "リリースページを開く"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Check for the latest Muteki Aegisub version and open its release page"
+msgstr "最新のMuteki Aegisubバージョンを確認してリリースページを開く"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific &release..."
+msgstr "特定の&リリースを開く..."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Open a specific release"
+msgstr "特定のリリースを開く"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Select a Muteki Aegisub version and open its release page"
+msgstr "Muteki Aegisubのバージョンを選択してリリースページを開く"

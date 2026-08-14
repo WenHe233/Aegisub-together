@@ -1,3 +1,16 @@
+Verze 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Funkce textového pole v nabídce Formátování
+    - samostatné textové pole, které lze upravovat ve videu pomocí obecných formátování (s výběrem textu)
+    - umístění textu ve vybrané oblasti, se zarovnáním doleva|na střed|doprava|do bloku
+    - možnost upravit řádkovou vzdálenost
+    - funguje i v perspektivě
+- Oprava chyby při mazání/commentování více gradientů pod sebou
+- Oprava chyby u sloučených řádků při použití CTRL + X, duplikování a přesouvání pomocí ALT + šipek
+- Linux & MAC release
+- Opravy a vylepšení režimu Clip + pipeta
+- Nastavení výběru fontu nyní mají vlastní místo
+
 Verze 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Funkce gradientu v nabídce Formátování

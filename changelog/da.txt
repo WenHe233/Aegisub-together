@@ -1,3 +1,16 @@
+Version 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Tekstboksfunktion i menuen Formázás
+    - tekstboks, der findes som et separat element, og som kan redigeres på videoen med almindelige formateringer (med tekstmarkering)
+    - tekstplacering inden for det markerede område med venstre|centreret|højre|justeret tekst
+    - linjeafstand kan ændres
+    - fungerer også i perspektiv
+- Fejl ved sletning/kommentering af flere gradienter under hinanden
+- Fejl ved sammenflettede linjer med CTRL + X, duplikering og flytning med ALT + piletaster
+- Udgivelse til Linux & MAC
+- Forbedringer og finjusteringer af Clip + pipette-tilstand
+- Indstillingerne for skrifttypevælgeren har fået deres egen plads
+
 Version 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Gradientfunktion i Formatering-menuen

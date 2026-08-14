@@ -1,3 +1,16 @@
+버전 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Formázás 메뉴의 텍스트 상자 기능
+    - 동영상에서 편집할 수 있는 별도 요소로 존재하는 텍스트 상자, 일반적인 서식 지정 기능 지원(텍스트 선택 포함)
+    - 선택한 영역 내에서 텍스트 배치, 왼쪽|가운데|오른쪽|양쪽 맞춤 정렬 지원
+    - 줄 간격 조정 가능
+    - 원근에서도 작동
+- 여러 gradient가 서로 아래에 있을 때 삭제/comment 버그
+- 병합된 줄의 CTRL + X, 복제, ALT + 화살표로 이동 시 버그
+- Linux & MAC release
+- Clip + 스포이트 모드 개선 및 세부 조정
+- Font 선택기의 설정이 별도의 공간을 갖게 됨
+
 버전 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - 서식 메뉴에 그라디언트 기능

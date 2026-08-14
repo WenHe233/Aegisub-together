@@ -1,3 +1,16 @@
+Versie 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Tekstvakfunctie in het menu Opmaak
+    - tekstvak dat als afzonderlijk element bestaat en in de video kan worden bewerkt, met algemene opmaakopties (met tekstselectie)
+    - tekstplaatsing binnen het geselecteerde gebied, met uitlijning links|gecentreerd|rechts|uitgevuld
+    - regelafstand kan worden aangepast
+    - werkt ook in perspectief
+- Bug bij het verwijderen/commentariëren van meerdere gradients onder elkaar
+- Bug bij samengevoegde regels met CTRL + X, dupliceren en verplaatsen met ALT + pijltjestoetsen
+- Linux & MAC-release
+- Verbeteringen en verfijningen aan de Clip + pipetmodus
+- De instellingen van de lettertypekiezer hebben een eigen plaats gekregen
+
 Versie 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Gradient-functie in het menu Formattering

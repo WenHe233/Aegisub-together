@@ -1,3 +1,16 @@
+Versió 4.6 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+- Funció de quadre de text al menú Formázás
+    - quadre de text existent com a element independent, que es pot editar al vídeo, amb formats generals (amb selecció de text)
+    - col·locació del text dins de l’àrea seleccionada, amb alineacions esquerra|centrada|dreta|justificada
+    - es pot modificar l’interlineat
+    - també funciona en perspectiva
+- Error en suprimir/comentar diversos gradients un sota l’altre
+- Error en moure línies combinades amb CTRL + X, en duplicar-les i amb ALT + fletxes
+- Versió per a Linux & MAC
+- Correccions i refinaments del mode Clip + pipeta
+- Els paràmetres del selector de fonts tenen un espai propi
+
 Versió 4.5 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.5/aegisub-nyaa-edition-v4.5.zip
 - Funció de degradat al menú Format
