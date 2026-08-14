@@ -9329,7 +9329,7 @@ msgstr "accepta el color amb un doble clic"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&Format"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json

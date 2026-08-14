@@ -9192,7 +9192,7 @@ msgstr "принять цвет двойным щелчком"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&Форматирование"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json

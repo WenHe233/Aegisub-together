@@ -9103,7 +9103,7 @@ msgstr "پذیرش رنگ با دوبار کلیک"
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
-msgstr "&قالب‌بندی"
+msgstr "T&ypesetting"
 
 # machine translation from Hungarian, not reviewed yet
 #: ../src/libresrc/default_menu_platform.json
