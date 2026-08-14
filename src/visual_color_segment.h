@@ -57,6 +57,12 @@ struct VisualColorTemplate {
 
 std::vector<VisualColorTemplate>& VisualColorTemplates();
 
+/// Split pixel-traced figure-eight contours at repeated vertices. The resulting
+/// simple loops have exactly the same non-zero/even-odd fill, but polygon boolean
+/// libraries can process them independently.
+std::vector<std::vector<Vector2D>> SplitSelfTouchingContours(
+	std::vector<std::vector<Vector2D>> contours);
+
 /// Corner radius edge smoothing uses while auto snap is on. Large enough to take
 /// the pixel staircase off a snapped outline and follow its curve, small enough
 /// not to cut across the outline band the snap just enclosed.
@@ -102,6 +108,9 @@ public:
 	/// stays rectangular, but only what the lasso encloses can be picked.
 	void SetRangeMask(std::vector<Vector2D> const& polygon);
 	void Paint(int frame_x, int frame_y, float radius, bool add);
+	/// Paint a continuous frame-space stroke into the manual override mask.
+	/// Pixels outside the stroke are never reclassified or retraced here.
+	void PaintStroke(Vector2D from, Vector2D to, float radius, bool add);
 	std::vector<std::vector<Vector2D>> Extract(double tolerance, bool fill_holes = false,
 		int offset_pixels = 0) const;
 

@@ -189,9 +189,20 @@ else
 
     deps += [
         wx.dependency('wxmono'),
-        wx.dependency('wxregex'),
         wx.dependency('wxscintilla'),
     ]
+
+    # New monolithic wxWidgets CMake builds fold wxRegex into wxmono and no
+    # longer export a separate wxregex target. Older bundled versions still do.
+    if wx.target_list().contains('wxregex')
+        deps += wx.dependency('wxregex')
+    endif
+
+    # CMake's static wxGTK target uses Wayland EGL, but Meson's CMake bridge
+    # does not always carry that private transitive library into wxmono_dep.
+    if host_machine.system() == 'linux'
+        deps += dependency('wayland-egl', required: false)
+    endif
 
     if host_machine.system() == 'windows' or host_machine.system() == 'darwin'
         deps += [
@@ -236,7 +247,10 @@ check_deps = [
 ]
 
 if host_machine.system() == 'linux'
-    if cc.get_define('__WXGTK3__', dependencies: wx_dep, prefix: '#include <wx/defs.h>') != ''
+    # The bundled wxWidgets fallback is configured for GTK3 above. wx_dep is
+    # deliberately not-found in that branch, so it cannot be passed to a
+    # compiler probe; doing so makes fresh Linux setups fail during configure.
+    if not wx_dep.found() or cc.get_define('__WXGTK3__', dependencies: wx_dep, prefix: '#include <wx/defs.h>') != ''
         check_deps += [['libportal-gtk3', [], 'libportal', [], []]]
     else
         check_deps += [['libportal', [], 'libportal', [], []]]
@@ -298,7 +312,7 @@ if host_machine.system() == 'windows' and cc.has_header('dwrite_3.h')
 endif
 
 if host_machine.system() == 'darwin'
-    frameworks_dep = dependency('appleframeworks', modules : ['CoreText', 'CoreFoundation', 'AppKit', 'Carbon', 'IOKit', 'QuartzCore'])
+    frameworks_dep = dependency('appleframeworks', modules : ['CoreText', 'CoreFoundation', 'AppKit', 'Carbon', 'IOKit', 'QuartzCore', 'Security'])
     deps += frameworks_dep
 endif
 
@@ -337,6 +351,9 @@ deps += dependency('libcurl', allow_fallback: true, default_options: curl_option
 
 if host_machine.system() == 'windows'
     deps += cc.find_library('advapi32', required: true)
+elif host_machine.system() == 'linux'
+    deps += dependency('libsecret-1', required: true)
+    conf.set('WITH_LIBSECRET', 1)
 endif
 
 luajit = dependency('luajit', version: '>=2.0.0', required: get_option('system_luajit'),

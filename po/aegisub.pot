@@ -7611,6 +7611,10 @@ msgid "Brush size: %d px"
 msgstr ""
 
 #: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr ""
+
+#: src/visual_tool_vector_clip.cpp
 #, c-format
 msgid "Brush: %s, %d px (right-click for settings)"
 msgstr ""
@@ -7702,4 +7706,20 @@ msgstr ""
 
 #: src/command/subtitle.cpp
 msgid "Matroska Files"
+msgstr ""
+
+#: src/dialog_ai_connection.cpp
+msgid "API key is stored securely in the operating system credential store."
+msgstr ""
+
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr ""
+
+#: src/dialog_ai_connection.cpp
+msgid "Store the key securely in the operating system credential store"
+msgstr ""
+
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
 msgstr ""

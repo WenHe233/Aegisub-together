@@ -1245,24 +1245,20 @@ bool VisualToolMask::PrepareColorSelection(Vector2D sample_point) {
 void VisualToolMask::PaintColorBrush(Vector2D from, Vector2D to) {
 	if (color_frame_width <= 0 ||
 		color_frame_height <= 0 || video_size.X() <= 0.f || video_size.Y() <= 0.f) return;
-	std::vector<std::vector<Vector2D>> screen_contours = color_contours;
-	for (auto& contour : screen_contours)
-		for (auto& point : contour) point = FromScriptCoords(point);
+	if (color_contours_dirty) SyncColorSegmenterFromContours();
+	auto to_frame = [&](Vector2D screen) {
+		Vector2D script = ToScriptCoords(screen);
+		return Vector2D(script.X() * color_frame_width / script_res.X(),
+			script.Y() * color_frame_height / script_res.Y());
+	};
+	float frame_scale_x = color_frame_width / video_size.X();
+	float frame_scale_y = color_frame_height / video_size.Y();
+	float frame_radius = color_brush_radius * (frame_scale_x + frame_scale_y) * .5f;
 	bool add = color_selection_mode == VisualSelectionMode::BrushAdd;
-	screen_contours = ApplyVectorBrushStroke(std::move(screen_contours),
-		{from, to}, color_brush_radius, add);
-	color_contours = screen_contours;
-	for (auto& contour : color_contours)
-		for (auto& point : contour) point = ToScriptCoords(point);
-	// The pipette selection is defined inside the range the user marked out, and
-	// the cached crop is restricted to it anyway. Cut the painted result to the same
-	// boundary so the brush cannot drag the outline past it - the freehand range
-	// included, not just its bounding box.
-	ClipVectorContoursToPolygon(color_contours, ColorRangeBoundary());
+	color_segmenter.PaintStroke(to_frame(from), to_frame(to), frame_radius, add);
 	color_offset = 0;
 	color_auto_fill = false;
-	color_contours_dirty = true;
-	color_display_dirty = true;
+	RefreshColorContours();
 }
 
 void VisualToolMask::SyncColorSegmenterFromContours() {
@@ -1273,7 +1269,7 @@ void VisualToolMask::SyncColorSegmenterFromContours() {
 			script = Vector2D(script.X() * color_frame_width / script_res.X(),
 				script.Y() * color_frame_height / script_res.Y());
 	}
-	color_segmenter.SetContours(frame_contours);
+	color_segmenter.SetContours(frame_contours, true);
 	color_contours_dirty = false;
 }
 

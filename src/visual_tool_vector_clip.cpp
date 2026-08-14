@@ -41,15 +41,20 @@
 #include <boost/geometry/geometries/polygon.hpp>
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/range/algorithm/set_algorithm.hpp>
+#include <chrono>
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <wx/brush.h>
+#include <wx/dcmemory.h>
 #include <wx/event.h>
 #include <wx/image.h>
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
+#include <wx/pen.h>
 #include <wx/popupwin.h>
 #include <wx/radiobut.h>
+#include <wx/settings.h>
 #include <wx/sizer.h>
 #include <wx/slider.h>
 #include <wx/stattext.h>
@@ -64,6 +69,27 @@ namespace {
 	using BrushPolygon = bg::model::polygon<BrushPoint>;
 	using BrushMultiPolygon = bg::model::multi_polygon<BrushPolygon>;
 	using BrushBox = bg::model::box<BrushPoint>;
+	constexpr int point_selection_rectangle = 1350;
+	constexpr int point_selection_freehand = 1351;
+
+	wxBitmap with_dropdown_indicator(wxBitmap const& source, int size) {
+		wxBitmap bitmap(size, size, 24);
+		wxMemoryDC dc(bitmap);
+		wxColour background = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
+		dc.SetBackground(wxBrush(background));
+		dc.Clear();
+		dc.DrawBitmap(source, 0, 0, true);
+		int corner = std::max(6, size / 4);
+		dc.SetPen(*wxTRANSPARENT_PEN);
+		dc.SetBrush(wxBrush(background));
+		dc.DrawRectangle(size - corner, size - corner, corner, corner);
+		wxPoint triangle[]{{size - corner + 1, size - corner + 1},
+			{size - 1, size - corner + 1}, {size - 1, size - 1}};
+		dc.SetBrush(wxBrush(wxColour(20, 20, 20)));
+		dc.DrawPolygon(3, triangle);
+		dc.SelectObject(wxNullBitmap);
+		return bitmap;
+	}
 
 	ai::CloudinaryCredentials configured_cloudinary() {
 		return {OPT_GET("AI/Cloudinary/Cloud Name")->GetString(),
@@ -85,6 +111,9 @@ namespace {
 			modes->Add(add_button, 1, wxRIGHT, 12);
 			modes->Add(erase_button, 1);
 			sizer->Add(modes, 0, wxEXPAND | wxALL, 10);
+			auto shortcut_label = new wxStaticText(this, wxID_ANY,
+				_("Double Alt: switch Add/Delete"));
+			sizer->Add(shortcut_label, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
 			auto size_label = new wxStaticText(this, wxID_ANY,
 				agi::wxformat(_("Brush size: %d px"), radius));
@@ -248,6 +277,58 @@ namespace {
 		return polygon;
 	}
 
+	bool normalize_self_touching_brush_paths(Spline& spline) {
+		std::vector<int> starts, counts;
+		auto points = spline.GetPointList(starts, counts);
+		std::vector<size_t> path_starts;
+		for (size_t i = 0; i < spline.size(); ++i)
+			if (spline[i].type == SplineCurve::POINT) path_starts.push_back(i);
+		if (starts.size() != path_starts.size()) return false;
+
+		std::vector<SplineCurve> rebuilt;
+		bool changed = false;
+		for (size_t path = 0; path < starts.size(); ++path) {
+			std::vector<Vector2D> contour;
+			contour.reserve(counts[path]);
+			for (int i = 0; i < counts[path]; ++i) {
+				size_t point = static_cast<size_t>(starts[path] + i) * 2;
+				Vector2D current(points[point], points[point + 1]);
+				if (contour.empty() || current != contour.back())
+					contour.push_back(current);
+			}
+			if (contour.size() > 2 && contour.front() == contour.back()) contour.pop_back();
+			std::set<std::pair<float, float>> unique;
+			bool repeats = std::any_of(contour.begin(), contour.end(), [&](Vector2D point) {
+				return !unique.emplace(point.X(), point.Y()).second;
+			});
+			size_t path_end = path + 1 < path_starts.size() ?
+				path_starts[path + 1] : spline.size();
+			if (!repeats) {
+				rebuilt.insert(rebuilt.end(), spline.begin() + path_starts[path],
+					spline.begin() + path_end);
+				continue;
+			}
+
+			auto simple = SplitSelfTouchingContours({std::move(contour)});
+			if (simple.empty()) {
+				rebuilt.insert(rebuilt.end(), spline.begin() + path_starts[path],
+					spline.begin() + path_end);
+				continue;
+			}
+			changed = true;
+			for (auto const& loop : simple) {
+				if (loop.size() < 3) continue;
+				rebuilt.emplace_back(loop.front());
+				for (size_t i = 1; i < loop.size(); ++i)
+					rebuilt.emplace_back(loop[i - 1], loop[i]);
+			}
+		}
+		if (!changed) return false;
+		spline.clear();
+		spline.insert(spline.end(), rebuilt.begin(), rebuilt.end());
+		return true;
+	}
+
 	Vector2D rotate_point(Vector2D point, float angle) {
 		float sine = std::sin(angle);
 		float cosine = std::cos(angle);
@@ -267,6 +348,18 @@ namespace {
 		}
 	}
 }
+
+struct VisualToolVectorClip::BrushGeometryCache {
+	struct Path {
+		std::vector<SplineCurve> curves;
+		std::vector<float> points;
+		BrushPolygon polygon;
+		BrushBox envelope;
+		double area = 0.0;
+		bool usable = false;
+	};
+	std::vector<Path> paths;
+};
 
 VisualToolVectorClip::VisualToolVectorClip(VideoDisplay *parent, agi::Context *context, bool edit_drawing)
 : VisualTool<VisualToolVectorClipDraggableFeature>(parent, context)
@@ -290,7 +383,12 @@ VisualToolVectorClip::~VisualToolVectorClip() {
 void VisualToolVectorClip::AddTool(std::string command_name, VisualToolVectorClipMode mode) {
 	cmd::Command *command = cmd::get(command_name);
 	int icon_size = OPT_GET("App/Toolbar Icon Size")->GetInt();
-	toolBar->AddTool(BUTTON_ID_BASE + mode, command->StrDisplay(c), command->Icon(icon_size), command->GetTooltip("Video"), wxITEM_CHECK);
+	auto icon = command->Icon(icon_size);
+	if (mode == VCLIP_DRAG || mode == VCLIP_REMOVE)
+		icon = wxBitmapBundle::FromBitmap(with_dropdown_indicator(
+			icon.GetBitmap(wxSize(icon_size, icon_size)), icon_size));
+	toolBar->AddTool(BUTTON_ID_BASE + mode, command->StrDisplay(c), icon,
+		command->GetTooltip("Video"), wxITEM_CHECK);
 }
 
 
@@ -327,12 +425,64 @@ void VisualToolVectorClip::SetToolbar(wxToolBar *toolBar) {
 
 void VisualToolVectorClip::OnToolbar(wxCommandEvent& event) {
 	int subtool = event.GetId() - BUTTON_ID_BASE;
+	if ((subtool == VCLIP_DRAG || subtool == VCLIP_REMOVE) &&
+		event.GetEventType() == wxEVT_TOOL_RCLICKED) {
+		ShowPointSelectionMenu(subtool);
+		return;
+	}
 	if (subtool == VCLIP_BRUSH && event.GetEventType() == wxEVT_TOOL_RCLICKED) {
 		ShowBrushSettings();
 		return;
 	}
 	if (event.GetEventType() == wxEVT_TOOL)
 		SetSubTool(subtool);
+}
+
+void VisualToolVectorClip::ShowPointSelectionMenu(int subtool) {
+	if (!toolBar) return;
+	auto& shape = subtool == VCLIP_REMOVE ? remove_selection_shape : drag_selection_shape;
+	wxMenu menu;
+	auto rectangle = menu.AppendRadioItem(point_selection_rectangle, _("Rectangle"));
+	auto freehand = menu.AppendRadioItem(point_selection_freehand, _("Freehand"));
+	rectangle->Check(shape == PointSelectionShape::Rectangle);
+	freehand->Check(shape == PointSelectionShape::Freehand);
+	Vector2D position(parent->ScreenToClient(wxGetMousePosition()));
+	int selected = parent->GetPopupMenuSelectionFromUser(menu,
+		wxPoint(static_cast<int>(position.X()), static_cast<int>(position.Y())));
+	if (selected == point_selection_rectangle)
+		shape = PointSelectionShape::Rectangle;
+	else if (selected == point_selection_freehand)
+		shape = PointSelectionShape::Freehand;
+	else
+		return;
+	if (mode != subtool) SetSubTool(subtool);
+	selection_lasso.clear();
+	parent->Render();
+}
+
+VisualToolVectorClip::PointSelectionShape VisualToolVectorClip::PointSelectionShapeForMode() const {
+	return mode == VCLIP_REMOVE ? remove_selection_shape : drag_selection_shape;
+}
+
+bool VisualToolVectorClip::PointInsideCurrentSelection(Vector2D point) const {
+	if (PointSelectionShapeForMode() == PointSelectionShape::Rectangle) {
+		Vector2D top_left = drag_start.Min(mouse_pos);
+		Vector2D bottom_right = drag_start.Max(mouse_pos);
+		return point.X() >= top_left.X() && point.X() <= bottom_right.X() &&
+			point.Y() >= top_left.Y() && point.Y() <= bottom_right.Y();
+	}
+	if (selection_lasso.size() < 3) return false;
+	bool inside = false;
+	for (size_t i = 0, previous = selection_lasso.size() - 1;
+		i < selection_lasso.size(); previous = i++) {
+		auto const& a = selection_lasso[previous];
+		auto const& b = selection_lasso[i];
+		if ((a.Y() > point.Y()) != (b.Y() > point.Y()) &&
+			point.X() < (b.X() - a.X()) * (point.Y() - a.Y()) /
+				(b.Y() - a.Y()) + a.X())
+			inside = !inside;
+	}
+	return inside;
 }
 
 void VisualToolVectorClip::ShowBrushSettings() {
@@ -487,6 +637,7 @@ void VisualToolVectorClip::ResetColorSelection() {
 	color_brush_stroke.clear();
 	color_brush_base_spline.clear();
 	color_brush_preview_changed = false;
+	color_brush_geometry.reset();
 	color_undo_history.clear();
 	color_redo_history.clear();
 	color_undo_history.reserve(16);
@@ -653,7 +804,7 @@ bool VisualToolVectorClip::LoadColorTemplate(ColorTemplate const& color_template
 			for (auto& contour : contours)
 				for (auto& point : contour)
 					point = point + Vector2D(static_cast<float>(left), static_cast<float>(top));
-			segmenter.SetContours(contours);
+			segmenter.SetContours(contours, true);
 		}
 		for (auto const& operation : color_template.sample_operations) {
 			if (!segmenter.AddSample(*frame, operation.sample, operation.add)) return false;
@@ -1213,6 +1364,7 @@ bool VisualToolVectorClip::EnsureColorSegmenter() {
 
 bool VisualToolVectorClip::InitializeBrushSelection() {
 	if (mode == VCLIP_BRUSH) {
+		color_brush_geometry.reset();
 		color_contours.clear();
 		color_display_dirty = true;
 		color_stage = ColorStage::Ready;
@@ -1288,7 +1440,7 @@ bool VisualToolVectorClip::PrepareAISelection() {
 		}
 		PushColorHistory();
 		color_segmenter.PrepareEmpty(*frame, left, top, right, bottom);
-		color_segmenter.SetContours(contours);
+		color_segmenter.SetContours(contours, true);
 		color_sample_operations.clear();
 		color_ai_base = true;
 		has_color_sample = false;
@@ -1349,30 +1501,20 @@ void VisualToolVectorClip::PaintColorBrush(Vector2D from, Vector2D to) {
 void VisualToolVectorClip::PaintSelectionBrush(Vector2D from, Vector2D to) {
 	if (color_frame_width <= 0 || color_frame_height <= 0 ||
 		video_size.X() <= 0.f || video_size.Y() <= 0.f) return;
-	std::vector<std::vector<Vector2D>> screen_contours = color_contours;
-	for (auto& contour : screen_contours)
-		for (auto& point : contour) point = FromScriptCoords(point);
-	float distance = (to - from).Len();
-	float step_size = std::max(1.f, color_brush_radius * .3f);
-	int steps = distance > .01f ?
-		std::max(1, static_cast<int>(std::ceil(distance / step_size))) : 0;
+	if (color_contours_dirty) SyncColorSegmenterFromContours();
+	auto to_frame = [&](Vector2D screen) {
+		Vector2D script = ToScriptCoords(screen);
+		return Vector2D(script.X() * color_frame_width / script_res.X(),
+			script.Y() * color_frame_height / script_res.Y());
+	};
+	float frame_scale_x = color_frame_width / video_size.X();
+	float frame_scale_y = color_frame_height / video_size.Y();
+	float frame_radius = color_brush_radius * (frame_scale_x + frame_scale_y) * .5f;
 	bool add = color_selection_mode == VisualSelectionMode::BrushAdd;
-	for (int step = 0; step <= steps; ++step)
-		ApplyVectorBrushStamp(screen_contours, from + (to - from) *
-			(steps ? static_cast<float>(step) / steps : 0.f),
-			color_brush_radius, add);
-	color_contours = std::move(screen_contours);
-	for (auto& contour : color_contours)
-		for (auto& point : contour) point = ToScriptCoords(point);
-	// The pipette selection is defined inside the range the user marked out, and
-	// the cached crop is restricted to it anyway. Cut the painted result to the same
-	// boundary so the brush cannot drag the outline past it - the freehand range
-	// included, not just its bounding box.
-	ClipVectorContoursToPolygon(color_contours, ColorRangeBoundary());
+	color_segmenter.PaintStroke(to_frame(from), to_frame(to), frame_radius, add);
 	color_offset = 0;
 	color_auto_fill = false;
-	color_contours_dirty = true;
-	color_display_dirty = true;
+	RefreshColorContours();
 }
 
 void VisualToolVectorClip::SyncColorSegmenterFromContours() {
@@ -1383,18 +1525,53 @@ void VisualToolVectorClip::SyncColorSegmenterFromContours() {
 			point = Vector2D(point.X() * color_frame_width / script_res.X(),
 				point.Y() * color_frame_height / script_res.Y());
 	}
-	color_segmenter.SetContours(frame_contours);
+	color_segmenter.SetContours(frame_contours, true);
 	color_contours_dirty = false;
 }
 
 bool VisualToolVectorClip::ApplyBrushStroke(std::vector<Vector2D> const& stroke) {
 	if (stroke.empty() || color_brush_radius <= 0.f) return false;
-	std::vector<int> starts, counts;
-	auto points = spline.GetPointList(starts, counts);
-	std::vector<size_t> path_starts;
-	for (size_t i = 0; i < spline.size(); ++i)
-		if (spline[i].type == SplineCurve::POINT) path_starts.push_back(i);
-	if (starts.size() != path_starts.size()) return false;
+	// The selection mode is also what drives the green/red cursor. Using the
+	// separately persisted toolbar preference here allowed the two states to get
+	// out of sync after accepting a pipette selection, visibly reversing the brush.
+	bool add_mode = color_selection_mode == VisualSelectionMode::BrushAdd;
+	if (!color_brush_geometry) {
+		// Pixel tracing can produce a valid non-zero fill whose boundary touches
+		// itself at a grid corner. Prepare an equivalent simple-path copy once per
+		// gesture; the original spline is kept intact until the brush changes it.
+		Spline prepared = spline;
+		normalize_self_touching_brush_paths(prepared);
+		std::vector<int> starts, counts;
+		auto points = prepared.GetPointList(starts, counts);
+		std::vector<size_t> path_starts;
+		for (size_t i = 0; i < prepared.size(); ++i)
+			if (prepared[i].type == SplineCurve::POINT) path_starts.push_back(i);
+		if (starts.size() != path_starts.size()) return false;
+
+		auto cache = std::make_unique<BrushGeometryCache>();
+		cache->paths.reserve(starts.size());
+		for (size_t i = 0; i < starts.size(); ++i) {
+			BrushGeometryCache::Path path;
+			size_t path_end = i + 1 < path_starts.size() ?
+				path_starts[i + 1] : prepared.size();
+			path.curves.insert(path.curves.end(), prepared.begin() + path_starts[i],
+				prepared.begin() + path_end);
+			size_t first = static_cast<size_t>(starts[i]);
+			size_t count = static_cast<size_t>(counts[i]);
+			path.points.reserve(count * 2);
+			for (size_t point = 0; point < count; ++point) {
+				path.points.push_back(points[(first + point) * 2]);
+				path.points.push_back(points[(first + point) * 2 + 1]);
+			}
+			path.area = ring_signed_area(path.points, 0, count);
+			path.polygon = make_brush_polygon(path.points, 0, count);
+			path.usable = repair_brush_polygon(path.polygon);
+			if (path.usable) bg::envelope(path.polygon, path.envelope);
+			cache->paths.push_back(std::move(path));
+		}
+		color_brush_geometry = std::move(cache);
+	}
+	auto& paths = color_brush_geometry->paths;
 
 	float spacing = std::max(1.f, color_brush_radius * .35f);
 	std::vector<Vector2D> centres{stroke.front()};
@@ -1406,46 +1583,38 @@ bool VisualToolVectorClip::ApplyBrushStroke(std::vector<Vector2D> const& stroke)
 		for (int step = 1; step <= steps; ++step)
 			centres.push_back(from + (to - from) * (static_cast<float>(step) / steps));
 	}
-	std::vector<unsigned char> touched(starts.size());
-	for (size_t i = 0; i < starts.size(); ++i) {
+	std::vector<unsigned char> touched(paths.size());
+	for (size_t i = 0; i < paths.size(); ++i) {
 		for (auto centre : centres) {
-			if (circle_touches_polygon(centre, color_brush_radius, points,
-				static_cast<size_t>(starts[i]), static_cast<size_t>(counts[i]))) {
+			if (circle_touches_polygon(centre, color_brush_radius, paths[i].points,
+				0, paths[i].points.size() / 2)) {
 				touched[i] = 1;
 				break;
 			}
 		}
 	}
 	if (std::none_of(touched.begin(), touched.end(), [](unsigned char value) { return value != 0; })) {
-		if (!brush_add_mode) return false;
+		if (!add_mode) return false;
 	}
 
 	try {
-		std::vector<BrushPolygon> polygons(starts.size());
-		std::vector<double> areas(starts.size());
-		std::vector<unsigned char> usable(starts.size());
-		for (size_t i = 0; i < starts.size(); ++i) {
-			areas[i] = ring_signed_area(points,
-				static_cast<size_t>(starts[i]), static_cast<size_t>(counts[i]));
-			polygons[i] = make_brush_polygon(points,
-				static_cast<size_t>(starts[i]), static_cast<size_t>(counts[i]));
-			usable[i] = repair_brush_polygon(polygons[i]) ? 1 : 0;
-		}
 		// A contour the boolean cannot digest is carried over untouched rather than
 		// abandoning the stroke: giving up here used to leave the brush stamping
 		// loose circles for the rest of the session.
-		std::vector<unsigned char> affected(starts.size());
-		for (size_t i = 0; i < starts.size(); ++i)
-			affected[i] = usable[i] ? touched[i] : 0;
+		std::vector<unsigned char> affected(paths.size());
+		for (size_t i = 0; i < paths.size(); ++i)
+			affected[i] = paths[i].usable ? touched[i] : 0;
 		bool expanded = true;
 		while (expanded) {
 			expanded = false;
-			for (size_t i = 0; i < polygons.size(); ++i) {
-				if (affected[i] || !usable[i]) continue;
-				for (size_t j = 0; j < polygons.size(); ++j) {
+			for (size_t i = 0; i < paths.size(); ++i) {
+				if (affected[i] || !paths[i].usable) continue;
+				for (size_t j = 0; j < paths.size(); ++j) {
 					if (!affected[j]) continue;
-					if (bg::intersects(polygons[i], polygons[j]) ||
-						bg::within(polygons[i], polygons[j]) || bg::within(polygons[j], polygons[i])) {
+					if (bg::disjoint(paths[i].envelope, paths[j].envelope)) continue;
+					if (bg::intersects(paths[i].polygon, paths[j].polygon) ||
+						bg::within(paths[i].polygon, paths[j].polygon) ||
+						bg::within(paths[j].polygon, paths[i].polygon)) {
 						affected[i] = 1;
 						expanded = true;
 						break;
@@ -1462,14 +1631,12 @@ bool VisualToolVectorClip::ApplyBrushStroke(std::vector<Vector2D> const& stroke)
 		// extracted colour clip next to a painted blob, for instance - get
 		// subtracted as if it were a hole.
 		std::vector<size_t> order;
-		for (size_t i = 0; i < starts.size(); ++i)
-			if (affected[i] && std::abs(areas[i]) > 1e-6) order.push_back(i);
+		for (size_t i = 0; i < paths.size(); ++i)
+			if (affected[i] && std::abs(paths[i].area) > 1e-6) order.push_back(i);
 		std::sort(order.begin(), order.end(), [&](size_t a, size_t b) {
-			return std::abs(areas[a]) > std::abs(areas[b]);
+			return std::abs(paths[a].area) > std::abs(paths[b].area);
 		});
-		std::vector<BrushBox> envelopes(starts.size());
-		for (size_t index : order) bg::envelope(polygons[index], envelopes[index]);
-		auto orientation = [&](size_t index) { return areas[index] > 0.0 ? 1 : -1; };
+		auto orientation = [&](size_t index) { return paths[index].area > 0.0 ? 1 : -1; };
 		BrushMultiPolygon selection;
 		for (size_t position = 0; position < order.size(); ++position) {
 			size_t index = order[position];
@@ -1477,12 +1644,12 @@ bool VisualToolVectorClip::ApplyBrushStroke(std::vector<Vector2D> const& stroke)
 			bool crosses_opposite = false;
 			for (size_t earlier = 0; earlier < position; ++earlier) {
 				size_t other = order[earlier];
-				if (!bg::intersects(envelopes[index], envelopes[other])) continue;
-				if (bg::covered_by(envelopes[index], envelopes[other]) &&
-					bg::covered_by(polygons[index], polygons[other]))
+				if (bg::disjoint(paths[index].envelope, paths[other].envelope)) continue;
+				if (bg::covered_by(paths[index].envelope, paths[other].envelope) &&
+					bg::covered_by(paths[index].polygon, paths[other].polygon))
 					winding += orientation(other);
 				else if (!crosses_opposite && orientation(other) != orientation(index) &&
-					bg::intersects(polygons[index], polygons[other]))
+					bg::intersects(paths[index].polygon, paths[other].polygon))
 					crosses_opposite = true;
 			}
 			int inside = winding + orientation(index);
@@ -1491,16 +1658,16 @@ bool VisualToolVectorClip::ApplyBrushStroke(std::vector<Vector2D> const& stroke)
 			if (winding != 0 && inside != 0) continue;
 			bool solid = winding == 0;
 			if (selection.empty()) {
-				if (solid) selection.push_back(polygons[index]);
+				if (solid) selection.push_back(paths[index].polygon);
 				continue;
 			}
 			BrushMultiPolygon combined;
-			if (!solid) bg::difference(selection, polygons[index], combined);
+			if (!solid) bg::difference(selection, paths[index].polygon, combined);
 			// Two contours wound against each other which merely overlap cancel in
 			// the overlap rather than merging. Containment is already accounted for
 			// by the winding count, so only crossings are left to handle here.
-			else if (crosses_opposite) bg::sym_difference(selection, polygons[index], combined);
-			else bg::union_(selection, polygons[index], combined);
+			else if (crosses_opposite) bg::sym_difference(selection, paths[index].polygon, combined);
+			else bg::union_(selection, paths[index].polygon, combined);
 			selection = std::move(combined);
 		}
 
@@ -1516,39 +1683,66 @@ bool VisualToolVectorClip::ApplyBrushStroke(std::vector<Vector2D> const& stroke)
 			brush = std::move(combined);
 		}
 		BrushMultiPolygon result;
-		if (brush_add_mode && selection.empty()) result = std::move(brush);
-		else if (brush_add_mode) bg::union_(selection, brush, result);
+		if (add_mode && selection.empty()) result = std::move(brush);
+		else if (add_mode) bg::union_(selection, brush, result);
 		else bg::difference(selection, brush, result);
 		tidy_brush_result(result);
 
-		std::vector<SplineCurve> rebuilt;
-		for (size_t i = 0; i < path_starts.size(); ++i) {
+		std::vector<BrushGeometryCache::Path> rebuilt;
+		rebuilt.reserve(paths.size() + result.size() * 2);
+		for (size_t i = 0; i < paths.size(); ++i) {
 			if (affected[i]) continue;
-			size_t end = i + 1 < path_starts.size() ? path_starts[i + 1] : spline.size();
-			rebuilt.insert(rebuilt.end(), spline.begin() + path_starts[i], spline.begin() + end);
+			rebuilt.push_back(std::move(paths[i]));
 		}
-		auto append_ring = [&](auto const& ring) {
+		auto append_ring = [&](auto const& ring, bool solid) {
 			if (ring.size() < 4) return;
-			Vector2D first(static_cast<float>(ring.front().x()),
-				static_cast<float>(ring.front().y()));
-			rebuilt.emplace_back(first);
+			BrushGeometryCache::Path path;
+			// Boost's default polygon model stores outer rings clockwise. ASS uses
+			// non-zero winding in its y-down coordinate system, where a solid outer
+			// ring must have positive signed area and a hole negative signed area.
+			// Writing Boost's order verbatim therefore swapped Add and Delete: a
+			// green brush stroke was appended as a new negative (hole) contour.
+			double signed_area = 0.0;
+			size_t count = ring.size() - 1; // Boost repeats the first point at the end.
+			for (size_t i = 0, previous = count - 1; i < count; previous = i++)
+				signed_area += ring[previous].x() * ring[i].y() -
+					ring[i].x() * ring[previous].y();
+			bool reverse = solid ? signed_area < 0.0 : signed_area > 0.0;
+			auto point_at = [&](size_t index) -> auto const& {
+				return ring[reverse ? count - 1 - index : index];
+			};
+			auto const& first_point = point_at(0);
+			Vector2D first(static_cast<float>(first_point.x()),
+				static_cast<float>(first_point.y()));
+			path.points.reserve(count * 2);
+			path.curves.reserve(count);
+			path.points.push_back(first.X());
+			path.points.push_back(first.Y());
+			path.curves.emplace_back(first);
 			Vector2D previous = first;
-			for (size_t i = 1; i + 1 < ring.size(); ++i) {
-				Vector2D current(static_cast<float>(ring[i].x()),
-					static_cast<float>(ring[i].y()));
-				rebuilt.emplace_back(previous, current);
+			for (size_t i = 1; i < count; ++i) {
+				auto const& point = point_at(i);
+				Vector2D current(static_cast<float>(point.x()),
+					static_cast<float>(point.y()));
+				path.points.push_back(current.X());
+				path.points.push_back(current.Y());
+				path.curves.emplace_back(previous, current);
 				previous = current;
 			}
+			path.area = solid ? std::abs(signed_area) * .5 : -std::abs(signed_area) * .5;
+			path.polygon = make_brush_polygon(path.points, 0, count);
+			path.usable = repair_brush_polygon(path.polygon);
+			if (path.usable) bg::envelope(path.polygon, path.envelope);
+			rebuilt.push_back(std::move(path));
 		};
 		for (auto const& polygon : result) {
-			append_ring(polygon.outer());
-			for (auto const& inner : polygon.inners()) append_ring(inner);
+			append_ring(polygon.outer(), true);
+			for (auto const& inner : polygon.inners()) append_ring(inner, false);
 		}
+		paths = std::move(rebuilt);
 		spline.clear();
-		spline.insert(spline.end(), rebuilt.begin(), rebuilt.end());
-		// The contour the previous edit pointed at may no longer exist.
-		NormalizeActivePath();
-		MakeFeatures();
+		for (auto const& path : paths)
+			spline.insert(spline.end(), path.curves.begin(), path.curves.end());
 		return true;
 	}
 	catch (...) {
@@ -1692,6 +1886,11 @@ void VisualToolVectorClip::AcceptColorContours() {
 void VisualToolVectorClip::CommitBrushContours() {
 	if (mode != VCLIP_BRUSH) return;
 	// The whole captured stroke has already been applied as one geometry edit.
+	// Point handles are hidden in brush mode, so rebuilding thousands of them for
+	// every live preview frame is wasted work. Rebuild them once for the final clip.
+	NormalizeActivePath();
+	MakeFeatures();
+	color_brush_geometry.reset();
 	Save();
 	VisualToolBase::Commit(_("Brush edit vector clip"));
 	commit_id = -1;
@@ -1743,12 +1942,12 @@ void VisualToolVectorClip::OnMouseEvent(wxMouseEvent& event) {
 		if (event.LeftUp()) {
 			color_brush_drawing = false;
 			if (parent->HasCapture()) parent->ReleaseMouse();
-			if (mode == VCLIP_BRUSH && color_brush_preview_changed) {
+			if (mode == VCLIP_BRUSH && color_brush_preview_changed)
 				CommitBrushContours();
-			}
 			color_brush_stroke.clear();
 			color_brush_base_spline.clear();
 			color_brush_preview_changed = false;
+			color_brush_geometry.reset();
 		}
 		parent->Render();
 		return;
@@ -1944,6 +2143,7 @@ void VisualToolVectorClip::OnMouseEvent(wxMouseEvent& event) {
 				color_brush_stroke.push_back(mouse_pos);
 				if (mode == VCLIP_BRUSH) {
 					color_brush_base_spline.assign(spline.begin(), spline.end());
+					color_brush_geometry.reset();
 					color_brush_preview_changed = ApplyBrushStroke(color_brush_stroke);
 				}
 				else {
@@ -2023,6 +2223,25 @@ bool VisualToolVectorClip::OnKeyEvent(wxKeyEvent& event) {
 #ifdef WXK_RALT
 	alt_key = alt_key || key == WXK_RALT;
 #endif
+	if (alt_key && (mode == VCLIP_BRUSH || mode == VCLIP_DRAG || mode == VCLIP_REMOVE)) {
+		if (event.IsAutoRepeat()) return true;
+		auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count();
+		bool double_alt = last_alt_press_ms != 0 && now - last_alt_press_ms <= 450;
+		last_alt_press_ms = double_alt ? 0 : now;
+		if (!double_alt) return true;
+		if (mode == VCLIP_BRUSH)
+			UpdateTool(brush_add_mode ? VCLIP_BRUSH_ACTION_DELETE : VCLIP_BRUSH_ACTION_ADD);
+		else {
+			auto& shape = mode == VCLIP_REMOVE ? remove_selection_shape : drag_selection_shape;
+			shape = shape == PointSelectionShape::Rectangle ?
+				PointSelectionShape::Freehand : PointSelectionShape::Rectangle;
+			selection_lasso.clear();
+			parent->Render();
+		}
+		return true;
+	}
+	if (!alt_key) last_alt_press_ms = 0;
 	if (mode == VCLIP_COLOR || mode == VCLIP_BRUSH) {
 		if (alt_key)
 			return true;
@@ -2045,6 +2264,7 @@ bool VisualToolVectorClip::OnKeyEvent(wxKeyEvent& event) {
 				color_brush_stroke.clear();
 				color_brush_base_spline.clear();
 				color_brush_preview_changed = false;
+				color_brush_geometry.reset();
 				if (parent->HasCapture()) parent->ReleaseMouse();
 			}
 			if (mode == VCLIP_BRUSH || color_stage == ColorStage::Range) CloseColorMode();
@@ -2568,13 +2788,20 @@ void VisualToolVectorClip::Draw() {
 	}
 
 	if ((mode == VCLIP_DRAG || mode == VCLIP_REMOVE) && holding && drag_start && mouse_pos) {
-		// Draw drag-select box
-		Vector2D top_left = drag_start.Min(mouse_pos);
-		Vector2D bottom_right = drag_start.Max(mouse_pos);
-		gl.DrawDashedLine(top_left, Vector2D(top_left.X(), bottom_right.Y()), 6);
-		gl.DrawDashedLine(Vector2D(top_left.X(), bottom_right.Y()), bottom_right, 6);
-		gl.DrawDashedLine(bottom_right, Vector2D(bottom_right.X(), top_left.Y()), 6);
-		gl.DrawDashedLine(Vector2D(bottom_right.X(), top_left.Y()), top_left, 6);
+		if (PointSelectionShapeForMode() == PointSelectionShape::Freehand) {
+			for (size_t i = 1; i < selection_lasso.size(); ++i)
+				gl.DrawDashedLine(selection_lasso[i - 1], selection_lasso[i], 6);
+			if (selection_lasso.size() > 2)
+				gl.DrawDashedLine(selection_lasso.back(), selection_lasso.front(), 6);
+		}
+		else {
+			Vector2D top_left = drag_start.Min(mouse_pos);
+			Vector2D bottom_right = drag_start.Max(mouse_pos);
+			gl.DrawDashedLine(top_left, Vector2D(top_left.X(), bottom_right.Y()), 6);
+			gl.DrawDashedLine(Vector2D(top_left.X(), bottom_right.Y()), bottom_right, 6);
+			gl.DrawDashedLine(bottom_right, Vector2D(bottom_right.X(), top_left.Y()), 6);
+			gl.DrawDashedLine(Vector2D(bottom_right.X(), top_left.Y()), top_left, 6);
+		}
 	}
 
 	Vector2D closest_point;
@@ -3030,10 +3257,16 @@ bool VisualToolVectorClip::InitializeHold() {
 		else
 			box_added.clear();
 
+		selection_lasso.clear();
+		if (drag_selection_shape == PointSelectionShape::Freehand)
+			selection_lasso.push_back(mouse_pos);
 		return true;
 	}
 	if (mode == VCLIP_REMOVE) {
 		sel_features.clear();
+		selection_lasso.clear();
+		if (remove_selection_shape == PointSelectionShape::Freehand)
+			selection_lasso.push_back(mouse_pos);
 		return true;
 	}
 
@@ -3138,32 +3371,25 @@ bool VisualToolVectorClip::InitializeHold() {
 	return false;
 }
 
-static bool in_box(Vector2D top_left, Vector2D bottom_right, Vector2D p) {
-	return p.X() >= top_left.X()
-		&& p.X() <= bottom_right.X()
-		&& p.Y() >= top_left.Y()
-		&& p.Y() <= bottom_right.Y();
-}
-
 void VisualToolVectorClip::UpdateHold() {
-	// Box selection
+	// Rectangle or freehand point selection
 	if ((mode == VCLIP_DRAG || mode == VCLIP_REMOVE) && holding) {
-		std::set<Feature *> boxed_features;
-
-		Vector2D p1 = drag_start.Min(mouse_pos);
-		Vector2D p2 = drag_start.Max(mouse_pos);
+		if (PointSelectionShapeForMode() == PointSelectionShape::Freehand &&
+			(selection_lasso.empty() || (mouse_pos - selection_lasso.back()).Len() >= 2.f))
+			selection_lasso.push_back(mouse_pos);
+		std::set<Feature *> enclosed_features;
 
 		for (auto& feature : features) {
-			if (in_box(p1, p2, feature.pos))
-				boxed_features.insert(&feature);
+			if (PointInsideCurrentSelection(feature.pos))
+				enclosed_features.insert(&feature);
 		}
 
-		sel_features = boxed_features;
+		sel_features = enclosed_features;
 
 		if (mode == VCLIP_DRAG && ctrl_down) {
 			sel_features = box_added;
 
-			for (auto* feature : boxed_features) {
+			for (auto* feature : enclosed_features) {
 				if (sel_features.count(feature))
 					sel_features.erase(feature);
 				else
@@ -3328,15 +3554,40 @@ void VisualToolVectorClip::DoRefresh() {
 }
 
 void VisualToolVectorClip::EndHold() {
+	if (mode == VCLIP_DRAG) {
+		// Include the final mouse-up position even if no motion event preceded it.
+		if (drag_selection_shape == PointSelectionShape::Freehand &&
+			(selection_lasso.empty() || (mouse_pos - selection_lasso.back()).Len() >= 1.f))
+			selection_lasso.push_back(mouse_pos);
+
+		std::set<Feature *> enclosed_features;
+		for (auto& feature : features) {
+			if (PointInsideCurrentSelection(feature.pos))
+				enclosed_features.insert(&feature);
+		}
+		sel_features = enclosed_features;
+		if (ctrl_down) {
+			sel_features = box_added;
+			for (auto* feature : enclosed_features) {
+				if (sel_features.count(feature))
+					sel_features.erase(feature);
+				else
+					sel_features.insert(feature);
+			}
+		}
+		return;
+	}
+
 	if (mode != VCLIP_REMOVE) return;
 
 	// Include the final mouse-up position even if the platform did not send a
 	// motion event for it.
-	Vector2D p1 = drag_start.Min(mouse_pos);
-	Vector2D p2 = drag_start.Max(mouse_pos);
+	if (remove_selection_shape == PointSelectionShape::Freehand &&
+		(selection_lasso.empty() || (mouse_pos - selection_lasso.back()).Len() >= 1.f))
+		selection_lasso.push_back(mouse_pos);
 	std::set<std::pair<size_t, int>> selected;
 	for (auto& feature : features) {
-		if (in_box(p1, p2, feature.pos))
+		if (PointInsideCurrentSelection(feature.pos))
 			selected.emplace(feature.idx, feature.point);
 	}
 	if (selected.empty()) {

@@ -925,7 +925,17 @@ struct edit_line_delete final : public validate_sel_nonempty {
 };
 
 static void duplicate_lines(agi::Context *c, int shift) {
-	auto const& sel = c->selectionController->GetSelectedSet();
+	Selection sel = c->selectionController->GetSelectedSet();
+	// A collapsed gradient/textbox/image group is represented by its first row in
+	// the grid. Duplicating only that row either loses the generated effect or
+	// leaves a source marker attached to the following group's rows.
+	if (!shift && c->imageMask) {
+		std::vector<AssDialogue *> selected(sel.begin(), sel.end());
+		for (auto line : selected) {
+			auto const& group = c->imageMask->GetGroupLines(line);
+			sel.insert(group.begin(), group.end());
+		}
+	}
 	auto in_selection = [&](AssDialogue const& d) { return sel.count(const_cast<AssDialogue *>(&d)); };
 
 	Selection new_sel;
@@ -990,7 +1000,7 @@ static void duplicate_lines(agi::Context *c, int shift) {
 	c->selectionController->SetSelectionAndActive(std::move(new_sel), new_active);
 }
 
-struct edit_line_duplicate final : public validate_sel_nonempty_no_imagemask {
+struct edit_line_duplicate final : public validate_sel_nonempty {
 	CMD_NAME("edit/line/duplicate")
 	STR_MENU("&Duplicate Lines")
 	STR_DISP("Duplicate Lines")
@@ -1057,10 +1067,16 @@ static void combine_lines(agi::Context *c, void (*combiner)(AssDialogue *, AssDi
 
 	AssDialogue *first = sel[0];
 	combiner(first, nullptr, keepTypesetting);
+	std::vector<std::unique_ptr<AssDialogue>> removed;
+	removed.reserve(sel.size() - 1);
 	for (size_t i = 1; i < sel.size(); ++i) {
 		combiner(first, sel[i], keepTypesetting);
 		first->End = std::max(first->End, sel[i]->End);
-		delete sel[i];
+		// Keep detached rows alive until selection listeners and commit listeners
+		// have stopped referring to the previous selection. Deleting here left
+		// dangling pointers during combined-row/fold refreshes.
+		c->ass->Events.erase(c->ass->Events.iterator_to(*sel[i]));
+		removed.emplace_back(sel[i]);
 	}
 
 	c->selectionController->SetSelectionAndActive({first}, first);

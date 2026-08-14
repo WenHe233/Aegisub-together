@@ -381,10 +381,23 @@ Metric Measure(agi::Context *c, AssDialogue const& prototype, TextStyle const& s
 std::vector<LayoutRow> Layout(agi::Context *c, AssDialogue const& prototype,
 	Document const& document) {
 	auto box = GetContentBox(document);
+	double right_outset = 0.0;
+	auto include_style_outset = [&](TextStyle const& style) {
+		double border = std::max(0.0, style.border);
+		right_outset = std::max(right_outset, border + std::max(0.0, style.shadow));
+	};
+	include_style_outset(document.base_style);
+	for (auto const& style : document.styles) include_style_outset(style);
 	double left = box.left;
 	double right = box.right;
 	double top = box.top;
 	double maximum_width = std::max(1.0, right - left);
+	// Word wrapping must use the full content width. Taking the outline out of
+	// this value can move a borderline word to the next row and cascade through
+	// the whole paragraph. Only the expanded justified row stops slightly early.
+	double justified_width = std::max(1.0, maximum_width - right_outset);
+	constexpr double minimum_justified_width_ratio = .60;
+	constexpr double maximum_word_stretch_em = .25;
 	std::map<std::string, Metric> cache;
 	std::map<std::string, bool> synthetic_bold_cache;
 
@@ -404,6 +417,9 @@ std::vector<LayoutRow> Layout(agi::Context *c, AssDialogue const& prototype,
 		LayoutRow row;
 		row.start = start;
 		row.end = end;
+		row.visible_end = end;
+		while (row.visible_end > start && IsSpace(document.text[row.visible_end - 1]))
+			--row.visible_end;
 		row.y = y;
 		row.paragraph_last = paragraph_last;
 		row.height = 0.0;
@@ -413,15 +429,37 @@ std::vector<LayoutRow> Layout(agi::Context *c, AssDialogue const& prototype,
 				synthetic_bold_cache).height;
 
 		double natural_width = 0.0;
-		for (size_t i = start; i < end; ++i) natural_width += advances[i];
+		for (size_t i = start; i < row.visible_end; ++i) natural_width += advances[i];
 		size_t spaces = 0;
 		if (document.alignment == Alignment::Justified && !paragraph_last) {
-			for (size_t i = start; i < end; ++i)
+			for (size_t i = start; i < row.visible_end; ++i)
 				if (IsSpace(document.text[i])) ++spaces;
 		}
-		if (spaces && natural_width < maximum_width)
-			row.justification = (maximum_width - natural_width) / spaces;
-		row.width = row.justification > 0.0 ? maximum_width : natural_width;
+		// Very short rows become unreadable when their few spaces are stretched
+		// across the whole box. Keep them left-aligned until the natural text
+		// occupies at least 60% of the usable line width.
+		if (spaces && natural_width < justified_width &&
+			natural_width >= maximum_width * minimum_justified_width_ratio) {
+			double extra_width = justified_width - natural_width;
+			// Put a bounded part of the expansion into word gaps. Long rows use only
+			// this natural-looking path; rows with a few long words distribute the
+			// remainder gently between letters instead of producing huge blank gaps.
+			double maximum_word_spacing = std::numeric_limits<double>::max();
+			for (size_t i = start; i < row.visible_end; ++i) {
+				if (!IsSpace(document.text[i])) continue;
+				auto const& style = StyleAt(document, i);
+				double em_width = std::max(0.0, style.size) *
+					std::abs(style.scale_x) / 100.0;
+				maximum_word_spacing = std::min(maximum_word_spacing,
+					em_width * maximum_word_stretch_em);
+			}
+			row.word_spacing = std::min(extra_width / spaces, maximum_word_spacing);
+			double remaining = extra_width - row.word_spacing * spaces;
+			size_t letter_gaps = row.visible_end > start ? row.visible_end - start - 1 : 0;
+			if (letter_gaps) row.letter_spacing = remaining / letter_gaps;
+		}
+		bool justified = row.word_spacing > 0.0 || row.letter_spacing > 0.0;
+		row.width = justified ? justified_width : natural_width;
 
 		double offset = document.alignment == Alignment::Centre ?
 			(maximum_width - row.width) * .5 : document.alignment == Alignment::Right ?
@@ -429,25 +467,25 @@ std::vector<LayoutRow> Layout(agi::Context *c, AssDialogue const& prototype,
 		row.carets.push_back(left + offset);
 		double x = left + offset;
 		for (size_t i = start; i < end; ++i) {
-			x += advances[i];
-			if (row.justification > 0.0 && IsSpace(document.text[i])) x += row.justification;
+			if (i < row.visible_end) {
+				x += advances[i];
+				if (i + 1 < row.visible_end) x += row.letter_spacing;
+				if (IsSpace(document.text[i])) x += row.word_spacing;
+			}
 			row.carets.push_back(x);
 		}
 		rows.push_back(std::move(row));
 		y += rows.back().height + document.line_spacing;
 	};
 
-	size_t paragraph_start = 0;
-	while (paragraph_start <= document.text.length()) {
-		size_t paragraph_end = document.text.find('\n', paragraph_start);
-		if (paragraph_end == wxString::npos) paragraph_end = document.text.length();
-		if (paragraph_start != paragraph_end) {
-			size_t cursor = paragraph_start;
-			while (cursor < paragraph_end) {
+	auto layout_line = [&](size_t line_start, size_t line_end, bool block_last) {
+		if (line_start != line_end) {
+			size_t cursor = line_start;
+			while (cursor < line_end) {
 				double width = 0.0;
 				size_t last_break = wxString::npos;
-				size_t cut = paragraph_end;
-				for (size_t i = cursor; i < paragraph_end; ++i) {
+				size_t cut = line_end;
+				for (size_t i = cursor; i < line_end; ++i) {
 					double next = width + advances[i];
 					if (next > maximum_width && i > cursor) {
 						cut = last_break != wxString::npos && last_break > cursor ? last_break : i;
@@ -457,13 +495,47 @@ std::vector<LayoutRow> Layout(agi::Context *c, AssDialogue const& prototype,
 					if (IsSpace(document.text[i])) last_break = i + 1;
 				}
 				if (cut <= cursor) cut = cursor + 1;
-				add_row(cursor, cut, cut == paragraph_end);
+				add_row(cursor, cut, block_last && cut == line_end);
 				cursor = cut;
 			}
 		}
-		else add_row(paragraph_start, paragraph_end, true);
-		if (paragraph_end == document.text.length()) break;
-		paragraph_start = paragraph_end + 1;
+		else add_row(line_start, line_end, block_last);
+	};
+
+	// A single explicit line break remains part of the same paragraph block, so
+	// its row is justified just like an automatically wrapped row. Two or more
+	// consecutive breaks end the block; only that block's final row is left-aligned.
+	auto layout_block = [&](size_t block_start, size_t block_end) {
+		size_t line_start = block_start;
+		while (line_start <= block_end) {
+			size_t line_end = document.text.find('\n', line_start);
+			if (line_end == wxString::npos || line_end >= block_end) line_end = block_end;
+			bool block_last = line_end == block_end;
+			layout_line(line_start, line_end, block_last);
+			if (block_last) break;
+			line_start = line_end + 1;
+		}
+	};
+
+	size_t block_start = 0;
+	while (block_start <= document.text.length()) {
+		size_t separator = wxString::npos;
+		for (size_t i = block_start; i + 1 < document.text.length(); ++i) {
+			if (document.text[i] == '\n' && document.text[i + 1] == '\n') {
+				separator = i;
+				break;
+			}
+		}
+		size_t block_end = separator == wxString::npos ? document.text.length() : separator;
+		layout_block(block_start, block_end);
+		if (separator == wxString::npos) break;
+		size_t next_block = separator + 2;
+		while (next_block < document.text.length() && document.text[next_block] == '\n')
+			++next_block;
+		// Preserve the vertical blank rows represented by the extra separators.
+		for (size_t blank = separator + 1; blank < next_block; ++blank)
+			add_row(blank, blank, true);
+		block_start = next_block;
 	}
 	return rows;
 }
@@ -733,7 +805,7 @@ std::vector<AssDialogue> Generate(agi::Context *c, AssDialogue const& prototype,
 	std::vector<AssDialogue> output;
 	output.reserve(rows.size());
 	for (auto const& row : rows) {
-		wxString row_text = document.text.Mid(row.start, row.end - row.start);
+		wxString row_text = document.text.Mid(row.start, row.visible_end - row.start);
 		if (row_text.Trim(true).Trim(false).empty()) continue;
 		TextStyle const& first_style = StyleAt(document, row.start);
 		if (document.transformed && plane.ok) {
@@ -758,24 +830,32 @@ std::vector<AssDialogue> Generate(agi::Context *c, AssDialogue const& prototype,
 			if (std::abs(plane.angle_y) > .0005) tags += "\\fry" + FormatNumber(plane.angle_y);
 			tags += preserved_tags;
 			tags += StyleDeltaTags(style_default, first.style);
+			if (row.letter_spacing > 0.0)
+				tags += "\\fsp" + FormatNumber(JustifiedSpacing(
+					first_style, row.letter_spacing));
 			ProjectedStyle neutral{first.style};
 			tags += ShearDelta(neutral, first);
 			std::string text = "{" + tags + "}";
 			ProjectedStyle running = first;
-			for (size_t i = row.start; i < row.end; ++i) {
+			for (size_t i = row.start; i < row.visible_end; ++i) {
 				ProjectedStyle style = ProjectStyle(StyleAt(document, i), plane);
 				if (style.style != running.style ||
 					std::abs(style.shear_x - running.shear_x) > .0005 ||
 					std::abs(style.shear_y - running.shear_y) > .0005) {
 					text += "{" + StyleDeltaTags(running.style, style.style) +
-						ShearDelta(running, style) + "}";
+						ShearDelta(running, style);
+					if (row.letter_spacing > 0.0)
+						text += "\\fsp" + FormatNumber(JustifiedSpacing(
+							StyleAt(document, i), row.letter_spacing));
+					text += "}";
 					running = style;
 				}
 				wxString character = document.text.Mid(i, 1);
-				if (row.justification > 0.0 && IsSpace(document.text[i]))
+				if (row.word_spacing > 0.0 && IsSpace(document.text[i]))
 					text += "{\\fsp" + FormatNumber(JustifiedSpacing(
-						StyleAt(document, i), row.justification)) + "}" +
-						EscapeCharacter(character) + "{\\fsp" + FormatNumber(style.style.spacing) + "}";
+						StyleAt(document, i), row.letter_spacing + row.word_spacing)) + "}" +
+						EscapeCharacter(character) + "{\\fsp" + FormatNumber(JustifiedSpacing(
+							StyleAt(document, i), row.letter_spacing)) + "}";
 				else text += EscapeCharacter(character);
 			}
 			AssDialogue generated(prototype);
@@ -793,19 +873,25 @@ std::vector<AssDialogue> Generate(agi::Context *c, AssDialogue const& prototype,
 			FormatNumber(x), FormatNumber(row.y));
 		tags += preserved_tags;
 		tags += StyleDeltaTags(style_default, first_style);
+		if (row.letter_spacing > 0.0)
+			tags += "\\fsp" + FormatNumber(JustifiedSpacing(first_style, row.letter_spacing));
 		std::string text = "{" + tags + "}";
 		TextStyle running = first_style;
-		for (size_t i = row.start; i < row.end; ++i) {
+		for (size_t i = row.start; i < row.visible_end; ++i) {
 			TextStyle const& style = StyleAt(document, i);
 			if (style != running) {
-				text += "{" + StyleDeltaTags(running, style) + "}";
+				text += "{" + StyleDeltaTags(running, style);
+				if (row.letter_spacing > 0.0)
+					text += "\\fsp" + FormatNumber(JustifiedSpacing(style, row.letter_spacing));
+				text += "}";
 				running = style;
 			}
 			wxString character = document.text.Mid(i, 1);
-			if (row.justification > 0.0 && IsSpace(document.text[i]))
+			if (row.word_spacing > 0.0 && IsSpace(document.text[i]))
 				text += "{\\fsp" + FormatNumber(JustifiedSpacing(
-					style, row.justification)) + "}" +
-					EscapeCharacter(character) + "{\\fsp" + FormatNumber(style.spacing) + "}";
+					style, row.letter_spacing + row.word_spacing)) + "}" +
+					EscapeCharacter(character) + "{\\fsp" + FormatNumber(
+						JustifiedSpacing(style, row.letter_spacing)) + "}";
 			else
 				text += EscapeCharacter(character);
 		}

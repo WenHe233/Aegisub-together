@@ -36,11 +36,14 @@ FoldController::FoldController(agi::Context *c)
 
 
 bool FoldController::CanAddFold(AssDialogue& start, AssDialogue& end) {
+	if (start.Row >= end.Row || start.Row < 0 || end.Row < 0)
+		return false;
 	if (start.Fold.valid || end.Fold.valid) {
 		return false;
 	}
 	int folddepth = 0;
-	for (auto it = std::next(context->ass->Events.begin(), start.Row); it->Row < end.Row; it++) {
+	for (auto it = std::next(context->ass->Events.begin(), start.Row);
+		it != context->ass->Events.end() && it->Row < end.Row; ++it) {
 		if (it->Fold.valid) {
 			folddepth += it->Fold.side ? -1 : 1;
 		}
@@ -280,6 +283,10 @@ void FoldController::LinkFolds() {
 			}
 		}
 		if (line->Fold.valid && line->Fold.side) {
+			if (foldStack.empty()) {
+				InvalidateLineFold(*line);
+				continue;
+			}
 			line->Fold.counterpart = foldStack.back();
 			(*foldStack.rbegin())->Fold.counterpart = &*line;
 

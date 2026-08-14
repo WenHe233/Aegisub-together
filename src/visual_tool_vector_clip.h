@@ -79,6 +79,10 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	size_t held_curve_index = no_path;
 	std::vector<Feature *> held_curve_features;
 	bool drag_commit_pending = false;
+	enum class PointSelectionShape { Rectangle, Freehand };
+	PointSelectionShape drag_selection_shape = PointSelectionShape::Rectangle;
+	PointSelectionShape remove_selection_shape = PointSelectionShape::Rectangle;
+	std::vector<Vector2D> selection_lasso;
 	enum class ColorStage { Range, Sample, Ready };
 	enum class ColorRangeShape { Rectangle, Freehand };
 	enum class ColorAction { None, RangeShape, Undo, Redo, SelectionMode, Templates, AISelect, AutoFill, SmoothEdges, EdgeSnap, Accept, Cancel };
@@ -124,6 +128,9 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	std::vector<Vector2D> color_brush_stroke;
 	std::vector<SplineCurve> color_brush_base_spline;
 	bool color_brush_preview_changed = false;
+	struct BrushGeometryCache;
+	std::unique_ptr<BrushGeometryCache> color_brush_geometry;
+	long long last_alt_press_ms = 0;
 	int color_return_mode = VCLIP_DRAG;
 	wxPopupTransientWindow *brush_popup = nullptr;
 	struct ColorHistoryState {
@@ -175,6 +182,9 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	void OnToolbar(wxCommandEvent& event);
 	void ShowBrushSettings();
 	void UpdateBrushToolbar();
+	void ShowPointSelectionMenu(int subtool);
+	PointSelectionShape PointSelectionShapeForMode() const;
+	bool PointInsideCurrentSelection(Vector2D point) const;
 	void OnSubtitleCommit(int type);
 	size_t PathEnd(size_t path_start) const;
 	std::vector<float> PathPoints(size_t path_start) const;

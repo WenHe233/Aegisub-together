@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <cstdlib>
 #include <iterator>
 #include <mutex>
@@ -27,6 +28,10 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <wincred.h>
+#elif defined(__APPLE__)
+#include <Security/Security.h>
+#elif defined(WITH_LIBSECRET)
+#include <libsecret/secret.h>
 #endif
 
 namespace ai {
@@ -38,6 +43,9 @@ constexpr size_t proofread_max_lines_per_request = 300;
 #ifdef _WIN32
 constexpr wchar_t credential_target[] = L"MutekiAegisub/AI/OpenAI/default";
 constexpr wchar_t cloudinary_credential_target[] = L"MutekiAegisub/AI/Cloudinary/default";
+#else
+constexpr char credential_target[] = "OpenAI/default";
+constexpr char cloudinary_credential_target[] = "Cloudinary/default";
 #endif
 
 std::mutex session_key_mutex;
@@ -837,6 +845,105 @@ std::string windows_error_message(DWORD code) {
 	if (buffer) LocalFree(buffer);
 	return std::string(wide.begin(), wide.end());
 }
+#elif defined(__APPLE__)
+constexpr char credential_service[] = "MutekiAegisub/AI";
+
+std::string macos_error_message(OSStatus status) {
+	CFStringRef message = SecCopyErrorMessageString(status, nullptr);
+	if (!message) return agi::format("macOS Keychain error: %d", status);
+	CFIndex size = CFStringGetMaximumSizeForEncoding(CFStringGetLength(message),
+		kCFStringEncodingUTF8) + 1;
+	std::vector<char> buffer(static_cast<size_t>(size));
+	bool converted = CFStringGetCString(message, buffer.data(), size, kCFStringEncodingUTF8);
+	CFRelease(message);
+	return converted ? std::string(buffer.data()) : agi::format("macOS Keychain error: %d", status);
+}
+
+std::string read_keychain_secret(char const *account) {
+	UInt32 length = 0;
+	void *data = nullptr;
+	OSStatus status = SecKeychainFindGenericPassword(nullptr,
+		static_cast<UInt32>(std::strlen(credential_service)), credential_service,
+		static_cast<UInt32>(std::strlen(account)), account, &length, &data, nullptr);
+	if (status != errSecSuccess) return {};
+	std::string value(static_cast<char const *>(data), length);
+	SecKeychainItemFreeContent(nullptr, data);
+	return value;
+}
+
+bool store_keychain_secret(char const *account, std::string const& value, std::string *error) {
+	SecKeychainItemRef item = nullptr;
+	OSStatus status = SecKeychainFindGenericPassword(nullptr,
+		static_cast<UInt32>(std::strlen(credential_service)), credential_service,
+		static_cast<UInt32>(std::strlen(account)), account, nullptr, nullptr, &item);
+	if (status == errSecSuccess) {
+		status = SecKeychainItemModifyAttributesAndData(item, nullptr,
+			static_cast<UInt32>(value.size()), value.data());
+		CFRelease(item);
+	}
+	else if (status == errSecItemNotFound) {
+		status = SecKeychainAddGenericPassword(nullptr,
+			static_cast<UInt32>(std::strlen(credential_service)), credential_service,
+			static_cast<UInt32>(std::strlen(account)), account,
+			static_cast<UInt32>(value.size()), value.data(), nullptr);
+	}
+	if (status == errSecSuccess) return true;
+	if (error) *error = macos_error_message(status);
+	return false;
+}
+
+bool delete_keychain_secret(char const *account, std::string *error) {
+	SecKeychainItemRef item = nullptr;
+	OSStatus status = SecKeychainFindGenericPassword(nullptr,
+		static_cast<UInt32>(std::strlen(credential_service)), credential_service,
+		static_cast<UInt32>(std::strlen(account)), account, nullptr, nullptr, &item);
+	if (status == errSecItemNotFound) return true;
+	if (status == errSecSuccess) {
+		status = SecKeychainItemDelete(item);
+		CFRelease(item);
+	}
+	if (status == errSecSuccess) return true;
+	if (error) *error = macos_error_message(status);
+	return false;
+}
+#elif defined(WITH_LIBSECRET)
+SecretSchema const credential_schema = {
+	"com.muteki.Aegisub", SECRET_SCHEMA_NONE,
+	{{"account", SECRET_SCHEMA_ATTRIBUTE_STRING}, {nullptr, SECRET_SCHEMA_ATTRIBUTE_STRING}}
+};
+
+std::string read_secret_service_secret(char const *account) {
+	GError *error = nullptr;
+	char *value = secret_password_lookup_sync(&credential_schema, nullptr, &error,
+		"account", account, nullptr);
+	if (error) g_error_free(error);
+	if (!value) return {};
+	std::string result(value);
+	secret_password_free(value);
+	return result;
+}
+
+bool store_secret_service_secret(char const *account, char const *label,
+	std::string const& value, std::string *message) {
+	GError *error = nullptr;
+	gboolean stored = secret_password_store_sync(&credential_schema,
+		SECRET_COLLECTION_DEFAULT, label, value.c_str(), nullptr, &error,
+		"account", account, nullptr);
+	if (stored) return true;
+	if (message) *message = error ? error->message : "Secret Service could not store the credential.";
+	if (error) g_error_free(error);
+	return false;
+}
+
+bool delete_secret_service_secret(char const *account, std::string *message) {
+	GError *error = nullptr;
+	gboolean removed = secret_password_clear_sync(&credential_schema, nullptr, &error,
+		"account", account, nullptr);
+	if (removed) return true;
+	if (message) *message = error ? error->message : "Secret Service could not delete the credential.";
+	if (error) g_error_free(error);
+	return false;
+}
 #endif
 
 } // namespace
@@ -1317,6 +1424,10 @@ std::string GetApiKey() {
 	if (!environment.empty()) return environment;
 #ifdef _WIN32
 	return read_credential_key();
+#elif defined(__APPLE__)
+	return read_keychain_secret(credential_target);
+#elif defined(WITH_LIBSECRET)
+	return read_secret_service_secret(credential_target);
 #else
 	return {};
 #endif
@@ -1330,6 +1441,10 @@ ApiKeySource GetApiKeySource() {
 	if (!read_environment_key().empty()) return ApiKeySource::Environment;
 #ifdef _WIN32
 	if (!read_credential_key().empty()) return ApiKeySource::CredentialManager;
+#elif defined(__APPLE__)
+	if (!read_keychain_secret(credential_target).empty()) return ApiKeySource::CredentialManager;
+#elif defined(WITH_LIBSECRET)
+	if (!read_secret_service_secret(credential_target).empty()) return ApiKeySource::CredentialManager;
 #endif
 	return ApiKeySource::None;
 }
@@ -1346,11 +1461,11 @@ void ClearSessionApiKey() {
 }
 
 bool StoreApiKey(std::string const& key, std::string *error) {
-#ifdef _WIN32
 	if (key.empty()) {
 		if (error) *error = "Az API-kulcs nem lehet üres.";
 		return false;
 	}
+#ifdef _WIN32
 	CREDENTIALW credential{};
 	credential.Type = CRED_TYPE_GENERIC;
 	credential.TargetName = const_cast<wchar_t *>(credential_target);
@@ -1362,6 +1477,15 @@ bool StoreApiKey(std::string const& key, std::string *error) {
 		if (error) *error = windows_error_message(GetLastError());
 		return false;
 	}
+	SetSessionApiKey(key);
+	return true;
+#elif defined(__APPLE__)
+	if (!store_keychain_secret(credential_target, key, error)) return false;
+	SetSessionApiKey(key);
+	return true;
+#elif defined(WITH_LIBSECRET)
+	if (!store_secret_service_secret(credential_target, "Muteki Aegisub OpenAI API key",
+		key, error)) return false;
 	SetSessionApiKey(key);
 	return true;
 #else
@@ -1378,6 +1502,10 @@ bool DeleteStoredApiKey(std::string *error) {
 	if (code == ERROR_NOT_FOUND) return true;
 	if (error) *error = windows_error_message(code);
 	return false;
+#elif defined(__APPLE__)
+	return delete_keychain_secret(credential_target, error);
+#elif defined(WITH_LIBSECRET)
+	return delete_secret_service_secret(credential_target, error);
 #else
 	(void)error;
 	return true;
@@ -1387,6 +1515,10 @@ bool DeleteStoredApiKey(std::string *error) {
 bool HasStoredApiKey() {
 #ifdef _WIN32
 	return !read_credential_key().empty();
+#elif defined(__APPLE__)
+	return !read_keychain_secret(credential_target).empty();
+#elif defined(WITH_LIBSECRET)
+	return !read_secret_service_secret(credential_target).empty();
 #else
 	return false;
 #endif
@@ -1450,6 +1582,14 @@ std::string GetCloudinarySecret() {
 	if (!environment.empty()) return environment;
 #ifdef _WIN32
 	auto stored = read_cloudinary_credential_secret();
+#elif defined(__APPLE__)
+	auto stored = read_keychain_secret(cloudinary_credential_target);
+#elif defined(WITH_LIBSECRET)
+	auto stored = read_secret_service_secret(cloudinary_credential_target);
+#else
+	std::string stored;
+#endif
+#if defined(_WIN32) || defined(__APPLE__) || defined(WITH_LIBSECRET)
 	if (!stored.empty()) SetSessionCloudinarySecret(stored);
 	return stored;
 #else
@@ -1469,8 +1609,8 @@ void ClearSessionCloudinarySecret() {
 }
 
 bool StoreCloudinarySecret(std::string const& secret, std::string *error) {
-#ifdef _WIN32
 	if (secret.empty()) { if (error) *error = "The Cloudinary API secret cannot be empty."; return false; }
+#ifdef _WIN32
 	CREDENTIALW credential{};
 	credential.Type = CRED_TYPE_GENERIC;
 	credential.TargetName = const_cast<wchar_t *>(cloudinary_credential_target);
@@ -1479,6 +1619,15 @@ bool StoreCloudinarySecret(std::string const& secret, std::string *error) {
 	credential.Persist = CRED_PERSIST_LOCAL_MACHINE;
 	credential.UserName = const_cast<wchar_t *>(L"Cloudinary API");
 	if (!CredWriteW(&credential, 0)) { if (error) *error = windows_error_message(GetLastError()); return false; }
+	SetSessionCloudinarySecret(secret);
+	return true;
+#elif defined(__APPLE__)
+	if (!store_keychain_secret(cloudinary_credential_target, secret, error)) return false;
+	SetSessionCloudinarySecret(secret);
+	return true;
+#elif defined(WITH_LIBSECRET)
+	if (!store_secret_service_secret(cloudinary_credential_target,
+		"Muteki Aegisub Cloudinary API secret", secret, error)) return false;
 	SetSessionCloudinarySecret(secret);
 	return true;
 #else
@@ -1495,6 +1644,10 @@ bool DeleteStoredCloudinarySecret(std::string *error) {
 	if (code == ERROR_NOT_FOUND) return true;
 	if (error) *error = windows_error_message(code);
 	return false;
+#elif defined(__APPLE__)
+	return delete_keychain_secret(cloudinary_credential_target, error);
+#elif defined(WITH_LIBSECRET)
+	return delete_secret_service_secret(cloudinary_credential_target, error);
 #else
 	(void)error;
 	return true;
@@ -1504,6 +1657,10 @@ bool DeleteStoredCloudinarySecret(std::string *error) {
 bool HasStoredCloudinarySecret() {
 #ifdef _WIN32
 	return !read_cloudinary_credential_secret().empty();
+#elif defined(__APPLE__)
+	return !read_keychain_secret(cloudinary_credential_target).empty();
+#elif defined(WITH_LIBSECRET)
+	return !read_secret_service_secret(cloudinary_credential_target).empty();
 #else
 	return false;
 #endif
