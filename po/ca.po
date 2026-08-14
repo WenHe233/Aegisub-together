@@ -9982,3 +9982,8 @@ msgstr "Emmagatzematge segur del secret de l'API al magatzem de credencials del 
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Alt doble: alterna entre afegir i suprimir"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Fons de les línies combinades"

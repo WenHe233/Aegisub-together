@@ -9929,3 +9929,8 @@ msgstr "Сигурно съхранение на API тайната в хран�
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Двоен Alt: превключване между добавяне и изтриване"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Фон на обединените редове"

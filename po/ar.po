@@ -9809,3 +9809,8 @@ msgstr "تخزين سر API بأمان في مخزن بيانات اعتماد �
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Alt مرتين: تبديل الإضافة/الحذف"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "خلفية الأسطر المدمجة"

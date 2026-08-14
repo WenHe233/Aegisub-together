@@ -9814,3 +9814,8 @@ msgstr "將 API 密鑰安全儲存在作業系統的認證資料庫中"
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "雙重 Alt：切換新增／刪除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "合併行背景"

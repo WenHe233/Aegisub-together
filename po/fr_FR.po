@@ -9963,3 +9963,8 @@ msgstr "Stockage sécurisé du secret API dans le trousseau d’identifiants du 
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Double Alt : basculer entre ajout et suppression"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Arrière-plan des lignes fusionnées"

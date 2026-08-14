@@ -9832,3 +9832,8 @@ msgstr "Bezbedno čuvanje API tajne u skladištu akreditiva operativnog sistema"
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Dvostruki Alt: prebacivanje između dodavanja i brisanja"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Pozadina spojenih redova"

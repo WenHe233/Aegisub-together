@@ -10520,3 +10520,8 @@ msgstr "운영 체제 자격 증명 저장소에 API 비밀 안전하게 저장"
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Alt 두 번: 추가/삭제 전환"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "병합된 줄 배경"

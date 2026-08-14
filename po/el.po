@@ -9981,3 +9981,8 @@ msgstr "Ασφαλής αποθήκευση του μυστικού API στον
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Διπλό Alt: εναλλαγή προσθήκης/διαγραφής"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Φόντο συγχωνευμένων γραμμών"

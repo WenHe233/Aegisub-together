@@ -9921,3 +9921,8 @@ msgstr "APIaren sekretua modu seguruan gordetzea sistema eragilearen kredentzial
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Alt bikoitza: gehitzea/ezabatzea txandakatu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Bateratutako lerroen atzeko planoa"

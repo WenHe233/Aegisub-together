@@ -9973,3 +9973,8 @@ msgstr "Armazenamento seguro do segredo da API no armazenamento de credenciais d
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Alt duas vezes: alternar adição/exclusão"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Fundo das linhas mescladas"

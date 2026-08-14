@@ -9900,3 +9900,8 @@ msgstr "Безпечне зберігання секрету у сховищі �
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Подвійне Alt: перемикання додавання/видалення"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Фон об’єднаних рядків"

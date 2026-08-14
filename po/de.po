@@ -9938,3 +9938,8 @@ msgstr "Sichere Speicherung des API-Secrets im Anmeldeinformationsspeicher des B
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Doppeltes Alt: Hinzufügen/Löschen umschalten"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Hintergrund zusammengeführter Zeilen"

@@ -6805,8 +6805,8 @@ msgstr "Kép maszk (%d sor)"
 msgid "Gradient (%d lines, text: %s)"
 msgstr "Gradient (%d sor, szöveg: %s)"
 
-msgid "Image Mask background"
-msgstr "Kép maszk háttere"
+msgid "Combined Group Background"
+msgstr "Összevont sorok háttere"
 
 msgid "Show Source"
 msgstr "Forrás mutatása"

@@ -9773,3 +9773,8 @@ msgstr "Bezpieczne przechowywanie sekretu API w magazynie danych uwierzytelniaj�
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Podwójny Alt: przełącz dodawanie/usuwanie"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Tło scalonych wierszy"

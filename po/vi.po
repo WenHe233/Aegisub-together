@@ -9934,3 +9934,8 @@ msgstr "Lưu trữ bí mật API an toàn trong kho thông tin xác thực của
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Nhấn Alt hai lần: chuyển đổi thêm/xóa"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Nền các dòng đã gộp"

@@ -9884,3 +9884,8 @@ msgstr "Het API-geheim veilig opslaan in de referentieopslag van het besturingss
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Dubbele Alt: schakelen tussen toevoegen/verwijderen"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Achtergrond samengevoegde regels"

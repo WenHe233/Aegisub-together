@@ -9845,3 +9845,8 @@ msgstr "Безопасное хранение секрета в хранилищ
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Двойное нажатие Alt: переключение добавления/удаления"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Фон объединённых строк"

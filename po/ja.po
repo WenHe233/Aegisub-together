@@ -9780,3 +9780,8 @@ msgstr "APIシークレットをオペレーティングシステムの資格情
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Altキーを2回押す：追加/削除を切り替え"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "結合行の背景"

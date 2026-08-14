@@ -10412,3 +10412,8 @@ msgstr "将 API 密钥安全存储在操作系统凭据存储中"
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "双击 Alt：切换添加/删除"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "合并行背景"

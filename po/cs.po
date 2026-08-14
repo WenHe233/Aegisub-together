@@ -9851,3 +9851,8 @@ msgstr "Bezpečné uložení tajemství API v úložišti přihlašovacích úda
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Dvojitý Alt: přepnutí přidání/odebrání"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Pozadí sloučených řádků"

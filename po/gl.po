@@ -9861,3 +9861,8 @@ msgstr "Gardar o segredo da API de forma segura no almacén de credenciais do si
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Alt dobre: alternar engadir/eliminar"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Fondo das liñas combinadas"

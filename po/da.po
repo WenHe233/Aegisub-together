@@ -9785,3 +9785,8 @@ msgstr "Sikker opbevaring af API-hemmeligheden i operativsystemets legitimations
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Dobbelt Alt: skift mellem tilføjelse/sletning"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Baggrund for sammenlagte linjer"

@@ -10524,3 +10524,8 @@ msgstr "API sırrını işletim sistemi kimlik bilgisi deposunda güvenli bir ş
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Çift Alt: ekleme/silme arasında geçiş"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Birleştirilmiş satırların arka planı"

@@ -9861,3 +9861,8 @@ msgstr "Archiviazione sicura del segreto API nell'archivio delle credenziali del
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Doppio Alt: attiva/disattiva aggiunta/rimozione"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Sfondo delle righe unite"

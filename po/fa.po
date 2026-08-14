@@ -9756,3 +9756,8 @@ msgstr "ذخیره‌سازی امن رمز API در مخزن اعتبارنام
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Alt دوگانه: تغییر حالت افزودن/حذف"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "پس‌زمینهٔ خطوط ادغام‌شده"

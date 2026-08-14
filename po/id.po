@@ -9893,3 +9893,8 @@ msgstr "Penyimpanan rahasia API yang aman di penyimpanan kredensial sistem opera
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Alt Ganda: alihkan penambahan/penghapusan"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Latar baris gabungan"

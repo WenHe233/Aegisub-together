@@ -9992,3 +9992,8 @@ msgstr "API-salaisuuden turvallinen tallennus käyttöjärjestelmän tunnistetie
 #: src/visual_tool_vector_clip.cpp
 msgid "Double Alt: switch Add/Delete"
 msgstr "Kaksois-Alt: lisäämisen ja poistamisen vaihto"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Combined Group Background"
+msgstr "Yhdistettyjen rivien tausta"
