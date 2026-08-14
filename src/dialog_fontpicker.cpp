@@ -1330,7 +1330,7 @@ public:
 
         auto has_char = [&](wchar_t ch) {
             if (!font) return false;
-            wxString text(wxUniChar(ch));
+            wxString text{wxUniChar(ch)};
             auto utf8 = text.utf8_str();
             CFStringRef value = CFStringCreateWithCString(kCFAllocatorDefault,
                 utf8.data(), kCFStringEncodingUTF8);
