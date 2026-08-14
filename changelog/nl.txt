@@ -1,5 +1,5 @@
 Versie 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Tekstvakfunctie in het menu Opmaak
     - tekstvak dat als afzonderlijk element bestaat en in de video kan worden bewerkt, met algemene opmaakopties (met tekstselectie)
     - tekstplaatsing binnen het geselecteerde gebied, met uitlijning links|gecentreerd|rechts|uitgevuld

@@ -1,5 +1,5 @@
 版本 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - 格式菜单中的文本框功能
     - 可单独存在的文本框，可在视频上进行编辑，并支持常规格式设置（通过选择文本）
     - 在选定区域内放置文本，支持左对齐|居中|右对齐|两端对齐

@@ -1,5 +1,5 @@
 Versione 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Funzione casella di testo nel menu Formattazione
     - casella di testo esistente come elemento separato, modificabile sul video, con formattazioni generali (con selezione del testo)
     - posizionamento del testo all'interno dell'area selezionata, con allineamento a sinistra|al centro|a destra|giustificato

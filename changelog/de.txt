@@ -1,5 +1,5 @@
 Version 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Textfeld-Funktion im Menü Formatierung
     - ein als separates Element vorhandenes Textfeld, das im Video mit allgemeinen Formatierungen (durch Textauswahl) bearbeitet werden kann
     - Textausrichtung innerhalb des ausgewählten Bereichs mit links|zentriert|rechts|Blocksatz

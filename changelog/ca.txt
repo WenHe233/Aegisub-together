@@ -1,5 +1,5 @@
 Versió 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Funció de quadre de text al menú Formázás
     - quadre de text existent com a element independent, que es pot editar al vídeo, amb formats generals (amb selecció de text)
     - col·locació del text dins de l’àrea seleccionada, amb alineacions esquerra|centrada|dreta|justificada

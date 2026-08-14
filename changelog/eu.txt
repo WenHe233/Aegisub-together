@@ -1,5 +1,5 @@
 Bertsioa 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Testu-koadroaren funtzioa Formázás menuan
     - elementu bereizi gisa dagoen testu-koadroa, bideoan edita daitekeena, formatu orokorrekin (testu-hautapenarekin)
     - testuaren kokapena hautatutako eremuaren barruan, ezkerrera|erdira|eskuinera|justifikatuta lerrokatuta

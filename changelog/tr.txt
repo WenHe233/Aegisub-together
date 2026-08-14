@@ -1,5 +1,5 @@
 Sürüm 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Biçimlendirme menüsünde metin kutusu işlevi
     - video üzerinde düzenlenebilen, genel biçimlendirmelere sahip (metin seçimiyle) ayrı bir öğe olarak bulunan metin kutusu
     - seçili alan içinde metin yerleştirme, sola|ortaya|sağa|iki yana yaslama düzenleriyle

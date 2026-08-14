@@ -1,5 +1,5 @@
 Versión 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Función de cuadro de texto en el menú Formato
     - cuadro de texto existente como elemento independiente, que se puede editar sobre el vídeo, con formatos generales (seleccionando el texto)
     - colocación del texto dentro del área seleccionada, con alineación a la izquierda|centrada|a la derecha|justificada

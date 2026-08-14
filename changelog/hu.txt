@@ -1,5 +1,5 @@
 Verzió 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Szövegdoboz funkció a Formázás menüben
     - külön elemként létező szövegdoboz, amit videón lehet szerkeszteni, általános formázásokkal (szöveg kijelöléssel)
     - szövegelhelyezés a kijelölt területen belül, balra|középre|jobbra|sorkizárt rendezésekkel

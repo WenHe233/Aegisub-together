@@ -1,5 +1,5 @@
 Phiên bản 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Chức năng hộp văn bản trong menu Định dạng
     - hộp văn bản tồn tại như một phần tử riêng, có thể chỉnh sửa trên video với các định dạng thông thường (kèm chọn văn bản)
     - đặt văn bản trong khu vực đã chọn, với các kiểu căn trái|căn giữa|căn phải|căn đều

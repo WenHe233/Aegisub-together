@@ -96,7 +96,7 @@ jobs:
           python-version: '3.x'
 
       - name: Set package version
-        run: python -c "import os; v = os.environ.get('GITHUB_REF_NAME', 'continuous'); v = v[1:] if os.environ.get('GITHUB_REF_TYPE') == 'tag' and v.startswith('v') else 'continuous'; open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8').write('PACKAGE_VERSION=' + v + '\n')"
+        run: python -c "import os; v = os.environ.get('GITHUB_REF_NAME', 'continuous'); v = v[1:] if os.environ.get('GITHUB_REF_TYPE') == 'tag' and v.startswith('v') else 'continuous'; open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8').write('PACKAGE_VERSION=' + v + '\nPACKAGE_BASENAME=Aegisub-nyaa-edition-v' + v + '\n')"
 
       - name: Setup Meson
         run: |
@@ -180,19 +180,19 @@ jobs:
         run: |
           $installer = Get-ChildItem build -Filter 'Aegisub-*.exe' | Select-Object -First 1
           if (-not $installer) { throw 'The Windows installer was not generated.' }
-          $installerTarget = "Aegisub-$env:PACKAGE_VERSION.exe"
+          $installerTarget = "$env:PACKAGE_BASENAME.exe"
           if ($installer.Name -ne $installerTarget) {
             Copy-Item -LiteralPath $installer.FullName -Destination "build/$installerTarget" -Force
           }
-          Copy-Item -LiteralPath 'build/aegisub-portable-64.zip' -Destination "build/Aegisub-$env:PACKAGE_VERSION-portable.zip" -Force
-          python tools/release/package_update.py --build-dir build --output "build/aegisub-nyaa-edition-v$env:PACKAGE_VERSION-update.zip"
+          Copy-Item -LiteralPath 'build/aegisub-portable-64.zip' -Destination "build/$env:PACKAGE_BASENAME-portable.zip" -Force
+          python tools/release/package_update.py --build-dir build --output "build/$env:PACKAGE_BASENAME-update.zip"
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v6
         if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
         with:
           name: release-windows-installer
-          path: build/Aegisub-${{ env.PACKAGE_VERSION }}.exe
+          path: build/${{ env.PACKAGE_BASENAME }}.exe
           if-no-files-found: error
 
       - name: Upload Windows portable package
@@ -200,7 +200,7 @@ jobs:
         if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
         with:
           name: release-windows-portable
-          path: build/Aegisub-${{ env.PACKAGE_VERSION }}-portable.zip
+          path: build/${{ env.PACKAGE_BASENAME }}-portable.zip
           if-no-files-found: error
 
       - name: Upload Windows update package
@@ -208,7 +208,7 @@ jobs:
         if: matrix.config.os == 'windows-latest' && matrix.config.buildtype == 'release'
         with:
           name: release-windows-update
-          path: build/aegisub-nyaa-edition-v${{ env.PACKAGE_VERSION }}-update.zip
+          path: build/${{ env.PACKAGE_BASENAME }}-update.zip
           if-no-files-found: error
 
       # macOS artifacts
@@ -225,20 +225,20 @@ jobs:
         if: startsWith(matrix.config.os, 'macos-') && matrix.config.buildtype == 'release'
         with:
           name: release-macos-${{ matrix.config.arch }}
-          path: build/Aegisub-${{ env.PACKAGE_VERSION }}-${{ matrix.config.arch }}.dmg
+          path: build/${{ env.PACKAGE_BASENAME }}-${{ matrix.config.arch }}.dmg
           if-no-files-found: error
 
       # Linux AppImage
       - name: Generate Linux AppImage
         if: matrix.config.name == 'Ubuntu Release'
-        run: bash tools/build-appimage.sh build "build/Aegisub-${PACKAGE_VERSION}-x86_64.AppImage"
+        run: bash tools/build-appimage.sh build "build/${PACKAGE_BASENAME}-x86_64.AppImage"
 
       - name: Upload Linux AppImage
         uses: actions/upload-artifact@v6
         if: matrix.config.name == 'Ubuntu Release'
         with:
           name: release-linux-appimage
-          path: build/Aegisub-${{ env.PACKAGE_VERSION }}-x86_64.AppImage
+          path: build/${{ env.PACKAGE_BASENAME }}-x86_64.AppImage
           if-no-files-found: error
 
       # Tarball
@@ -254,14 +254,14 @@ jobs:
           tar -xJf build/meson-dist/*.tar.xz -C distcheck/
           test -e distcheck/*/subprojects/luabins/meson.build
           test -e distcheck/*/subprojects/LuaJIT*/meson.build
-          cp build/meson-dist/*.tar.xz "build/Aegisub-${PACKAGE_VERSION}.tar.xz"
+          cp build/meson-dist/*.tar.xz "build/${PACKAGE_BASENAME}.tar.xz"
 
       - name: Upload source tarball
         uses: actions/upload-artifact@v6
         if: matrix.config.name == 'Ubuntu Release'
         with:
           name: release-source-tarball
-          path: build/Aegisub-${{ env.PACKAGE_VERSION }}.tar.xz
+          path: build/${{ env.PACKAGE_BASENAME }}.tar.xz
           if-no-files-found: error
 
   publish-release:
@@ -285,14 +285,15 @@ jobs:
         run: |
           set -euo pipefail
           version="${TAG#v}"
+          base="Aegisub-nyaa-edition-v${version}"
           for asset in \
-            "Aegisub-${version}.exe" \
-            "Aegisub-${version}-portable.zip" \
-            "aegisub-nyaa-edition-v${version}-update.zip" \
-            "Aegisub-${version}-arm64.dmg" \
-            "Aegisub-${version}-x86_64.dmg" \
-            "Aegisub-${version}-x86_64.AppImage" \
-            "Aegisub-${version}.tar.xz"
+            "${base}.exe" \
+            "${base}-portable.zip" \
+            "${base}-update.zip" \
+            "${base}-arm64.dmg" \
+            "${base}-x86_64.dmg" \
+            "${base}-x86_64.AppImage" \
+            "${base}.tar.xz"
           do
             test -s "release-assets/${asset}"
           done
@@ -305,7 +306,25 @@ jobs:
         run: |
           set -euo pipefail
           version="${TAG#v}"
+          base="Aegisub-nyaa-edition-v${version}"
           if ! gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
-            gh release create "${TAG}" --verify-tag --title "nyaa's edition v${version}" --generate-notes --repo "${GITHUB_REPOSITORY}"
+            gh release create "${TAG}" --verify-tag --title "${base}" --generate-notes --repo "${GITHUB_REPOSITORY}"
+          else
+            gh release edit "${TAG}" --title "${base}" --repo "${GITHUB_REPOSITORY}"
           fi
           gh release upload "${TAG}" release-assets/* --clobber --repo "${GITHUB_REPOSITORY}"
+
+          while IFS= read -r asset; do
+            case "${asset}" in
+              "${base}.exe"|\
+              "${base}-portable.zip"|\
+              "${base}-update.zip"|\
+              "${base}-arm64.dmg"|\
+              "${base}-x86_64.dmg"|\
+              "${base}-x86_64.AppImage"|\
+              "${base}.tar.xz") ;;
+              *) gh release delete-asset "${TAG}" "${asset}" --yes --repo "${GITHUB_REPOSITORY}" ;;
+            esac
+          done < <(gh release view "${TAG}" --json assets --jq '.assets[].name' --repo "${GITHUB_REPOSITORY}")
+
+          test "$(gh release view "${TAG}" --json assets --jq '.assets | length' --repo "${GITHUB_REPOSITORY}")" -eq 7

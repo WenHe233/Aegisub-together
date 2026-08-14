@@ -1,5 +1,5 @@
 Version 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Fonction de zone de texte dans le menu Formatage
     - zone de texte existant en tant qu’élément distinct, pouvant être modifiée sur la vidéo, avec des mises en forme générales (avec sélection de texte)
     - placement du texte à l’intérieur de la zone sélectionnée, avec alignements à gauche|au centre|à droite|justifié

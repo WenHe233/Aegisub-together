@@ -1,5 +1,5 @@
 Versión 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Función de caixa de texto no menú Formázás
     - caixa de texto existente como elemento independente, que se pode editar sobre o vídeo, con formatos xerais (coa selección de texto)
     - colocación do texto dentro da área seleccionada, con aliñamentos á esquerda|centrado|á dereita|xustificado

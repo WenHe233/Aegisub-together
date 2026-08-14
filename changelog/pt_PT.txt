@@ -1,5 +1,5 @@
 Versão 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Função de caixa de texto no menu Formatação
     - caixa de texto existente como elemento separado, que pode ser editada no vídeo, com formatações gerais (com seleção de texto)
     - posicionamento do texto dentro da área selecionada, com alinhamento à esquerda|ao centro|à direita|justificado

@@ -1,5 +1,5 @@
 الإصدار 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - وظيفة مربع النص في قائمة Formázás
     - مربع نص موجود كعنصر مستقل، يمكن تحريره على الفيديو، مع تنسيقات عامة (مع تحديد النص)
     - وضع النص داخل المنطقة المحددة، مع محاذاته إلى اليسار|الوسط|اليمين|الضبط

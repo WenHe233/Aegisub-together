@@ -1,5 +1,5 @@
 Версия 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Функция за текстово поле в менюто Форматиране
     - текстово поле, съществуващо като отделен елемент, което може да се редактира върху видеото, с общо форматиране (с избиране на текст)
     - позициониране на текста в избраната област, с подравняване наляво|по средата|надясно|двустранно

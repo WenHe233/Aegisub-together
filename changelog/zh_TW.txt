@@ -1,5 +1,5 @@
 版本 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - 「文字方塊」功能位於「格式」選單中
     - 以獨立元素存在的文字方塊，可在影片上編輯，並支援一般格式設定（含文字選取）
     - 文字可在選取區域內放置，並可設定靠左|置中|靠右|左右對齊

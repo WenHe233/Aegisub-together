@@ -1,5 +1,5 @@
 Verzija 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Funkcija tekstualnog okvira u meniju Formázás
     - tekstualni okvir koji postoji kao zaseban element i može se uređivati na videu, uz opšta formatiranja (sa označavanjem teksta)
     - postavljanje teksta unutar označenog područja, poravnanje nalevo|centrirano|nadesno|obostrano

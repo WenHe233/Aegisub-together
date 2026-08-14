@@ -1,5 +1,5 @@
 Версія 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Функцыя тэкставага поля ў меню Formázás
     - тэкставае поле, якое існуе як асобны элемент і якое можна рэдагаваць на відэа, з агульнымі магчымасцямі фарматавання (з вылучэннем тэксту)
     - размяшчэнне тэксту ў межах вылучанай вобласці з выраўноўваннем па левым краі|па цэнтры|па правым краі|па шырыні

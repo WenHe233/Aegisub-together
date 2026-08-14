@@ -1,5 +1,5 @@
 Wersja 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Funkcja pola tekstowego w menu Formázás
     - pole tekstowe istniejące jako osobny element, które można edytować na wideo, z ogólnymi opcjami formatowania (z zaznaczaniem tekstu)
     - rozmieszczanie tekstu wewnątrz zaznaczonego obszaru, z wyrównaniem do lewej|środka|prawej|wyjustowaniem

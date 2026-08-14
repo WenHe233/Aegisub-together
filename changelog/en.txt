@@ -1,5 +1,5 @@
 Version 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Text box function in the Formatting menu
     - a text box existing as a separate element, which can be edited on the video, with general formatting options (with text selection)
     - text placement within the selected area, with left|center|right|justified alignment

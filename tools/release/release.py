@@ -4,7 +4,7 @@ Three steps, each of which skips whatever is already done:
 
 1. build Aegisub and compile every catalogue
 2. pack aegisub.exe plus locale/ into
-   <release_dir>/aegisub-nyaa-edition-v<version>-update.zip
+   <release_dir>/Aegisub-nyaa-edition-v<version>-update.zip
 3. optionally create and push the version tag which makes GitHub Actions build
    and publish every platform package
 """

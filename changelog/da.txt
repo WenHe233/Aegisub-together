@@ -1,5 +1,5 @@
 Version 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Tekstboksfunktion i menuen Formázás
     - tekstboks, der findes som et separat element, og som kan redigeres på videoen med almindelige formateringer (med tekstmarkering)
     - tekstplacering inden for det markerede område med venstre|centreret|højre|justeret tekst

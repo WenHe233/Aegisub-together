@@ -1,5 +1,5 @@
 Έκδοση 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Λειτουργία πλαισίου κειμένου στο μενού Μορφοποίηση
     - πλαίσιο κειμένου ως ξεχωριστό στοιχείο, το οποίο μπορεί να επεξεργαστεί πάνω στο βίντεο, με γενικές μορφοποιήσεις (με επιλογή κειμένου)
     - τοποθέτηση κειμένου μέσα στην επιλεγμένη περιοχή, με στοίχιση αριστερά|στο κέντρο|δεξιά|πλήρης

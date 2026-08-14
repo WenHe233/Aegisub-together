@@ -1,5 +1,5 @@
 Versi 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Fungsi kotak teks di menu Pemformatan
     - kotak teks yang berdiri sebagai elemen terpisah, yang dapat diedit pada video, dengan pemformatan umum (dengan pemilihan teks)
     - penempatan teks di dalam area yang dipilih, dengan perataan kiri|tengah|kanan|rata kiri-kanan

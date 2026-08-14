@@ -1,5 +1,5 @@
 Versio 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Tekstiruututoiminto Formázás-valikossa
     - erillisenä elementtinä toimiva tekstiruutu, jota voi muokata videolla yleisillä muotoiluilla (tekstin valinnalla)
     - tekstin sijoittaminen valitulle alueelle vasemmalle|keskelle|oikealle|tasatulla asettelulla

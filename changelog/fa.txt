@@ -1,5 +1,5 @@
 نسخه 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - قابلیت جعبهٔ متن در منوی قالب‌بندی
     - جعبهٔ متنی که به‌عنوان عنصری مستقل وجود دارد و می‌توان آن را روی ویدئو با قالب‌بندی‌های عمومی و با انتخاب متن ویرایش کرد
     - جایگذاری متن در محدودهٔ انتخاب‌شده، با چینش‌های چپ|وسط|راست|تراز دوطرفه

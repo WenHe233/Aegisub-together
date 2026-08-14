@@ -1,5 +1,5 @@
 バージョン 4.6 ---
-https://github.com/croni1012/Aegisub/releases/download/v4.6/aegisub-nyaa-edition-v4.6-update.zip
+https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - フォーマットメニューにテキストボックス機能を追加
     - 独立した要素として存在するテキストボックス。動画上で編集でき、一般的な書式設定（テキスト選択対応）が可能
     - 選択範囲内でのテキスト配置。左揃え|中央揃え|右揃え|両端揃えに対応
