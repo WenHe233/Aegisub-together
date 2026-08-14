@@ -8,7 +8,7 @@ extra arguments.
 | --- | --- |
 | `release-local.cmd` | Copies the built `aegisub.exe` and the Hungarian catalogue into `C:\aegisub-portable`, for trying a build out immediately. |
 | `translate.cmd` | Translates whatever is new in `po/hu.po` and in `changelog/hu.txt` into the other languages. It does not build or pack anything. |
-| `release.cmd` | Builds, packs `aegisub-nyaa-edition-v<version>-update.zip` into `.releases/`, and offers to publish it as `nyaa's edition v<version>` with the English changelog as its GitHub notes. It does not run translations. |
+| `release.cmd` | Builds and verifies the Windows updater ZIP, then offers to create and push the `v<version>` tag. The tag starts the complete Windows, macOS, and Linux GitHub Actions release. It does not run translations. |
 
 ## Settings
 
@@ -75,17 +75,18 @@ whatever the default branch is, so renaming the branch does not break it.
 
 ## Publishing
 
-The upload needs a GitHub token in `release.config.apikey.json` as
-`github_token`, or one in `GH_TOKEN` / `GITHUB_TOKEN`. A fine-grained token with
-**Contents: read and write** on this repository is enough — create it at
-<https://github.com/settings/personal-access-tokens>.
+For a fork, first open the repository's **Actions** page and enable workflows.
+This only has to be done once. `release.cmd` uses the Git authentication already
+configured for the repository; it does not need a separate GitHub API token.
 
-Both translation passes and the release publishing step skip what is already
-done, so either script can be re-run after a failure part way through.
+Before pushing a tag, the script verifies that the worktree is clean, the
+current branch is the default branch, its HEAD is already pushed, and the tag
+does not exist locally or on GitHub. It then creates an annotated `v<version>`
+tag and pushes it to `origin` after confirmation.
 
-Pushing a `v*` tag also creates the complete cross-platform release in GitHub
-Actions. The release contains the Windows installer, a full Windows portable
-ZIP, the smaller `-update.zip` used only by the Windows in-program updater,
-Intel and Apple Silicon macOS DMGs, a Linux x86_64 AppImage, and the source
-tarball. The workflow creates a missing GitHub release or updates the assets of
-an existing release without replacing hand-written release notes.
+The tag creates the complete cross-platform release in GitHub Actions. The
+release contains the Windows installer, a full Windows portable ZIP, the
+smaller `-update.zip` used only by the Windows in-program updater, Intel and
+Apple Silicon macOS DMGs, a Linux x86_64 AppImage, and the source tarball. The
+workflow creates a missing GitHub release or updates the assets of an existing
+release without replacing hand-written release notes.
