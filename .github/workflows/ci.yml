@@ -273,6 +273,8 @@ jobs:
       contents: write
 
     steps:
+      - uses: actions/checkout@v6
+
       - uses: actions/download-artifact@v6
         with:
           pattern: release-*
@@ -307,10 +309,15 @@ jobs:
           set -euo pipefail
           version="${TAG#v}"
           base="Aegisub-nyaa-edition-v${version}"
+          title="nyaa's edition v${version}"
+          python tools/release/github_release_notes.py \
+            --changelog changelog/en.txt \
+            --version "${version}" \
+            --output release-notes.md
           if ! gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
-            gh release create "${TAG}" --verify-tag --title "${base}" --generate-notes --repo "${GITHUB_REPOSITORY}"
+            gh release create "${TAG}" --verify-tag --title "${title}" --notes-file release-notes.md --repo "${GITHUB_REPOSITORY}"
           else
-            gh release edit "${TAG}" --title "${base}" --repo "${GITHUB_REPOSITORY}"
+            gh release edit "${TAG}" --title "${title}" --notes-file release-notes.md --repo "${GITHUB_REPOSITORY}"
           fi
           gh release upload "${TAG}" release-assets/* --clobber --repo "${GITHUB_REPOSITORY}"
 

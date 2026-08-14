@@ -19,6 +19,7 @@
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -40,6 +41,7 @@
 #include <wx/zipstrm.h>
 
 #ifdef _WIN32
+#include <shellapi.h>
 #include <windows.h>
 #endif
 
@@ -104,6 +106,14 @@ std::string Trim(std::string value) {
 	value.erase(value.begin(), std::find_if(value.begin(), value.end(), not_space));
 	value.erase(std::find_if(value.rbegin(), value.rend(), not_space).base(), value.end());
 	return value;
+}
+
+std::string PathForError(fs::path const& path) {
+#ifdef _WIN32
+	return from_wx(wxString(path.wstring()));
+#else
+	return path.string();
+#endif
 }
 
 std::string ChangelogUrl(std::string const& language) {
@@ -559,22 +569,45 @@ void RemoveProtectedUserData(fs::path const& stage) {
 bool ReplaceFileFromStage(fs::path const& source, fs::path const& destination, std::string& error) {
 	std::error_code ec;
 	fs::create_directories(destination.parent_path(), ec);
-	if (ec) { error = ec.message(); return false; }
+	if (ec) {
+		error = "A célmappa nem hozható létre: " + PathForError(destination.parent_path()) +
+			" (" + ec.message() + ")";
+		return false;
+	}
 	auto temporary = destination;
 	temporary += ".muteki-update-new";
 	fs::remove(temporary, ec);
 	ec.clear();
 	fs::copy_file(source, temporary, fs::copy_options::overwrite_existing, ec);
-	if (ec) { error = ec.message(); return false; }
-#ifdef _WIN32
-	if (!MoveFileExW(temporary.c_str(), destination.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
-		error = "Windows error " + std::to_string(GetLastError());
-		fs::remove(temporary, ec);
+	if (ec) {
+		error = "Az új fájl nem írható a telepítési mappába: " +
+			PathForError(destination) + " (" + ec.message() + ")";
 		return false;
 	}
+#ifdef _WIN32
+	DWORD windows_error = ERROR_SUCCESS;
+	for (int attempt = 0; attempt < 20; ++attempt) {
+		if (MoveFileExW(temporary.c_str(), destination.c_str(),
+				MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+			return true;
+		windows_error = GetLastError();
+		if (windows_error != ERROR_ACCESS_DENIED &&
+			windows_error != ERROR_SHARING_VIOLATION &&
+			windows_error != ERROR_LOCK_VIOLATION)
+			break;
+		Sleep(250);
+	}
+	error = "A fájl nem cserélhető le: " + PathForError(destination) +
+		" (Windows error " + std::to_string(windows_error) + ")";
+	fs::remove(temporary, ec);
+	return false;
 #else
 	fs::rename(temporary, destination, ec);
-	if (ec) { error = ec.message(); fs::remove(temporary); return false; }
+	if (ec) {
+		error = "A fájl nem cserélhető le: " + PathForError(destination) + " (" + ec.message() + ")";
+		fs::remove(temporary);
+		return false;
+	}
 #endif
 	return true;
 }
@@ -593,8 +626,19 @@ bool ApplyPackage(fs::path const& stage, fs::path const& destination, std::strin
 			auto target = destination / relative;
 			if (fs::exists(target)) {
 				auto saved = backup / relative;
-				fs::create_directories(saved.parent_path());
-				fs::copy_file(target, saved, fs::copy_options::overwrite_existing);
+				fs::create_directories(saved.parent_path(), ec);
+				if (ec) {
+					error = "A biztonsági mentés mappája nem hozható létre: " +
+						PathForError(saved.parent_path()) + " (" + ec.message() + ")";
+					throw std::runtime_error(error);
+				}
+				ec.clear();
+				fs::copy_file(target, saved, fs::copy_options::overwrite_existing, ec);
+				if (ec) {
+					error = "A fájl nem menthető a frissítés előtt: " +
+						PathForError(target) + " (" + ec.message() + ")";
+					throw std::runtime_error(error);
+				}
 				existing.push_back(relative);
 			}
 			if (!ReplaceFileFromStage(source, target, error)) throw std::runtime_error(error);
@@ -655,6 +699,69 @@ bool StartProcess(fs::path const& exe, std::wstring arguments, fs::path const& w
 	CloseHandle(process.hThread);
 	CloseHandle(process.hProcess);
 	return true;
+}
+
+bool CanWriteToDirectory(fs::path const& directory) {
+	auto probe = directory / (std::wstring(L".muteki-update-write-test-") +
+		std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(GetTickCount64()));
+	HANDLE file = CreateFileW(probe.c_str(), GENERIC_WRITE | DELETE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, CREATE_NEW,
+		FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr);
+	if (file == INVALID_HANDLE_VALUE) return false;
+	CloseHandle(file);
+	DeleteFileW(probe.c_str());
+	return true;
+}
+
+bool SaveApplyResult(fs::path const& result, bool success, std::string const& error) {
+	std::ofstream output(result, std::ios::binary | std::ios::trunc);
+	if (!output) return false;
+	output << (success ? "success\n" : "failure\n") << error;
+	return static_cast<bool>(output);
+}
+
+bool LoadApplyResult(fs::path const& result, std::string& error) {
+	std::ifstream input(result, std::ios::binary);
+	if (!input) {
+		error = "Az emelt jogosultságú frissítő nem adott vissza eredményt.";
+		return false;
+	}
+	std::string state;
+	std::getline(input, state);
+	if (state == "success") return true;
+	std::ostringstream detail;
+	detail << input.rdbuf();
+	error = Trim(detail.str());
+	if (error.empty()) error = "Az emelt jogosultságú frissítő ismeretlen hibával leállt.";
+	return false;
+}
+
+bool ApplyPackageElevated(fs::path const& helper, fs::path const& stage,
+	fs::path const& destination, std::string& error) {
+	auto result = stage.parent_path() / "apply-result.txt";
+	std::error_code ignored;
+	fs::remove(result, ignored);
+	std::wstring arguments = L" --muteki-update-apply " + Quote(stage) + L" " +
+		Quote(destination) + L" " + Quote(result);
+	SHELLEXECUTEINFOW execute{};
+	execute.cbSize = sizeof(execute);
+	execute.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC;
+	execute.lpVerb = L"runas";
+	execute.lpFile = helper.c_str();
+	execute.lpParameters = arguments.c_str();
+	execute.lpDirectory = helper.parent_path().c_str();
+	execute.nShow = SW_HIDE;
+	if (!ShellExecuteExW(&execute)) {
+		auto code = GetLastError();
+		error = code == ERROR_CANCELLED
+			? "A frissítéshez szükséges rendszergazdai jóváhagyás elmaradt."
+			: "Az emelt jogosultságú frissítő nem indítható el (Windows error " +
+				std::to_string(code) + ").";
+		return false;
+	}
+	WaitForSingleObject(execute.hProcess, INFINITE);
+	CloseHandle(execute.hProcess);
+	return LoadApplyResult(result, error);
 }
 #endif
 
@@ -743,6 +850,16 @@ bool RunHelperMode(wxArrayString const& args) {
 #ifndef _WIN32
 	return false;
 #else
+	if (args.size() >= 2 && args[1] == "--muteki-update-apply") {
+		if (args.size() != 5) return true;
+		fs::path stage(args[2].ToStdWstring());
+		fs::path destination(args[3].ToStdWstring());
+		fs::path result(args[4].ToStdWstring());
+		std::string error;
+		bool success = ApplyPackage(stage, destination, error);
+		SaveApplyResult(result, success, error);
+		return true;
+	}
 	if (args.size() < 6 || args[1] != "--muteki-update-helper") return false;
 	unsigned long pid = 0;
 	if (!args[2].ToULong(&pid)) return true;
@@ -754,7 +871,9 @@ bool RunHelperMode(wxArrayString const& args) {
 		CloseHandle(process);
 	}
 	std::string error;
-	bool success = ApplyPackage(stage, destination, error);
+	bool success = CanWriteToDirectory(destination)
+		? ApplyPackage(stage, destination, error)
+		: ApplyPackageElevated(ExecutablePath(), stage, destination, error);
 	if (!success)
 		MessageBoxW(nullptr, to_wx("A frissítés telepítése sikertelen:\n" + error).wc_str(),
 			L"Muteki update", MB_OK | MB_ICONERROR);
