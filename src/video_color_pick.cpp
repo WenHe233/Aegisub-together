@@ -29,6 +29,7 @@
 #include "ass_file.h"
 #include "ass_parsed_line.h"
 #include "compat.h"
+#include "dialogs.h"
 #include "include/aegisub/context.h"
 #include "options.h"
 #include "project.h"
@@ -309,8 +310,10 @@ int Apply(agi::Context *c, std::vector<Target> const& targets, agi::Color colour
 		}
 	}
 
-	return c->ass->Commit(_("pick color from video"), AssFile::COMMIT_DIAG_TEXT,
+	int new_commit_id = c->ass->Commit(_("pick color from video"), AssFile::COMMIT_DIAG_TEXT,
 		commit_id, sel.size() == 1 ? *sel.begin() : nullptr);
+	AddColorToRecent(colour);
+	return new_commit_id;
 }
 
 // --------------------------------------------------------------- motion tracks

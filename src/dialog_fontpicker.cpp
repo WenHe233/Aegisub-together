@@ -875,7 +875,17 @@ public:
             int height = std::min(std::max(extent.GetHeight(), 1), 400);
 
             wxBitmap canvas;
-            if (canvas.CreateWithLogicalSize(wxSize(width, height), scale_percent / 100.0, 24)) {
+#if wxCHECK_VERSION(3, 3, 0)
+            bool const canvas_created = canvas.CreateWithLogicalSize(
+                wxSize(width, height), scale_percent / 100.0, 24);
+#else
+            // wxWidgets 3.2 (used by current Linux distributions) predates
+            // CreateWithLogicalSize(). GTK and macOS use DPI-independent
+            // logical pixels, where CreateWithDIPSize() has the same semantics.
+            bool const canvas_created = canvas.CreateWithDIPSize(
+                wxSize(width, height), scale_percent / 100.0, 24);
+#endif
+            if (canvas_created) {
                 wxMemoryDC draw(canvas);
                 draw.SetBackground(*wxWHITE_BRUSH);
                 draw.Clear();
