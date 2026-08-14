@@ -9826,3 +9826,28 @@ msgstr "Typ gradientu\\nLineární gradient sleduje vybraný úhel. Radiální g
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d řádků, %s, text: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "Klíč API je bezpečně uložen v úložišti přihlašovacích údajů operačního systému."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Bezpečné uložení klíče v úložišti přihlašovacích údajů operačního systému"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Tajemství API je bezpečně uloženo v úložišti přihlašovacích údajů operačního systému."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Bezpečné uložení tajemství API v úložišti přihlašovacích údajů operačního systému"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Dvojitý Alt: přepnutí přidání/odebrání"

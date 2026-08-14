@@ -9913,3 +9913,28 @@ msgstr "Farbverlaufstyp\\nDer lineare Farbverlauf folgt dem ausgewählten Winkel
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Farbverlauf (%d Zeilen, %s, Text: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "Der API-Schlüssel wird sicher im Anmeldeinformationsspeicher des Betriebssystems gespeichert."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Sichere Speicherung des Schlüssels im Anmeldeinformationsspeicher des Betriebssystems"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Das API-Secret wird sicher im Anmeldeinformationsspeicher des Betriebssystems gespeichert."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Sichere Speicherung des API-Secrets im Anmeldeinformationsspeicher des Betriebssystems"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Doppeltes Alt: Hinzufügen/Löschen umschalten"

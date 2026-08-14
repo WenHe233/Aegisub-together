@@ -9807,3 +9807,28 @@ msgstr "Tip gradijenta\\nLinearni gradijent prati izabrani ugao. Radijalni gradi
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradijent (%d redova, %s, tekst: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API ključ je bezbedno sačuvan u skladištu akreditiva operativnog sistema."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Bezbedno čuvanje ključa u skladištu akreditiva operativnog sistema"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "API tajna je bezbedno sačuvana u skladištu akreditiva operativnog sistema."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Bezbedno čuvanje API tajne u skladištu akreditiva operativnog sistema"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Dvostruki Alt: prebacivanje između dodavanja i brisanja"

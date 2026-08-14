@@ -10495,3 +10495,28 @@ msgstr "그라디언트 유형\\n선형 그라디언트는 선택한 각도를 �
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "그라디언트 (%d행, %s, 텍스트: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API 키가 운영 체제 자격 증명 저장소에 안전하게 저장되어 있습니다."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "운영 체제 자격 증명 저장소에 키 안전하게 저장"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "API 비밀이 운영 체제 자격 증명 저장소에 안전하게 저장되어 있습니다."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "운영 체제 자격 증명 저장소에 API 비밀 안전하게 저장"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Alt 두 번: 추가/삭제 전환"

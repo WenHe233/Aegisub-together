@@ -9731,3 +9731,28 @@ msgstr "نوع گرادیان\\nگرادیان خطی از زاویه انتخا
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "گرادیان (%d ردیف، %s، متن: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "کلید API به‌صورت امن در مخزن اعتبارنامه‌های سیستم‌عامل ذخیره شده است."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "ذخیره‌سازی امن کلید در مخزن اعتبارنامه‌های سیستم‌عامل"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "رمز API به‌صورت امن در مخزن اعتبارنامه‌های سیستم‌عامل ذخیره شده است."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "ذخیره‌سازی امن رمز API در مخزن اعتبارنامه‌های سیستم‌عامل"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Alt دوگانه: تغییر حالت افزودن/حذف"

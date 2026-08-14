@@ -9896,3 +9896,28 @@ msgstr "Gradientearen mota\\nGradientearen linealak hautatutako angeluari jarrai
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d errenkada, %s, testua: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API-gakoa modu seguruan gordeta dago sistema eragilearen kredentzial-biltegian."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Gakoa modu seguruan gordetzea sistema eragilearen kredentzial-biltegian"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "APIaren sekretua modu seguruan gordeta dago sistema eragilearen kredentzial-biltegian."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "APIaren sekretua modu seguruan gordetzea sistema eragilearen kredentzial-biltegian"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Alt bikoitza: gehitzea/ezabatzea txandakatu"

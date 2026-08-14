@@ -9784,3 +9784,28 @@ msgstr "نوع التدرج\\nيتبع التدرج الخطي الزاوية ا
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "تدرّج (%d سطر، %s، النص: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "يُخزَّن مفتاح API بأمان في مخزن بيانات اعتماد نظام التشغيل."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "تخزين المفتاح بأمان في مخزن بيانات اعتماد نظام التشغيل"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "يُخزَّن سر API بأمان في مخزن بيانات اعتماد نظام التشغيل."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "تخزين سر API بأمان في مخزن بيانات اعتماد نظام التشغيل"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Alt مرتين: تبديل الإضافة/الحذف"

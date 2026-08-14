@@ -9967,3 +9967,28 @@ msgstr "Gradientin tyyppi\\nLineaarinen gradientti seuraa valittua kulmaa. Radia
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d rivi, %s, teksti: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API-avain on tallennettu turvallisesti käyttöjärjestelmän tunnistetietosäilöön."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Avaimen turvallinen tallennus käyttöjärjestelmän tunnistetietosäilöön"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "API-salaisuus on tallennettu turvallisesti käyttöjärjestelmän tunnistetietosäilöön."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "API-salaisuuden turvallinen tallennus käyttöjärjestelmän tunnistetietosäilöön"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Kaksois-Alt: lisäämisen ja poistamisen vaihto"

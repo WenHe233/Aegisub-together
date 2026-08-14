@@ -9952,3 +9952,28 @@ msgstr "Tipo de degradado\\nEl degradado lineal sigue el ángulo seleccionado. E
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Degradado (%d líneas, %s, texto: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "La clave de API se almacena de forma segura en el almacén de credenciales del sistema operativo."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Almacenamiento seguro de la clave en el almacén de credenciales del sistema operativo"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "El secreto de API se almacena de forma segura en el almacén de credenciales del sistema operativo."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Almacenamiento seguro del secreto de API en el almacén de credenciales del sistema operativo"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Alt doble: alternar añadir/eliminar"

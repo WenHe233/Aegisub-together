@@ -9859,3 +9859,28 @@ msgstr "Verlooptype\\nHet lineaire verloop volgt de geselecteerde hoek. Het radi
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Verloop (%d regels, %s, tekst: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "De API-sleutel wordt veilig opgeslagen in de referentieopslag van het besturingssysteem."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "De API-sleutel veilig opslaan in de referentieopslag van het besturingssysteem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Het API-geheim wordt veilig opgeslagen in de referentieopslag van het besturingssysteem."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Het API-geheim veilig opslaan in de referentieopslag van het besturingssysteem"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Dubbele Alt: schakelen tussen toevoegen/verwijderen"

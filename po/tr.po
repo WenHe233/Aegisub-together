@@ -10499,3 +10499,28 @@ msgstr "Degrade türü\\nDoğrusal degrade, seçilen açıyı izler. Radyal degr
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Degrade (%d satır, %s, metin: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API anahtarı güvenli bir şekilde işletim sistemi kimlik bilgisi deposunda saklanır."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Anahtarı işletim sistemi kimlik bilgisi deposunda güvenli bir şekilde saklama"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "API sırrı güvenli bir şekilde işletim sistemi kimlik bilgisi deposunda saklanır."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "API sırrını işletim sistemi kimlik bilgisi deposunda güvenli bir şekilde saklama"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Çift Alt: ekleme/silme arasında geçiş"

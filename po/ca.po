@@ -9957,3 +9957,28 @@ msgstr "Tipus de gradient\\nEl gradient lineal segueix l'angle seleccionat. El g
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d línies, %s, text: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "La clau de l'API s'emmagatzema de manera segura al magatzem de credencials del sistema operatiu."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Emmagatzematge segur de la clau al magatzem de credencials del sistema operatiu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "El secret de l'API s'emmagatzema de manera segura al magatzem de credencials del sistema operatiu."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Emmagatzematge segur del secret de l'API al magatzem de credencials del sistema operatiu"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Alt doble: alterna entre afegir i suprimir"

@@ -9820,3 +9820,28 @@ msgstr "Тип градиента\\nЛинейный градиент следу
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Градиент (%d строк, %s, текст: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "Ключ API безопасно сохранён в хранилище учётных данных операционной системы."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Безопасное хранение ключа в хранилище учётных данных операционной системы"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Секрет API безопасно сохранён в хранилище учётных данных операционной системы."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Безопасное хранение секрета в хранилище учётных данных операционной системы"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Двойное нажатие Alt: переключение добавления/удаления"

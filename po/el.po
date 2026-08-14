@@ -9956,3 +9956,28 @@ msgstr "Τύπος διαβάθμισης\\nΗ γραμμική διαβάθμι
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Διαβάθμιση (%d γραμμές, %s, κείμενο: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "Το κλειδί API αποθηκεύεται με ασφάλεια στον χώρο αποθήκευσης διαπιστευτηρίων του λειτουργικού συστήματος."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Ασφαλής αποθήκευση του κλειδιού στον χώρο αποθήκευσης διαπιστευτηρίων του λειτουργικού συστήματος"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Το μυστικό API αποθηκεύεται με ασφάλεια στον χώρο αποθήκευσης διαπιστευτηρίων του λειτουργικού συστήματος."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Ασφαλής αποθήκευση του μυστικού API στον χώρο αποθήκευσης διαπιστευτηρίων του λειτουργικού συστήματος"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Διπλό Alt: εναλλαγή προσθήκης/διαγραφής"

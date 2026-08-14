@@ -9948,3 +9948,28 @@ msgstr "Tipo de gradiente\\nO gradiente linear segue o ângulo selecionado. O gr
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradiente (%d linhas, %s, texto: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "A chave da API está armazenada com segurança no armazenamento de credenciais do sistema operacional."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Armazenamento seguro da chave no armazenamento de credenciais do sistema operacional"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "O segredo da API está armazenado com segurança no armazenamento de credenciais do sistema operacional."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Armazenamento seguro do segredo da API no armazenamento de credenciais do sistema operacional"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Alt duas vezes: alternar adição/exclusão"

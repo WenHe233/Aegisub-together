@@ -9789,3 +9789,28 @@ msgstr "Gradient 類型\\n線性 gradient 會沿著選取的角度延伸。放�
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d 行，%s，文字：%s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "API 金鑰已安全儲存在作業系統的認證資料庫中。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "將金鑰安全儲存在作業系統的認證資料庫中"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "API 密鑰已安全儲存在作業系統的認證資料庫中。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "將 API 密鑰安全儲存在作業系統的認證資料庫中"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "雙重 Alt：切換新增／刪除"

@@ -9938,3 +9938,28 @@ msgstr "Type de dégradé\\nLe dégradé linéaire suit l’angle sélectionné.
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient (%d lignes, %s, texte: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "La clé API est stockée en toute sécurité dans le trousseau d’identifiants du système d’exploitation."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Stockage sécurisé de la clé dans le trousseau d’identifiants du système d’exploitation"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Le secret API est stocké en toute sécurité dans le trousseau d’identifiants du système d’exploitation."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Stockage sécurisé du secret API dans le trousseau d’identifiants du système d’exploitation"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Double Alt : basculer entre ajout et suppression"

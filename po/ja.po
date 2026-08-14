@@ -9755,3 +9755,28 @@ msgstr "Gradient の種類\\n線形 Gradient は選択した角度に沿いま�
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Gradient（%d 行、%s、テキスト: %s）"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "APIキーはオペレーティングシステムの資格情報ストアに安全に保存されています。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "キーをオペレーティングシステムの資格情報ストアに安全に保存"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "APIシークレットはオペレーティングシステムの資格情報ストアに安全に保存されています。"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "APIシークレットをオペレーティングシステムの資格情報ストアに安全に保存"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Altキーを2回押す：追加/削除を切り替え"

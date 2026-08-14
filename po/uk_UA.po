@@ -9875,3 +9875,28 @@ msgstr "Тип градієнта\\nЛінійний градієнт відпо
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Градієнт (%d рядків, %s, текст: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "API key is stored securely in the operating system credential store."
+msgstr "Ключ API безпечно збережено у сховищі облікових даних операційної системи."
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Store the key securely in the operating system credential store"
+msgstr "Безпечне зберігання ключа у сховищі облікових даних операційної системи"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "API secret is stored securely in the operating system credential store."
+msgstr "Секрет API безпечно збережено у сховищі облікових даних операційної системи."
+
+# machine translation from Hungarian, not reviewed yet
+#: src/dialog_ai_connection.cpp
+msgid "Store the API secret securely in the operating system credential store"
+msgstr "Безпечне зберігання секрету у сховищі облікових даних операційної системи"
+
+# machine translation from Hungarian, not reviewed yet
+#: src/visual_tool_vector_clip.cpp
+msgid "Double Alt: switch Add/Delete"
+msgstr "Подвійне Alt: перемикання додавання/видалення"
