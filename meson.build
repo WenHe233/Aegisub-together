@@ -8,6 +8,7 @@ project('Aegisub', ['c', 'cpp'],
             'b_ndebug=if-release',
 
             'harfbuzz:icu=disabled',
+            'dav1d:enable_tests=false',
             'ffmpeg:libdav1d=enabled',
             'luajit:default_library=static',
             'luajit:amalgam=true',
@@ -98,6 +99,7 @@ endif
 
 rubberband_sp = subproject('rubberband')
 rubberband_dep = rubberband_sp.get_variable('rubberband_dep')
+deps += rubberband_dep
 
 cxx = meson.get_compiler('cpp')
 cc = meson.get_compiler('c')

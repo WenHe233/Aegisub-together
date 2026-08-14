@@ -11,6 +11,7 @@ libaegisub_src = [
     'audio/provider_lock.cpp',
     'audio/provider_pcm.cpp',
     'audio/provider_ram.cpp',
+    'audio/playback_renderer.cpp',
 
     'common/calltip_provider.cpp',
     'common/character_count.cpp',
