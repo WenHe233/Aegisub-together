@@ -47,6 +47,7 @@ class VisualToolAutoMotion final : public VisualToolBase {
 	float MeasuredTextWidth(wxString const& label, bool bold) const;
 	std::pair<Vector2D, Vector2D> ActionBounds(AutoMotionAction action) const;
 	AutoMotionAction ActionAt(Vector2D point) const;
+	bool HasOutputComponent() const;
 	bool ActionEnabled(AutoMotionAction action) const;
 	bool ActionChecked(AutoMotionAction action) const;
 	void Perform(AutoMotionAction action);

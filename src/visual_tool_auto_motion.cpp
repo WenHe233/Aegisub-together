@@ -70,7 +70,7 @@ void VisualToolAutoMotion::ExitTool() {
 }
 
 void VisualToolAutoMotion::RunTracking() {
-	if (busy || !has_region) return;
+	if (busy || !has_region || !HasOutputComponent()) return;
 	Vector2D top_left(std::min(region_start.X(), region_end.X()),
 		std::min(region_start.Y(), region_end.Y()));
 	Vector2D bottom_right(std::max(region_start.X(), region_end.X()),
@@ -223,8 +223,12 @@ std::pair<Vector2D, Vector2D> VisualToolAutoMotion::ActionBounds(
 
 bool VisualToolAutoMotion::ActionEnabled(AutoMotionAction action) const {
 	if (busy || leaving) return false;
-	if (action == AutoMotionAction::Accept) return has_region;
+	if (action == AutoMotionAction::Accept) return has_region && HasOutputComponent();
 	return action != AutoMotionAction::None;
+}
+
+bool VisualToolAutoMotion::HasOutputComponent() const {
+	return track_x || track_y || track_scale || track_rotate || track_perspective;
 }
 
 bool VisualToolAutoMotion::ActionChecked(AutoMotionAction action) const {
@@ -328,9 +332,11 @@ void VisualToolAutoMotion::DrawTopBar() {
 
 	gl_text->SetFont("Verdana", 9, false, false);
 	gl_text->SetColour(agi::Color(220, 223, 226, 255));
-	std::string message = from_wx(has_region ?
+	wxString status = has_region && !HasOutputComponent() ?
+		_("Select at least one motion component.") : has_region ?
 		_("Tracking region ready. Adjust the motion components or select a new region.") :
-		_("Select a stable tracking region, choose the motion components, then accept."));
+		_("Select a stable tracking region, choose the motion components, then accept.");
+	std::string message = from_wx(status);
 	gl_text->Print(message, 12, 50);
 }
 
