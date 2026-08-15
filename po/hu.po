@@ -8401,10 +8401,6 @@ msgid "pick color from video"
 msgstr "szín felvétele a videóról"
 
 #: ../src/video_color_pick.cpp
-msgid "remember for future use"
-msgstr "legyen ez az alapértelmezett"
-
-#: ../src/video_color_pick.cpp
 #, c-format
 msgid "add with \\t(%d,%d,%s...)"
 msgstr "hozzáadás \\t(%d,%d,%s...) formában"
@@ -8438,12 +8434,16 @@ msgid "This line already has timed colors for that tag, from an earlier import o
 msgstr "Ezen a soron már vannak időzített színek ehhez a taghoz, egy korábbi importból vagy egy átmenettel készült színvételből.\nAz import felülírja őket. Folytatod?"
 
 #: ../src/main.cpp
-msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\n\nPressed twice quickly it magnifies that part of the video around the pointer, and lets you write the color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form as well.\n\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, which writes the color the tracked point passes over as a sequence of \\t() tags.\n\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
-msgstr "Új színválasztó funkció került bevezetésre, mely szándékosan nem lett automatikusan hozzárendelve semmilyen gombhoz.\nSegítségével lehetőséged van, hogy a kijelölt sorok színe a videóból közvetlenül az egér pozíciójából származzon egyetlen gombnyomással.\n\nKétszer gyorsan nyomva pedig az egér körül felnagyítja a videó azon részét és lehetőséged van dinamikusan \\t(<aktuális milisecond>,<aktuális milisecond>,\\c...) formátumban is beírni a színt.\n\nA felnagyított nézetből a vágólapon lévő mocha motion track mentén is beolvashatod a színt: ilyenkor a program a követett pont alatti színt \\t() tagek sorozataként írja be.\n\nA használatához társítsd a \"video/colorpick/primary|outline|shadow\" commandot gyorsgombokhoz (javasolt egy gombhoz)."
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\n\nPressed twice quickly it restores the first write and magnifies that part of the video around the pointer. The popup lets you select an exact pixel and optionally write the accepted color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form.\n\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, including its position, scale and rotation, which writes the color the tracked point passes over as a sequence of \\t() tags.\n\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "Új színválasztó funkció került bevezetésre, mely szándékosan nem lett automatikusan hozzárendelve semmilyen gombhoz.\nSegítségével a kijelölt sorok színét egyetlen gombnyomással átveheted az egér alatti videóképpontból.\n\nKétszer gyorsan megnyomva visszaállítja az első színbeírást, és felnagyítja a videó egér körüli részét. A felugró ablakban pontos képpontot választhatsz, az elfogadott színt pedig igény szerint dinamikus \\t(<aktuális ezredmásodperc>,<aktuális ezredmásodperc>,\\c...) formában írhatod be.\n\nA felnagyított nézetből a vágólapon lévő Mocha motion track mentén is beolvashatod a színt, annak pozícióját, méretezését és forgatását is figyelembe véve. Ilyenkor a program a követett pont alatti színt \\t() tagek sorozataként írja be.\n\nA használatához társítsd a \"video/colorpick/primary|outline|shadow\" parancsokat gyorsbillentyűkhöz (mindegyikhez egy-egy gomb javasolt)."
 
 #: ../src/video_color_pick.cpp
-msgid "accept color by doubleclick"
-msgstr "szín elfogadása dupla kattintással"
+msgid "Pick"
+msgstr "Pick"
+
+#: ../src/video_color_pick.cpp
+msgid "Select a pixel, then pick the color."
+msgstr "Válassz ki egy képpontot, majd vedd fel a színt."
 
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"

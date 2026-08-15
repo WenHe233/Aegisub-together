@@ -772,23 +772,6 @@ struct video_zoom_out final : public validator_video_attached {
 	}
 };
 
-struct video_opt_colorautotransition final : public Command {
-	CMD_NAME("video/opt/colorautotransition")
-	CMD_ICON(toggle_colorautotransition)
-	CMD_TYPE(COMMAND_TOGGLE)
-	STR_MENU("Toggle auto transition of color")
-	STR_DISP("Toggle auto transition of color")
-	STR_HELP("Toggle adding \\t() for color picker")
-
-	bool IsActive(const agi::Context *) override {
-		return OPT_GET("Video/Color Pick/Auto Transition")->GetBool();
-	}
-
-	void operator()(agi::Context *) override {
-		OPT_SET("Video/Color Pick/Auto Transition")->SetBool(!OPT_GET("Video/Color Pick/Auto Transition")->GetBool());
-	}
-};
-
 /// Taking a colour off the video under the pointer, one command per colour so each
 /// can have its own hotkey.
 template<video_color_pick::Target Which>
@@ -933,7 +916,6 @@ namespace cmd {
 		reg(std::make_unique<video_zoom_50>());
 		reg(std::make_unique<video_zoom_in>());
 		reg(std::make_unique<video_zoom_out>());
-		reg(std::make_unique<video_opt_colorautotransition>());
 		reg(std::make_unique<video_colorpick_primary>());
 		reg(std::make_unique<video_colorpick_outline>());
 		reg(std::make_unique<video_colorpick_shadow>());

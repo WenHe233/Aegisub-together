@@ -669,7 +669,6 @@
 		},
 		"Subtitle Sync" : true,
 		"Color Pick" : {
-			"Auto Transition" : false,
 			"Intro Shown" : false
 		},
 		"Toggle Mask" : true,

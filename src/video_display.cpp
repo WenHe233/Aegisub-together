@@ -780,6 +780,7 @@ void VideoDisplay::SetTool(std::unique_ptr<VisualToolBase> new_tool) {
 		UpdateViewportSize(true);
 		PositionVideo();
 	}
+	AnnounceToolChanged();
 }
 
 bool VideoDisplay::ToolIsType(std::type_info const& type) const {
