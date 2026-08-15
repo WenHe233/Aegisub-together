@@ -371,6 +371,12 @@ VisualToolVectorClip::VisualToolVectorClip(VideoDisplay *parent, agi::Context *c
 {
 	connections.push_back(c->ass->AddCommitListener(
 		&VisualToolVectorClip::OnSubtitleCommit, this));
+	preview_interface.AttachHost(parent->GetPreviewBar(), [this](int id) {
+		this->parent->SetFocus();
+		PerformPreviewAction(static_cast<ColorAction>(id));
+	}, [this](int id, double value, bool final) {
+		UpdateExternalSlider(static_cast<ColorAction>(id), value, final);
+	});
 }
 
 VisualToolVectorClip::~VisualToolVectorClip() {
@@ -579,6 +585,7 @@ void VisualToolVectorClip::SetSubTool(int subtool) {
 	else if ((mode == VCLIP_COLOR || mode == VCLIP_BRUSH) &&
 		subtool != VCLIP_COLOR && subtool != VCLIP_BRUSH) {
 		ResetColorSelection();
+		preview_interface.Clear();
 	}
 
 	// Manually enforce radio behavior as we want one selection in the bar
@@ -643,6 +650,7 @@ void VisualToolVectorClip::ResetColorSelection() {
 	color_undo_history.reserve(16);
 	color_redo_history.reserve(16);
 	hovered_color_action = ColorAction::None;
+	external_slider_action = ColorAction::None;
 	parent->SetCursor(wxCursor(wxCURSOR_ARROW));
 	parent->UnsetToolTip();
 	if (parent->HasCapture()) parent->ReleaseMouse();
@@ -1021,6 +1029,7 @@ std::pair<Vector2D, Vector2D> VisualToolVectorClip::ColorActionBounds(ColorActio
 }
 
 float VisualToolVectorClip::ColorTopBarHeight() {
+	if (preview_interface.HasExternalHost()) return 0.f;
 	if (mode == VCLIP_BRUSH) return 0.f;
 	if (color_smooth_edges)
 		return (color_edge_snap ? EdgeSnapRadiusBounds() : EdgeSnapBounds()).second.Y() + 10.f;
@@ -1028,6 +1037,7 @@ float VisualToolVectorClip::ColorTopBarHeight() {
 }
 
 VisualToolVectorClip::ColorAction VisualToolVectorClip::ColorActionAt(Vector2D point) {
+	if (preview_interface.HasExternalHost()) return ColorAction::None;
 	if (mode == VCLIP_BRUSH) return ColorAction::None;
 	auto hits = [&](ColorAction action) {
 		auto [top_left, bottom_right] = ColorActionBounds(action);
@@ -1070,6 +1080,175 @@ VisualToolVectorClip::ColorAction VisualToolVectorClip::ColorActionAt(Vector2D p
 	return ColorAction::None;
 }
 
+void VisualToolVectorClip::PerformPreviewAction(ColorAction action) {
+	if (action == ColorAction::RangeShape) ShowRangeShapeMenu();
+	else if (action == ColorAction::Undo) UndoColorHistory();
+	else if (action == ColorAction::Redo) RedoColorHistory();
+	else if (action == ColorAction::SelectionMode) ShowColorModeMenu();
+	else if (action == ColorAction::Templates) ShowColorTemplatesMenu();
+	else if (action == ColorAction::AISelect) ShowAISelectionMenu();
+	else if (action == ColorAction::AutoFill) {
+		if (color_contours_dirty) SyncColorSegmenterFromContours();
+		PushColorHistory();
+		color_auto_fill = !color_auto_fill;
+		RefreshColorContours();
+	}
+	else if (action == ColorAction::SmoothEdges) {
+		PushColorHistory();
+		color_smooth_edges = !color_smooth_edges;
+		color_display_dirty = true;
+		if (!color_smooth_edges && color_edge_snap) {
+			color_edge_snap = false;
+			if (color_contours_dirty) SyncColorSegmenterFromContours();
+			RefreshColorContours();
+		}
+	}
+	else if (action == ColorAction::EdgeSnap) {
+		if (color_contours_dirty) SyncColorSegmenterFromContours();
+		PushColorHistory();
+		color_edge_snap = !color_edge_snap;
+		RefreshColorContours();
+	}
+	else if (action == ColorAction::Accept) AcceptColorContours();
+	else if (action == ColorAction::Cancel) {
+		if (mode == VCLIP_BRUSH) CloseColorMode();
+		else ResetColorSelection();
+	}
+	parent->Render();
+}
+
+void VisualToolVectorClip::UpdateExternalSlider(ColorAction action, double value, bool final) {
+	if (external_slider_action != action) {
+		external_slider_action = action;
+		if (action != ColorAction::BrushSize) PushColorHistory();
+	}
+	if (action == ColorAction::BrushSize) {
+		color_brush_radius = static_cast<float>(std::lround(value));
+		UpdateBrushToolbar();
+	}
+	else if (action == ColorAction::Tolerance) {
+		if (color_contours_dirty) SyncColorSegmenterFromContours();
+		color_tolerance = value;
+		RefreshColorContours();
+	}
+	else if (action == ColorAction::Offset) {
+		if (color_contours_dirty) SyncColorSegmenterFromContours();
+		color_offset = static_cast<int>(std::lround(value));
+		RefreshColorContours();
+	}
+	else if (action == ColorAction::SmoothTolerance) {
+		color_smooth_tolerance = value;
+		color_display_dirty = true;
+	}
+	else if (action == ColorAction::SmoothAngle) {
+		color_smooth_angle = value;
+		color_display_dirty = true;
+	}
+	else if (action == ColorAction::EdgeSnapRadius) {
+		color_edge_snap_radius = value;
+		if (color_contours_dirty) SyncColorSegmenterFromContours();
+		RefreshColorContours();
+	}
+	if (final) external_slider_action = ColorAction::None;
+	parent->Render();
+}
+
+void VisualToolVectorClip::UpdatePreviewInterface() {
+	using Interface = VisualToolPreviewInterface;
+	Interface::Page page;
+	auto add = [&](ColorAction action, Interface::ControlKind kind, wxString label,
+		bool enabled = true,
+		Interface::ControlStyle style = Interface::ControlStyle::Neutral) -> Interface::Control& {
+		Interface::Control control;
+		control.id = static_cast<int>(action);
+		control.kind = kind;
+		control.label = std::move(label);
+		control.enabled = enabled;
+		control.style = style;
+		page.controls.push_back(std::move(control));
+		return page.controls.back();
+	};
+	auto add_slider = [&](ColorAction action, wxString label, double value,
+		double minimum, double maximum, double step, wxString text, bool enabled = true) {
+		auto& control = add(action, Interface::ControlKind::Slider, std::move(label), enabled);
+		control.value = value;
+		control.minimum = minimum;
+		control.maximum = maximum;
+		control.step = step;
+		control.value_text = std::move(text);
+		control.width = 150;
+	};
+	if (mode == VCLIP_COLOR && color_stage == ColorStage::Range) {
+		auto& range = add(ColorAction::RangeShape, Interface::ControlKind::Button,
+			color_range_shape == ColorRangeShape::Rectangle ? _("Rectangle") : _("Freehand"));
+		range.dropdown = true;
+		range.icon_only = true;
+		range.bitmap = MakeVisualRangeShapeBitmap(
+			color_range_shape == ColorRangeShape::Freehand,
+			std::max(16, static_cast<int>(OPT_GET("App/Toolbar Icon Size")->GetInt())), true);
+	}
+	if (mode == VCLIP_COLOR) {
+		add(ColorAction::Undo, Interface::ControlKind::Undo, wxString(), !color_undo_history.empty());
+		add(ColorAction::Redo, Interface::ControlKind::Redo, wxString(), !color_redo_history.empty());
+		add_slider(ColorAction::Offset, _("Offset"), color_offset, -25, 25, 1,
+			agi::wxformat("%d", color_offset), CanOffsetSelection());
+	}
+	if (mode == VCLIP_BRUSH || color_stage != ColorStage::Range) {
+		wxString selection = color_selection_mode == VisualSelectionMode::PipetteAdd ? _("Pipette add") :
+			color_selection_mode == VisualSelectionMode::PipetteSubtract ? _("Pipette subtract") :
+			color_selection_mode == VisualSelectionMode::BrushAdd ? _("Brush add") : _("Brush subtract");
+		auto& selection_control = add(ColorAction::SelectionMode,
+			Interface::ControlKind::Button, selection);
+		selection_control.dropdown = true;
+		bool pipette = color_selection_mode == VisualSelectionMode::PipetteAdd ||
+			color_selection_mode == VisualSelectionMode::PipetteSubtract;
+		if (mode == VCLIP_COLOR && pipette && has_color_sample)
+			add_slider(ColorAction::Tolerance, _("Tolerance"), color_tolerance,
+				0, 20, .1, agi::wxformat("%.1f", color_tolerance));
+		else if (!pipette || mode == VCLIP_BRUSH)
+			add_slider(ColorAction::BrushSize, _("Size"), color_brush_radius,
+				2, 200, 1, agi::wxformat("%d", static_cast<int>(std::lround(color_brush_radius))));
+	}
+	if (mode == VCLIP_COLOR && color_stage != ColorStage::Range) {
+		auto& templates = add(ColorAction::Templates, Interface::ControlKind::Button, _("Templates"));
+		templates.dropdown = true;
+		add(ColorAction::AISelect, Interface::ControlKind::Button, _("AI recognition"),
+			true, Interface::ControlStyle::Warning);
+		if (has_color_sample) {
+			auto& fill = add(ColorAction::AutoFill, Interface::ControlKind::Button, _("Auto fill"));
+			fill.selected = color_auto_fill;
+		}
+		auto& smooth = add(ColorAction::SmoothEdges, Interface::ControlKind::Button,
+			_("Smooth edges"), !color_contours.empty());
+		smooth.selected = color_smooth_edges;
+		if (color_smooth_edges) {
+			add_slider(ColorAction::SmoothTolerance, _("Smooth tolerance"),
+				color_smooth_tolerance, .1, 50, .1, agi::wxformat("%.1f", color_smooth_tolerance));
+			add_slider(ColorAction::SmoothAngle, _("Angle threshold"), color_smooth_angle,
+				0, 180, .1, agi::wxformat("%.1f", color_smooth_angle));
+			auto& snap = add(ColorAction::EdgeSnap, Interface::ControlKind::Button,
+				_("Auto snap"), !color_contours.empty());
+			snap.selected = color_edge_snap;
+			if (color_edge_snap)
+				add_slider(ColorAction::EdgeSnapRadius, _("Edge search"), color_edge_snap_radius,
+					2, 50, 1, agi::wxformat("%d", static_cast<int>(std::lround(color_edge_snap_radius))));
+		}
+		add(ColorAction::Accept, Interface::ControlKind::Button, _("Accept"),
+			!color_contours.empty(), Interface::ControlStyle::Accept);
+	}
+	if (mode == VCLIP_COLOR || mode == VCLIP_BRUSH)
+		add(ColorAction::Cancel, Interface::ControlKind::Button, _("Cancel"),
+			mode == VCLIP_BRUSH || color_stage != ColorStage::Range,
+			Interface::ControlStyle::Cancel);
+	page.message = mode == VCLIP_BRUSH ? _("Paint to add to or erase from the current clip.") :
+		color_stage == ColorStage::Range ?
+			(color_range_shape == ColorRangeShape::Rectangle ? _("Draw the search range.") :
+			_("Draw round the search range.")) :
+		color_stage == ColorStage::Sample ? _("Click the color to extract inside the range.") :
+		agi::wxformat(_("%zu contours found. They will be added to the current clip."), color_contours.size());
+	preview_interface.SetPage(std::move(page));
+}
+
 void VisualToolVectorClip::ShowColorModeMenu() {
 	if (color_stage == ColorStage::Range) return;
 	constexpr int pipette_add_id = 17411;
@@ -1086,9 +1265,8 @@ void VisualToolVectorClip::ShowColorModeMenu() {
 	}
 	add_mode_item(brush_add_id, _("Brush add"));
 	add_mode_item(brush_subtract_id, _("Brush subtract"));
-	auto [top_left, bottom_right] = ColorActionBounds(ColorAction::SelectionMode);
-	int selected = parent->GetPopupMenuSelectionFromUser(menu,
-		wxPoint(static_cast<int>(top_left.X()), static_cast<int>(bottom_right.Y())));
+	wxPoint menu_position = parent->ScreenToClient(wxGetMousePosition());
+	int selected = parent->GetPopupMenuSelectionFromUser(menu, menu_position);
 	if (selected == pipette_add_id) color_selection_mode = VisualSelectionMode::PipetteAdd;
 	else if (selected == pipette_subtract_id) color_selection_mode = VisualSelectionMode::PipetteSubtract;
 	else if (selected == brush_add_id) color_selection_mode = VisualSelectionMode::BrushAdd;
@@ -1109,9 +1287,8 @@ void VisualToolVectorClip::ShowRangeShapeMenu() {
 	rectangle_item->SetBitmap(MakeVisualRangeShapeBitmap(false, icon_size));
 	auto freehand_item = menu.Append(freehand_id, _("Freehand range"));
 	freehand_item->SetBitmap(MakeVisualRangeShapeBitmap(true, icon_size));
-	auto [top_left, bottom_right] = ColorActionBounds(ColorAction::RangeShape);
-	int selected = parent->GetPopupMenuSelectionFromUser(menu,
-		wxPoint(static_cast<int>(top_left.X()), static_cast<int>(bottom_right.Y())));
+	wxPoint menu_position = parent->ScreenToClient(wxGetMousePosition());
+	int selected = parent->GetPopupMenuSelectionFromUser(menu, menu_position);
 	if (selected == rectangle_id) color_range_shape = ColorRangeShape::Rectangle;
 	else if (selected == freehand_id) color_range_shape = ColorRangeShape::Freehand;
 	else return;
@@ -1168,9 +1345,8 @@ void VisualToolVectorClip::ShowColorTemplatesMenu() {
 	update_item->Enable(!templates.empty() && CanCaptureColorTemplate());
 	delete_item->Enable(!templates.empty());
 
-	auto [top_left, bottom_right] = ColorActionBounds(ColorAction::Templates);
-	int selected = parent->GetPopupMenuSelectionFromUser(menu,
-		wxPoint(static_cast<int>(top_left.X()), static_cast<int>(bottom_right.Y())));
+	wxPoint menu_position = parent->ScreenToClient(wxGetMousePosition());
+	int selected = parent->GetPopupMenuSelectionFromUser(menu, menu_position);
 	if (selected == add_id) {
 		wxString default_name = agi::wxformat(_("Template %zu"), templates.size() + 1);
 		wxTextEntryDialog dialog(c->parent, _("Template name:"),
@@ -2323,6 +2499,7 @@ bool VisualToolVectorClip::SelectPathAt(Vector2D point) {
 }
 
 void VisualToolVectorClip::DrawColorMode() {
+	UpdatePreviewInterface();
 	float top_bar_height = ColorTopBarHeight();
 	wxColour line_colour = to_wx(line_color_primary_opt->GetColor());
 	wxColour highlight = to_wx(highlight_color_primary_opt->GetColor());
@@ -2399,27 +2576,13 @@ void VisualToolVectorClip::DrawColorMode() {
 		gl.DrawCircle(mouse_pos, 2.f);
 	}
 	if (mode == VCLIP_BRUSH) return;
+	if (preview_interface.HasExternalHost()) return;
 
-	gl.SetFillColour(*wxBLACK, .72f);
-	gl.SetLineColour(*wxBLACK, 0.f, 1);
-	gl.DrawRectangle(Vector2D(0.f, 0.f), Vector2D(canvas_size.X(), top_bar_height));
-	auto rounded_rectangle = [&](Vector2D top_left, Vector2D bottom_right,
-		float radius, wxColour colour) {
-		float safe_radius = std::min({radius, (bottom_right.X() - top_left.X()) * .5f,
-			(bottom_right.Y() - top_left.Y()) * .5f});
-		gl.SetFillColour(colour, 1.f); gl.SetLineColour(colour, 0.f, 1);
-		gl.DrawRectangle(top_left + Vector2D(safe_radius, 0.f), bottom_right - Vector2D(safe_radius, 0.f));
-		gl.DrawRectangle(top_left + Vector2D(0.f, safe_radius), bottom_right - Vector2D(0.f, safe_radius));
-		gl.DrawCircle(top_left + Vector2D(safe_radius, safe_radius), safe_radius);
-		gl.DrawCircle(Vector2D(bottom_right.X() - safe_radius, top_left.Y() + safe_radius), safe_radius);
-		gl.DrawCircle(Vector2D(top_left.X() + safe_radius, bottom_right.Y() - safe_radius), safe_radius);
-		gl.DrawCircle(bottom_right - Vector2D(safe_radius, safe_radius), safe_radius);
-	};
+	preview_interface.DrawBackground(gl, canvas_size, top_bar_height);
 	if (mode == VCLIP_COLOR && color_stage == ColorStage::Range) {
 		auto [top_left, bottom_right] = ColorActionBounds(ColorAction::RangeShape);
-		wxColour colour = hovered_color_action == ColorAction::RangeShape ?
-			wxColour(55, 59, 64).ChangeLightness(118) : wxColour(55, 59, 64);
-		rounded_rectangle(top_left, bottom_right, 7.f, colour);
+		preview_interface.DrawPanel(gl, {top_left, bottom_right}, true,
+			hovered_color_action == ColorAction::RangeShape);
 		Vector2D centre((top_left.X() + bottom_right.X()) * .5f - 5.f,
 			(top_left.Y() + bottom_right.Y()) * .5f);
 		gl.SetLineColour(*wxWHITE, 1.f, 2);
@@ -2452,19 +2615,8 @@ void VisualToolVectorClip::DrawColorMode() {
 		auto [top_left, bottom_right] = ColorActionBounds(action);
 		bool enabled = action == ColorAction::Undo ? !color_undo_history.empty() :
 			!color_redo_history.empty();
-		wxColour colour = enabled ? wxColour(55, 59, 64) : wxColour(66, 69, 73);
-		if (enabled && hovered_color_action == action)
-			colour = colour.ChangeLightness(118);
-		rounded_rectangle(top_left, bottom_right, 7.f, colour);
-		wxColour content = enabled ? *wxWHITE : wxColour(145, 148, 152);
-		gl.SetLineColour(content, 1.f, 3);
-		float direction = action == ColorAction::Undo ? -1.f : 1.f;
-		Vector2D centre((top_left.X() + bottom_right.X()) * .5f,
-			(top_left.Y() + bottom_right.Y()) * .5f);
-		Vector2D tip = centre + Vector2D(direction * 7.f, 0.f);
-		gl.DrawLine(centre - Vector2D(direction * 7.f, 0.f), tip);
-		gl.DrawLine(tip, tip - Vector2D(direction * 5.f, 5.f));
-		gl.DrawLine(tip, tip - Vector2D(direction * 5.f, -5.f));
+		preview_interface.DrawHistory(gl, {top_left, bottom_right},
+			action == ColorAction::Redo, enabled, hovered_color_action == action);
 	}
 
 	int text_width, text_height;
@@ -2472,7 +2624,7 @@ void VisualToolVectorClip::DrawColorMode() {
 		color_selection_mode == VisualSelectionMode::PipetteSubtract;
 	if (mode == VCLIP_COLOR && pipette_mode && has_color_sample) {
 		auto [tolerance_top_left, tolerance_bottom_right] = ColorToleranceBounds();
-		rounded_rectangle(tolerance_top_left, tolerance_bottom_right, 7.f, wxColour(55, 59, 64));
+		preview_interface.DrawPanel(gl, {tolerance_top_left, tolerance_bottom_right});
 		gl_text->SetFont("Verdana", 9, false, false);
 		gl_text->SetColour(agi::Color(255, 255, 255, 255));
 		std::string tolerance_label = from_wx(_("Tolerance"));
@@ -2495,8 +2647,7 @@ void VisualToolVectorClip::DrawColorMode() {
 		gl_text->SetColour(offset_enabled ? agi::Color(255, 255, 255, 255) :
 			agi::Color(145, 148, 152, 255));
 		auto [offset_top_left, offset_bottom_right] = ColorOffsetBounds();
-		rounded_rectangle(offset_top_left, offset_bottom_right, 7.f,
-			offset_enabled ? wxColour(55, 59, 64) : wxColour(66, 69, 73));
+		preview_interface.DrawPanel(gl, {offset_top_left, offset_bottom_right}, offset_enabled);
 		std::string offset_label = from_wx(_("Offset"));
 		gl_text->GetExtent(offset_label, text_width, text_height);
 		gl_text->Print(offset_label, static_cast<int>(offset_top_left.X() + 10.f),
@@ -2514,7 +2665,7 @@ void VisualToolVectorClip::DrawColorMode() {
 	}
 	if (brush_mode) {
 		auto [brush_top_left, brush_bottom_right] = ColorBrushBounds();
-		rounded_rectangle(brush_top_left, brush_bottom_right, 7.f, wxColour(55, 59, 64));
+		preview_interface.DrawPanel(gl, {brush_top_left, brush_bottom_right});
 		gl_text->SetFont("Verdana", 9, false, false);
 		gl_text->SetColour(agi::Color(255, 255, 255, 255));
 		std::string brush_label = from_wx(_("Size"));
@@ -2535,7 +2686,7 @@ void VisualToolVectorClip::DrawColorMode() {
 		auto draw_smooth_slider = [&](std::pair<Vector2D, Vector2D> bounds,
 			wxString label, double ratio) {
 			auto [top_left, bottom_right] = bounds;
-			rounded_rectangle(top_left, bottom_right, 7.f, wxColour(55, 59, 64));
+			preview_interface.DrawPanel(gl, {top_left, bottom_right});
 			gl_text->SetFont("Verdana", 9, false, false);
 			gl_text->SetColour(agi::Color(255, 255, 255, 255));
 			std::string text = from_wx(label);
@@ -2603,33 +2754,19 @@ void VisualToolVectorClip::DrawColorMode() {
 			enabled = color_stage != ColorStage::Range;
 		if (action == ColorAction::Cancel)
 			enabled = color_stage != ColorStage::Range;
-		wxColour colour = action == ColorAction::Accept ? wxColour(31, 153, 76) :
-			action == ColorAction::Cancel ? wxColour(183, 54, 61) : wxColour(55, 59, 64);
-		if (action == ColorAction::AISelect) colour = wxColour(180, 105, 43);
-		if (action == ColorAction::AutoFill && color_auto_fill)
-			colour = wxColour(35, 125, 153);
-		if (action == ColorAction::SmoothEdges && color_smooth_edges)
-			colour = wxColour(35, 125, 153);
-		if (action == ColorAction::EdgeSnap && color_edge_snap)
-			colour = wxColour(35, 125, 153);
-		if (!enabled) colour = wxColour(66, 69, 73);
-		else if (hovered_color_action == action) colour = colour.ChangeLightness(118);
-		rounded_rectangle(top_left, bottom_right, 7.f, colour);
-		wxColour content = enabled ? *wxWHITE : wxColour(145, 148, 152);
-		gl.SetLineColour(content, 1.f, 3);
-		if (action == ColorAction::SelectionMode || action == ColorAction::Templates) {
-			float icon_y = (top_left.Y() + bottom_right.Y()) * .5f;
-			gl.SetFillColour(content, 1.f);
-			gl.DrawTriangle(Vector2D(bottom_right.X() - 14.f, icon_y - 2.f),
-				Vector2D(bottom_right.X() - 6.f, icon_y - 2.f),
-				Vector2D(bottom_right.X() - 10.f, icon_y + 3.f));
-		}
-		gl_text->SetFont("Verdana", 9, true, false);
-		gl_text->SetColour(enabled ? agi::Color(255, 255, 255, 255) : agi::Color(145, 148, 152, 255));
-		std::string label = from_wx(label_for(action));
-		gl_text->GetExtent(label, text_width, text_height);
-		gl_text->Print(label, static_cast<int>(top_left.X() + 12.f),
-			static_cast<int>((top_left.Y() + bottom_right.Y() - text_height) * .5f));
+		auto style = action == ColorAction::Accept ?
+			VisualToolPreviewInterface::ControlStyle::Accept :
+			action == ColorAction::Cancel ?
+			VisualToolPreviewInterface::ControlStyle::Cancel :
+			action == ColorAction::AISelect ?
+			VisualToolPreviewInterface::ControlStyle::Warning :
+			VisualToolPreviewInterface::ControlStyle::Neutral;
+		bool selected = (action == ColorAction::AutoFill && color_auto_fill) ||
+			(action == ColorAction::SmoothEdges && color_smooth_edges) ||
+			(action == ColorAction::EdgeSnap && color_edge_snap);
+		bool dropdown = action == ColorAction::SelectionMode || action == ColorAction::Templates;
+		preview_interface.DrawButton(gl, *gl_text, {top_left, bottom_right}, label_for(action),
+			style, enabled, hovered_color_action == action, selected, dropdown);
 	}
 
 	auto last = ColorActionBounds(mode == VCLIP_BRUSH ? ColorAction::SelectionMode :
@@ -2642,16 +2779,14 @@ void VisualToolVectorClip::DrawColorMode() {
 		color_stage == ColorStage::Sample ?
 		_("Click the color to extract inside the range.") :
 		agi::wxformat(_("%zu contours found. They will be added to the current clip."), color_contours.size());
-	gl_text->SetFont("Verdana", 9, false, false);
-	gl_text->SetColour(agi::Color(225, 225, 225, 255));
-	std::string info = from_wx(information);
-	gl_text->GetExtent(info, text_width, text_height);
-	gl_text->Print(info, static_cast<int>(last.second.X() + 16.f),
-		static_cast<int>((last.first.Y() + last.second.Y() - text_height) * .5f));
+	preview_interface.DrawMessage(*gl_text, last, last.second.X() + 16.f, information);
 }
 
 void VisualToolVectorClip::Draw() {
-	if (!active_line) return;
+	if (!active_line) {
+		preview_interface.Clear();
+		return;
+	}
 	if (mode == VCLIP_COLOR || mode == VCLIP_BRUSH) {
 		DrawColorMode();
 		return;

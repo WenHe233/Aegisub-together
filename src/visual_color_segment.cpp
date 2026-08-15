@@ -3365,23 +3365,25 @@ wxBitmap MakeVisualAISelectionBitmap(int size) {
 	return bitmap;
 }
 
-wxBitmap MakeVisualRangeShapeBitmap(bool freehand, int size) {
+wxBitmap MakeVisualRangeShapeBitmap(bool freehand, int size, bool dark) {
 	size = std::max(size, 16);
-	wxBitmap bitmap(size, size, 24);
+	wxBitmap bitmap(size, size, 32);
+	bitmap.UseAlpha();
 	wxMemoryDC dc(bitmap);
-	dc.SetBackground(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)));
+	dc.SetBackground(wxBrush(wxColour(0, 0, 0, 0)));
 	dc.Clear();
 	int thickness = std::max(1, size / 10);
 	dc.SetBrush(*wxTRANSPARENT_BRUSH);
+	wxColour foreground = dark ? wxColour(225, 225, 225) : wxColour(20, 20, 20);
 	if (!freehand) {
-		dc.SetPen(wxPen(wxColour(20, 20, 20), thickness, wxPENSTYLE_SHORT_DASH));
+		dc.SetPen(wxPen(foreground, thickness, wxPENSTYLE_SHORT_DASH));
 		int inset = std::max(2, size / 6);
 		dc.DrawRectangle(inset, inset, size - inset * 2, size - inset * 2);
 		dc.SelectObject(wxNullBitmap);
 		return bitmap;
 	}
 	// A mouse: rounded body, split top and a short cable.
-	dc.SetPen(wxPen(wxColour(20, 20, 20), thickness));
+	dc.SetPen(wxPen(foreground, thickness));
 	int width = std::max(6, size / 2);
 	int height = std::max(8, size * 2 / 3);
 	int x = (size - width) / 2;

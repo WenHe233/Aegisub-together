@@ -67,6 +67,7 @@
     "main/typesetting/transform" : [
         { "command" : "typesetting/transform/free" },
         { "command" : "typesetting/transform/distort" },
+		{ "command" : "typesetting/transform/auto_perspective" },
         { "command" : "typesetting/transform/arch" },
         { "command" : "typesetting/transform/warp" },
         {},

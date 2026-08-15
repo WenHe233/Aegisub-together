@@ -19,6 +19,7 @@
 #include "gl_wrap.h"
 #include "vector2d.h"
 #include "options.h"
+#include "visual_tool_preview.h"
 
 #include <libaegisub/owning_intrusive_list.h>
 #include <libaegisub/signal.h>
@@ -80,6 +81,9 @@ protected:
 	std::vector<agi::signal::Connection> connections;
 
 	OpenGLWrapper gl;
+	/// Shared presentation model for non-destructive visual-tool previews. A tool supplies
+	/// controls and behavior; this object supplies uniform layout, hit testing and rendering.
+	mutable VisualToolPreviewInterface preview_interface;
 
 	/// Called when the user double-clicks
 	virtual void OnDoubleClick() { }

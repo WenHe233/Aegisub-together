@@ -650,6 +650,7 @@ class DialogGradient final : public wxDialog {
 	agi::Context *context;
 	Settings settings;
 	typesetting::gradient::PreviewSession preview_session;
+	VisualToolPreviewInterface preview_interface;
 	wxTimer preview_timer;
 	wxTimer playback_timer;
 	wxRadioBox *kind = nullptr;
@@ -813,6 +814,19 @@ public:
 	, preview_session(context)
 	, preview_timer(this)
 	, playback_timer(this) {
+		preview_interface.AttachHost(context->videoDisplay->GetPreviewBar(), [this](int id) {
+			if (id == wxID_OK) Accept();
+			else if (id == wxID_CANCEL) EndModal(wxID_CANCEL);
+		}, {}, false);
+		VisualToolPreviewInterface::Page preview_page;
+		preview_page.controls = {
+			{wxID_OK, VisualToolPreviewInterface::ControlKind::Button, _("Accept"),
+				VisualToolPreviewInterface::ControlStyle::Accept},
+			{wxID_CANCEL, VisualToolPreviewInterface::ControlKind::Button, _("Cancel"),
+				VisualToolPreviewInterface::ControlStyle::Cancel}
+		};
+		preview_page.message = _("Gradient");
+		preview_interface.SetPage(std::move(preview_page));
 		settings.shared_motion = true;
 		bool rectangular = UsesRectangularClip(settings);
 		non_rect_overlap = rectangular ? 0.4 : settings.anti_strip_overlap;

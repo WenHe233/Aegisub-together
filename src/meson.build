@@ -175,6 +175,7 @@ aegisub_src = files(
     'video_slider.cpp',
     'visual_feature.cpp',
     'visual_tool.cpp',
+	'visual_tool_preview.cpp',
     'visual_tool_clip.cpp',
 	'visual_color_segment.cpp',
     'visual_tool_cross.cpp',

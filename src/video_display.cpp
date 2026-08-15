@@ -99,12 +99,15 @@ enum {
 	NOTHING,
 };
 
-VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBox, wxComboBox *speedBox, wxSlider *brightnessSlider, wxWindow *parent, agi::Context *c)
+VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBox,
+	wxComboBox *speedBox, wxSlider *brightnessSlider, VisualToolPreviewBar *previewBar,
+	wxWindow *parent, agi::Context *c)
 : wxGLCanvas(parent, buildGLAttributes())
 , autohideTools(OPT_GET("Tool/Visual/Autohide"))
 , con(c)
 , windowZoomValue(OPT_GET("Video/Default Zoom")->GetInt() * .125 + .125)
 , toolBar(toolbar)
+, previewBar(previewBar)
 , zoomBox(zoomBox)
 , speedBox(speedBox)
 , brightnessSlider(brightnessSlider)

@@ -49,7 +49,14 @@ enum class VisualToolMaskAction {
 	AISelect,
 	Templates,
 	SmoothEdges,
-	EdgeSnap
+	EdgeSnap,
+	MaskBrushSize,
+	Tolerance,
+	Offset,
+	SmoothTolerance,
+	SmoothAngle,
+	EdgeSnapRadius,
+	ColorBrushSize
 };
 
 /// Draws a line-only polygon on the video and creates an ASS drawing mask.
@@ -75,6 +82,7 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	bool mask_brush_slider_dragging = false;
 	Vector2D mask_brush_last;
 	VisualToolMaskAction hovered_action = VisualToolMaskAction::None;
+	VisualToolMaskAction external_slider_action = VisualToolMaskAction::None;
 	enum class ColorStage { Range, Sample, Ready };
 	enum class ColorRangeShape { Rectangle, Freehand };
 	ColorStage color_stage = ColorStage::Range;
@@ -217,6 +225,9 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	std::unique_ptr<wxImage> RunAIImageEdit(wxImage const& scene, wxImage const& mask,
 		std::string const& prompt, wxString const& progress_message, bool use_cloudinary);
 	void DrawTopBar();
+	void UpdatePreviewInterface();
+	void PerformPreviewAction(VisualToolMaskAction action);
+	void UpdateExternalSlider(VisualToolMaskAction action, double value, bool final);
 	Vector2D ColourSamplePoint() const;
 	agi::Color SampleColour(AssStyle const *style) const;
 	std::string EncodeDrawing() const;

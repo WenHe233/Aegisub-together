@@ -33,6 +33,7 @@
 #include <wx/panel.h>
 
 namespace agi { struct Context; }
+class VisualToolPreviewBar;
 class wxTextCtrl;
 
 /// @class VideoBox
@@ -47,5 +48,6 @@ class VideoBox final : public wxPanel {
 	void UpdateTimeBoxes();
 
 public:
-	VideoBox(wxWindow *parent, bool isDetached, agi::Context *context);
+	VideoBox(wxWindow *parent, bool isDetached, VisualToolPreviewBar *previewBar,
+		agi::Context *context);
 };

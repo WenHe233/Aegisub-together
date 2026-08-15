@@ -125,6 +125,25 @@ struct typesetting_transform_distort final :
 	STR_HELP("Drag the four corners of the selected lines on the video")
 };
 
+struct typesetting_transform_auto_perspective final : public Command {
+	CMD_NAME("typesetting/transform/auto_perspective")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Auto &perspective")
+	STR_DISP("Auto perspective")
+	STR_HELP("Draw four directed points and fit the selected lines into their perspective")
+
+	bool Validate(const agi::Context *c) override {
+		return !!c->project->VideoProvider() && typesetting::CanTransform(c);
+	}
+
+	void operator()(agi::Context *c) override {
+		if (RefusedForMask(c)) return;
+		std::string back = previous_tool(c);
+		c->videoDisplay->SetTool(std::make_unique<VisualToolTransform>(c->videoDisplay, c,
+			VisualToolTransformMode::Distort, std::move(back), true));
+	}
+};
+
 struct typesetting_transform_warp final :
 	public transform_command<VisualToolTransformMode::Warp> {
 	CMD_NAME("typesetting/transform/warp")
@@ -223,6 +242,7 @@ namespace cmd {
 		reg(std::make_unique<typesetting_transform_free>());
 		reg(std::make_unique<typesetting_transform_arch>());
 		reg(std::make_unique<typesetting_transform_distort>());
+		reg(std::make_unique<typesetting_transform_auto_perspective>());
 		reg(std::make_unique<typesetting_transform_warp>());
 		reg(std::make_unique<typesetting_flip_horizontal>());
 		reg(std::make_unique<typesetting_flip_vertical>());

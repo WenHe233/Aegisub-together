@@ -8566,6 +8566,30 @@ msgid "Drag the four corners of the selected lines on the video"
 msgstr "A kijelölt sorok négy sarkának húzása a videón"
 
 #: ../src/command/typesetting.cpp
+msgid "Auto &perspective"
+msgstr "Automatikus &perspektíva"
+
+#: ../src/command/typesetting.cpp
+msgid "Auto perspective"
+msgstr "Automatikus perspektíva"
+
+#: ../src/command/typesetting.cpp
+msgid "Draw four directed points and fit the selected lines into their perspective"
+msgstr "Négy irányhelyes pont rajzolása és a kijelölt sorok perspektívába illesztése"
+
+#: ../src/visual_tool_transform.cpp
+msgid "Draw 4 points."
+msgstr "Rajzolj 4 pontot."
+
+#: ../src/visual_tool_transform.cpp
+msgid "Redraw the 4 points."
+msgstr "Rajzold újra a 4 pontot."
+
+#: ../src/visual_tool_transform.cpp
+msgid "auto perspective"
+msgstr "automatikus perspektíva"
+
+#: ../src/command/typesetting.cpp
 msgid "&Warp"
 msgstr "&Hajlítás"
 
@@ -8704,9 +8728,6 @@ msgid ""
 msgstr ""
 "A bord és a shad értéke elcsúszhat, a megtartás opció bekapcsolása javasolt, "
 "ekkor alakzattal helyettesítődnek."
-
-msgid "If the rows move by themselves, use \\q2."
-msgstr "Ha a sorok automatikusan elmozdulnának, használd a \\q2-t."
 
 #: ../src/command/typesetting.cpp ../src/dialog_gradient.cpp
 msgid "Gradient"

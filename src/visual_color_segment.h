@@ -122,7 +122,7 @@ wxBitmap MakeVisualSelectionModeBitmap(VisualSelectionMode mode, int size = 20);
 wxBitmap MakeVisualVectorClipBrushBitmap(bool add, int size = 20, bool dropdown = true);
 wxBitmap MakeVisualAISelectionBitmap(int size = 20);
 /// Icon for the range shape chooser: a dashed rectangle, or a mouse for freehand.
-wxBitmap MakeVisualRangeShapeBitmap(bool freehand, int size = 20);
+wxBitmap MakeVisualRangeShapeBitmap(bool freehand, int size = 20, bool dark = false);
 
 /// Return whether a screen-space brush stroke can change the current selection.
 bool WouldVectorBrushStrokeChange(std::vector<std::vector<Vector2D>> const& contours,

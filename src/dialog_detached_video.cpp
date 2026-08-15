@@ -44,6 +44,7 @@
 #include "video_box.h"
 #include "video_controller.h"
 #include "video_display.h"
+#include "visual_tool_preview.h"
 
 #include <libaegisub/format_path.h>
 
@@ -65,12 +66,14 @@ DialogDetachedVideo::DialogDetachedVideo(agi::Context *context)
 	old_display->Unload();
 
 	// Video area;
-	auto videoBox = new VideoBox(this, true, context);
+	auto previewBar = new VisualToolPreviewBar(this);
+	auto videoBox = new VideoBox(this, true, previewBar, context);
 	context->videoDisplay->SetMinClientSize(old_display->GetClientSize());
 	videoBox->Layout();
 
 	// Set sizer
 	wxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
+	mainSizer->Add(previewBar, 0, wxEXPAND);
 	mainSizer->Add(videoBox,1,wxEXPAND);
 	SetSizerAndFit(mainSizer);
 

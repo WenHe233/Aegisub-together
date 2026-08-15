@@ -50,7 +50,8 @@
 #include <wx/textctrl.h>
 #include <wx/toolbar.h>
 
-VideoBox::VideoBox(wxWindow *parent, bool isDetached, agi::Context *context)
+VideoBox::VideoBox(wxWindow *parent, bool isDetached,
+	VisualToolPreviewBar *previewBar, agi::Context *context)
 : wxPanel(parent, -1)
 , context(context)
 {
@@ -83,7 +84,8 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached, agi::Context *context)
 	auto brightnessSlider = new wxSlider(this, -1, 100, 0, 400, wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", 100) + " (" + _("Right click to reset") + ")");
 
-	auto videoDisplay = new VideoDisplay(visualSubToolBar, isDetached, zoomBox, speedBox, brightnessSlider, this, context);
+	auto videoDisplay = new VideoDisplay(visualSubToolBar, isDetached, zoomBox, speedBox,
+		brightnessSlider, previewBar, this, context);
 	videoDisplay->MoveBeforeInTabOrder(videoSlider);
 
 	auto toolbarSizer = new wxBoxSizer(wxVERTICAL);

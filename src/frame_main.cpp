@@ -58,6 +58,7 @@
 #include "video_box.h"
 #include "video_controller.h"
 #include "video_display.h"
+#include "visual_tool_preview.h"
 
 #include <libaegisub/dispatch.h>
 #include <libaegisub/log.h>
@@ -191,7 +192,8 @@ void FrameMain::InitContents() {
 	context->subsGrid = new BaseGrid(Panel, context.get());
 
 	StartupLog("Create video box");
-	videoBox = new VideoBox(Panel, false, context.get());
+	auto previewBar = new VisualToolPreviewBar(Panel);
+	videoBox = new VideoBox(Panel, false, previewBar, context.get());
 
 	StartupLog("Create audio box");
 	context->audioBox = audioBox = new AudioBox(Panel, context.get());
@@ -208,6 +210,7 @@ void FrameMain::InitContents() {
 	TopSizer->Add(videoBox, 0, wxEXPAND, 0);
 	TopSizer->Add(ToolsSizer, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 5);
 	MainSizer = new wxBoxSizer(wxVERTICAL);
+	MainSizer->Add(previewBar, 0, wxEXPAND);
 	MainSizer->Add(new wxStaticLine(Panel),0,wxEXPAND | wxALL,0);
 	MainSizer->Add(TopSizer,0,wxEXPAND | wxALL,0);
 	MainSizer->Add(context->subsGrid,1,wxEXPAND | wxALL,0);
@@ -323,6 +326,11 @@ void FrameMain::OnCloseWindow(wxCloseEvent &event) {
 		event.Veto();
 		return;
 	}
+
+	// Keep the last preview strip painted while its tool and video are being destroyed. Hiding
+	// and relaying it out here produces a single bright frame immediately before the window goes.
+	if (context->videoDisplay && context->videoDisplay->GetPreviewBar())
+		context->videoDisplay->GetPreviewBar()->BeginShutdown();
 
 	context->dialog.reset();
 
