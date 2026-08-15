@@ -103,6 +103,10 @@ struct Settings {
 /// with fixed defaults and two stops using their effective fill, outline and shadow colours.
 Settings LoadSettingsForSelection(agi::Context *c);
 
+/// Read gradient settings embedded in copied ASS rows. Returns false unless both the
+/// gradient settings and source-row markers are present and valid.
+bool SettingsFromClipboard(std::string clipboard, Settings& settings);
+
 /// Non-destructive video preview for one open gradient dialog. The selection geometry is
 /// collected once so dragging a stop or the angle dial remains responsive.
 class PreviewSession final : public NonDestructivePreviewSession {

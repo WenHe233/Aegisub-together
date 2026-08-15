@@ -6803,7 +6803,7 @@ msgid "Image Mask (%d lines)"
 msgstr "Kép maszk (%d sor)"
 
 msgid "Gradient (%d lines, text: %s)"
-msgstr "Gradient (%d sor, szöveg: %s)"
+msgstr "Színátmenet (%d sor, szöveg: %s)"
 
 msgid "Combined Group Background"
 msgstr "Összevont sorok háttere"
@@ -8731,7 +8731,27 @@ msgstr ""
 
 #: ../src/command/typesetting.cpp ../src/dialog_gradient.cpp
 msgid "Gradient"
-msgstr "Gradient"
+msgstr "Színátmenet"
+
+#: ../src/command/typesetting.cpp
+msgid "Edit gradient"
+msgstr "Színátmenet szerkesztése"
+
+#: ../src/command/typesetting.cpp
+msgid "Edit the gradient settings of the selected generated gradient"
+msgstr "A kijelölt létrehozott színátmenet beállításainak szerkesztése"
+
+#: ../src/command/typesetting.cpp
+msgid "Copy gradient"
+msgstr "Színátmenet másolása"
+
+#: ../src/command/typesetting.cpp
+msgid "Copy the selected generated gradient rows and settings"
+msgstr "A kijelölt létrehozott színátmenet sorainak és beállításainak másolása"
+
+#: ../src/dialog_gradient.cpp
+msgid "Paste gradient"
+msgstr "Színátmenet beillesztése"
 
 #: ../src/command/typesetting.cpp
 msgid "Create a linear, radial or per-character colour gradient on the selected lines"
@@ -8763,7 +8783,7 @@ msgstr "Húzd a szögtárcsát, vagy adj meg pontos értéket. A videón törté
 
 #: ../src/dialog_gradient.cpp
 msgid "With shapes there will be no clips and you can give additional clip, blur, etc. You can edit the gradient after saving."
-msgstr "Alakzatokká alakítva nincsen clip és így lehet további clipet, blurt, egyebet alkalmazni. Szerkesztheted a gradientet mentés után."
+msgstr "Alakzatokká alakítva nincsen clip és így lehet további clipet, blurt, egyebet alkalmazni. Szerkesztheted a színátmenetet mentés után."
 
 #: ../src/dialog_gradient.cpp
 msgid "Enable at least one color block."
@@ -8851,7 +8871,7 @@ msgstr "Szélső színek folytatása"
 
 #: ../src/dialog_gradient.cpp
 msgid "Repeat gradient"
-msgstr "Gradient ismétlése"
+msgstr "Színátmenet ismétlése"
 
 #: ../src/dialog_gradient.cpp
 msgid "First stop color"
@@ -8959,7 +8979,7 @@ msgstr "Következő képkocka"
 
 #: ../src/dialog_gradient.cpp
 msgid "Gradient help"
-msgstr "Gradient súgó"
+msgstr "Színátmenet súgó"
 
 #: ../src/dialog_gradient.cpp
 msgid ""
@@ -8977,21 +8997,21 @@ msgid ""
 "Playback\n"
 "The framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
 msgstr ""
-"Gradient típusa\n"
-"A lineáris gradient a kiválasztott szöget követi. A radiális gradient a kijelölt szöveg középpontjából terjed kifelé.\n\n"
+"Színátmenet típusa\n"
+"A lineáris színátmenet a kiválasztott szöget követi. A radiális színátmenet a kijelölt szöveg középpontjából terjed kifelé.\n\n"
 "Kimenet\n"
-"A Clip vágott feliratsor-másolatokat hoz létre. A Karakterenként minden karakterhez külön rendeli a gradientet. Az Alakzatokkal a szöveget, a bordot és az árnyékot clip nélküli, szerkeszthető vektoralakzatokká alakítja.\n\n"
+"A Clip vágott feliratsor-másolatokat hoz létre. A Karakterenként minden karakterhez külön rendeli a színátmenetet. Az Alakzatokkal a szöveget, a bordot és az árnyékot clip nélküli, szerkeszthető vektoralakzatokká alakítja.\n\n"
 "A Pixeltávolság sávonként a térbeli részletességet szabályozza. A kisebb érték simább eredményt, de több létrehozott sort jelent. A csíkosság elleni átfedés kissé egymásra húzza a ferde, radiális és alakzatos sávokat; a téglalapos clipek mindig nullát használnak.\n\n"
 "Színpontok\n"
 "Kattints a sávra új színpont hozzáadásához, húzd a négyzetét a pozicionáláshoz, kattints rá a szín és az alpha szerkesztéséhez, vagy jobb kattintással távolítsd el.\n\n"
 "Mozgás\n"
 "Az Egyszer a választott időtartam alatt mozgat a két pozíció között. Az Ismétlés minden ciklusban újraindul. Az Oda-vissza váltogatja az irányt. A sorhoz igazított mód a teljes sorhosszt használja. A Sor végének használata az Egyszer módot a felirat végén fejezi be.\n\n"
-"A Gyorsítás az időgörbét módosítja: az 1 lineáris, az 1 feletti érték lassabban, az 1 alatti gyorsabban indul. A pozíciók a gradient tartományának százalékai; a 0 alatti és 100 feletti értékek a szövegen kívülre helyezik. A mozgó tartományon kívül a legközelebbi szélső szín folytatódik.\n\n"
-"A kezdő, középső és végső szélesség a mozgó gradient méretét adja meg az elején, félidőben és a végén. Így vékony–széles–vékony fénycsóva is készíthető.\n\n"
+"A Gyorsítás az időgörbét módosítja: az 1 lineáris, az 1 feletti érték lassabban, az 1 alatti gyorsabban indul. A pozíciók a színátmenet tartományának százalékai; a 0 alatti és 100 feletti értékek a szövegen kívülre helyezik. A mozgó tartományon kívül a legközelebbi szélső szín folytatódik.\n\n"
+"A kezdő, középső és végső szélesség a mozgó színátmenet méretét adja meg az elején, félidőben és a végén. Így vékony–széles–vékony fénycsóva is készíthető.\n\n"
 "Lejátszás\n"
 "A keretezett Play gomb egyszer játssza le a sort. A sima Play gomb ismétli. A Pause leállítja a lejátszást. A nyílgombok egyetlen videóképkockát lépnek."
 
 #: ../src/base_grid.cpp
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
-msgstr "Gradient (%d sor, %s, szöveg: %s)"
+msgstr "Színátmenet (%d sor, %s, szöveg: %s)"

@@ -215,6 +215,40 @@ struct typesetting_gradient final : public Command {
 	}
 };
 
+struct typesetting_gradient_edit final : public Command {
+	CMD_NAME("typesetting/gradient/edit")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Edit gradient")
+	STR_DISP("Edit gradient")
+	STR_HELP("Edit the gradient settings of the selected generated gradient")
+
+	bool Validate(const agi::Context *c) override {
+		auto active = c->selectionController->GetActiveLine();
+		return active && c->imageMask->IsGradientGroup(active);
+	}
+
+	void operator()(agi::Context *c) override {
+		ShowGradientDialog(c);
+	}
+};
+
+struct typesetting_gradient_copy final : public Command {
+	CMD_NAME("typesetting/gradient/copy")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Copy gradient")
+	STR_DISP("Copy gradient")
+	STR_HELP("Copy the selected generated gradient rows and settings")
+
+	bool Validate(const agi::Context *c) override {
+		auto active = c->selectionController->GetActiveLine();
+		return active && c->imageMask->IsGradientGroup(active);
+	}
+
+	void operator()(agi::Context *c) override {
+		cmd::call("edit/line/copy", c);
+	}
+};
+
 struct typesetting_textbox final : public Command {
 	CMD_NAME("typesetting/textbox")
 	CMD_TYPE(COMMAND_VALIDATE)
@@ -247,6 +281,8 @@ namespace cmd {
 		reg(std::make_unique<typesetting_flip_horizontal>());
 		reg(std::make_unique<typesetting_flip_vertical>());
 		reg(std::make_unique<typesetting_gradient>());
+		reg(std::make_unique<typesetting_gradient_edit>());
+		reg(std::make_unique<typesetting_gradient_copy>());
 		reg(std::make_unique<typesetting_textbox>());
 	}
 }

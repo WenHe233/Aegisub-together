@@ -36,7 +36,7 @@ ID allocation for menu items:
 (wxID_HIGHEST + 1) + 2000 ~ (wxID_HIGHEST + 1) + 2014    Grid column list, see base_grid.cpp
 (wxID_HIGHEST + 1) + 3000 ~ (wxID_HIGHEST + 1) + 3001    Context menu, see timeedit_ctrl.cpp
 (wxID_HIGHEST + 1) + 4000 ~ (wxID_HIGHEST + 1) + 7999    Context menu, see subs_edit_ctrl.cpp
-(wxID_HIGHEST + 1) + 8000 ~ (wxID_HIGHEST + 1) + 8019    Grid context menu, see base_grid.cpp
+(wxID_HIGHEST + 1) + 8000 ~ (wxID_HIGHEST + 1) + 8599    Grid context menus, see base_grid.cpp
 (wxID_HIGHEST + 1) + 9000 ~ (wxID_HIGHEST + 1) + 9004    Video context menu, see video_display.cpp
 (wxID_HIGHEST + 1) + 10000 ~ (wxID_HIGHEST + 1) + 10999  Main menu
 */

@@ -907,16 +907,28 @@ void BaseGrid::OnContextMenu(wxContextMenuEvent &evt) {
 		pos = ScreenToClient(pos);
 
 	int row = pos.y / lineHeight + yPos - 1;
-	AssDialogue* d = GetVisDialogue(row);
+	AssDialogue* d = pos == wxDefaultPosition ?
+		context->selectionController->GetActiveLine() : GetVisDialogue(row);
 
-	if (d && context->imageMask->IsGroupStart(d) && !context->selectionController->GetSelectedSet().count(d)) {
+	if (d && (context->imageMask->IsGroupStart(d) || context->imageMask->IsGradientGroup(d)) &&
+		!context->selectionController->GetSelectedSet().count(d)) {
 		SelectRow(row, false);
 		context->selectionController->SetActiveLine(d);
 	}
 
 	if (pos == wxDefaultPosition || pos.y > lineHeight) {
-		if (!context_menu) context_menu = menu::GetMenu("grid_context", (wxID_HIGHEST + 1) + 8000, context);
-		menu::OpenPopupMenu(context_menu.get(), this);
+		if (d && context->imageMask->IsGradientGroup(d)) {
+			if (!gradient_context_menu)
+				gradient_context_menu = menu::GetMenu("grid_context_gradient",
+					(wxID_HIGHEST + 1) + 8500, context);
+			menu::OpenPopupMenu(gradient_context_menu.get(), this);
+		}
+		else {
+			if (!context_menu)
+				context_menu = menu::GetMenu("grid_context",
+					(wxID_HIGHEST + 1) + 8000, context);
+			menu::OpenPopupMenu(context_menu.get(), this);
+		}
 	}
 	else {
 		wxMenu menu;

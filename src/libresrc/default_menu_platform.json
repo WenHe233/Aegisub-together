@@ -61,7 +61,7 @@
 	],
     "main/typesetting" : [
         { "submenu" : "main/typesetting/transform", "text" : "&Transform" },
-        { "command" : "typesetting/gradient" },
+		{ "command" : "typesetting/gradient" },
 		{ "command" : "typesetting/textbox" }
     ],
     "main/typesetting/transform" : [

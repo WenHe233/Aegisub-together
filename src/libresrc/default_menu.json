@@ -34,6 +34,12 @@
         {},
         { "command" : "edit/line/delete" }
     ],
+    "grid_context_gradient" : [
+        { "command" : "typesetting/gradient/edit" },
+        { "command" : "typesetting/gradient/copy" },
+        {},
+        { "include" : "grid_context" }
+    ],
     "main" : "[Dummy, set in platform configs]",
     "main/file" : "[Dummy, set in platform configs]",
     "main/edit" : "[Dummy, set in platform configs]",
