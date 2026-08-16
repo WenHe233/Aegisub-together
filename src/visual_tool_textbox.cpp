@@ -1219,6 +1219,10 @@ bool VisualToolTextBox::OnKeyEvent(wxKeyEvent& event) {
 		}
 		if (!shortcut) {
 			event.DoAllowNextEvent();
+			// wxGTK only generates the translated character event when the hook is
+			// also skipped. DoAllowNextEvent alone is sufficient on MSW, but not on
+			// GTK, where keeping the hook handled swallows all printable input.
+			event.Skip();
 			return true;
 		}
 		return true;
@@ -1274,6 +1278,9 @@ bool VisualToolTextBox::OnKeyEvent(wxKeyEvent& event) {
 	// preventing the video's hotkeys from consuming this physical key.
 	if (!shortcut) {
 		event.DoAllowNextEvent();
+		// Keep the hook unhandled so wxGTK can pass the key through its input
+		// method and emit the layout-aware wxEVT_CHAR consumed by OnTextInput.
+		event.Skip();
 		return true;
 	}
 	return false;

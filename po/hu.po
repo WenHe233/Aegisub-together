@@ -6805,6 +6805,75 @@ msgstr "Kép maszk (%d sor)"
 msgid "Gradient (%d lines, text: %s)"
 msgstr "Színátmenet (%d sor, szöveg: %s)"
 
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Textbox (%d lines, text: %s)"
+msgstr "Szövegdoboz (%d sor, szöveg: %s)"
+
+#: ../src/command/typesetting.cpp ../src/command/vis_tool.cpp
+msgid "Textbox"
+msgstr "Szövegdoboz"
+
+#: ../src/command/typesetting.cpp
+msgid "Put the selected lines into a wrapping textbox drawn on the video"
+msgstr "A kijelölt sorok elhelyezése a videón rajzolt, automatikusan tördelő szövegdobozba"
+
+#: ../src/command/vis_tool.cpp
+msgid "Show and edit the selected textbox"
+msgstr "A kijelölt szövegdoboz megjelenítése és szerkesztése"
+
+#: ../src/typesetting_textbox.cpp
+msgid "apply text box"
+msgstr "szövegdoboz alkalmazása"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Accept (CTRL+ENTER)"
+msgstr "Elfogadás (CTRL+ENTER)"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Align centre"
+msgstr "Középre igazítás"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Align left"
+msgstr "Balra igazítás"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Align right"
+msgstr "Jobbra igazítás"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Border"
+msgstr "Bord"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Border color"
+msgstr "Bord szín"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Centre"
+msgstr "Közép"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Justify"
+msgstr "Sorkizárt"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Line spacing"
+msgstr "Sorköz"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Padding"
+msgstr "Belső margó"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Spacing"
+msgstr "Sorköz"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Text color"
+msgstr "Szövegszín"
+
 msgid "Combined Group Background"
 msgstr "Összevont sorok háttere"
 
