@@ -119,7 +119,10 @@ Matcher make_matcher(std::string const& text, bool match_case, bool whole_word, 
 }
 
 struct ParsedLine {
-	std::string start, end, style, text, source;
+	// `raw` is the untouched event line as it appears in the file. The other fields are
+	// trimmed, tag-stripped and have the extradata prefix removed, so none of them can be
+	// glued back into something a subtitle file would accept.
+	std::string start, end, style, text, source, raw;
 	std::vector<uint32_t> extra_ids;
 	std::vector<Range> text_hits, source_hits;
 	size_t line = 0;
@@ -127,7 +130,7 @@ struct ParsedLine {
 
 struct ResultRow {
 	std::filesystem::path file;
-	std::string start, end, style, text, source;
+	std::string start, end, style, text, source, raw;
 	std::vector<Range> text_hits, source_hits;
 	size_t line = 0;
 	bool openable = false;
@@ -194,6 +197,7 @@ std::optional<ParsedLine> parse_event(std::string const& raw, size_t line_number
 		return std::string(v);
 	};
 	ParsedLine out;
+	out.raw = raw;
 	out.start = trim(fields[1]); out.end = trim(fields[2]); out.style = trim(fields[3]); out.line = line_number;
 	auto text = std::string(fields[9]);
 	out.extra_ids = extract_ids(text);
@@ -264,7 +268,7 @@ std::vector<ResultGroup> search_file(std::filesystem::path const& file, Matcher 
 		group.match_line = lines[match].line;
 		for (size_t i = match > 2 ? match - 2 : 0; i < std::min(lines.size(), match + 3); ++i) {
 			auto const& line = lines[i];
-			group.rows.push_back({file, line.start, line.end, line.style, line.text, line.source,
+			group.rows.push_back({file, line.start, line.end, line.style, line.text, line.source, line.raw,
 				line.text_hits, line.source_hits, line.line, i == match});
 		}
 		out.push_back(std::move(group));
@@ -282,7 +286,7 @@ std::vector<std::pair<int, int>> char_ranges(std::string const& text, std::vecto
 }
 
 struct DisplayRow {
-	wxString start, end, style, text, source;
+	wxString start, end, style, text, source, raw;
 	std::vector<std::pair<int, int>> text_hits, source_hits;
 	std::filesystem::path file;
 	size_t line;
@@ -305,7 +309,7 @@ struct DisplayFile {
 class ResultsView final : public wxScrolledWindow {
 	std::vector<DisplayFile> files;
 	std::unordered_set<size_t> selected;
-	std::function<void(wxString const&)> selection_changed;
+	std::function<void(wxString const&, wxString const&)> selection_changed;
 	std::function<void(std::filesystem::path const&, size_t)> open_requested;
 	size_t next_row_id = 1;
 	int content_height = 0;
@@ -323,13 +327,16 @@ class ResultsView final : public wxScrolledWindow {
 	}
 
 	void NotifySelection() {
-		wxString text;
+		wxString text, raw;
+		bool any = false;
 		for (auto const& file : files) for (auto const& match : file.matches) for (auto const& row : match.rows) {
 			if (!selected.contains(row.id)) continue;
-			if (!text.empty()) text += "\n";
-			text += row.text;
+			// An empty line is still a selected line, so the separator is driven by whether
+			// anything came before rather than by the accumulated text being non-empty.
+			if (any) { text += "\n"; raw += "\n"; }
+			text += row.text; raw += row.raw; any = true;
 		}
-		if (selection_changed) selection_changed(text);
+		if (selection_changed) selection_changed(text, raw);
 	}
 
 	void DrawTextCell(wxDC& dc, wxRect const& rect, wxString const& text,
@@ -452,7 +459,7 @@ public:
 		Bind(wxEVT_PAINT, &ResultsView::OnPaint, this); Bind(wxEVT_LEFT_DOWN, &ResultsView::OnLeftDown, this);
 		Bind(wxEVT_SIZE, [this](wxSizeEvent& event) { SetVirtualSize(ContentWidth(), content_height); Refresh(); event.Skip(); });
 	}
-	void SetSelectionChanged(std::function<void(wxString const&)> callback) { selection_changed = std::move(callback); }
+	void SetSelectionChanged(std::function<void(wxString const&, wxString const&)> callback) { selection_changed = std::move(callback); }
 	void SetOpenRequested(std::function<void(std::filesystem::path const&, size_t)> callback) { open_requested = std::move(callback); }
 	void ClearResults() {
 		files.clear(); selected.clear(); next_row_id = 1; content_height = Margin(); SetVirtualSize(ContentWidth(), content_height); Refresh(); NotifySelection();
@@ -465,7 +472,7 @@ public:
 			}
 			DisplayMatch match; match.y = content_height; match.match_line = group.match_line;
 			for (auto& item : group.rows) {
-				match.rows.push_back({to_wx(item.start), to_wx(item.end), to_wx(item.style), to_wx(item.text), to_wx(item.source),
+				match.rows.push_back({to_wx(item.start), to_wx(item.end), to_wx(item.style), to_wx(item.text), to_wx(item.source), to_wx(item.raw),
 					char_ranges(item.text, item.text_hits), char_ranges(item.source, item.source_hits), std::move(item.file), item.line, item.openable, next_row_id++});
 			}
 			content_height += MatchHeight() + ColumnsHeight() + static_cast<int>(match.rows.size()) * RowHeight() + Gap();
@@ -479,7 +486,9 @@ class DialogFolderSearch final : public wxDialog {
 	wxDirPickerCtrl *folder;
 	wxTextCtrl *query, *include_styles, *exclude_styles, *selected_text;
 	wxCheckBox *match_case, *whole_word, *regex;
-	wxButton *search, *stop, *copy;
+	wxButton *search, *stop, *copy, *copy_full;
+	// The full event lines are not shown anywhere, so the selection has to keep them.
+	wxString selected_raw;
 	wxGauge *progress;
 	wxStaticText *status;
 	ResultsView *results;
@@ -501,7 +510,7 @@ class DialogFolderSearch final : public wxDialog {
 		Layout();
 	}
 	void clear_results() {
-		results->ClearResults(); selected_text->Clear(); copy->Disable();
+		results->ClearResults(); selected_text->Clear(); selected_raw.clear(); copy->Disable(); copy_full->Disable();
 	}
 	void append_groups(std::vector<ResultGroup>& groups) {
 		results->Append(groups);
@@ -566,10 +575,14 @@ public:
 		stop = new wxButton(this, -1, _("S&top")); stop->Disable(); progress = new wxGauge(this, -1, 100); status = new wxStaticText(this, -1, _("Ready."));
 		progress->SetMinSize(FromDIP(wxSize(180, -1))); status->SetMinSize(FromDIP(wxSize(500, -1)));
 		results = new ResultsView(this);
-		results->SetSelectionChanged([this](wxString const& text) { selected_text->SetValue(text); copy->Enable(!text.empty()); });
+		results->SetSelectionChanged([this](wxString const& text, wxString const& raw) {
+			selected_text->SetValue(text); selected_raw = raw;
+			copy->Enable(!text.empty()); copy_full->Enable(!raw.empty());
+		});
 		results->SetOpenRequested([](std::filesystem::path const& file, size_t line) { LaunchAegisubAtLine(agi::fs::path(file), line); });
 		selected_text = new wxTextCtrl(this, -1, {}, wxDefaultPosition, FromDIP(wxSize(-1, 85)), wxTE_MULTILINE | wxTE_READONLY);
 		copy = new wxButton(this, -1, _("Copy to &Clipboard")); copy->Disable();
+		copy_full = new wxButton(this, -1, _("Copy to Clipboard (&full line)")); copy_full->Disable();
 		auto form = new wxFlexGridSizer(2, FromDIP(6), FromDIP(8)); form->AddGrowableCol(1, 1);
 		form->Add(new wxStaticText(this, -1, _("Folder:")), wxSizerFlags().CenterVertical()); form->Add(folder, wxSizerFlags(1).Expand());
 		form->Add(new wxStaticText(this, -1, _("Find what:")), wxSizerFlags().CenterVertical()); form->Add(query, wxSizerFlags(1).Expand());
@@ -579,6 +592,7 @@ public:
 		options->Add(regex, wxSizerFlags().Border(wxRIGHT)); options->AddStretchSpacer(); options->Add(search, wxSizerFlags().Border(wxRIGHT)); options->Add(stop);
 		auto progress_row = new wxBoxSizer(wxHORIZONTAL); progress_row->Add(progress, wxSizerFlags(1).Expand().Border(wxRIGHT)); progress_row->Add(status, wxSizerFlags().CenterVertical());
 		auto buttons = new wxBoxSizer(wxHORIZONTAL); buttons->Add(copy, wxSizerFlags().Border(wxRIGHT));
+		buttons->Add(copy_full, wxSizerFlags().Border(wxRIGHT));
 		buttons->AddStretchSpacer(); buttons->Add(new wxButton(this, wxID_CANCEL, _("Close")));
 		auto main = new wxBoxSizer(wxVERTICAL); main->Add(form, wxSizerFlags().Expand().Border()); main->Add(options, wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT | wxBOTTOM));
 		main->Add(progress_row, wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT | wxBOTTOM));
@@ -591,6 +605,7 @@ public:
 		include_styles->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent&) { start_search(); }); exclude_styles->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent&) { start_search(); });
 		stop->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { cancelled = true; set_status(_("Stopping search...")); stop->Disable(); });
 		copy->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { SetClipboard(from_wx(selected_text->GetValue())); });
+		copy_full->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { SetClipboard(from_wx(selected_raw)); });
 		query->SetFocus();
 	}
 	~DialogFolderSearch() override { pulse.Stop(); stop_worker(); }

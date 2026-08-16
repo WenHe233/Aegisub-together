@@ -7623,6 +7623,9 @@ msgstr "Kész."
 msgid "Copy to &Clipboard"
 msgstr "Másolás a &vágólapra"
 
+msgid "Copy to Clipboard (&full line)"
+msgstr "Másolás a vágólapra (&teljes sor)"
+
 msgid "&Open Result"
 msgstr "Találat &megnyitása"
 
