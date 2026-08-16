@@ -2167,12 +2167,14 @@ void VisualToolMask::Draw() {
 		for (size_t i = 0; i < screen_points.size(); ++i)
 			gl.DrawCircle(screen_points[i], static_cast<int>(i) == hovered_point ||
 				static_cast<int>(i) == dragged_point ? 3.f : 1.5f);
-		if (mode == MASK_POINTS && mouse_inside && dragged_point < 0 &&
+		if (mode == MASK_POINTS && mouse_inside && dragged_point < 0 && !screen_points.empty() &&
 			mouse_pos.Y() >= TopBarHeight() && ActionAt(mouse_pos) == VisualToolMaskAction::None) {
-			Vector2D preview = ToScriptCoords(mouse_pos);
-			preview = Vector2D(std::clamp(preview.X(), 0.f, script_res.X()),
-				std::clamp(preview.Y(), 0.f, script_res.Y()));
-			Vector2D screen_preview = FromScriptCoords(preview);
+			// Clicking stores the raw script point, so a point can legitimately sit
+			// outside the video rect. Clamping the preview to the script resolution
+			// made the dashed line stop at the video edge instead of following the
+			// cursor into the letterbox, which is exactly where the next point would
+			// land. The screen position is the mouse position; no round trip needed.
+			Vector2D screen_preview = mouse_pos;
 			gl.SetLineColour(line_colour, .85f, 2);
 			gl.DrawDashedLine(screen_preview, screen_points.front(), 6.f);
 			if (screen_points.size() > 1)

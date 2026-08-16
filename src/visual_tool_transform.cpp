@@ -2531,9 +2531,12 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 	// The moving edge and its closing edge preview the same connected contour used by the
 	// mask tools. Only the fixed, clicked points are retained.
 	Vector2D pointer = mouse_pos;
-	if (pointer.Y() >= TopBarHeight() &&
-		pointer.X() >= video_pos.X() && pointer.X() <= video_pos.X() + video_size.X() &&
-		pointer.Y() >= video_pos.Y() && pointer.Y() <= video_pos.Y() + video_size.Y()) {
+	// The preview follows the cursor into the letterbox too, since a click there places a
+	// corner as well; stopping the dashed edges at the video rect pointed them at a spot
+	// where nothing would appear. mouse_pos is tested for validity because leaving the
+	// display resets it to a near-zero float rather than NaN, which would otherwise pass
+	// the top bar test on its own.
+	if (pointer && pointer.Y() >= TopBarHeight()) {
 		Vector2D last = FromScriptCoords(auto_perspective_points.back());
 		gl.DrawDashedLine(last, pointer, 5.f);
 		if (auto_perspective_points.size() > 1)
@@ -2932,9 +2935,9 @@ void VisualToolTransform::OnMouseEvent(wxMouseEvent& event) {
 			VisualTool<VisualDraggableFeature>::OnMouseEvent(event);
 			return;
 		}
-		if (point.X() >= video_pos.X() && point.X() <= video_pos.X() + video_size.X() &&
-			point.Y() >= video_pos.Y() && point.Y() <= video_pos.Y() + video_size.Y())
-			AddAutoPerspectivePoint(ToScriptCoords(point));
+		// A perspective quad routinely has corners past the frame edge, so a click outside
+		// the video is accepted; the top bar already returned above.
+		AddAutoPerspectivePoint(ToScriptCoords(point));
 		return;
 	}
 	VisualTool<VisualDraggableFeature>::OnMouseEvent(event);
