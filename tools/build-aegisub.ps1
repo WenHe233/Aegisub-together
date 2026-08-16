@@ -4,54 +4,10 @@ $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $buildDir = Join-Path $projectRoot 'build-codex'
 
 $buildSucceeded = $false
-$wrapOverrides = & (Join-Path $PSScriptRoot 'subproject-overrides.ps1')
-$wrapBackupDir = Join-Path ([System.IO.Path]::GetTempPath()) ("aegisub-wrap-{0}" -f [guid]::NewGuid())
-$savedWraps = @()
 $locationPushed = $false
 
-# A source tree is only usable if it can actually be enumerated. The broken ones are not
-# missing, they are present and unreadable, so Test-Path alone says nothing.
-function Test-UsableSubproject([string] $path) {
-	if (-not (Test-Path -LiteralPath $path)) { return $false }
-	try { return $null -ne (Get-ChildItem -LiteralPath $path -Force -ErrorAction Stop | Select-Object -First 1) }
-	catch { return $false }
-}
-
 try {
-	[System.IO.Directory]::CreateDirectory($wrapBackupDir) | Out-Null
 	$utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
-	$overridden = @()
-	foreach ($entry in $wrapOverrides.GetEnumerator()) {
-		$wrapPath = Join-Path $projectRoot (Join-Path 'subprojects' $entry.Key)
-		$localDependency = Join-Path $projectRoot (Join-Path 'subprojects' $entry.Value)
-		if (-not (Test-Path -LiteralPath $wrapPath) -or
-			-not (Test-UsableSubproject $localDependency)) { continue }
-
-		$content = [System.IO.File]::ReadAllText($wrapPath)
-		$stockMatch = [System.Text.RegularExpressions.Regex]::Match(
-			$content, '(?m)^directory\s*=\s*(.+?)\s*$')
-		# Leave the wrap alone when the directory it names is readable. The rewriting only
-		# exists to route around the locked-out source trees, so it disappears by itself
-		# once fix-subproject-permissions.ps1 has put the replacements under those names.
-		if ($stockMatch.Success -and
-			(Test-UsableSubproject (Join-Path $projectRoot (Join-Path 'subprojects' $stockMatch.Groups[1].Value)))) {
-			continue
-		}
-
-		$backupPath = Join-Path $wrapBackupDir $entry.Key
-		Copy-Item -LiteralPath $wrapPath -Destination $backupPath
-		$savedWraps += [pscustomobject]@{ Source = $backupPath; Target = $wrapPath }
-		$content = [System.Text.RegularExpressions.Regex]::Replace(
-			$content, '(?m)^directory\s*=.*$', "directory = $($entry.Value)")
-		[System.IO.File]::WriteAllText($wrapPath, $content, $utf8WithoutBom)
-		$overridden += $entry.Key
-	}
-
-	if ($overridden.Count) {
-		Write-Output ("Redirected {0} wrap(s) around unreadable source trees: {1}" -f
-			$overridden.Count, ($overridden -join ', '))
-		Write-Output 'Run tools\fix-subproject-permissions.ps1 from an elevated shell to retire this.'
-	}
 
 	Push-Location $projectRoot
 	$locationPushed = $true
@@ -78,12 +34,11 @@ try {
         Write-Warning 'No bundled nasm found; libass will build without its SIMD kernels.'
     }
 
-    # Both of these can only enter the configuration while meson is configuring: the
-    # assembler because add_languages runs there, and the wrap redirection because it
-    # decides where each subproject's sources live. A tree configured under different
-    # answers keeps building the old way until it is reconfigured, so record them.
+    # The assembler can only enter the configuration while meson is configuring, since that
+    # is when add_languages runs. A tree set up before NASM was visible therefore keeps
+    # building the scalar libass until it is reconfigured, so record what it was set up with.
     $configStamp = Join-Path $buildDir '.aegisub-buildconfig'
-    $configCurrent = "nasm=$(if ($nasmExe) { $nasmExe } else { 'none' })`nwraps=$($overridden -join ',')"
+    $configCurrent = "nasm=$(if ($nasmExe) { $nasmExe } else { 'none' })"
     $configRecorded = if (Test-Path -LiteralPath $configStamp) {
         [System.IO.File]::ReadAllText($configStamp).Trim()
     } else { '' }
@@ -104,12 +59,6 @@ try {
 }
 finally {
 	if ($locationPushed) { Pop-Location }
-	foreach ($saved in $savedWraps) {
-		Copy-Item -LiteralPath $saved.Source -Destination $saved.Target -Force
-	}
-	if (Test-Path -LiteralPath $wrapBackupDir) {
-		Remove-Item -LiteralPath $wrapBackupDir -Recurse -Force
-	}
 }
 
 $freshExe = Join-Path $buildDir 'aegisub.exe'

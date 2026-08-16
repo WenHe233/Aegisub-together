@@ -1,112 +1,83 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-Puts the replacement subproject sources under the names the wraps already use.
+Gives your account back access to subproject source trees that lock it out.
 
 .DESCRIPTION
-Several extracted subprojects carry an ACL that shuts this account out completely: they
-cannot be read, renamed or deleted, only seen in a directory listing. Working copies were
-made beside them under suffixed names, and build-aegisub.ps1 rewrites the wraps to point
-at those for the duration of a build.
+Extracted subprojects occasionally end up with inheritance switched off and a DACL that
+lists BUILTIN\Administrators but not your own account. An elevated shell reads them without
+complaint while meson, running unelevated, cannot get in at all -- so a wrap resolves to a
+directory that is present but unusable, and the build fails or has to be routed around.
 
-This script retires that workaround. For each entry in subproject-overrides.ps1 it takes
-ownership of the unreadable directory, moves it aside, and renames the working copy into
-its place. Afterwards the wraps resolve on their own and the build stops touching them.
+This turns inheritance back on and grants the account explicit access. Every wrap under
+subprojects/ is checked; the wrap files themselves are never touched, and nothing is moved
+or deleted.
 
-Ownership has to be taken before the move, which is why this needs an elevated shell.
+Elevation is required: an ACL you are neither on nor own cannot be rewritten without it.
 
-.PARAMETER RemoveLocked
-Also delete the directories that were moved aside instead of leaving them in place. This
-is the only irreversible part, so it is off by default.
+.PARAMETER Account
+Who to grant access to. Defaults to whoever runs the script, which is the right answer when
+you elevate your own account rather than switching to a separate administrator.
 #>
 [CmdletBinding()]
 param(
-    [switch] $RemoveLocked
+    [string] $Account = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 )
 
 $ErrorActionPreference = 'Stop'
 
-$projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$subprojects = Join-Path $projectRoot 'subprojects'
-$overrides = & (Join-Path $PSScriptRoot 'subproject-overrides.ps1')
-$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$account = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+$subprojects = Join-Path ([System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))) 'subprojects'
 
-# Present but unreadable is the case this whole script is about, so presence proves nothing.
-function Test-UsableSubproject([string] $path) {
-    if (-not (Test-Path -LiteralPath $path)) { return $false }
-    try { return $null -ne (Get-ChildItem -LiteralPath $path -Force -ErrorAction Stop | Select-Object -First 1) }
+# Whether the ACL hands this account what it needs. Reading the directory is the wrong
+# question: run elevated, the Administrators entry answers it and everything looks healthy
+# while the unelevated build still cannot get in.
+function Test-AccountHasAccess([string] $path, [string] $account) {
+    try { $acl = Get-Acl -LiteralPath $path -ErrorAction Stop }
     catch { return $false }
+    foreach ($ace in $acl.Access) {
+        if ($ace.AccessControlType -ne [Security.AccessControl.AccessControlType]::Allow) { continue }
+        if ($ace.IdentityReference.Value -ne $account) { continue }
+        if ($ace.FileSystemRights -band [Security.AccessControl.FileSystemRights]::ReadAndExecute) { return $true }
+    }
+    return $false
 }
 
+Write-Output "Granting access to: $Account"
+Write-Output ''
+
 $repaired = @()
-$skipped = @()
+$failed = @()
 
-foreach ($entry in $overrides.GetEnumerator()) {
-    $wrapPath = Join-Path $subprojects $entry.Key
-    if (-not (Test-Path -LiteralPath $wrapPath)) {
-        $skipped += "$($entry.Key): no such wrap"
-        continue
-    }
+foreach ($wrap in Get-ChildItem -LiteralPath $subprojects -Filter '*.wrap' -File) {
+    $match = [System.Text.RegularExpressions.Regex]::Match(
+        [System.IO.File]::ReadAllText($wrap.FullName), '(?m)^directory\s*=\s*(.+?)\s*$')
+    if (-not $match.Success) { continue }
 
-    $stockMatch = [System.Text.RegularExpressions.Regex]::Match(
-        [System.IO.File]::ReadAllText($wrapPath), '(?m)^directory\s*=\s*(.+?)\s*$')
-    if (-not $stockMatch.Success) {
-        $skipped += "$($entry.Key): no directory field"
-        continue
-    }
+    $name = $match.Groups[1].Value
+    $path = Join-Path $subprojects $name
+    if (-not (Test-Path -LiteralPath $path)) { continue }
+    if (Test-AccountHasAccess $path $Account) { continue }
 
-    $stockName = $stockMatch.Groups[1].Value
-    $stockPath = Join-Path $subprojects $stockName
-    $replacementPath = Join-Path $subprojects $entry.Value
+    Write-Output "Repairing $name ..."
+    # Ownership first, so the ACL becomes writable at all.
+    & takeown.exe /F $path | Out-Null
+    # Inheritance pulls in the Full Control the parent already grants; the explicit
+    # recursive grant then covers children that broke inheritance on their own.
+    & icacls.exe $path /inheritance:e /C /Q | Out-Null
+    & icacls.exe $path /grant "$($Account):(OI)(CI)F" /T /C /Q | Out-Null
 
-    if (Test-UsableSubproject $stockPath) {
-        $skipped += "$stockName is already readable"
-        continue
-    }
-    if (-not (Test-UsableSubproject $replacementPath)) {
-        Write-Warning "$($entry.Value) is missing or unreadable; leaving $stockName alone."
-        continue
-    }
-
-    if (Test-Path -LiteralPath $stockPath) {
-        # Renaming a directory within its parent only touches its own entry, so ownership
-        # of the top level is enough and the contents can keep their ACLs. Recursing here
-        # would mean walking every file of boost and icu for no gain.
-        # Ownership goes to whoever runs this, not to the Administrators group: /A would
-        # leave directories that an unelevated shell still cannot clean up later.
-        & takeown.exe /F $stockPath | Out-Null
-        & icacls.exe $stockPath /grant "$($account):(OI)(CI)F" /C /Q | Out-Null
-
-        $lockedPath = Join-Path $subprojects "$stockName.locked-$stamp"
-        Move-Item -LiteralPath $stockPath -Destination $lockedPath
-        Write-Output "Moved aside: $stockName -> $stockName.locked-$stamp"
-
-        if ($RemoveLocked) {
-            # Deleting does need every child, hence the recursive pass this time.
-            & takeown.exe /F $lockedPath /R /D Y | Out-Null
-            & icacls.exe $lockedPath /grant "$($account):(OI)(CI)F" /T /C /Q | Out-Null
-            Remove-Item -LiteralPath $lockedPath -Recurse -Force
-            Write-Output "Deleted: $stockName.locked-$stamp"
-        }
-    }
-
-    Move-Item -LiteralPath $replacementPath -Destination $stockPath
-    $repaired += "$($entry.Value) -> $stockName"
+    if (Test-AccountHasAccess $path $Account) { $repaired += $name } else { $failed += $name }
 }
 
 Write-Output ''
 if ($repaired.Count) {
-    Write-Output "Repaired $($repaired.Count) subproject(s):"
+    Write-Output "Access restored on $($repaired.Count):"
     $repaired | ForEach-Object { Write-Output "  $_" }
-    Write-Output ''
-    Write-Output 'The next build will reconfigure itself and will no longer rewrite the wraps.'
 }
-else {
-    Write-Output 'Nothing to repair.'
+if ($failed.Count) {
+    Write-Output "Could not repair $($failed.Count):"
+    $failed | ForEach-Object { Write-Output "  $_" }
 }
-if ($skipped.Count) {
-    Write-Output ''
-    Write-Output 'Skipped:'
-    $skipped | ForEach-Object { Write-Output "  $_" }
+if (-not $repaired.Count -and -not $failed.Count) {
+    Write-Output 'Every subproject already grants access. Nothing to do.'
 }
