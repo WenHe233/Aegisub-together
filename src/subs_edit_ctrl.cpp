@@ -363,12 +363,23 @@ void SubsTextEditCtrl::Paste() {
 	SetSelectionEnd(sel_start);
 }
 
+void SubsTextEditCtrl::RestoreSelection(int anchor, int caret) {
+	// Not SetSelection: wxStyledTextCtrl implements it as SCI_SETSELECTIONSTART followed by
+	// SCI_SETSELECTIONEND, and Scintilla clamps both of those to anchor <= caret. A selection
+	// dragged right to left has the anchor at the higher position, so the first message
+	// collapsed the range onto the anchor and the second collapsed it onto the caret, which is
+	// why restoring only ever worked for selections made left to right. SCI_SETANCHOR and
+	// SCI_SETCURRENTPOS each move one end and leave the other alone, so the direction survives.
+	SetAnchor(anchor);
+	SetCurrentPos(caret);
+}
+
 void SubsTextEditCtrl::OnRightDown(wxMouseEvent &event) {
 	right_click_pending = true;
 	right_click_anchor = GetAnchor();
 	right_click_caret = GetCurrentPos();
 	right_click_position = PositionFromPoint(event.GetPosition());
-	SetSelection(right_click_anchor, right_click_caret);
+	RestoreSelection(right_click_anchor, right_click_caret);
 	// Do not pass the click to Scintilla: its native handler can move the caret or
 	// discard the selection before WM_CONTEXTMENU opens our existing popup menu.
 }
@@ -378,7 +389,7 @@ void SubsTextEditCtrl::OnContextMenu(wxContextMenuEvent &event) {
 	int activePos;
 	if (right_click_pending) {
 		activePos = right_click_position;
-		SetSelection(right_click_anchor, right_click_caret);
+		RestoreSelection(right_click_anchor, right_click_caret);
 		right_click_pending = false;
 	}
 	else if (pos == wxDefaultPosition)

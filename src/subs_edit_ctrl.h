@@ -87,6 +87,10 @@ class SubsTextEditCtrl final : public wxStyledTextCtrl {
 	int right_click_caret = 0;
 	int right_click_position = -1;
 
+	/// Put the anchor and the caret back exactly where they were, including when the anchor
+	/// is the later of the two. wxStyledTextCtrl::SetSelection cannot express that.
+	void RestoreSelection(int anchor, int caret);
+
 	void OnContextMenu(wxContextMenuEvent &);
 	void OnRightDown(wxMouseEvent &);
 	void OnDoubleClick(wxStyledTextEvent&);
