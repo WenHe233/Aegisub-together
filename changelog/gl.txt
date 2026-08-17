@@ -1,3 +1,23 @@
+Versión 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- A barra superior eliminouse do vídeo e fíxose máis compacta
+- O movemento durante a distorsión move na súa propia perspectiva e xestiona os \org extremos
+- Distorsión + Transformación libre engade automaticamente \q2
+- Función de perspectiva automática
+    - Coloca as liñas seleccionadas en perspectiva con 4 puntos
+    - Traballa segundo un rectángulo de referencia amarelo personalizable
+    - se a liña activa é unha máscara, utilízaa como rectángulo de referencia
+    - pódese mover despois da colocación para facer axustes nesa perspectiva
+- As liñas con gradientes recibiron 2 opcións no menú do botón dereito: pódense copiar e pegar nun texto novo, así como abrir a edición
+- Melloras no selector de cores
+- Corrección da caixa de texto
+- As liñas de previsualización poden saír do vídeo ao crear unha máscara
+- Ao buscar nos subtítulos, pódese copiar a liña completa
+- Mantense a selección da caixa de texto ao facer clic dereito despois de seleccionar desde a dereita
+- O pincel resolve o mesmo con menos puntos (bezier)
+- A creación de máscaras tamén permite bezier; pódese cambiar premendo ALT dúas veces
+- Pódese cambiar visualmente a opacidade dos subtítulos
+
 Versión 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Función de caixa de texto no menú Formázás

@@ -1,3 +1,23 @@
+Versi 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Bilah atas dihapus dari video dan menjadi lebih ringkas
+- Pergerakan saat distorsi bergerak dalam perspektifnya sendiri dan menangani \org yang ekstrem
+- Distorsi + Bentuk Bebas secara otomatis menambahkan \q2
+- Fungsi perspektif otomatis
+    - menempatkan baris yang dipilih dalam perspektif dengan 4 titik
+    - bekerja berdasarkan persegi panjang acuan kuning yang dapat disesuaikan
+    - jika baris aktif adalah mask, maka baris tersebut digunakan sebagai persegi panjang acuan
+    - dapat digerakkan setelah penempatan untuk penyempurnaan dalam perspektif tersebut
+- Baris gradien mendapatkan 2 opsi di menu klik kanan: dapat disalin dan ditempelkan ke teks baru, serta membuka penyuntingan
+- Penyempurnaan pemilih warna
+- Perbaikan kotak teks
+- Garis pratinjau saat membuat mask dapat keluar dari video
+- Saat mencari dalam subtitle, seluruh baris dapat disalin
+- Mempertahankan pilihan kotak teks saat klik kanan setelah memilih dari kanan
+- Brush menyelesaikan hal yang sama dengan lebih sedikit titik (bezier)
+- Pembuatan mask juga mengizinkan bezier, dapat beralih dengan ALT ganda
+- Opasitas subtitle dapat diubah secara visual
+
 Versi 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Fungsi kotak teks di menu Pemformatan

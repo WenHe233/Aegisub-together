@@ -1,3 +1,23 @@
+Wersja 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Górny pasek został usunięty z wideo i stał się bardziej kompaktowy
+- Przesuwanie podczas zniekształcania przesuwa obiekt w jego własnej perspektywie i obsługuje skrajne wartości \org
+- Zniekształcanie + Swobodne przekształcanie automatycznie dodaje \q2
+- Automatyczna funkcja perspektywy
+    - Umieszcza zaznaczone linie w perspektywie za pomocą 4 punktów
+    - działa według żółtego, konfigurowalnego prostokąta odniesienia
+    - jeśli aktywna linia jest maską, używa jej jako prostokąta odniesienia
+    - po umieszczeniu można ją przesuwać w danej perspektywie w celu dopracowania
+- Linie z gradientem otrzymały 2 opcje w menu kontekstowym: można je kopiować i wklejać do nowego tekstu, a także otworzyć ich edycję
+- Udoskonalenie wyboru koloru
+- Poprawiono pole tekstowe
+- Linie podglądu podczas tworzenia maski mogą wychodzić poza wideo
+- Podczas wyszukiwania w napisach można kopiować całą linię
+- Zachowanie zaznaczenia pola tekstowego po kliknięciu prawym przyciskiem myszy po zaznaczeniu od prawej strony
+- Pędzel wykonuje to samo za pomocą mniejszej liczby punktów (Bezier)
+- Tworzenie maski pozwala także na użycie krzywych Beziera, można przełączać za pomocą podwójnego ALT
+- Można wizualnie zmieniać krycie napisów
+
 Wersja 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Funkcja pola tekstowego w menu Formázás

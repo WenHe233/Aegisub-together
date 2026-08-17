@@ -1,3 +1,23 @@
+Version 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Oberer Balken aus dem Video entfernt und kompakter gestaltet
+- Verschieben während der Verzerrung verschiebt in der eigenen Perspektive und behandelt extreme \orgs
+- Verzerrung + Freie Form fügt automatisch \q2 hinzu
+- Automatische Perspektivfunktion
+    - Platziert die ausgewählten Zeilen mit 4 Punkten perspektivisch
+    - arbeitet nach dem anpassbaren gelben Referenzrechteck
+    - wenn die aktive Zeile eine Maske ist, wird diese als Rechteck verwendet
+    - kann nach der Platzierung in der jeweiligen Perspektive zur Feinabstimmung verschoben werden
+- Gradientzeilen haben 2 Optionen im Rechtsklickmenü erhalten: Sie können in einen neuen Text kopiert und eingefügt sowie zur Bearbeitung geöffnet werden
+- Farbwahler verfeinert
+- Textfeld verbessert
+- Vorschau-Linien können beim Erstellen einer Maske aus dem Video herausragen
+- Bei der Suche in Untertiteln kann die gesamte Zeile kopiert werden
+- Auswahl des Textfelds bleibt bei einem Rechtsklick nach einer Auswahl von rechts erhalten
+- Pinsel löst dasselbe mit weniger Punkten (Bezier)
+- Maskenerstellung erlaubt auch Bezier, mit doppeltem ALT kann gewechselt werden
+- Die Transparenz der Untertitel kann visuell geändert werden
+
 Version 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Textfeld-Funktion im Menü Formatierung

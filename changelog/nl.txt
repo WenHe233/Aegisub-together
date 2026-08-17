@@ -1,3 +1,23 @@
+Versie 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Bovenste balk is uit de video verwijderd en compacter gemaakt
+- Verplaatsen tijdens vervorming verplaatst in het eigen perspectief en verwerkt extreme \org's
+- Vervorming + Vrije vormgeving voegt automatisch \q2 toe
+- Automatische perspectieffunctie
+    - plaatst de geselecteerde regels met 4 punten in perspectief
+    - werkt volgens een gele, aanpasbare referentierechthoek
+    - als de actieve regel een masker is, wordt deze als rechthoek gebruikt
+    - kan na het plaatsen binnen het gegeven perspectief worden verplaatst voor verfijning
+- Gradiëntregels hebben 2 opties gekregen in het rechtsklikmenu: ze kunnen naar een nieuwe tekst worden gekopieerd en geplakt, en de bewerking kan worden geopend
+- Verfijning van de kleurkiezer
+- Tekstvakverbetering
+- Voorbeeldlijnen kunnen bij het maken van een masker buiten de video lopen
+- Bij het zoeken in ondertitels kan nu de volledige regel worden gekopieerd
+- Selectie van het tekstvak blijft behouden bij rechtsklikken na selectie van rechts
+- Penseel lost hetzelfde op met minder punten (bezier)
+- Bij het maken van maskers is bezier nu ook toegestaan, met dubbel ALT kan er worden gewisseld
+- De transparantie van de ondertiteling kan visueel worden gewijzigd
+
 Versie 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Tekstvakfunctie in het menu Opmaak

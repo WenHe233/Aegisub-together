@@ -1,3 +1,23 @@
+Sürüm 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Üst çubuk videodan kaldırıldı ve daha kompakt hâle getirildi
+- Deformasyon sırasında taşıma, nesneyi kendi perspektifinde taşır ve uç \org değerlerini işler
+- Deformasyon + Serbest dönüştürme otomatik olarak \q2 ekler
+- Otomatik perspektif işlevi
+    - Seçili satırları 4 noktayla perspektife yerleştirir
+    - Sarı, özelleştirilebilir referans dikdörtgenine göre çalışır
+    - Aktif satır maske ise onu dikdörtgen olarak temel alır
+    - Yerleştirme sonrasında, ilgili perspektifte ince ayar yapmak için taşınabilir
+- Gradyanlı satırlara sağ tıklama menüsünde 2 seçenek eklendi: yeni bir metne kopyalanıp yapıştırılabilir ve düzenleme açılabilir
+- Renk seçici iyileştirildi
+- Metin kutusu düzeltildi
+- Maske oluştururken önizleme çizgileri videonun dışına taşabilir
+- Altyazılarda arama yaparken satırın tamamı kopyalanabilir
+- Sağdan seçim yaptıktan sonra sağ tıklama durumunda metin kutusu seçimi korunur
+- Fırça aynı işlemi daha az noktadan yapar (bezier)
+- Maske oluşturma artık bezier'e de izin veriyor, çift ALT ile geçiş yapılabilir
+- Altyazının saydamlığı görsel olarak değiştirilebilir
+
 Sürüm 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Biçimlendirme menüsünde metin kutusu işlevi

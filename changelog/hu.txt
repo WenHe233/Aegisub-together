@@ -1,3 +1,23 @@
+Verzió 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Felső sáv kikerült a videóból és kompaktabb lett
+- Torzítás közbeni mozgatás a saját perspektívájában mozgatja és kezeli a szélsőséges \org-okat
+- Torzítás + Szabad alakítás automatán hozzáadja a \q2-t
+- Automatikus perspektíva funkció
+    - 4 ponttal elhelyezi a kijelölt sorokat perspektívában
+    - sárga testreszabható viszonyítási téglalap szerint dolgozik
+    - ha az aktív sor maszk, akkor azt veszi alapul téglalapnak
+    - lehet mozgatni elhelyezés után az adott perspektívában finomításhoz
+- Gradientes sorok kaptak 2 opciót a jobb klikk menüben: lehet másolni és beilleszteni egy új szövegre, valamint szerkesztést előhozni
+- Színkiválasztó finomítás
+- Szövegdoboz javítás
+- Előnézeti vonalak maszk létrehozásánál kifuthatnak a videóból
+- Feliratokban keresésnél lehessen teljes sort másolni
+- Szövegdoboz kijelölés megtartása jobbról történő kijelölés utáni jobb klikk esetén
+- Ecset kevesebb pontból oldja meg ugyanazt (bezier)
+- Maszk létrehozás beziert is enged, dupla ALT-al lehet váltani
+- Vizuálisan lehet a felirat áttetszőségét változtatni
+
 Verzió 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Szövegdoboz funkció a Formázás menüben

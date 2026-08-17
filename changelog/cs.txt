@@ -1,3 +1,23 @@
+Verze 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Horní lišta byla z videa odstraněna a stala se kompaktnější
+- Pohyb při deformaci pohybuje objektem v jeho vlastní perspektivě a zvládá extrémní \org
+- Deformace + Volná transformace automaticky přidává \q2
+- Automatická perspektiva
+    - umístí vybrané řádky do perspektivy pomocí 4 bodů
+    - pracuje podle žlutého přizpůsobitelného referenčního obdélníku
+    - pokud je aktivní řádek maskou, použije ji jako obdélník
+    - po umístění lze objektem v dané perspektivě pohybovat pro jemné doladění
+- Řádky s gradientem dostaly v nabídce po kliknutí pravým tlačítkem 2 možnosti: lze je zkopírovat a vložit do nového textu a také vyvolat úpravy
+- Vylepšení výběru barev
+- Oprava textového rámečku
+- Náhledové čáry při vytváření masky mohou přesahovat mimo video
+- Při hledání v titulcích lze zkopírovat celý řádek
+- Zachování výběru textového rámečku při kliknutí pravým tlačítkem po výběru zprava
+- Štětec zvládne totéž s menším počtem bodů (bezier)
+- Vytváření masky nyní umožňuje také beziery, přepínat lze dvojitým ALT
+- Průhlednost titulků lze měnit vizuálně
+
 Verze 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Funkce textového pole v nabídce Formátování

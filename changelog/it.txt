@@ -1,3 +1,23 @@
+Versione 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- La barra superiore è stata rimossa dal video ed è diventata più compatta
+- Il movimento durante la distorsione avviene nella propria prospettiva e gestisce gli \org estremi
+- Distorsione + Trasformazione libera aggiunge automaticamente \q2
+- Funzione di prospettiva automatica
+    - Posiziona le righe selezionate in prospettiva usando 4 punti
+    - funziona in base al rettangolo di riferimento giallo personalizzabile
+    - se la riga attiva è una maschera, la usa come rettangolo di riferimento
+    - dopo il posizionamento è possibile spostarla nella prospettiva data per apportare rifiniture
+- Le righe con gradiente hanno ricevuto 2 opzioni nel menu del tasto destro: è possibile copiarle e incollarle su un nuovo testo, nonché richiamare la modifica
+- Miglioramento del selettore dei colori
+- Correzione della casella di testo
+- Durante la creazione di una maschera, le linee di anteprima possono fuoriuscire dal video
+- Durante la ricerca nei sottotitoli è possibile copiare un'intera riga
+- Mantenimento della selezione della casella di testo quando si fa clic con il tasto destro dopo una selezione da destra
+- Il pennello ottiene lo stesso risultato usando meno punti (bezier)
+- La creazione di maschere consente anche l'uso di bezier, è possibile alternare con un doppio ALT
+- È possibile modificare visivamente l'opacità del sottotitolo
+
 Versione 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Funzione casella di testo nel menu Formattazione
