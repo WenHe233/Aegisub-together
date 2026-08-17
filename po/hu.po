@@ -8474,8 +8474,8 @@ msgstr "szín felvétele a videóról"
 
 #: ../src/video_color_pick.cpp
 #, c-format
-msgid "add with \\t(%d,%d,%s...)"
-msgstr "hozzáadás \\t(%d,%d,%s...) formában"
+msgid "as \\t(%d,%d,%s...)"
+msgstr "\\t(%d,%d,%s...) formában"
 
 #: ../src/video_color_pick.cpp
 msgid "also add for:"
@@ -8511,7 +8511,7 @@ msgstr "Új színválasztó funkció került bevezetésre, mely szándékosan ne
 
 #: ../src/video_color_pick.cpp
 msgid "Pick"
-msgstr "Pick"
+msgstr "Kiválaszt"
 
 #: ../src/video_color_pick.cpp
 msgid "Select a pixel, then pick the color."

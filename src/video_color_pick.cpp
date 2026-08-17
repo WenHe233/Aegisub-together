@@ -60,6 +60,7 @@
 #include <wx/button.h>
 #include <wx/checkbox.h>
 #include <wx/dcbuffer.h>
+#include <wx/dcclient.h>
 #include <wx/msgdlg.h>
 #include <wx/popupwin.h>
 #include <wx/progdlg.h>
@@ -76,6 +77,35 @@ struct TagNames {
 	const char *tag;
 	const char *alt;
 };
+
+/// Breaks a label into lines no wider than `width`. wxStaticText has Wrap() for this;
+/// a check box has to be handed the newlines, and MSW switches its label to multi-line
+/// drawing as soon as it contains one.
+wxString WrapLabel(wxWindow *window, wxString const& text, int width) {
+	wxClientDC dc(window);
+	dc.SetFont(window->GetFont());
+	wxString wrapped, line;
+	size_t at = 0;
+	while (at <= text.size()) {
+		size_t space = text.find(' ', at);
+		wxString word = text.substr(at, space == wxString::npos ? wxString::npos : space - at);
+		at = space == wxString::npos ? text.size() + 1 : space + 1;
+		if (word.empty()) continue;
+		wxString candidate = line.empty() ? word : line + " " + word;
+		if (!line.empty() && dc.GetTextExtent(candidate).GetWidth() > width) {
+			if (!wrapped.empty()) wrapped += "\n";
+			wrapped += line;
+			line = word;
+		}
+		else
+			line = candidate;
+	}
+	if (!line.empty()) {
+		if (!wrapped.empty()) wrapped += "\n";
+		wrapped += line;
+	}
+	return wrapped;
+}
 
 TagNames NamesFor(Target target) {
 	switch (target) {
@@ -104,6 +134,8 @@ constexpr int DOUBLE_PRESS_MS = 200;
 constexpr int MAGNIFIER_COLUMNS = 17;
 constexpr int MAGNIFIER_ROWS = 13;
 constexpr int MAGNIFIER_SCALE = 12;
+/// The border every row of the picker popup keeps to the window edge.
+constexpr int popup_margin = 6;
 
 // ---------------------------------------------------------------- frame sampling
 
@@ -794,16 +826,32 @@ public:
 		transition = new wxCheckBox(this, wxID_ANY, "");
 		transition->SetValue(false);
 
-		auto *also_row = new wxBoxSizer(wxHORIZONTAL);
-		also_row->Add(new wxStaticText(this, wxID_ANY, _("also add for:")), 0,
-			wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+		auto *also_label = new wxStaticText(this, wxID_ANY, _("also add for:"));
+		auto *also_boxes = new wxBoxSizer(wxHORIZONTAL);
+		int also_width = also_label->GetBestSize().GetWidth() + 6;
 		for (Target other : {Target::Primary, Target::Outline, Target::Shadow}) {
 			// The colour that was asked for is being written anyway, so offering it
 			// here would only be a checkbox that cannot mean anything.
 			if (other == target) continue;
 			auto *box = new wxCheckBox(this, wxID_ANY, NamesFor(other).tag);
-			also_row->Add(box, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
+			also_boxes->Add(box, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
+			also_width += box->GetBestSize().GetWidth() + 8;
 			also.emplace_back(other, box);
+		}
+		// One line while the translation fits beside the boxes, two when it does not:
+		// the popup is as wide as the magnifier and nothing here may widen it.
+		wxSizer *also_row;
+		if (also_width <= ContentWidth()) {
+			auto *row = new wxBoxSizer(wxHORIZONTAL);
+			row->Add(also_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+			row->Add(also_boxes, 0, wxALIGN_CENTER_VERTICAL);
+			also_row = row;
+		}
+		else {
+			auto *column = new wxBoxSizer(wxVERTICAL);
+			column->Add(also_label, 0);
+			column->Add(also_boxes, 0, wxTOP, 2);
+			also_row = column;
 		}
 
 		canvas = new MagnifierCanvas(this, c, centre, [this] { Pick(); });
@@ -816,26 +864,26 @@ public:
 		auto *close = new wxButton(this, wxID_ANY, _("Close"));
 		accept->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { Pick(); });
 		close->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { Dismiss(); });
-		buttons->AddStretchSpacer();
-		buttons->Add(accept, 0, wxRIGHT, 6);
-		buttons->Add(close, 0);
-		buttons->AddStretchSpacer();
+		buttons->Add(accept, 1, wxEXPAND | wxRIGHT, 6);
+		buttons->Add(close, 1, wxEXPAND);
 
 		auto *hint = new wxStaticText(this, wxID_ANY,
-			_("Select a pixel, then pick the color."));
+			_("Select a pixel, then pick the color."), wxDefaultPosition, wxDefaultSize,
+			wxALIGN_CENTRE_HORIZONTAL);
 		wxFont hint_font = hint->GetFont();
 		hint_font.SetStyle(wxFONTSTYLE_ITALIC);
 		hint->SetFont(hint_font);
 		hint->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
 
 		auto *sizer = new wxBoxSizer(wxVERTICAL);
-		sizer->Add(transition, 0, wxLEFT | wxRIGHT | wxTOP, 6);
-		sizer->Add(also_row, 0, wxLEFT | wxRIGHT | wxTOP, 6);
-		sizer->Add(canvas, 0, wxALL, 6);
-		sizer->Add(import, 0, wxEXPAND | wxLEFT | wxRIGHT, 6);
-		sizer->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 6);
-		sizer->Add(hint, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, 4);
-		SetSizerAndFit(sizer);
+		sizer->Add(transition, 0, wxLEFT | wxRIGHT | wxTOP, popup_margin);
+		sizer->Add(also_row, 0, wxLEFT | wxRIGHT | wxTOP, popup_margin);
+		sizer->Add(canvas, 0, wxALL, popup_margin);
+		sizer->Add(import, 0, wxEXPAND | wxLEFT | wxRIGHT, popup_margin);
+		sizer->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, popup_margin);
+		sizer->Add(hint, 0, wxEXPAND | wxALL, popup_margin);
+		hint->Wrap(ContentWidth());
+		SetSizer(sizer);
 
 		UpdateTransitionLabel();
 
@@ -883,15 +931,30 @@ private:
 		int time = TransitionTime(c);
 		// The tag already carries its own "c" - \c, \3c, \4c - so the format must not
 		// add another one.
-		transition->SetLabel(wxString::Format(_("add with \\t(%d,%d,%s...)"),
-			time, time, NamesFor(target).tag));
+		// The check box reserves its indicator and a space before the text, and MSW
+		// pads a multi-line label by the indicator again; wrapping to what is left
+		// of the magnifier keeps the whole row inside the popup.
+		int reserved = 2 * transition->GetCharHeight() + transition->GetCharWidth();
+		transition->SetLabel(WrapLabel(transition,
+			wxString::Format(_("as \\t(%d,%d,%s...)"), time, time,
+				NamesFor(target).tag),
+			std::max(1, ContentWidth() - reserved)));
 		auto line = c->selectionController->GetActiveLine();
 		bool first_frame = !line || c->videoController->GetFrameN() ==
 			c->videoController->FrameAtTime(line->Start, agi::vfr::START);
 		transition->Enable(!first_frame);
 		if (first_frame) transition->SetValue(false);
 
-		GetSizer()->SetSizeHints(this);
+		FitToMagnifier();
+	}
+
+	/// The popup is exactly the magnifier plus its border. Everything above the image
+	/// wraps to that width, so the fitted height is all that is left to take.
+	static int ContentWidth() { return MAGNIFIER_COLUMNS * MAGNIFIER_SCALE; }
+
+	void FitToMagnifier() {
+		GetSizer()->Fit(this);
+		SetClientSize(ContentWidth() + 2 * popup_margin, GetClientSize().GetHeight());
 		Layout();
 	}
 
