@@ -8668,6 +8668,10 @@ msgid "Line %d is fitted to the points, the rest follow it."
 msgstr "A %d. sor illeszkedik a pontokra, a többi ehhez igazodik."
 
 #: ../src/visual_tool_transform.cpp
+msgid "The yellow dashed rectangle is the reference."
+msgstr "A sárga szaggatott téglalap a viszonyítási alap."
+
+#: ../src/visual_tool_transform.cpp
 msgid "auto perspective"
 msgstr "automatikus perspektíva"
 

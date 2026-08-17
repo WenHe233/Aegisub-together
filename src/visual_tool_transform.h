@@ -370,6 +370,11 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// The nth handle. The features are an intrusive list, and there are never more than a
 	/// handful of them, so walking to one costs nothing worth a lookup table.
 	VisualDraggableFeature *FeatureAt(size_t index);
+	/// The selected line the tool works from, or nothing when it is not among the lines
+	/// this tool collected.
+	TagLine const *ActiveTagLine() const;
+	/// Whether auto perspective has a shape to fit, rather than only measured text.
+	bool AutoPerspectiveFitsShape() const;
 	/// A line's drawing, taken to where the renderer puts it on screen.
 	std::vector<Vector2D> ShapeOutline(TagLine const& found);
 	/// The four source points, from the active line's own shape.

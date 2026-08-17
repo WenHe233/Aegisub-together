@@ -958,22 +958,39 @@ void VisualToolTransform::BuildBox() {
 	BuildAutoPerspectiveBox();
 }
 
+VisualToolTransform::TagLine const *VisualToolTransform::ActiveTagLine() const {
+	AssDialogue *active = c->selectionController->GetActiveLine();
+	auto found = std::find_if(tag_lines.begin(), tag_lines.end(),
+		[&](TagLine const& line) { return line.line == active; });
+	return found == tag_lines.end() ? nullptr : &*found;
+}
+
+bool VisualToolTransform::AutoPerspectiveFitsShape() const {
+	TagLine const *found = ActiveTagLine();
+	return found && found->drawing;
+}
+
 void VisualToolTransform::BuildAutoPerspectiveBox() {
 	if (!auto_perspective) return;
 
-	// The four points are drawn where the active line is to end up, so that line is the source
-	// of the map - not the box round everything that happens to be selected. It lands on the
-	// points exactly, and the rest of the selection follows it through the same map, keeping
-	// its size and its place relative to it.
+	// The four points are drawn where the active line is to end up, so a shape is the source of
+	// the map - not the box round everything that happens to be selected. It lands on the points
+	// exactly, and the rest of the selection follows it through the same map, keeping its size
+	// and its place relative to it.
 	//
 	// Measured the other way the fit depended on how far the other lines reached, which is not
 	// always where they are drawn: a row turned about its anchor sweeps a much larger box than
 	// the glyphs occupy, and letter spacing is not in the measurement at all. Both quietly made
 	// the block too big and left the active line short of the points drawn to be filled.
-	AssDialogue *active = c->selectionController->GetActiveLine();
-	auto found = std::find_if(tag_lines.begin(), tag_lines.end(),
-		[&](TagLine const& line) { return line.line == active; });
-	if (found == tag_lines.end()) return;
+	//
+	// Only a shape has an outline to be measured though. Text is measured rather than drawn, and
+	// one row of a selection is a worse answer than the box round all of it - so for text the
+	// box stays as it was built, round everything.
+	TagLine const *found = ActiveTagLine();
+	if (!found || !found->drawing) {
+		if (!source_moved) box.Corners(source_corners);
+		return;
+	}
 
 	// A drawing is not an upright rectangle. The mask on a sign leans a degree or two, and its
 	// upright bounding box then has a triangle of air at every corner - fitted to the four
@@ -2616,12 +2633,14 @@ void VisualToolTransform::UpdatePreviewInterface() const {
 		size.width = 170;
 		wxString message = touched && auto_perspective_points.empty() ?
 			_("Redraw the 4 points.") : _("Draw 4 points.");
-		if (tag_lines.size() > 1)
+		// Only worth saying when one line really is the measure of the others.
+		if (tag_lines.size() > 1 && AutoPerspectiveFitsShape())
 			if (AssDialogue *active = c->selectionController->GetActiveLine()) {
 				std::string pattern =
 					from_wx(_("Line %d is fitted to the points, the rest follow it."));
 				message += " " + to_wx(agi::format(pattern.c_str(), active->Row + 1));
 			}
+		message += " " + _("The yellow dashed rectangle is the reference.");
 		page.message = message;
 		preview_interface.SetPage(std::move(page));
 		return;
