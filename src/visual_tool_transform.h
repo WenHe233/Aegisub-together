@@ -80,6 +80,14 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	bool auto_perspective = false;
 	/// Uniform percentage applied to the whole selection in the target's perspective plane.
 	double auto_perspective_size = 100.0;
+	/// The rectangle the selection is proportioned by, as four points of its own. Seeded from
+	/// the active line's shape and then left to the user, who can drag them: no rectangle fits
+	/// every shape, and the one the fit is measured from is worth being able to say exactly.
+	Vector2D source_corners[4];
+	bool source_moved = false;
+	static constexpr size_t no_feature = static_cast<size_t>(-1);
+	/// Where the four source handles begin in `features`, or no_feature while they are hidden.
+	size_t source_feature_first = no_feature;
 	/// The unfinished target path. It is cleared as soon as four valid points are applied,
 	/// so the construction points never obscure the result being judged.
 	std::vector<Vector2D> auto_perspective_points;
@@ -263,6 +271,11 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 		/// Whether the lines had been broken up for the lean yet, so a step back can put
 		/// them together again.
 		bool split = false;
+		/// Auto perspective: the four points the fit is measured from, and whether a target
+		/// had been drawn at all - so a step back can take one away again.
+		Vector2D source_corners[4];
+		bool source_moved = false;
+		bool touched = false;
 	};
 	std::vector<HistoryState> undo_history;
 	std::vector<HistoryState> redo_history;
@@ -352,6 +365,17 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	void EnsureShearSplit();
 	/// Measure the box the handles sit on, from the lines as they now stand.
 	void BuildBox();
+	/// Narrow the box down to the active line, which is what auto perspective fits.
+	void BuildAutoPerspectiveBox();
+	/// The nth handle. The features are an intrusive list, and there are never more than a
+	/// handful of them, so walking to one costs nothing worth a lookup table.
+	VisualDraggableFeature *FeatureAt(size_t index);
+	/// A line's drawing, taken to where the renderer puts it on screen.
+	std::vector<Vector2D> ShapeOutline(TagLine const& found);
+	/// The four source points, from the active line's own shape.
+	void SeedAutoPerspectiveSource(TagLine const& found);
+	/// The map from the source quadrilateral onto the drawn one.
+	typesetting::PointMap AutoPerspectiveMap() const;
 
 	/// What one line becomes under the gesture in progress: the numbers, before anything is
 	/// decided about which of them are worth writing. The one place that works this out, so
@@ -380,6 +404,9 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	static bool Perspective(TagLine const& original);
 	/// The four corners of a line's box on screen, as it was read.
 	void LineQuad(TagLine const& original, Vector2D corners[4]) const;
+	/// Where a line stands on screen: its quadrilateral if it is turned out of the plane,
+	/// and its turned box if it is not.
+	void LineCorners(TagLine const& original, Vector2D corners[4]) const;
 	/// The largest authored perspective plane in the selection, after the distortion already
 	/// present at the start of a move. Used so even the first move follows the line's own plane.
 	bool PerspectiveMovePlane(Vector2D const held_corners[4],
@@ -456,6 +483,8 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	void Perform(VisualToolTransformAction action);
 	void UpdateAutoPerspectiveSize(double value);
 	void DrawTopBar();
+	/// The rectangle the fit is measured from, in yellow dashes.
+	void DrawAutoPerspectiveSource();
 	void DrawAutoPerspectivePath();
 	bool AddAutoPerspectivePoint(Vector2D point);
 	/// The free transform's own handles: plain outlines rather than the crossed blocks the

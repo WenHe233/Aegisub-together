@@ -8663,6 +8663,11 @@ msgid "Redraw the 4 points."
 msgstr "Rajzold újra a 4 pontot."
 
 #: ../src/visual_tool_transform.cpp
+#, c-format
+msgid "Line %d is fitted to the points, the rest follow it."
+msgstr "A %d. sor illeszkedik a pontokra, a többi ehhez igazodik."
+
+#: ../src/visual_tool_transform.cpp
 msgid "auto perspective"
 msgstr "automatikus perspektíva"
 

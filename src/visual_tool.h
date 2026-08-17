@@ -148,6 +148,9 @@ protected:
 	///	containing both text and drawings.
 	/// Returns a rough estimate when getting the precise extents fails
 	std::pair<Vector2D, Vector2D> GetLineBaseExtents(AssDialogue *diag);
+	/// The outline of a line's drawing, in the coordinates its extents are measured in.
+	/// Curves are sampled. Empty when the line is not a drawing.
+	std::vector<Vector2D> GetLineDrawingPoints(AssDialogue *diag);
 	void GetLineClip(AssDialogue *diag, Vector2D &p1, Vector2D &p2, bool &inverse);
 	std::string GetLineVectorClip(AssDialogue *diag, int &scale, bool &inverse);
 
