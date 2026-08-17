@@ -9979,3 +9979,187 @@ msgstr "Mở một bản phát hành cụ thể"
 #: src
 msgid "Select a Muteki Aegisub version and open its release page"
 msgstr "Chọn phiên bản Muteki Aegisub và mở trang phát hành"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_box.cpp
+#, c-format
+msgid "Subtitle opacity: %d%%"
+msgstr "Độ hiển thị phụ đề: %d%%"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Textbox (%d lines, text: %s)"
+msgstr "Hộp văn bản (%d dòng, văn bản: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp ../src/command/vis_tool.cpp
+msgid "Textbox"
+msgstr "Hộp văn bản"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Put the selected lines into a wrapping textbox drawn on the video"
+msgstr "Đặt các dòng đã chọn vào hộp văn bản được vẽ trên video và tự động ngắt dòng"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Show and edit the selected textbox"
+msgstr "Hiển thị và chỉnh sửa hộp văn bản đã chọn"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_textbox.cpp
+msgid "apply text box"
+msgstr "áp dụng hộp văn bản"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Accept (CTRL+ENTER)"
+msgstr "Chấp nhận (CTRL+ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align centre"
+msgstr "Căn giữa"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align left"
+msgstr "Căn trái"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align right"
+msgstr "Căn phải"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Border"
+msgstr "Viền"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Border color"
+msgstr "Màu viền"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Centre"
+msgstr "Giữa"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Justify"
+msgstr "Căn đều"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Line spacing"
+msgstr "Khoảng cách dòng"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Padding"
+msgstr "Lề trong"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Spacing"
+msgstr "Khoảng cách dòng"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Text color"
+msgstr "Màu văn bản"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy to Clipboard (&full line)"
+msgstr "Sao chép vào bảng tạm (&toàn bộ dòng)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+#, c-format
+msgid "as \\t(%d,%d,%s...)"
+msgstr "\\t(theo dạng %d,%d,%s...)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\\n\\nPressed twice quickly it restores the first write and magnifies that part of the video around the pointer. The popup lets you select an exact pixel and optionally write the accepted color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form.\\n\\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, including its position, scale and rotation, which writes the color the tracked point passes over as a sequence of \\t() tags.\\n\\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "Đã thêm tính năng chọn màu mới, tính năng này cố ý không được tự động gán cho nút nào.\\nBạn có thể lấy màu của các dòng đã chọn từ điểm ảnh video dưới con trỏ chuột chỉ bằng một lần nhấn nút."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Pick"
+msgstr "Chọn"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Select a pixel, then pick the color."
+msgstr "Chọn một điểm ảnh, rồi lấy màu."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Auto &perspective"
+msgstr "Phối cảnh &tự động"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Auto perspective"
+msgstr "Phối cảnh tự động"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Draw four directed points and fit the selected lines into their perspective"
+msgstr "Vẽ bốn điểm định hướng và phối cảnh các dòng đã chọn"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Draw 4 points."
+msgstr "Vẽ 4 điểm."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Redraw the 4 points."
+msgstr "Vẽ lại 4 điểm."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+#, c-format
+msgid "Line %d is fitted to the points, the rest follow it."
+msgstr "Dòng %d khớp với các điểm, các dòng còn lại sẽ căn chỉnh theo dòng này."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "The yellow dashed rectangle is the reference."
+msgstr "Hình chữ nhật nét đứt màu vàng là mốc tham chiếu."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "auto perspective"
+msgstr "Phối cảnh tự động"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Edit gradient"
+msgstr "Chỉnh sửa chuyển màu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Edit the gradient settings of the selected generated gradient"
+msgstr "Chỉnh sửa cài đặt chuyển màu đã tạo được chọn"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Copy gradient"
+msgstr "Sao chép chuyển màu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Copy the selected generated gradient rows and settings"
+msgstr "Sao chép các dòng và cài đặt của dải chuyển màu đã chọn"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Paste gradient"
+msgstr "Chèn chuyển màu biên tập"

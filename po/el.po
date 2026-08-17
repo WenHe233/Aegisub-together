@@ -10026,3 +10026,187 @@ msgstr "Άνοιγμα συγκεκριμένης έκδοσης"
 #: src
 msgid "Select a Muteki Aegisub version and open its release page"
 msgstr "Επιλέξτε μια έκδοση του Muteki Aegisub και ανοίξτε τη σελίδα έκδοσης"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_box.cpp
+#, c-format
+msgid "Subtitle opacity: %d%%"
+msgstr "Ορατότητα υπότιτλων: %d%%"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Textbox (%d lines, text: %s)"
+msgstr "Κείμενο (%d γραμμές, κείμενο: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp ../src/command/vis_tool.cpp
+msgid "Textbox"
+msgstr "Πλαίσιο κειμένου"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Put the selected lines into a wrapping textbox drawn on the video"
+msgstr "Τοποθέτηση των επιλεγμένων γραμμών σε πλαίσιο κειμένου που σχεδιάζεται στο βίντεο και αναδιπλώνει αυτόματα το κείμενο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Show and edit the selected textbox"
+msgstr "Εμφάνιση και επεξεργασία του επιλεγμένου πλαισίου κειμένου"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_textbox.cpp
+msgid "apply text box"
+msgstr "εφαρμογή πλαισίου κειμένου"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Accept (CTRL+ENTER)"
+msgstr "Αποδοχή (CTRL+ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align centre"
+msgstr "Στοίχιση στο κέντρο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align left"
+msgstr "Αριστερή στοίχιση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align right"
+msgstr "Δεξιά στοίχιση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Border"
+msgstr "Περίγραμμα"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Border color"
+msgstr "Χρώμα περιγράμματος"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Centre"
+msgstr "Κέντρο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Justify"
+msgstr "Πλήρης στοίχιση"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Line spacing"
+msgstr "Διάστιχο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Padding"
+msgstr "Εσωτερικό περιθώριο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Spacing"
+msgstr "Διάστιχο"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Text color"
+msgstr "Χρώμα κειμένου"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy to Clipboard (&full line)"
+msgstr "Αντιγραφή στο πρόχειρο (&ολόκληρη γραμμή)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+#, c-format
+msgid "as \\t(%d,%d,%s...)"
+msgstr "\\t(σε μορφή %d,%d,%s...)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\\n\\nPressed twice quickly it restores the first write and magnifies that part of the video around the pointer. The popup lets you select an exact pixel and optionally write the accepted color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form.\\n\\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, including its position, scale and rotation, which writes the color the tracked point passes over as a sequence of \\t() tags.\\n\\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "Εισήχθη νέα λειτουργία επιλογής χρώματος, η οποία σκόπιμα δεν αντιστοιχίστηκε αυτόματα σε κανένα κουμπί.\\nΜε αυτήν μπορείτε να εφαρμόσετε το χρώμα των επιλεγμένων γραμμών από το εικονοστοιχείο του βίντεο κάτω από τον δείκτη του ποντικιού με ένα μόνο πάτημα κουμπιού."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Pick"
+msgstr "Επιλογή"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Select a pixel, then pick the color."
+msgstr "Επιλέξτε ένα pixel και κατόπιν επιλέξτε το χρώμα."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Auto &perspective"
+msgstr "Αυτόματη &προοπτική"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Auto perspective"
+msgstr "Αυτόματη προοπτική"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Draw four directed points and fit the selected lines into their perspective"
+msgstr "Σχεδίαση τεσσάρων σημείων προσανατολισμού και προσαρμογή των επιλεγμένων γραμμών σε προοπτική"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Draw 4 points."
+msgstr "Σχεδιάστε 4 σημεία."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Redraw the 4 points."
+msgstr "Σχεδίαση των 4 σημείων ξανά."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+#, c-format
+msgid "Line %d is fitted to the points, the rest follow it."
+msgstr "Η γραμμή %d προσαρμόζεται στα σημεία και οι υπόλοιπες ευθυγραμμίζονται με αυτήν."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "The yellow dashed rectangle is the reference."
+msgstr "Το κίτρινο διακεκομμένο ορθογώνιο είναι το σημείο αναφοράς."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "auto perspective"
+msgstr "αυτόματη προοπτική"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Edit gradient"
+msgstr "Επεξεργασία διαβάθμισης χρώματος"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Edit the gradient settings of the selected generated gradient"
+msgstr "Επεξεργασία ρυθμίσεων της επιλεγμένης διαβάθμισης"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Copy gradient"
+msgstr "Αντιγραφή διαβάθμισης χρώματος"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Copy the selected generated gradient rows and settings"
+msgstr "Αντιγραφή γραμμών και ρυθμίσεων της επιλεγμένης διαβάθμισης"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Paste gradient"
+msgstr "Εισαγωγή διαβάθμισης χρώματος"

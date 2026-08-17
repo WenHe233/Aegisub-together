@@ -10569,3 +10569,187 @@ msgstr "Belirli bir sürümü aç"
 #: src
 msgid "Select a Muteki Aegisub version and open its release page"
 msgstr "Muteki Aegisub sürümünü seçin ve sürüm sayfasını açın"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_box.cpp
+#, c-format
+msgid "Subtitle opacity: %d%%"
+msgstr "Altyazı görünürlüğü: %d%%"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Textbox (%d lines, text: %s)"
+msgstr "Metin kutusu (%d satır, metin: %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp ../src/command/vis_tool.cpp
+msgid "Textbox"
+msgstr "Metin kutusu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Put the selected lines into a wrapping textbox drawn on the video"
+msgstr "Seçili satırları videoda çizilen, otomatik satır sonlandırmalı bir metin kutusuna yerleştirir"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp
+msgid "Show and edit the selected textbox"
+msgstr "Seçili metin kutusunu görüntüleme ve düzenleme"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_textbox.cpp
+msgid "apply text box"
+msgstr "Metin kutusunu uygula"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Accept (CTRL+ENTER)"
+msgstr "Kabul et (CTRL+ENTER)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align centre"
+msgstr "Ortala"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align left"
+msgstr "Sola hizala"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Align right"
+msgstr "Sağa hizala"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Border"
+msgstr "Kenarlık"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Border color"
+msgstr "Kenarlık rengi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Centre"
+msgstr "Orta"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Justify"
+msgstr "İki yana yasla"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Line spacing"
+msgstr "Satır aralığı"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Padding"
+msgstr "İç kenar boşluğu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Spacing"
+msgstr "Satır aralığı"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_textbox.cpp
+msgid "Text color"
+msgstr "Metin rengi"
+
+# machine translation from Hungarian, not reviewed yet
+#: src
+msgid "Copy to Clipboard (&full line)"
+msgstr "Panoya kopyala (&tam satır)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+#, c-format
+msgid "as \\t(%d,%d,%s...)"
+msgstr "\\t(%d,%d,%s...) biçiminde"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\\n\\nPressed twice quickly it restores the first write and magnifies that part of the video around the pointer. The popup lets you select an exact pixel and optionally write the accepted color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form.\\n\\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, including its position, scale and rotation, which writes the color the tracked point passes over as a sequence of \\t() tags.\\n\\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "Yeni bir renk seçici özelliği eklendi; bu özellik kasıtlı olarak hiçbir düğmeye otomatik şekilde atanmadı.\\nBu özellik sayesinde seçili satırların rengini, tek bir tuşa basarak fare imlecinin altındaki video pikselinden alabilirsin."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Pick"
+msgstr "Seç"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_color_pick.cpp
+msgid "Select a pixel, then pick the color."
+msgstr "Bir piksel seçin ve rengi alın."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Auto &perspective"
+msgstr "Otomatik &perspektif"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Auto perspective"
+msgstr "Otomatik perspektif"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Draw four directed points and fit the selected lines into their perspective"
+msgstr "Dört yön noktası çizin ve seçili satırları perspektife uydurun"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Draw 4 points."
+msgstr "4 nokta çizin."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "Redraw the 4 points."
+msgstr "4 noktayı yeniden çizin."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+#, c-format
+msgid "Line %d is fitted to the points, the rest follow it."
+msgstr "%d. satır noktalara uyar, diğerleri buna göre hizalanır."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "The yellow dashed rectangle is the reference."
+msgstr "Sarı kesikli dikdörtgen referans noktasıdır."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp
+msgid "auto perspective"
+msgstr "otomatik perspektif"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Edit gradient"
+msgstr "Degrade düzenleme"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Edit the gradient settings of the selected generated gradient"
+msgstr "Seçili oluşturulmuş degradenin ayarlarını düzenleme"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Copy gradient"
+msgstr "Degrade kopyalama"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "Copy the selected generated gradient rows and settings"
+msgstr "Seçili oluşturulmuş degradenin satırlarını ve ayarlarını kopyalama"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp
+msgid "Paste gradient"
+msgstr "Degrade yapıştırma"
