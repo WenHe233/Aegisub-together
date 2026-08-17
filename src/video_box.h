@@ -34,6 +34,7 @@
 
 namespace agi { struct Context; }
 class VisualToolPreviewBar;
+class wxSlider;
 class wxTextCtrl;
 
 /// @class VideoBox
@@ -43,9 +44,14 @@ class VideoBox final : public wxPanel {
 	agi::Context *context;     ///< Project context
 	wxTextCtrl *VideoPosition; ///< Current frame/time
 	wxTextCtrl *VideoSubsPos;  ///< Time relative to the active subtitle line
+	wxSlider *subsOpacitySlider; ///< How solid the rendered subtitles are
 
 	/// Update VideoPosition and VideoSubsPos
 	void UpdateTimeBoxes();
+
+	/// Push the slider's value to the renderer and redraw the frame
+	void ApplySubsOpacity();
+	void UpdateSubsOpacityTooltip();
 
 public:
 	VideoBox(wxWindow *parent, bool isDetached, VisualToolPreviewBar *previewBar,

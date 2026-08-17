@@ -68,7 +68,7 @@ class CSRISubtitlesProvider final : public SubtitlesProvider {
 public:
 	CSRISubtitlesProvider(std::string subType);
 
-	void DrawSubtitles(VideoFrame &dst, double time) override;
+	void DrawSubtitles(VideoFrame &dst, double time, int opacity) override;
 };
 
 CSRISubtitlesProvider::CSRISubtitlesProvider(std::string type) {
@@ -84,7 +84,8 @@ CSRISubtitlesProvider::CSRISubtitlesProvider(std::string type) {
 		throw agi::InternalError("CSRI renderer vanished between initial list and creation?");
 }
 
-void CSRISubtitlesProvider::DrawSubtitles(VideoFrame &dst, double time) {
+// CSRI renders straight into the frame buffer, so there is nothing here to fade.
+void CSRISubtitlesProvider::DrawSubtitles(VideoFrame &dst, double time, int) {
 	if (!instance) return;
 
 	csri_frame frame;

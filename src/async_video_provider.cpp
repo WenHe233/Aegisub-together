@@ -29,13 +29,28 @@
 #include <boost/gil.hpp>
 
 #include <algorithm>
+#include <atomic>
 
 enum {
 	NEW_SUBS_FILE = -1,
 	SUBS_FILE_ALREADY_LOADED = -2
 };
 
-std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, double time, bool raw, bool forceSub) {
+namespace {
+/// Read on the provider's worker thread, written from the UI thread.
+std::atomic<int> display_subtitles_opacity{100};
+}
+
+void AsyncVideoProvider::SetDisplaySubtitlesOpacity(int opacity) {
+	display_subtitles_opacity = std::clamp(opacity, 0, 100);
+}
+
+int AsyncVideoProvider::GetDisplaySubtitlesOpacity() {
+	return display_subtitles_opacity;
+}
+
+std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, double time,
+	bool raw, bool forceSub, int subs_opacity) {
 	// Find an unused buffer to use or allocate a new one if needed
 	std::shared_ptr<VideoFrame> frame;
 	for (auto& buffer : buffers) {
@@ -80,7 +95,7 @@ std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, doub
 
 	try {
 		if (OPT_GET("Video/Toggle Subtitle")->GetBool()) {
-			subs_provider->DrawSubtitles(*frame, time / 1000.);
+			subs_provider->DrawSubtitles(*frame, time / 1000., subs_opacity);
 		}
 	}
 	catch (agi::UserCancelException const&) { }
@@ -346,7 +361,9 @@ void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated
 	last_rendered = frame_number;
 
 	try {
-		auto evt = new FrameReadyEvent(ProcFrame(frame_number, time, false, forceSub), time);
+		// The only frame the fade applies to: this is the one the video box shows.
+		auto evt = new FrameReadyEvent(ProcFrame(frame_number, time, false, forceSub,
+			display_subtitles_opacity), time);
 		evt->SetEventType(EVT_FRAME_READY);
 		parent->QueueEvent(evt);
 	}

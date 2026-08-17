@@ -31,6 +31,7 @@
 
 #include "ass_dialogue.h"
 #include "ass_file.h"
+#include "async_video_provider.h"
 #include "compat.h"
 #include "format.h"
 #include "include/aegisub/context.h"
@@ -81,6 +82,19 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached,
 
 	auto speedBox = new wxComboBox(this, -1, "1x", wxDefaultPosition, wxDefaultSize, speedChoices, wxCB_READONLY);
 
+	// Next to the two buttons that decide whether subtitles and masks are drawn at
+	// all: this one decides how strongly. It fades the rendering, so nothing in the
+	// file changes and every line keeps its own alpha tags.
+	subsOpacitySlider = new wxSlider(this, -1,
+		AsyncVideoProvider::GetDisplaySubtitlesOpacity(), 0, 100,
+		wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
+	UpdateSubsOpacityTooltip();
+	subsOpacitySlider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&) { ApplySubsOpacity(); });
+	subsOpacitySlider->Bind(wxEVT_RIGHT_DOWN, [this](wxMouseEvent&) {
+		subsOpacitySlider->SetValue(100);
+		ApplySubsOpacity();
+	});
+
 	auto brightnessSlider = new wxSlider(this, -1, 100, 0, 400, wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", 100) + " (" + _("Right click to reset") + ")");
 
@@ -98,6 +112,7 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached,
 
 	auto videoBottomSizer = new wxBoxSizer(wxHORIZONTAL);
 	videoBottomSizer->Add(mainToolbar, wxSizerFlags(0).Center());
+	videoBottomSizer->Add(subsOpacitySlider, wxSizerFlags(0).Center());
 	videoBottomSizer->Add(VideoPosition, wxSizerFlags(1).Center().Border(wxLEFT));
 	videoBottomSizer->Add(VideoSubsPos, wxSizerFlags(1).Center().Border(wxLEFT));
 	videoBottomSizer->Add(speedBox, wxSizerFlags(0).Center().Border(wxLEFT));
@@ -121,6 +136,25 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached,
 		context->selectionController->AddSelectionListener(&VideoBox::UpdateTimeBoxes, this),
 		context->videoController->AddSeekListener(&VideoBox::UpdateTimeBoxes, this),
 	});
+}
+
+void VideoBox::UpdateSubsOpacityTooltip() {
+	subsOpacitySlider->SetToolTip(
+		fmt_tl("Subtitle opacity: %d%%", subsOpacitySlider->GetValue()) +
+		" (" + _("Right click to reset") + ")");
+}
+
+void VideoBox::ApplySubsOpacity() {
+	UpdateSubsOpacityTooltip();
+
+	int value = subsOpacitySlider->GetValue();
+	if (AsyncVideoProvider::GetDisplaySubtitlesOpacity() == value) return;
+	AsyncVideoProvider::SetDisplaySubtitlesOpacity(value);
+
+	// The subtitles are drawn into the frame by the provider, so the frame on screen
+	// has to be made again rather than merely redrawn.
+	if (auto provider = context->project->VideoProvider())
+		provider->ResetCurrentFrame();
 }
 
 void VideoBox::UpdateTimeBoxes() {

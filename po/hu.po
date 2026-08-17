@@ -6727,6 +6727,11 @@ msgstr "Dupla kattintás az opciók listázásáért"
 msgid "Brightness: %d%%"
 msgstr "Fényerő: %d%%"
 
+#: ../src/video_box.cpp
+#, c-format
+msgid "Subtitle opacity: %d%%"
+msgstr "Felirat láthatósága: %d%%"
+
 msgid "All fonts"
 msgstr "Minden betűtípus"
 
