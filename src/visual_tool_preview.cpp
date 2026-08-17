@@ -115,6 +115,12 @@ void VisualToolPreviewInterface::SetPage(Page page) {
 	NotifyHost();
 }
 
+void VisualToolPreviewInterface::ClearPages() {
+	if (pages.empty()) return;
+	pages.clear();
+	NotifyHost();
+}
+
 void VisualToolPreviewInterface::PushPage(Page page) {
 	// A tool which only uses the shared drawing primitives still has an implicit root page.
 	// Creating it here lets a nested stage (AI refinement, for example) pop cleanly back to

@@ -36,6 +36,7 @@
 #include <array>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
@@ -43,8 +44,10 @@
 #include <boost/range/algorithm/set_algorithm.hpp>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <limits>
+#include <unordered_set>
 #include <wx/brush.h>
 #include <wx/dcmemory.h>
 #include <wx/event.h>
@@ -277,6 +280,34 @@ namespace {
 		return polygon;
 	}
 
+	/// How far a fitted curve may sit from a pixel-traced outline. Larger than the brush's
+	/// because it has to cut across the staircase the tracer leaves behind rather than
+	/// follow it, and a step is a whole pixel tall.
+	constexpr double traced_fit_tolerance = 1.4;
+
+	/// Flatten a pixel staircase into something worth fitting.
+	///
+	/// A traced contour turns ninety degrees at every step, so the corner test would call
+	/// each one a deliberate corner and the fit would faithfully reproduce the stairs.
+	/// Simplifying first leaves a polyline that follows the shape rather than the grid.
+	std::vector<Vector2D> simplify_traced_contour(std::vector<Vector2D> const& contour,
+			double tolerance) {
+		if (contour.size() < 8) return contour;
+		bg::model::linestring<BrushPoint> source, simplified;
+		source.reserve(contour.size() + 1);
+		for (auto point : contour) source.emplace_back(point.X(), point.Y());
+		source.emplace_back(contour.front().X(), contour.front().Y());
+		bg::simplify(source, simplified, tolerance);
+		if (simplified.size() < 5) return contour;
+		std::vector<Vector2D> out;
+		out.reserve(simplified.size());
+		for (auto const& point : simplified)
+			out.emplace_back(static_cast<float>(bg::get<0>(point)),
+				static_cast<float>(bg::get<1>(point)));
+		if (out.size() > 3 && (out.front() - out.back()).SquareLen() < 1e-5f) out.pop_back();
+		return out;
+	}
+
 	bool normalize_self_touching_brush_paths(Spline& spline) {
 		std::vector<int> starts, counts;
 		auto points = spline.GetPointList(starts, counts);
@@ -357,8 +388,16 @@ struct VisualToolVectorClip::BrushGeometryCache {
 		BrushBox envelope;
 		double area = 0.0;
 		bool usable = false;
+		/// Whether the brush produced this contour. Paths carried over untouched from the
+		/// clip the user already had keep their own curves; refitting those would quietly
+		/// replace hand placed geometry with an approximation of itself.
+		bool brushed = false;
 	};
 	std::vector<Path> paths;
+	/// Vertices the clip already had when the gesture began, so the fit can leave them
+	/// exactly where they are. Boost keeps surviving vertices at their original
+	/// coordinates, which is what makes recognising them by position sound.
+	std::unordered_set<uint64_t> original_vertices;
 };
 
 VisualToolVectorClip::VisualToolVectorClip(VideoDisplay *parent, agi::Context *context, bool edit_drawing)
@@ -1155,6 +1194,13 @@ void VisualToolVectorClip::UpdateExternalSlider(ColorAction action, double value
 
 void VisualToolVectorClip::UpdatePreviewInterface() {
 	using Interface = VisualToolPreviewInterface;
+	// The brush wants the canvas to itself. Its mode and size are on the toolbar button's
+	// own right-click popup, and Escape leaves the mode, so the bar carried nothing that
+	// is not reachable without it.
+	if (mode == VCLIP_BRUSH) {
+		preview_interface.ClearPages();
+		return;
+	}
 	Interface::Page page;
 	auto add = [&](ColorAction action, Interface::ControlKind kind, wxString label,
 		bool enabled = true,
@@ -1733,16 +1779,44 @@ bool VisualToolVectorClip::ApplyBrushStroke(std::vector<Vector2D> const& stroke)
 			path.curves.insert(path.curves.end(), prepared.begin() + path_starts[i],
 				prepared.begin() + path_end);
 			size_t first = static_cast<size_t>(starts[i]);
-			size_t count = static_cast<size_t>(counts[i]);
-			path.points.reserve(count * 2);
-			for (size_t point = 0; point < count; ++point) {
-				path.points.push_back(points[(first + point) * 2]);
-				path.points.push_back(points[(first + point) * 2 + 1]);
+			size_t source_count = static_cast<size_t>(counts[i]);
+			path.points.reserve(source_count * 2);
+			// Drop points that repeat the one before them, and the one that repeats the
+			// start. A path of straight segments never produces either, but a bezier does:
+			// SplineCurve::GetPoints samples a curve from t=0, so it re-emits the point
+			// its own start shares with the end of the previous segment, once per curve.
+			// Those duplicates make the ring invalid for the boolean operations, and an
+			// unusable ring is dropped from the fill entirely - which is why a clip that
+			// had been through the curve fitting could no longer be painted into.
+			for (size_t point = 0; point < source_count; ++point) {
+				float x = points[(first + point) * 2];
+				float y = points[(first + point) * 2 + 1];
+				if (!path.points.empty()) {
+					float dx = x - path.points[path.points.size() - 2];
+					float dy = y - path.points[path.points.size() - 1];
+					if (dx * dx + dy * dy < 1e-6f) continue;
+				}
+				path.points.push_back(x);
+				path.points.push_back(y);
 			}
+			if (path.points.size() >= 6) {
+				float dx = path.points.front() - path.points[path.points.size() - 2];
+				float dy = path.points[1] - path.points.back();
+				if (dx * dx + dy * dy < 1e-6f) path.points.resize(path.points.size() - 2);
+			}
+			size_t count = path.points.size() / 2;
+			if (count < 3) continue;
 			path.area = ring_signed_area(path.points, 0, count);
 			path.polygon = make_brush_polygon(path.points, 0, count);
 			path.usable = repair_brush_polygon(path.polygon);
 			if (path.usable) bg::envelope(path.polygon, path.envelope);
+			// Remember where the clip's corners were before the brush touched anything.
+			// The union merges a stroke and the shape it overlaps into one ring, and from
+			// then on nothing in the geometry says which half of that ring the user drew
+			// by hand, so the fit would round their corners off along with the stroke.
+			for (size_t point = 0; point < count; ++point)
+				cache->original_vertices.insert(ContourVertexKey(
+					Vector2D(path.points[point * 2], path.points[point * 2 + 1])));
 			cache->paths.push_back(std::move(path));
 		}
 		color_brush_geometry = std::move(cache);
@@ -1905,6 +1979,7 @@ bool VisualToolVectorClip::ApplyBrushStroke(std::vector<Vector2D> const& stroke)
 				path.curves.emplace_back(previous, current);
 				previous = current;
 			}
+			path.brushed = true;
 			path.area = solid ? std::abs(signed_area) * .5 : -std::abs(signed_area) * .5;
 			path.polygon = make_brush_polygon(path.points, 0, count);
 			path.usable = repair_brush_polygon(path.polygon);
@@ -2042,15 +2117,32 @@ void VisualToolVectorClip::AcceptColorContours() {
 		}
 	}
 	else {
+		// The brush inside colour mode paints round shapes, so accepting it should hand
+		// over curves for the same reason the standalone brush does: the traced outline is
+		// otherwise thousands of one-pixel steps describing an edge that was round. The
+		// pipette is left alone, since following the pixels exactly is the whole point of
+		// it, and so is Smooth edges, which is the user's own explicit control above.
+		bool brush_selection = color_selection_mode == VisualSelectionMode::BrushAdd ||
+			color_selection_mode == VisualSelectionMode::BrushSubtract;
 		for (auto const& contour : color_contours) {
 			if (contour.size() < 3) continue;
 			std::vector<Vector2D> screen_contour;
 			screen_contour.reserve(contour.size());
 			for (auto point : contour) screen_contour.push_back(FromScriptCoords(point));
 			active_path_start = spline.size();
-			spline.emplace_back(screen_contour.front());
-			for (size_t i = 1; i < screen_contour.size(); ++i)
-				spline.emplace_back(screen_contour[i - 1], screen_contour[i]);
+			std::vector<SplineCurve> curves;
+			if (brush_selection)
+				curves = FitClosedContour(
+					simplify_traced_contour(screen_contour, traced_fit_tolerance),
+					traced_fit_tolerance);
+			if (curves.empty()) {
+				spline.emplace_back(screen_contour.front());
+				for (size_t i = 1; i < screen_contour.size(); ++i)
+					spline.emplace_back(screen_contour[i - 1], screen_contour[i]);
+				continue;
+			}
+			spline.emplace_back(curves.front().p1);
+			for (auto const& curve : curves) spline.push_back(curve);
 		}
 	}
 	MakeFeatures();
@@ -2059,8 +2151,40 @@ void VisualToolVectorClip::AcceptColorContours() {
 	VisualToolBase::Commit(brush_edit ? _("Brush edit vector clip") : _("Add color contours"));
 }
 
+void VisualToolVectorClip::FitBrushContours() {
+	if (!color_brush_geometry) return;
+	// Every stamped circle contributes 64 vertices and the union keeps most of them, so
+	// without this the stroke reaches the subtitle file as thousands of straight segments
+	// describing an edge that was round to begin with. Done here rather than while the
+	// stroke is being painted, so the fit runs once over the finished shape instead of
+	// once per mouse motion event over a shape that is still growing.
+	bool refitted = false;
+	for (auto& path : color_brush_geometry->paths) {
+		if (!path.brushed) continue;
+		size_t count = path.points.size() / 2;
+		if (count < 3) continue;
+		std::vector<Vector2D> contour;
+		contour.reserve(count);
+		for (size_t i = 0; i < count; ++i)
+			contour.emplace_back(path.points[i * 2], path.points[i * 2 + 1]);
+		auto curves = FitClosedContour(contour, contour_fit_tolerance,
+			color_brush_geometry->original_vertices);
+		if (curves.empty()) continue;
+		path.curves.clear();
+		path.curves.reserve(curves.size() + 1);
+		path.curves.emplace_back(curves.front().p1);
+		path.curves.insert(path.curves.end(), curves.begin(), curves.end());
+		refitted = true;
+	}
+	if (!refitted) return;
+	spline.clear();
+	for (auto const& path : color_brush_geometry->paths)
+		spline.insert(spline.end(), path.curves.begin(), path.curves.end());
+}
+
 void VisualToolVectorClip::CommitBrushContours() {
 	if (mode != VCLIP_BRUSH) return;
+	FitBrushContours();
 	// The whole captured stroke has already been applied as one geometry edit.
 	// Point handles are hidden in brush mode, so rebuilding thousands of them for
 	// every live preview frame is wasted work. Rebuild them once for the final clip.
@@ -2431,19 +2555,27 @@ bool VisualToolVectorClip::OnKeyEvent(wxKeyEvent& event) {
 			return true;
 		}
 		if (key == WXK_ESCAPE) {
-			if (mode == VCLIP_BRUSH && color_brush_drawing) {
-				spline.clear();
-				spline.insert(spline.end(), color_brush_base_spline.begin(),
-					color_brush_base_spline.end());
-				MakeFeatures();
-				color_brush_drawing = false;
-				color_brush_stroke.clear();
-				color_brush_base_spline.clear();
-				color_brush_preview_changed = false;
-				color_brush_geometry.reset();
-				if (parent->HasCapture()) parent->ReleaseMouse();
+			if (mode == VCLIP_BRUSH) {
+				if (color_brush_drawing) {
+					spline.clear();
+					spline.insert(spline.end(), color_brush_base_spline.begin(),
+						color_brush_base_spline.end());
+					MakeFeatures();
+					color_brush_drawing = false;
+					color_brush_stroke.clear();
+					color_brush_base_spline.clear();
+					color_brush_preview_changed = false;
+					color_brush_geometry.reset();
+					if (parent->HasCapture()) parent->ReleaseMouse();
+				}
+				// Escape abandons the stroke in progress and stops there. The brush is
+				// left through the toolbar, the same way it was entered: dropping out of
+				// the mode as well meant one keypress too many took the tool away when
+				// only the stroke was meant to go.
+				parent->Render();
+				return true;
 			}
-			if (mode == VCLIP_BRUSH || color_stage == ColorStage::Range) CloseColorMode();
+			if (color_stage == ColorStage::Range) CloseColorMode();
 			else ResetColorSelection();
 			parent->Render();
 			return true;

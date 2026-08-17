@@ -249,6 +249,9 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	void PerformPreviewAction(ColorAction action);
 	void UpdateExternalSlider(ColorAction action, double value, bool final);
 	void AcceptColorContours();
+	/// Replace the brush's straight-segment outlines with fitted bezier curves. Called
+	/// when a stroke ends, never while one is in progress.
+	void FitBrushContours();
 	void CommitBrushContours();
 	void CloseColorMode();
 	bool DeleteActivePath();

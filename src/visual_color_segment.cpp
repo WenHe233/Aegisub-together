@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <unordered_set>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -2225,6 +2226,274 @@ std::vector<std::vector<Vector2D>> SplitSelfTouchingContours(
 			result.push_back(std::move(contour));
 	}
 	return result;
+}
+
+namespace {
+/// How sharply the outline has to turn at a vertex for it to count as a corner the
+/// fit is cut at rather than drawn through. This is the turn angle, so 0 is straight
+/// ahead: a circle stamped as a 64-gon turns 5.6 degrees per vertex and is nowhere
+/// near it, while two circles meeting at a tangent produce a genuine corner.
+constexpr double brush_fit_corner_turn_degrees = 55.0;
+/// Newton steps used to slide each point along the curve to its true nearest
+/// parameter. Chord length alone puts the samples slightly off, and the fit is only
+/// as good as the parameters it is given; two passes converge for outlines this
+/// smooth and cost a handful of evaluations per point.
+constexpr int brush_fit_refine_passes = 2;
+/// Fewest segments a run needs before a curve may be fitted to it. Three interior
+/// points is the least that can tell a curve which follows the outline from one which
+/// merely touches it in a couple of places.
+constexpr size_t brush_fit_min_run = 4;
+/// A run is never split further than this, so a pathological outline cannot turn into
+/// more curves than the point list it came from.
+constexpr int brush_fit_max_depth = 8;
+
+/// Identifies a vertex by position, quantised finely enough that only a vertex which
+/// really is the same one matches, and coarsely enough to survive the rounding a
+/// coordinate picks up on its way through the geometry library.
+
+/// Direction from a to b, or the fallback when the two coincide. Vector2D::Unit
+/// returns a zero vector there, and Vector2D's operator bool tests for its invalid
+/// sentinel rather than for length, so a zero tangent would pass unnoticed and
+/// collapse the fit's control points onto its endpoints.
+Vector2D safe_direction(Vector2D from, Vector2D to, Vector2D fallback) {
+	Vector2D delta = to - from;
+	return delta.Len() < 1e-5f ? fallback : delta.Unit();
+}
+
+Vector2D bezier_at(std::array<Vector2D, 4> const& curve, double t) {
+	double u = 1.0 - t;
+	return curve[0] * static_cast<float>(u * u * u) +
+		curve[1] * static_cast<float>(3 * u * u * t) +
+		curve[2] * static_cast<float>(3 * u * t * t) +
+		curve[3] * static_cast<float>(t * t * t);
+}
+
+/// Least squares cubic through points[first..last] with the given end tangents.
+///
+/// Corner rounding cannot be used for this. It pulls the outline inward at every
+/// vertex it touches, and the brush re-reads its own output at the start of the next
+/// gesture, so the shape would creep smaller with every stroke the user paints. A fit
+/// has no such bias: handed the points of a curve it already produced, it returns that
+/// curve again, which is what makes repeated strokes safe.
+std::array<Vector2D, 4> fit_bezier(std::vector<Vector2D> const& points, size_t first,
+		size_t last, Vector2D start_tangent, Vector2D end_tangent,
+		std::vector<double> const& parameters) {
+	Vector2D p0 = points[first], p3 = points[last];
+	double chord = (p3 - p0).Len();
+	std::array<Vector2D, 4> fallback{p0, p0 + start_tangent * static_cast<float>(chord / 3.0),
+		p3 + end_tangent * static_cast<float>(chord / 3.0), p3};
+	double c00 = 0, c01 = 0, c11 = 0, x0 = 0, x1 = 0;
+	for (size_t i = 0; i < parameters.size(); ++i) {
+		double t = parameters[i], u = 1.0 - t;
+		double b0 = u * u * u, b1 = 3 * u * u * t, b2 = 3 * u * t * t, b3 = t * t * t;
+		Vector2D a1 = start_tangent * static_cast<float>(b1);
+		Vector2D a2 = end_tangent * static_cast<float>(b2);
+		c00 += a1.Dot(a1);
+		c01 += a1.Dot(a2);
+		c11 += a2.Dot(a2);
+		Vector2D residual = points[first + i] -
+			(p0 * static_cast<float>(b0 + b1) + p3 * static_cast<float>(b2 + b3));
+		x0 += a1.Dot(residual);
+		x1 += a2.Dot(residual);
+	}
+	double determinant = c00 * c11 - c01 * c01;
+	if (std::abs(determinant) < 1e-12) return fallback;
+	double alpha1 = (x0 * c11 - x1 * c01) / determinant;
+	double alpha2 = (c00 * x1 - c01 * x0) / determinant;
+	// Handles that vanish or run away describe a curve which no longer follows the
+	// points it was fitted to, so keep the plain guess instead. The bound is on the
+	// chord: fitting a whole circle in one piece is what would need more, and the
+	// loop is cut into runs before it gets here precisely so that never happens. A
+	// semicircle, the longest run that can occur, needs about two thirds of it.
+	if (!std::isfinite(alpha1) || !std::isfinite(alpha2) ||
+		alpha1 < 1e-4 || alpha2 < 1e-4 ||
+		alpha1 > chord * 1.5 || alpha2 > chord * 1.5)
+		return fallback;
+	return {p0, p0 + start_tangent * static_cast<float>(alpha1),
+		p3 + end_tangent * static_cast<float>(alpha2), p3};
+}
+
+std::vector<double> chord_parameters(std::vector<Vector2D> const& points, size_t first,
+		size_t last) {
+	std::vector<double> parameters(last - first + 1, 0.0);
+	for (size_t i = first + 1; i <= last; ++i)
+		parameters[i - first] = parameters[i - first - 1] + (points[i] - points[i - 1]).Len();
+	double total = parameters.back();
+	if (total <= 1e-9) return {};
+	for (auto& value : parameters) value /= total;
+	return parameters;
+}
+
+/// Slide each parameter to the curve's nearest point by one Newton step on
+/// (Q(t) - P) . Q'(t) = 0, which is where the distance stops changing.
+void refine_parameters(std::vector<Vector2D> const& points, size_t first,
+		std::array<Vector2D, 4> const& curve, std::vector<double>& parameters) {
+	Vector2D d1[3] = {(curve[1] - curve[0]) * 3.f, (curve[2] - curve[1]) * 3.f,
+		(curve[3] - curve[2]) * 3.f};
+	Vector2D d2[2] = {(d1[1] - d1[0]) * 2.f, (d1[2] - d1[1]) * 2.f};
+	for (size_t i = 1; i + 1 < parameters.size(); ++i) {
+		double t = parameters[i], u = 1.0 - t;
+		Vector2D on_curve = bezier_at(curve, t);
+		Vector2D first_derivative = d1[0] * static_cast<float>(u * u) +
+			d1[1] * static_cast<float>(2 * u * t) + d1[2] * static_cast<float>(t * t);
+		Vector2D second_derivative = d2[0] * static_cast<float>(u) +
+			d2[1] * static_cast<float>(t);
+		Vector2D offset = on_curve - points[first + i];
+		double denominator = first_derivative.Dot(first_derivative) +
+			offset.Dot(second_derivative);
+		if (std::abs(denominator) < 1e-9) continue;
+		double next = t - offset.Dot(first_derivative) / denominator;
+		// Parameters have to stay inside the segment and in order, or the least
+		// squares system below is no longer describing this piece of the outline.
+		if (next > parameters[i - 1] && next < 1.0 && std::isfinite(next))
+			parameters[i] = next;
+	}
+}
+
+void fit_run(std::vector<Vector2D> const& points, size_t first, size_t last,
+		Vector2D start_tangent, Vector2D end_tangent, double tolerance, int depth,
+		std::vector<SplineCurve>& out) {
+	if (last <= first) return;
+	// Too short to fit, so keep the segments as they are.
+	//
+	// The error check below can only look at the points between the two ends, and a
+	// cubic has enough freedom to pass through one or two of them while bulging far
+	// away everywhere else. That is not a theoretical worry: a three point run along
+	// a nearly straight edge came back as a curve whose handles reached a hundred
+	// pixels clear of the shape, and the check saw no error at all because the curve
+	// did pass through the single point it was asked about.
+	if (last - first < brush_fit_min_run) {
+		for (size_t i = first; i < last; ++i)
+			out.emplace_back(points[i], points[i + 1]);
+		return;
+	}
+	auto parameters = chord_parameters(points, first, last);
+	if (parameters.empty()) {
+		out.emplace_back(points[first], points[last]);
+		return;
+	}
+	auto curve = fit_bezier(points, first, last, start_tangent, end_tangent, parameters);
+	for (int pass = 0; pass < brush_fit_refine_passes; ++pass) {
+		refine_parameters(points, first, curve, parameters);
+		curve = fit_bezier(points, first, last, start_tangent, end_tangent, parameters);
+	}
+
+	double worst = 0;
+	size_t split = first + (last - first) / 2;
+	for (size_t i = 1; i < parameters.size() - 1; ++i) {
+		double error = (bezier_at(curve, parameters[i]) - points[first + i]).Len();
+		if (error > worst) {
+			worst = error;
+			split = first + i;
+		}
+	}
+	if (worst <= tolerance || depth >= brush_fit_max_depth) {
+		out.emplace_back(curve[0], curve[1], curve[2], curve[3]);
+		return;
+	}
+	// Split where the fit strays furthest and let both halves meet smoothly there.
+	Vector2D middle = safe_direction(points[split - 1], points[split + 1],
+		safe_direction(points[first], points[last], start_tangent));
+	fit_run(points, first, split, start_tangent, -middle, tolerance, depth + 1, out);
+	fit_run(points, split, last, middle, end_tangent, tolerance, depth + 1, out);
+}
+}
+
+uint64_t ContourVertexKey(Vector2D point) {
+	auto quantise = [](float value) {
+		return static_cast<int64_t>(std::llround(value * 64.0));
+	};
+	return (static_cast<uint64_t>(static_cast<uint32_t>(quantise(point.X()))) << 32) |
+		static_cast<uint32_t>(quantise(point.Y()));
+}
+
+std::vector<SplineCurve> FitClosedContour(std::vector<Vector2D> const& contour,
+		double tolerance, std::unordered_set<uint64_t> const& keep_vertices) {
+	size_t count = contour.size();
+	if (count < 8) return {};
+
+	// The fit is cut at two kinds of vertex, and both are left exactly where they are.
+	//
+	// Corners, because the union of stamped circles meets existing straight edges at
+	// real angles and a curve drawn through such a vertex would cut the corner off.
+	//
+	// And vertices the clip already had, because a stroke that overlaps existing
+	// geometry comes back from the union as one merged ring. Fitting straight through
+	// it rounded the shape the user had drawn by hand, which is not the brush's to
+	// change: cutting at those vertices leaves their edges as the straight segments
+	// they were, since a run one vertex long is emitted as a line.
+	double corner_cosine = std::cos(brush_fit_corner_turn_degrees * M_PI / 180.0);
+	std::vector<size_t> splits;
+	for (size_t i = 0; i < count; ++i) {
+		if (!keep_vertices.empty() && keep_vertices.count(ContourVertexKey(contour[i]))) {
+			splits.push_back(i);
+			continue;
+		}
+		Vector2D incoming = contour[i] - contour[(i + count - 1) % count];
+		Vector2D outgoing = contour[(i + 1) % count] - contour[i];
+		float incoming_length = incoming.Len(), outgoing_length = outgoing.Len();
+		if (incoming_length < 1e-4f || outgoing_length < 1e-4f) continue;
+		if (incoming.Dot(outgoing) / (incoming_length * outgoing_length) < corner_cosine)
+			splits.push_back(i);
+	}
+
+	// A loop with no split at all still has to be cut somewhere to be fitted as runs,
+	// so cut it at one arbitrary point and let the two ends meet there.
+	std::vector<Vector2D> ordered;
+	std::vector<size_t> breaks;
+	ordered.reserve(count + 1);
+	size_t origin = splits.empty() ? 0 : splits.front();
+	for (size_t i = 0; i <= count; ++i)
+		ordered.push_back(contour[(origin + i) % count]);
+	breaks.push_back(0);
+	for (size_t split : splits)
+		if (split != origin)
+			breaks.push_back((split + count - origin) % count);
+	std::sort(breaks.begin() + 1, breaks.end());
+	breaks.push_back(count);
+	// A run spanning the whole loop begins and ends at the same point, and a fit has
+	// no chord to work from there: the end tangents are undefined and the handle
+	// lengths have nothing to be measured against. Cutting it in half gives both
+	// halves real endpoints. This is the ordinary case, since a brush dab is a closed
+	// curve with no corner anywhere on it.
+	if (breaks.size() == 2)
+		breaks.insert(breaks.begin() + 1, count / 2);
+
+	std::vector<SplineCurve> curves;
+	for (size_t i = 0; i + 1 < breaks.size(); ++i) {
+		size_t first = breaks[i], last = breaks[i + 1];
+		if (last <= first) continue;
+		Vector2D chord = safe_direction(ordered[first], ordered[last], Vector2D(1.f, 0.f));
+		Vector2D start_tangent = safe_direction(ordered[first], ordered[first + 1], chord);
+		Vector2D end_tangent = safe_direction(ordered[last], ordered[last - 1], -chord);
+		fit_run(ordered, first, last, start_tangent, end_tangent, tolerance, 0, curves);
+	}
+
+	// Last line of defence. A fit that has gone wrong does not go slightly wrong; it
+	// throws a control point across the screen, and the outline turns into the loops
+	// and stray lines that the straight segments would never have produced. Measure
+	// the result against the outline it claims to describe and refuse it outright if
+	// it does not hold up, so the caller keeps the polyline instead.
+	Vector2D low = ordered.front(), high = ordered.front();
+	double perimeter = 0;
+	for (size_t i = 0; i < ordered.size(); ++i) {
+		low = Vector2D(std::min(low.X(), ordered[i].X()), std::min(low.Y(), ordered[i].Y()));
+		high = Vector2D(std::max(high.X(), ordered[i].X()), std::max(high.Y(), ordered[i].Y()));
+		if (i) perimeter += (ordered[i] - ordered[i - 1]).Len();
+	}
+	float slack = static_cast<float>(perimeter);
+	for (auto const& curve : curves) {
+		int points = curve.type == SplineCurve::BICUBIC ? 4 : 2;
+		for (int i = 0; i < points; ++i) {
+			Vector2D point = i == 0 ? curve.p1 : i == 1 ? curve.p2 :
+				i == 2 ? curve.p3 : curve.p4;
+			if (!std::isfinite(point.X()) || !std::isfinite(point.Y()) ||
+				point.X() < low.X() - slack || point.X() > high.X() + slack ||
+				point.Y() < low.Y() - slack || point.Y() > high.Y() + slack)
+				return {};
+		}
+	}
+	return curves;
 }
 
 std::vector<SplineCurve> SmoothClosedContour(std::vector<Vector2D> points,

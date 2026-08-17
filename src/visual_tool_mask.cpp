@@ -27,6 +27,11 @@
 #include <libaegisub/color.h>
 
 #include <algorithm>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/multi_polygon.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+
 #include <cmath>
 #include <cstddef>
 #include <exception>
@@ -48,6 +53,93 @@
 namespace {
 	constexpr int button_id_base = 1600;
 	constexpr double image_colour_tolerance = 25.0;
+
+	namespace bg = boost::geometry;
+	using MaskPoint = bg::model::d2::point_xy<double>;
+	using MaskPolygon = bg::model::polygon<MaskPoint>;
+	using MaskMultiPolygon = bg::model::multi_polygon<MaskPolygon>;
+
+	/// Sub-pixel detail dropped from a merged brush outline. The circles are stamped a
+	/// fraction of a radius apart, so their union carries far more vertices along a
+	/// straight run of the stroke than the shape of it needs.
+	constexpr double mask_brush_simplify = .1;
+
+	/// Rebuild a merged region from the contours the mask stores, so a new stroke carries
+	/// on from whatever is already there rather than starting from nothing.
+	MaskMultiPolygon MaskRegionFrom(std::vector<std::vector<Vector2D>> const& contours);
+
+	MaskPolygon MakeMaskCircle(Vector2D centre, double radius) {
+		constexpr int circle_points = 48;
+		MaskPolygon polygon;
+		auto& ring = polygon.outer();
+		ring.reserve(circle_points + 1);
+		for (int i = 0; i < circle_points; ++i) {
+			double angle = i * 2.0 * M_PI / circle_points;
+			ring.emplace_back(centre.X() + std::cos(angle) * radius,
+				centre.Y() + std::sin(angle) * radius);
+		}
+		ring.push_back(ring.front());
+		bg::correct(polygon);
+		return polygon;
+	}
+
+	MaskMultiPolygon MaskRegionFrom(std::vector<std::vector<Vector2D>> const& contours) {
+		MaskMultiPolygon region;
+		for (auto const& contour : contours) {
+			if (contour.size() < 3) continue;
+			MaskPolygon polygon;
+			auto& ring = polygon.outer();
+			ring.reserve(contour.size() + 1);
+			double signed_area = 0;
+			for (size_t i = 0, previous = contour.size() - 1; i < contour.size(); previous = i++)
+				signed_area += static_cast<double>(contour[previous].X()) * contour[i].Y() -
+					static_cast<double>(contour[i].X()) * contour[previous].Y();
+			for (auto point : contour) ring.emplace_back(point.X(), point.Y());
+			ring.push_back(ring.front());
+			bg::correct(polygon);
+			if (!bg::is_valid(polygon)) continue;
+			MaskMultiPolygon combined;
+			// Positive is solid and negative is a hole, which is the order the contours
+			// were written in, so replaying them in that order reproduces the region.
+			if (signed_area >= 0) bg::union_(region, polygon, combined);
+			else bg::difference(region, polygon, combined);
+			region = std::move(combined);
+		}
+		return region;
+	}
+
+	/// Turn a merged region back into the contour lists the mask works in. ASS reads them
+	/// with the non-zero winding rule, where an outer ring has to wind one way and a hole
+	/// the other, so the ring order Boost hands back is corrected rather than copied.
+	std::vector<std::vector<Vector2D>> MaskContoursFrom(MaskMultiPolygon const& region) {
+		std::vector<std::vector<Vector2D>> contours;
+		auto append = [&](auto const& ring, bool solid) {
+			if (ring.size() < 4) return;
+			size_t count = ring.size() - 1; // Boost repeats the first point at the end.
+			double signed_area = 0;
+			for (size_t i = 0, previous = count - 1; i < count; previous = i++)
+				signed_area += ring[previous].x() * ring[i].y() -
+					ring[i].x() * ring[previous].y();
+			bool reverse = solid ? signed_area < 0 : signed_area > 0;
+			std::vector<Vector2D> contour;
+			contour.reserve(count);
+			for (size_t i = 0; i < count; ++i) {
+				auto const& point = ring[reverse ? count - 1 - i : i];
+				contour.emplace_back(static_cast<float>(point.x()),
+					static_cast<float>(point.y()));
+			}
+			contours.push_back(std::move(contour));
+		};
+		for (auto const& polygon : region) {
+			append(polygon.outer(), true);
+			for (auto const& inner : polygon.inners()) append(inner, false);
+		}
+		return contours;
+	}
+	/// How far a fitted brush outline may sit from the polygon it replaces. The mask's
+	/// regions are in script coordinates and it writes them with one decimal, so this is
+	/// finer than anything the drawing can express anyway.
+	constexpr double mask_brush_fit_tolerance = .3;
 
 	ai::CloudinaryCredentials configured_cloudinary() {
 		return {OPT_GET("AI/Cloudinary/Cloud Name")->GetString(),
@@ -241,26 +333,49 @@ void VisualToolMask::CommitCurrentRegion() {
 	points.clear();
 }
 
+struct VisualToolMask::BrushShape {
+	MaskMultiPolygon region;
+};
+
 void VisualToolMask::PaintMaskBrush(Vector2D from, Vector2D to) {
+	if (!mask_brush_shape) mask_brush_shape = std::make_unique<BrushShape>();
 	float distance = (to - from).Len();
 	float step = std::max(1.f, mask_brush_radius * .3f);
 	int steps = distance > 0.f ? std::max(1, static_cast<int>(std::ceil(distance / step))) : 0;
 	float script_radius = mask_brush_radius * .5f *
 		(script_res.X() / std::max(1.f, video_size.X()) +
 		 script_res.Y() / std::max(1.f, video_size.Y()));
-	constexpr int circle_points = 48;
+	// The circles are merged as they are stamped rather than piled on top of one another.
+	// Left separate they reach the file as one contour each - a stroke was hundreds of
+	// them - and the preview has to carry a winding count that deep through a stencil
+	// buffer which wraps around long before that, which is what broke it up into rings.
+	// One merged outline is also what the vector clip's brush produces, for the same
+	// reasons, and it is what makes the curve fitting worth anything: a fit can follow the
+	// edge of a stroke, but it can do nothing with a heap of overlapping circles.
+	MaskMultiPolygon& shape = mask_brush_shape->region;
 	for (int i = 0; i <= steps; ++i) {
 		float progress = steps ? static_cast<float>(i) / steps : 0.f;
 		Vector2D centre = ToScriptCoords(from + (to - from) * progress);
-		std::vector<Vector2D> circle;
-		circle.reserve(circle_points);
-		for (int point = 0; point < circle_points; ++point) {
-			float angle = static_cast<float>(point * 2.0 * M_PI / circle_points);
-			circle.emplace_back(centre.X() + std::cos(angle) * script_radius,
-				centre.Y() + std::sin(angle) * script_radius);
+		// Each call starts where the last one ended, so the circle at progress zero
+		// repeats one already stamped. Merging makes that harmless, but not free.
+		if ((centre - mask_brush_last_centre).Len() < 1e-3f) continue;
+		mask_brush_last_centre = centre;
+		auto circle = MakeMaskCircle(centre, script_radius);
+		if (shape.empty()) {
+			shape.push_back(std::move(circle));
+			continue;
 		}
-		mask_regions.push_back(std::move(circle));
+		MaskMultiPolygon merged;
+		bg::union_(shape, circle, merged);
+		shape = std::move(merged);
 	}
+	MaskMultiPolygon simplified;
+	bg::simplify(shape, simplified, mask_brush_simplify);
+	bg::correct(simplified);
+	if (!simplified.empty() && bg::is_valid(simplified)) shape = std::move(simplified);
+
+	// In brush mode every region is brush output, so the merged shape is all of it.
+	mask_regions = MaskContoursFrom(shape);
 }
 
 void VisualToolMask::UpdateMaskBrushSize(Vector2D point) {
@@ -1833,6 +1948,13 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 			CommitCurrentRegion();
 			mask_brush_drawing = true;
 			mask_brush_last = mouse_pos;
+			// A new stroke has nothing behind it, so nothing to match against.
+			mask_brush_last_centre = Vector2D();
+			// Pick the merged shape back up from whatever is on the canvas. Rebuilding it
+			// here rather than keeping it alive means undo, a cleared mask and a mode
+			// change all need no bookkeeping of their own: the contours are the record.
+			if (!mask_brush_shape) mask_brush_shape = std::make_unique<BrushShape>();
+			mask_brush_shape->region = MaskRegionFrom(mask_regions);
 			PaintMaskBrush(mouse_pos, mouse_pos);
 			if (!parent->HasCapture()) parent->CaptureMouse();
 			parent->SetFocus();
@@ -2564,6 +2686,29 @@ std::string VisualToolMask::EncodeDrawing() const {
 	auto append_region = [&](std::vector<Vector2D> const& region) {
 		if (region.size() < 3) return;
 		if (!encoded.empty()) encoded += " ";
+		// The brush stamps a 48-sided polygon per step, so a stroke reaches the file as
+		// thousands of straight segments describing edges that were round to begin with.
+		// Fitting them here, where the line is written, keeps the painting itself working
+		// on the plain polygons it always has.
+		if (mode == MASK_BRUSH) {
+			auto curves = FitClosedContour(region, mask_brush_fit_tolerance);
+			if (!curves.empty()) {
+				encoded += "m " + curves.front().p1.Str(' ', 1);
+				char last = 'm';
+				for (auto const& curve : curves) {
+					if (curve.type == SplineCurve::LINE) {
+						if (last != 'l') { encoded += " l"; last = 'l'; }
+						encoded += " " + curve.p2.Str(' ', 1);
+					}
+					else if (curve.type == SplineCurve::BICUBIC) {
+						if (last != 'b') { encoded += " b"; last = 'b'; }
+						encoded += " " + curve.p2.Str(' ', 1) + " " + curve.p3.Str(' ', 1) +
+							" " + curve.p4.Str(' ', 1);
+					}
+				}
+				return;
+			}
+		}
 		encoded += "m ";
 		for (size_t i = 0; i < region.size(); ++i) {
 			if (i == 1) encoded += " l ";

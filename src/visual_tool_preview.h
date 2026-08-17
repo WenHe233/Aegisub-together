@@ -101,6 +101,10 @@ public:
 
 	void SetPage(Page page);
 	void PushPage(Page page);
+	/// Drop every page, which leaves the host with nothing to show and hides it. A later
+	/// SetPage brings it back, so a tool can use this for the modes that want the canvas
+	/// to itself.
+	void ClearPages();
 	bool PopPage();
 	void Clear();
 	bool HasPage() const { return !pages.empty(); }

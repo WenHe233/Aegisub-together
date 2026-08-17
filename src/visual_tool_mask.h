@@ -81,6 +81,13 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	bool mask_brush_drawing = false;
 	bool mask_brush_slider_dragging = false;
 	Vector2D mask_brush_last;
+	/// Centre of the circle the brush stamped last, so a stroke made of many small motions
+	/// does not stamp the same one again at the start of every one of them.
+	Vector2D mask_brush_last_centre;
+	/// The brush's stamped circles merged into one region, held apart from mask_regions so
+	/// the merge is carried forward rather than redone from the contours on every stamp.
+	struct BrushShape;
+	std::unique_ptr<BrushShape> mask_brush_shape;
 	VisualToolMaskAction hovered_action = VisualToolMaskAction::None;
 	VisualToolMaskAction external_slider_action = VisualToolMaskAction::None;
 	enum class ColorStage { Range, Sample, Ready };
