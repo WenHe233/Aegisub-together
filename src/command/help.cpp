@@ -91,10 +91,18 @@ struct help_video final : public Command {
 	CMD_ICON(visual_help)
 	STR_MENU("&Visual Typesetting")
 	STR_DISP("Visual Typesetting")
-	STR_HELP("Open the manual page for Visual Typesetting")
+	STR_HELP("Open the visual typesetting guides")
 
 	void operator()(agi::Context *) override {
-		HelpButton::OpenPage("Visual Typesetting");
+		// Both, rather than one with the other as a fallback. The illustrated guide is
+		// the more useful of the two, but it is hosted outside the project and may not
+		// answer at all one day; a fallback nobody sees would leave the button doing
+		// nothing on that day, so the official manual is opened alongside it.
+		wxLaunchDefaultBrowser("https://aegisub.org/docs/latest/visual_typesetting/",
+			wxBROWSER_NEW_WINDOW);
+		// Opened second so it is the page in front, being the one with the pictures.
+		wxLaunchDefaultBrowser("https://mutekifansub.hu/public/aegisub-docs/?lang=en",
+			wxBROWSER_NEW_WINDOW);
 	}
 };
 
