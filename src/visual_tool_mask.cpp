@@ -522,7 +522,7 @@ void VisualToolMask::UpdateActionTooltip(VisualToolMaskAction action) {
 	}
 	switch (action) {
 		case VisualToolMaskAction::Create:
-			parent->SetToolTip(ai_refining ? _("Accept") : _("Create mask"));
+			parent->SetToolTip(_("Accept"));
 			break;
 		case VisualToolMaskAction::RemoveText: parent->SetToolTip(_("AI text removal")); break;
 		case VisualToolMaskAction::GenerateText: parent->SetToolTip(_("AI custom generation")); break;
@@ -687,8 +687,11 @@ std::pair<Vector2D, Vector2D> VisualToolMask::ActionBounds(VisualToolMaskAction 
 	};
 		auto label_for = [&](VisualToolMaskAction item) -> wxString {
 		switch (item) {
-			case VisualToolMaskAction::Create: return ai_refining ? _("Accept (ENTER)") : _("Create mask (ENTER)");
-			case VisualToolMaskAction::Clear: return _("Cancel (ESC)");
+			// The same two words every other top bar uses, whatever the button goes on to
+			// do underneath. Enter and Escape still work; naming them in the label made
+			// these the only buttons in the application that did.
+			case VisualToolMaskAction::Create: return _("Accept");
+			case VisualToolMaskAction::Clear: return _("Cancel");
 			case VisualToolMaskAction::RemoveText:
 				return ai_refining ? _("Erase again") : _("AI text removal");
 			case VisualToolMaskAction::GenerateText: return _("AI custom generation");
@@ -1178,7 +1181,7 @@ void VisualToolMask::UpdatePreviewInterface() {
 			Interface::ControlStyle::Accent);
 	}
 	add(VisualToolMaskAction::Create, Interface::ControlKind::Button,
-		ai_refining ? _("Accept") : _("Create mask"), CanCreateMask(),
+		_("Accept"), CanCreateMask(),
 		Interface::ControlStyle::Accept);
 	add(VisualToolMaskAction::Clear, Interface::ControlKind::Button, _("Cancel"),
 		CanCancel(), Interface::ControlStyle::Cancel);
@@ -2796,8 +2799,8 @@ void VisualToolMask::DrawTopBar() {
 
 	auto label_for = [&](VisualToolMaskAction action) -> wxString {
 		switch (action) {
-			case VisualToolMaskAction::Create: return ai_refining ? _("Accept (ENTER)") : _("Create mask (ENTER)");
-			case VisualToolMaskAction::Clear: return _("Cancel (ESC)");
+			case VisualToolMaskAction::Create: return _("Accept");
+			case VisualToolMaskAction::Clear: return _("Cancel");
 			case VisualToolMaskAction::RemoveText:
 				return ai_refining ? _("Erase again") : _("AI text removal");
 			case VisualToolMaskAction::GenerateText: return _("AI custom generation");

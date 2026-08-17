@@ -2215,7 +2215,7 @@ bool VisualToolVectorClip::DeleteActivePath() {
 }
 
 void VisualToolVectorClip::OnMouseEvent(wxMouseEvent& event) {
-	if (!active_line) return;
+	if (!active_line || !HasEditableDrawing()) return;
 	if (mode != VCLIP_COLOR && mode != VCLIP_BRUSH) {
 		VisualTool<VisualToolVectorClipDraggableFeature>::OnMouseEvent(event);
 		return;
@@ -2499,6 +2499,10 @@ void VisualToolVectorClip::OnMouseEvent(wxMouseEvent& event) {
 }
 
 bool VisualToolVectorClip::OnMouseWheel(wxMouseEvent& event) {
+	// With nothing to edit the brush cannot paint, so its size is not worth a wheel
+	// notch: hand the event back so the video zooms instead.
+	if (!HasEditableDrawing())
+		return VisualTool<VisualToolVectorClipDraggableFeature>::OnMouseWheel(event);
 	int wheel = event.GetWheelRotation();
 	bool brush_mode = mode == VCLIP_BRUSH || (mode == VCLIP_COLOR &&
 		(color_selection_mode == VisualSelectionMode::BrushAdd ||
@@ -2518,6 +2522,7 @@ bool VisualToolVectorClip::OnMouseWheel(wxMouseEvent& event) {
 }
 
 bool VisualToolVectorClip::OnKeyEvent(wxKeyEvent& event) {
+	if (!HasEditableDrawing()) return false;
 	int key = event.GetKeyCode();
 	bool alt_key = key == WXK_ALT;
 #ifdef WXK_RALT
@@ -3256,6 +3261,15 @@ void VisualToolVectorClip::SyncCurveFeatures(size_t idx) {
 			case 3: feature->pos = curve.p4; break;
 		}
 	}
+}
+
+// The mask editor edits the active line's drawing in place: with no drawing on screen
+// there is nothing to grab, and Save() would throw every gesture away because there is
+// no drawing block to write it into. Rather than let the tools look alive and do
+// nothing, they are inert until the selection puts a shape on the video.
+bool VisualToolVectorClip::HasEditableDrawing() const {
+	if (!drawing_mode) return true;
+	return active_line && !spline.empty();
 }
 
 void VisualToolVectorClip::Save(int precision_override) {

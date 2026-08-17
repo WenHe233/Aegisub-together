@@ -171,6 +171,10 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	float drawing_rotation = 0.f;
 	int drawing_scale_level = 1;
 
+	/// Whether the mask editor has a shape to work on. The clip tool always has one:
+	/// the clip is created by drawing it. The mask editor only edits what the selected
+	/// lines already put on the video.
+	bool HasEditableDrawing() const;
 	void Save(int precision_override = -1);
 	void Commit(wxString message="") override;
 	void OnFrameChanged() override;
