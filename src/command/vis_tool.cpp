@@ -528,6 +528,14 @@ namespace {
 		STR_HELP("Add mask points")
 	};
 
+	struct visual_mode_mask_bezier final : public visual_tool_mask_command<MASK_BEZIER> {
+		CMD_NAME("video/tool/mask/bezier")
+		CMD_ICON(visual_vector_clip_bicubic)
+		STR_MENU("Curve")
+		STR_DISP("Curve")
+		STR_HELP("Join the mask points with curves instead of straight edges (double Alt to switch)")
+	};
+
 	struct visual_mode_mask_brush final : public visual_tool_mask_command<MASK_BRUSH> {
 		CMD_NAME("video/tool/mask/brush")
 		wxBitmapBundle Icon(int height, wxLayoutDirection = wxLayout_LeftToRight) const override {
@@ -641,6 +649,7 @@ namespace cmd {
 		reg(std::make_unique<visual_mode_vclip_color>());
 		reg(std::make_unique<visual_mode_mask_rectangle>());
 		reg(std::make_unique<visual_mode_mask_points>());
+		reg(std::make_unique<visual_mode_mask_bezier>());
 		reg(std::make_unique<visual_mode_mask_brush>());
 		reg(std::make_unique<visual_mode_mask_freehand>());
 		reg(std::make_unique<visual_mode_mask_color>());

@@ -3618,22 +3618,6 @@ wxBitmap MakeVisualVectorClipBrushBitmap(bool add, int size, bool dropdown) {
 	return bitmap;
 }
 
-wxBitmap MakeVisualAISelectionBitmap(int size) {
-	size = std::max(size, 16);
-	wxBitmap bitmap(size, size, 24);
-	wxMemoryDC dc(bitmap);
-	dc.SetBackground(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)));
-	dc.Clear();
-	dc.SetPen(wxPen(wxColour(20, 20, 20), std::max(2, size / 8)));
-	dc.SetBrush(*wxTRANSPARENT_BRUSH);
-	int centre = size / 2;
-	int radius = std::max(3, size / 3);
-	dc.DrawCircle(centre, centre, radius);
-	dc.DrawCircle(centre, centre, std::max(1, radius / 3));
-	dc.SelectObject(wxNullBitmap);
-	return bitmap;
-}
-
 wxBitmap MakeVisualRangeShapeBitmap(bool freehand, int size, bool dark) {
 	size = std::max(size, 16);
 	wxBitmap bitmap(size, size, 32);

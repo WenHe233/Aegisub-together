@@ -29,6 +29,9 @@ namespace agi { struct Color; }
 enum VisualToolMaskMode {
 	MASK_RECTANGLE = 0,
 	MASK_POINTS,
+	/// The same points as MASK_POINTS, joined by curves instead of straight edges. The two
+	/// share their point list, which is why switching between them keeps the work.
+	MASK_BEZIER,
 	MASK_BRUSH,
 	MASK_FREEHAND,
 	MASK_COLOR,
@@ -64,10 +67,35 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	wxToolBar *toolBar = nullptr;
 	std::unique_ptr<OpenGLText> gl_text;
 	VisualToolMaskMode mode = MASK_POINTS;
+	/// Line and curve differ only in how the points they share are joined, so nearly every
+	/// test in the tool is about the pair rather than about one of them.
+	bool IsPointMode() const { return mode == MASK_POINTS || mode == MASK_BEZIER; }
+	/// When Alt was last pressed, so a second press soon after can be told from the first
+	/// and used to flip between the two tools of a pair.
+	long long last_alt_press_ms = 0;
 	std::vector<Vector2D> points;
+	/// Whether the edge leaving points[i] is a curve. Kept per edge rather than taken from
+	/// the current tool, so switching between line and curve decides what the next edge
+	/// will be without rewriting the ones already placed.
+	std::vector<char> point_curved;
+	/// The two handles shaping a curved edge, one per end. Only meaningful where
+	/// point_curved says so; they are seeded to the smooth default when an edge becomes a
+	/// curve, and are the user's to move from then on.
+	std::vector<Vector2D> edge_control_out;
+	std::vector<Vector2D> edge_control_in;
+	/// Handle being hovered or dragged, as edge * 2 plus 0 for the outgoing handle and 1
+	/// for the incoming one. -1 when none.
+	/// Handle size, read from the same setting the vector clip uses so the two tools draw
+	/// points that are the same size and shape.
+	int featureSize = 0;
+	int hovered_control = -1;
+	int dragged_control = -1;
 	std::vector<std::vector<Vector2D>> mask_regions;
 	struct MaskHistoryState {
 		std::vector<Vector2D> points;
+		std::vector<char> point_curved;
+		std::vector<Vector2D> edge_control_out;
+		std::vector<Vector2D> edge_control_in;
 		std::vector<std::vector<Vector2D>> regions;
 	};
 	std::vector<MaskHistoryState> mask_undo_history;
@@ -188,6 +216,12 @@ class VisualToolMask final : public VisualTool<VisualDraggableFeature> {
 	std::pair<Vector2D, Vector2D> MaskBrushBounds() const;
 	VisualToolMaskAction ActionAt(Vector2D point);
 	int PointAt(Vector2D point) const;
+	/// Hit test the curve handles, which sit above the points they belong to.
+	int ControlAt(Vector2D point) const;
+	/// Give every edge the handles a smooth curve through the points would have, for those
+	/// that have none yet. Called whenever the points move, since a handle only makes sense
+	/// relative to the ends of its own edge.
+	void SeedEdgeControls();
 	void ClearPreview();
 	MaskHistoryState CaptureMaskHistory() const;
 	void RestoreMaskHistory(MaskHistoryState state);

@@ -32,6 +32,7 @@
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <exception>
@@ -67,6 +68,69 @@ namespace {
 	/// Rebuild a merged region from the contours the mask stores, so a new stroke carries
 	/// on from whatever is already there rather than starting from nothing.
 	MaskMultiPolygon MaskRegionFrom(std::vector<std::vector<Vector2D>> const& contours);
+
+	/// The outline the mask points describe, edge by edge. A curved edge leaves and enters
+	/// its ends along the line joining the neighbours on either side, which makes the joins
+	/// smooth without asking for handles to be placed; a straight edge stays straight even
+	/// where its neighbours curve, so one outline can be part polygon and part curve.
+	/// Where a curved edge's handles sit when nobody has moved them: the smooth choice, so
+	/// a new curve arrives looking like a curve and is then the user's to shape.
+	std::pair<Vector2D, Vector2D> DefaultEdgeControls(std::vector<Vector2D> const& points,
+			size_t edge) {
+		size_t count = points.size();
+		Vector2D previous = points[(edge + count - 1) % count];
+		Vector2D start = points[edge];
+		Vector2D end = points[(edge + 1) % count];
+		Vector2D next = points[(edge + 2) % count];
+		// With only two points the neighbours are the ends themselves, and the smooth
+		// formula collapses onto them. Fall back to thirds of the chord: a straight start
+		// the handles can then be pulled away from, rather than handles with nowhere to be.
+		if (count < 3) {
+			Vector2D along = (end - start) / 3.f;
+			return {start + along, end - along};
+		}
+		return {start + (end - previous) / 6.f, end - (next - start) / 6.f};
+	}
+
+	std::vector<SplineCurve> CurveThroughPoints(std::vector<Vector2D> const& points,
+			std::vector<char> const& curved, std::vector<Vector2D> const& control_out,
+			std::vector<Vector2D> const& control_in) {
+		std::vector<SplineCurve> curves;
+		size_t count = points.size();
+		if (count < 2) return curves;
+		for (size_t i = 0; i < count; ++i) {
+			Vector2D start = points[i];
+			Vector2D end = points[(i + 1) % count];
+			if (i >= curved.size() || !curved[i]) {
+				curves.emplace_back(start, end);
+				continue;
+			}
+			auto [out, in] = i < control_out.size() && i < control_in.size() ?
+				std::pair<Vector2D, Vector2D>{control_out[i], control_in[i]} :
+				DefaultEdgeControls(points, i);
+			curves.emplace_back(start, out, in, end);
+		}
+		return curves;
+	}
+
+	std::vector<Vector2D> FlattenCurves(std::vector<SplineCurve> const& curves) {
+		std::vector<Vector2D> out;
+		if (curves.empty()) return out;
+		out.push_back(curves.front().p1);
+		for (auto const& curve : curves) {
+			if (curve.type != SplineCurve::BICUBIC) {
+				out.push_back(curve.p2);
+				continue;
+			}
+			float length = (curve.p2 - curve.p1).Len() + (curve.p3 - curve.p2).Len() +
+				(curve.p4 - curve.p3).Len();
+			int steps = std::clamp(static_cast<int>(std::ceil(length / 3.f)), 4, 48);
+			for (int step = 1; step <= steps; ++step)
+				out.push_back(curve.GetPoint(static_cast<float>(step) / steps));
+		}
+		if (out.size() > 3 && (out.front() - out.back()).SquareLen() < 1e-5f) out.pop_back();
+		return out;
+	}
 
 	MaskPolygon MakeMaskCircle(Vector2D centre, double radius) {
 		constexpr int circle_points = 48;
@@ -222,6 +286,7 @@ namespace {
 VisualToolMask::VisualToolMask(VideoDisplay *parent, agi::Context *context)
 : VisualTool<VisualDraggableFeature>(parent, context)
 , gl_text(std::make_unique<OpenGLText>())
+, featureSize(OPT_GET("Tool/Visual/Shape Handle Size")->GetInt())
 {
 	preview_interface.AttachHost(parent->GetPreviewBar(), [this](int id) {
 		this->parent->SetFocus();
@@ -256,6 +321,7 @@ void VisualToolMask::SetToolbar(wxToolBar *toolbar) {
 	toolBar->AddSeparator();
 	AddTool("video/tool/mask/rectangle", MASK_RECTANGLE);
 	AddTool("video/tool/mask/points", MASK_POINTS);
+	AddTool("video/tool/mask/bezier", MASK_BEZIER);
 	AddTool("video/tool/mask/brush", MASK_BRUSH);
 	AddTool("video/tool/mask/freehand", MASK_FREEHAND);
 	AddTool("video/tool/mask/color", MASK_COLOR);
@@ -275,11 +341,18 @@ void VisualToolMask::SetSubTool(int subtool) {
 		return;
 	auto next_mode = static_cast<VisualToolMaskMode>(subtool);
 	if (next_mode == mode) return;
+	// Curve and line work on the same points, and the two stamping tools on the same merged
+	// region, so switching within a pair only changes how the work is drawn - throwing it
+	// away would defeat the point of being able to switch at all.
+	bool same_pair = IsPointMode() && (next_mode == MASK_POINTS || next_mode == MASK_BEZIER);
 	if (next_mode == MASK_COLOR) {
 		ClearPreview();
 	}
-	else {
+	else if (!same_pair) {
 		points.clear();
+		point_curved.clear();
+		edge_control_out.clear();
+		edge_control_in.clear();
 		mask_regions.clear();
 		drawing = false;
 		mask_brush_drawing = false;
@@ -287,8 +360,10 @@ void VisualToolMask::SetSubTool(int subtool) {
 	}
 	mode = next_mode;
 	drawing = false;
-	mask_undo_history.clear();
-	mask_redo_history.clear();
+	if (!same_pair) {
+		mask_undo_history.clear();
+		mask_redo_history.clear();
+	}
 	if (mode == MASK_COLOR)
 		ResetColorSelection();
 	if (parent->HasCapture())
@@ -328,9 +403,24 @@ void VisualToolMask::UpdateFreehand(Vector2D point) {
 }
 
 void VisualToolMask::CommitCurrentRegion() {
-	if (points.size() >= 3 && std::abs(polygon_area(points)) > .5)
+	// Curved edges are flattened on the way in. A finished region is a plain outline here -
+	// everything downstream, from the boolean merge to the rasteriser, expects one - so the
+	// curve is kept as the shape it describes rather than as its recipe. The area is
+	// measured on the flattened outline too: two points bowed apart enclose something the
+	// straight polygon between them does not.
+	bool curved = std::find(point_curved.begin(), point_curved.end(), 1) != point_curved.end();
+	if (curved && points.size() >= 2) {
+		auto outline = FlattenCurves(CurveThroughPoints(points, point_curved,
+			edge_control_out, edge_control_in));
+		if (outline.size() >= 3 && std::abs(polygon_area(outline)) > .5)
+			mask_regions.push_back(std::move(outline));
+	}
+	else if (points.size() >= 3 && std::abs(polygon_area(points)) > .5)
 		mask_regions.push_back(std::move(points));
 	points.clear();
+	point_curved.clear();
+	edge_control_out.clear();
+	edge_control_in.clear();
 }
 
 struct VisualToolMask::BrushShape {
@@ -889,6 +979,9 @@ bool VisualToolMask::RedoColorHistory() {
 void VisualToolMask::ClearPreview() {
 	ResetAIRefinement();
 	points.clear();
+	point_curved.clear();
+	edge_control_out.clear();
+	edge_control_in.clear();
 	mask_regions.clear();
 	mask_undo_history.clear();
 	mask_redo_history.clear();
@@ -1106,11 +1199,15 @@ void VisualToolMask::UpdatePreviewInterface() {
 }
 
 VisualToolMask::MaskHistoryState VisualToolMask::CaptureMaskHistory() const {
-	return {points, mask_regions};
+	return {points, point_curved, edge_control_out, edge_control_in, mask_regions};
 }
 
 void VisualToolMask::RestoreMaskHistory(MaskHistoryState state) {
 	points = std::move(state.points);
+	point_curved = std::move(state.point_curved);
+	edge_control_out = std::move(state.edge_control_out);
+	edge_control_in = std::move(state.edge_control_in);
+	dragged_control = hovered_control = -1;
 	mask_regions = std::move(state.regions);
 	drawing = false;
 	mask_brush_drawing = false;
@@ -1694,9 +1791,40 @@ void VisualToolMask::RefreshColorContours() {
 	color_display_dirty = true;
 }
 
+void VisualToolMask::SeedEdgeControls() {
+	size_t count = points.size();
+	point_curved.resize(count, 0);
+	bool grew = edge_control_out.size() != count;
+	edge_control_out.resize(count);
+	edge_control_in.resize(count);
+	if (count < 2) return;
+	// Only edges that have never had handles are seeded. An edge the user has already
+	// shaped keeps what they made of it, even as its neighbours move around it.
+	for (size_t edge = 0; edge < count; ++edge) {
+		if (!point_curved[edge]) continue;
+		if (!grew && edge_control_out[edge] && edge_control_in[edge]) continue;
+		if (edge_control_out[edge] && edge_control_in[edge]) continue;
+		auto [out, in] = DefaultEdgeControls(points, edge);
+		edge_control_out[edge] = out;
+		edge_control_in[edge] = in;
+	}
+}
+
+int VisualToolMask::ControlAt(Vector2D point) const {
+	for (size_t edge = 0; edge < point_curved.size(); ++edge) {
+		if (!point_curved[edge] || edge >= edge_control_out.size()) continue;
+		float reach = std::max(6.f, featureSize + 2.f);
+		if ((point - FromScriptCoords(edge_control_out[edge])).Len() <= reach)
+			return static_cast<int>(edge) * 2;
+		if ((point - FromScriptCoords(edge_control_in[edge])).Len() <= reach)
+			return static_cast<int>(edge) * 2 + 1;
+	}
+	return -1;
+}
+
 int VisualToolMask::PointAt(Vector2D point) const {
 	for (int i = static_cast<int>(points.size()) - 1; i >= 0; --i) {
-		if ((point - FromScriptCoords(points[i])).Len() <= 6.f)
+		if ((point - FromScriptCoords(points[i])).Len() <= std::max(6.f, featureSize + 2.f))
 			return i;
 	}
 	return -1;
@@ -1773,7 +1901,8 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 	}
 
 	auto action = ActionAt(mouse_pos);
-	hovered_point = mode == MASK_COLOR ? -1 : PointAt(mouse_pos);
+	hovered_control = IsPointMode() ? ControlAt(mouse_pos) : -1;
+	hovered_point = mode == MASK_COLOR || hovered_control >= 0 ? -1 : PointAt(mouse_pos);
 	UpdateActionTooltip(action);
 
 	if (tolerance_dragging && (event.Dragging() || event.LeftUp())) {
@@ -1993,7 +2122,17 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 			return;
 		}
 
-		if (hovered_point >= 0) {
+		// Handles are tested before points, since they sit on top of them and are the
+		// smaller target: a handle resting on its own anchor would be unreachable
+		// otherwise.
+		if (hovered_control >= 0) {
+			PushMaskHistory();
+			dragged_control = hovered_control;
+			if (!parent->HasCapture())
+				parent->CaptureMouse();
+			parent->SetFocus();
+		}
+		else if (hovered_point >= 0) {
 			PushMaskHistory();
 			dragged_point = hovered_point;
 			if (!parent->HasCapture())
@@ -2003,15 +2142,31 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 		else {
 			Vector2D script_point = ToScriptCoords(mouse_pos);
 			PushMaskHistory();
-			if (mode == MASK_POINTS) {
+			if (IsPointMode()) {
 				points.push_back(script_point);
+				// The tool in hand decides the edge that has just been made and the one
+				// closing back to the start; earlier edges keep whatever they were drawn
+				// with, which is what lets the two be mixed in one outline.
+				point_curved.resize(points.size(), 0);
+				if (points.size() >= 2)
+					point_curved[points.size() - 2] = mode == MASK_BEZIER;
+				// The edge back to the first point stays straight, so the outline always
+				// closes with the line the preview has been showing all along.
+				point_curved.back() = 0;
+				SeedEdgeControls();
 			}
 			else {
 				points.clear();
+				point_curved.clear();
+				edge_control_out.clear();
+				edge_control_in.clear();
 				mask_regions.clear();
 				drawing = true;
 				shape_start = script_point;
 				points.clear();
+				point_curved.clear();
+				edge_control_out.clear();
+				edge_control_in.clear();
 				if (mode == MASK_RECTANGLE)
 					UpdateRectangle(script_point);
 				else
@@ -2022,8 +2177,28 @@ void VisualToolMask::OnMouseEvent(wxMouseEvent& event) {
 		}
 	}
 
+	if (dragged_control >= 0 && (event.Dragging() || event.LeftUp())) {
+		size_t edge = static_cast<size_t>(dragged_control) / 2;
+		if (edge < edge_control_out.size()) {
+			if (dragged_control % 2 == 0) edge_control_out[edge] = ToScriptCoords(mouse_pos);
+			else edge_control_in[edge] = ToScriptCoords(mouse_pos);
+		}
+		if (event.LeftUp()) {
+			dragged_control = -1;
+			if (parent->HasCapture())
+				parent->ReleaseMouse();
+			parent->SetFocus();
+			hovered_control = ControlAt(mouse_pos);
+		}
+		parent->Render();
+		return;
+	}
+
 	if (dragged_point >= 0 && (event.Dragging() || event.LeftUp())) {
 		points[dragged_point] = ToScriptCoords(mouse_pos);
+		// A handle nobody has touched follows its point; one that has been shaped stays
+		// where it was put, so moving an anchor does not undo the shaping.
+		SeedEdgeControls();
 		if (event.LeftUp()) {
 			dragged_point = -1;
 			if (parent->HasCapture())
@@ -2132,12 +2307,25 @@ bool VisualToolMask::OnKeyEvent(wxKeyEvent& event) {
 	alt_key = alt_key || key == WXK_RALT;
 #endif
 	if (alt_key) {
-		if (mode == MASK_COLOR || mode == MASK_BRUSH)
+		if (event.IsAutoRepeat()) return true;
+		// Where a tool has a twin - line and curve, brush and square - Alt flips between
+		// the two of them instead of walking the whole toolbar. A single press cannot do
+		// it: it would have moved on before the second press could be recognised, so the
+		// pair switch waits for a quick double press and the single press does nothing.
+		if (IsPointMode()) {
+			auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count();
+			bool double_alt = last_alt_press_ms != 0 && now - last_alt_press_ms <= 450;
+			last_alt_press_ms = double_alt ? 0 : now;
+			if (double_alt)
+				SetSubTool(mode == MASK_POINTS ? MASK_BEZIER : MASK_POINTS);
 			return true;
-		if (!event.IsAutoRepeat())
-			SetSubTool(mode == MASK_COLOR ? MASK_RECTANGLE : (mode + 1) % MASK_COLOR);
+		}
+		if (mode == MASK_COLOR || mode == MASK_BRUSH) return true;
+		SetSubTool((mode + 1) % MASK_COLOR);
 		return true;
 	}
+	last_alt_press_ms = 0;
 	if ((event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) &&
 		CanCreateMask() && !drawing) {
 		CreateMask();
@@ -2154,6 +2342,9 @@ void VisualToolMask::Draw() {
 	if (ai_refining && c->selectionController->GetActiveLine() != ai_session_line) {
 		ResetAIRefinement();
 		points.clear();
+		point_curved.clear();
+		edge_control_out.clear();
+		edge_control_in.clear();
 		mask_regions.clear();
 		drawing = false;
 	}
@@ -2174,7 +2365,21 @@ void VisualToolMask::Draw() {
 		if (mode == MASK_RECTANGLE) {
 			gl.DrawRectangle(icon - Vector2D(4.f, 3.f), icon + Vector2D(4.f, 3.f));
 		}
-		else if (mode == MASK_POINTS) {
+		else if (mode == MASK_BEZIER) {
+			// An arc rather than the line tool's corner, so the badge says which of the
+			// two will join the next point before it is placed.
+			SplineCurve arc(icon + Vector2D(-4.f, 2.f), icon + Vector2D(-3.f, -4.f),
+				icon + Vector2D(3.f, -4.f), icon + Vector2D(4.f, 2.f));
+			Vector2D previous = arc.p1;
+			for (int step = 1; step <= 8; ++step) {
+				Vector2D at = arc.GetPoint(step / 8.f);
+				gl.DrawLine(previous, at);
+				previous = at;
+			}
+			gl.DrawCircle(icon + Vector2D(-4.f, 2.f), 1.f);
+			gl.DrawCircle(icon + Vector2D(4.f, 2.f), 1.f);
+		}
+		else if (IsPointMode()) {
 			gl.DrawLine(icon + Vector2D(-4.f, 2.f), icon + Vector2D(0.f, -3.f));
 			gl.DrawLine(icon + Vector2D(0.f, -3.f), icon + Vector2D(4.f, 2.f));
 			gl.DrawCircle(icon + Vector2D(-4.f, 2.f), 1.f);
@@ -2268,7 +2473,15 @@ void VisualToolMask::Draw() {
 			}
 		};
 		for (auto const& region : mask_regions) append_region(region);
-		append_region(points);
+		// Show the curve rather than the polygon it is built from, so what is on screen is
+		// what the mask will be made of.
+		// Show the edges as they will be written, not as the point list behind them.
+		if (points.size() >= 2 &&
+			std::find(point_curved.begin(), point_curved.end(), 1) != point_curved.end())
+			append_region(FlattenCurves(CurveThroughPoints(points, point_curved,
+				edge_control_out, edge_control_in)));
+		else
+			append_region(points);
 		for (Vector2D point : points) {
 			Vector2D screen = FromScriptCoords(point);
 			screen_points.push_back(screen);
@@ -2285,11 +2498,108 @@ void VisualToolMask::Draw() {
 		// shape being built still had only its two points.
 		if (screen_points.size() == 2)
 			gl.DrawLine(screen_points[0], screen_points[1]);
-		gl.SetFillColour(point_colour, .65f);
-		for (size_t i = 0; i < screen_points.size(); ++i)
-			gl.DrawCircle(screen_points[i], static_cast<int>(i) == hovered_point ||
-				static_cast<int>(i) == dragged_point ? 3.f : 1.5f);
-		if (mode == MASK_POINTS && mouse_inside && dragged_point < 0 && !screen_points.empty() &&
+		// Handles in screen space, kept for the direction arrows further down as well.
+		std::vector<Vector2D> control_screen_out(point_curved.size());
+		std::vector<Vector2D> control_screen_in(point_curved.size());
+		for (size_t edge = 0; edge < point_curved.size(); ++edge) {
+			if (edge >= edge_control_out.size()) break;
+			control_screen_out[edge] = FromScriptCoords(edge_control_out[edge]);
+			control_screen_in[edge] = FromScriptCoords(edge_control_in[edge]);
+		}
+		// Two points describe no curve yet, and an edge that has never been seeded has no
+		// handles to show - drawing those put a pair of squares at the origin.
+		if (IsPointMode() && screen_points.size() >= 2) {
+			for (size_t edge = 0; edge < point_curved.size() && edge < screen_points.size();
+					++edge) {
+				if (!point_curved[edge] || edge >= edge_control_out.size()) continue;
+				if (!edge_control_out[edge] || !edge_control_in[edge]) continue;
+				Vector2D anchor = screen_points[edge];
+				Vector2D far_anchor = screen_points[(edge + 1) % screen_points.size()];
+				Vector2D out = FromScriptCoords(edge_control_out[edge]);
+				Vector2D in = FromScriptCoords(edge_control_in[edge]);
+				// The vector clip's own handles, to the pixel: dashed to the point they
+				// belong to, then a square of the shared handle size.
+				gl.SetLineColour(line_colour, .9f, 1);
+				gl.DrawDashedLine(anchor, out, 6.f);
+				gl.DrawDashedLine(far_anchor, in, 6.f);
+				int first = static_cast<int>(edge) * 2;
+				for (auto [handle, id] : {std::pair<Vector2D, int>{out, first},
+						std::pair<Vector2D, int>{in, first + 1}}) {
+					bool active = id == hovered_control || id == dragged_control;
+					gl.SetFillColour(active ? point_colour : line_colour, .6f);
+					gl.SetLineColour(line_colour, .5f, 1);
+					gl.DrawRectangle(handle - featureSize, handle + featureSize);
+				}
+			}
+		}
+		// Points are drawn the size the vector clip draws its own, from the same setting.
+		for (size_t i = 0; i < screen_points.size(); ++i) {
+			bool active = static_cast<int>(i) == hovered_point ||
+				static_cast<int>(i) == dragged_point;
+			wxColour colour = active ? point_colour : line_colour;
+			gl.SetFillColour(colour, .6f);
+			gl.SetLineColour(colour, .5f, 1);
+			gl.DrawCircle(screen_points[i], featureSize * 2.f / 3.f);
+		}
+		// The same switch the vector clip reads, so the two tools are informative or quiet
+		// together rather than each having its own setting to find, and they say the same
+		// things in the same way: an arrow at the middle of every edge for its direction,
+		// and a crosshair with coordinates on whichever point is under the cursor.
+		if (IsPointMode() && OPT_GET("Video/Clip Info")->GetBool() &&
+			screen_points.size() >= 2) {
+			auto screen_curves = CurveThroughPoints(screen_points, point_curved,
+				control_screen_out, control_screen_in);
+			gl.SetLineColour(to_wx(agi::Color(255, 255, 255)), .5f, 2);
+			constexpr float arrow_length = 6.f;
+			constexpr float arrow_width = 2.5f;
+			for (auto const& curve : screen_curves) {
+				// A curve is sampled either side of its middle for the same answer a
+				// straight edge gives outright: which way it is going where the arrow sits.
+				Vector2D tip, before;
+				if (curve.type == SplineCurve::BICUBIC) {
+					tip = curve.GetPoint(.5f);
+					before = curve.GetPoint(.44f);
+				}
+				else {
+					tip = (curve.p1 + curve.p2) * .5f;
+					before = curve.p1;
+				}
+				Vector2D direction = tip - before;
+				float length = direction.Len();
+				if (length < 1e-6f) continue;
+				direction = direction / length;
+				Vector2D across(-direction.Y(), direction.X());
+				gl.DrawLine(tip, tip - direction * arrow_length + across * arrow_width);
+				gl.DrawLine(tip, tip - direction * arrow_length - across * arrow_width);
+			}
+
+			int marked = dragged_point >= 0 ? dragged_point : hovered_point;
+			if (marked >= 0 && static_cast<size_t>(marked) < screen_points.size()) {
+				Vector2D at = screen_points[marked];
+				gl.SetLineColour(to_wx(agi::Color(255, 255, 255)), .5f, 1);
+				gl.DrawDashedLine(Vector2D(0.f, at), Vector2D(canvas_size, at), 11.f);
+				gl.DrawDashedLine(Vector2D(at, 0.f), Vector2D(at, canvas_size), 11.f);
+				gl_text->SetFont("Verdana", 10, false, false);
+				gl_text->SetColour(agi::Color(255, 255, 255, 175));
+				std::string text = points[marked].Str();
+				int width = 0, height = 0;
+				gl_text->GetExtent(text, width, height);
+				// Tuck the label into the quadrant of the cross that has room for it.
+				int x = static_cast<int>(at.X());
+				int y = static_cast<int>(at.Y());
+				bool right = true;
+				if (x + width + 14 > canvas_size.X()) { x -= width + 4; right = false; }
+				else x += 4;
+				y -= height + 4;
+				if (y < 4) {
+					y += height + 8;
+					if (right) x += 10;
+				}
+				gl_text->Print(text, x, y);
+			}
+		}
+
+		if (IsPointMode() && mouse_inside && dragged_point < 0 && !screen_points.empty() &&
 			mouse_pos.Y() >= TopBarHeight() && ActionAt(mouse_pos) == VisualToolMaskAction::None) {
 			// Clicking stores the raw script point, so a point can legitimately sit
 			// outside the video rect. Clamping the preview to the script resolution
@@ -2721,7 +3031,29 @@ std::string VisualToolMask::EncodeDrawing() const {
 		}
 	};
 	for (auto const& region : mask_regions) append_region(region);
-	append_region(points);
+	// Edges drawn with the curve tool are written as bezier segments and the rest as
+	// lines, in the order they were placed. The points are still the points; only the way
+	// consecutive ones are joined differs, and that is recorded per edge.
+	if (points.size() >= 2 &&
+		std::find(point_curved.begin(), point_curved.end(), 1) != point_curved.end()) {
+		auto curves = CurveThroughPoints(points, point_curved, edge_control_out, edge_control_in);
+		if (!encoded.empty()) encoded += " ";
+		encoded += "m " + curves.front().p1.Str(' ', 1);
+		char last = 'm';
+		for (auto const& curve : curves) {
+			if (curve.type == SplineCurve::BICUBIC) {
+				if (last != 'b') { encoded += " b"; last = 'b'; }
+				encoded += " " + curve.p2.Str(' ', 1) + " " + curve.p3.Str(' ', 1) +
+					" " + curve.p4.Str(' ', 1);
+			}
+			else {
+				if (last != 'l') { encoded += " l"; last = 'l'; }
+				encoded += " " + curve.p2.Str(' ', 1);
+			}
+		}
+	}
+	else
+		append_region(points);
 	return encoded;
 }
 
@@ -3045,6 +3377,9 @@ bool VisualToolMask::AcceptAIRefinement() {
 	c->selectionController->SetSelectionAndActive(std::move(selection), lines.front());
 	ResetAIRefinement();
 	points.clear();
+	point_curved.clear();
+	edge_control_out.clear();
+	edge_control_in.clear();
 	mask_regions.clear();
 	drawing = false;
 	UpdateActionTooltip(VisualToolMaskAction::None);
@@ -3241,6 +3576,9 @@ void VisualToolMask::CreateAIMask(VisualToolMaskAction action) {
 	}
 	mask_regions.clear();
 	points.clear();
+	point_curved.clear();
+	edge_control_out.clear();
+	edge_control_in.clear();
 	mask_undo_history.clear();
 	mask_redo_history.clear();
 	drawing = false;
