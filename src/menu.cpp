@@ -379,7 +379,12 @@ void process_menu_item(wxMenu *parent, agi::Context *c, json::Object const& ele,
 		return;
 	}
 
-	std::string submenu, recent, command, text, special;
+	std::string submenu, recent, command, text, special, include;
+	if (read_entry(ele, "include", &include)) {
+		for (auto const& item : get_menu(include))
+			process_menu_item(parent, c, item, cm);
+		return;
+	}
 	read_entry(ele, "special", &special);
 
 #ifdef __WXMAC__

@@ -13,6 +13,7 @@
 #include "dialogs.h"
 #include "include/aegisub/context.h"
 #include "typesetting_gradient.h"
+#include "utils.h"
 #include "video_controller.h"
 #include "video_display.h"
 
@@ -587,6 +588,7 @@ class GradientBlock {
 	std::function<void()> layout_changed;
 	std::function<void(int, int)> copy_stops;
 	std::function<void(bool)> settings_changed;
+	wxCheckBox *enabled = nullptr;
 	GradientSlider *slider = nullptr;
 
 public:
@@ -604,7 +606,7 @@ public:
 	, settings_changed(std::move(settings_changed)) {
 		auto main = new wxBoxSizer(wxVERTICAL);
 		auto header = new wxBoxSizer(wxHORIZONTAL);
-		auto enabled = new wxCheckBox(content, wxID_ANY, _("Apply to this color"));
+		enabled = new wxCheckBox(content, wxID_ANY, _("Apply to this color"));
 		enabled->SetValue(this->channel.enabled);
 		enabled->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& event) {
 			this->channel.enabled = event.IsChecked();
@@ -643,6 +645,10 @@ public:
 	}
 
 	wxCollapsiblePane *Window() const { return pane; }
+	void RefreshValues() {
+		enabled->SetValue(channel.enabled);
+		slider->Refresh();
+	}
 	void RefreshStops() { slider->Refresh(); }
 };
 
@@ -650,6 +656,7 @@ class DialogGradient final : public wxDialog {
 	agi::Context *context;
 	Settings settings;
 	typesetting::gradient::PreviewSession preview_session;
+	VisualToolPreviewInterface preview_interface;
 	wxTimer preview_timer;
 	wxTimer playback_timer;
 	wxRadioBox *kind = nullptr;
@@ -784,6 +791,25 @@ class DialogGradient final : public wxDialog {
 		SchedulePreview(immediate);
 	}
 
+	void LoadClipboardSettings(Settings pasted) {
+		pasted.geometry.valid = false;
+		pasted.shared_motion = true;
+		settings = std::move(pasted);
+		kind->SetSelection(settings.kind == Kind::Radial ? 1 : 0);
+		for (size_t i = 0; i < output_choices.size(); ++i)
+			output_choices[i]->SetValue(i == static_cast<size_t>(settings.output));
+		angle->SetValue(settings.angle);
+		angle_dial->SetValue(settings.angle);
+		pixels_per_strip->SetValue(settings.pixels_per_strip);
+		bool rectangular = UsesRectangularClip(settings);
+		non_rect_overlap = rectangular ? 0.4 : settings.anti_strip_overlap;
+		anti_strip_overlap->SetValue(rectangular ? 0.0 : settings.anti_strip_overlap);
+		motion_editor->RefreshValues();
+		for (auto const& block : blocks) block->RefreshValues();
+		UpdateControls(true);
+		LayoutContent();
+	}
+
 	void Accept() {
 		UpdateControls();
 		preview_timer.Stop();
@@ -813,6 +839,19 @@ public:
 	, preview_session(context)
 	, preview_timer(this)
 	, playback_timer(this) {
+		preview_interface.AttachHost(context->videoDisplay->GetPreviewBar(), [this](int id) {
+			if (id == wxID_OK) Accept();
+			else if (id == wxID_CANCEL) EndModal(wxID_CANCEL);
+		}, {}, false);
+		VisualToolPreviewInterface::Page preview_page;
+		preview_page.controls = {
+			{wxID_OK, VisualToolPreviewInterface::ControlKind::Button, _("Accept"),
+				VisualToolPreviewInterface::ControlStyle::Accept},
+			{wxID_CANCEL, VisualToolPreviewInterface::ControlKind::Button, _("Cancel"),
+				VisualToolPreviewInterface::ControlStyle::Cancel}
+		};
+		preview_page.message = _("Gradient");
+		preview_interface.SetPage(std::move(preview_page));
 		settings.shared_motion = true;
 		bool rectangular = UsesRectangularClip(settings);
 		non_rect_overlap = rectangular ? 0.4 : settings.anti_strip_overlap;
@@ -974,8 +1013,21 @@ public:
 			sections->Add(block->Window(), 0, wxEXPAND | wxBOTTOM, 6);
 		main->Add(sections_panel, 0, wxEXPAND | wxLEFT | wxRIGHT, 8);
 
+		auto bottom = new wxBoxSizer(wxHORIZONTAL);
+		Settings clipboard_settings;
+		if (typesetting::gradient::SettingsFromClipboard(GetClipboard(), clipboard_settings)) {
+			auto paste = new wxButton(this, wxID_ANY, _("Paste gradient"));
+			paste->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+				Settings pasted;
+				if (typesetting::gradient::SettingsFromClipboard(GetClipboard(), pasted))
+					LoadClipboardSettings(std::move(pasted));
+			});
+			bottom->Add(paste, 0, wxALIGN_CENTER_VERTICAL);
+		}
+		bottom->AddStretchSpacer();
 		auto buttons = CreateStdDialogButtonSizer(wxOK | wxCANCEL);
-		main->Add(buttons, 0, wxEXPAND | wxALL, 8);
+		bottom->Add(buttons, 0, wxALIGN_CENTER_VERTICAL);
+		main->Add(bottom, 0, wxEXPAND | wxALL, 8);
 		SetSizer(main);
 
 		preview_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent&) {

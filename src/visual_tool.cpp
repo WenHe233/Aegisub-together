@@ -43,6 +43,7 @@
 #include <boost/algorithm/string/replace.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <type_traits>
 #include <unordered_set>
@@ -664,6 +665,48 @@ int VisualToolBase::GetLineAlignment(AssDialogue *diag) {
 	return an;
 }
 
+namespace {
+/// Where a curve really reaches along one axis.
+///
+/// A cubic stays inside its four control points but hardly ever touches the middle two, so
+/// measuring the handles gives a drawing a margin of air it does not have - and everything
+/// that fits a drawing into something else then fits the air as well. The curve's own ends
+/// are always on it; between them it turns where its derivative does, which is a quadratic
+/// with at most two roots.
+void CurveSpan(float p1, float p2, float p3, float p4, float& low, float& high) {
+	low = std::min(low, std::min(p1, p4));
+	high = std::max(high, std::max(p1, p4));
+
+	double a = -p1 + 3.0 * p2 - 3.0 * p3 + p4;
+	double b = 2.0 * (p1 - 2.0 * p2 + p3);
+	double c = p2 - p1;
+
+	double roots[2];
+	int count = 0;
+	if (std::abs(a) < 1e-9) {
+		if (std::abs(b) > 1e-9) roots[count++] = -c / b;
+	}
+	else {
+		double discriminant = b * b - 4.0 * a * c;
+		if (discriminant >= 0) {
+			double root = std::sqrt(discriminant);
+			roots[count++] = (-b + root) / (2.0 * a);
+			roots[count++] = (-b - root) / (2.0 * a);
+		}
+	}
+
+	for (int i = 0; i < count; ++i) {
+		double t = roots[i];
+		if (!(t > 0) || !(t < 1)) continue;
+		double s = 1.0 - t;
+		double at = s * s * s * p1 + 3.0 * s * s * t * p2 + 3.0 * s * t * t * p3 +
+			t * t * t * p4;
+		low = std::min(low, (float)at);
+		high = std::max(high, (float)at);
+	}
+}
+}
+
 std::pair<Vector2D, Vector2D> VisualToolBase::GetLineBaseExtents(AssDialogue *diag) {
 	double width = 0.;
 	double height = 0.;
@@ -693,6 +736,11 @@ std::pair<Vector2D, Vector2D> VisualToolBase::GetLineBaseExtents(AssDialogue *di
 		float bot = -std::numeric_limits<float>::max();
 
 		for (SplineCurve curve : spline) {
+			if (curve.type == SplineCurve::BICUBIC) {
+				CurveSpan(curve.p1.X(), curve.p2.X(), curve.p3.X(), curve.p4.X(), left, right);
+				CurveSpan(curve.p1.Y(), curve.p2.Y(), curve.p3.Y(), curve.p4.Y(), top, bot);
+				continue;
+			}
 			for (Vector2D pt : curve.AnchorPoints()) {
 				left = std::min(left, pt.X());
 				top = std::min(top, pt.Y());
@@ -728,6 +776,30 @@ std::pair<Vector2D, Vector2D> VisualToolBase::GetLineBaseExtents(AssDialogue *di
 		}
 		return std::make_pair(Vector2D(0, 0), Vector2D(width, height));
 	}
+}
+
+std::vector<Vector2D> VisualToolBase::GetLineDrawingPoints(AssDialogue *diag) {
+	auto blocks = diag->ParseTags();
+	param_vec ptag = find_tag(blocks, "\\p");
+	if (!ptag || !ptag->front().Get(0)) return {};
+
+	Spline spline;
+	spline.SetScale(ptag->front().Get(1));
+	spline.DecodeFromAss(join(blocks | agi::of_type<AssDialogueBlockDrawing>() |
+		boost::adaptors::transformed([&](AssDialogueBlock *d) { return d->GetText(); }), ""));
+
+	std::vector<float> flat;
+	for (SplineCurve curve : spline) {
+		flat.push_back(curve.p1.X());
+		flat.push_back(curve.p1.Y());
+		curve.GetPoints(flat);
+	}
+
+	std::vector<Vector2D> points;
+	points.reserve(flat.size() / 2);
+	for (size_t at = 0; at + 1 < flat.size(); at += 2)
+		points.emplace_back(flat[at], flat[at + 1]);
+	return points;
 }
 
 void VisualToolBase::GetLineClip(AssDialogue *diag, Vector2D &p1, Vector2D &p2, bool &inverse) {

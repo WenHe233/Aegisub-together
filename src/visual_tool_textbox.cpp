@@ -121,6 +121,12 @@ VisualToolTextBox::VisualToolTextBox(VideoDisplay *parent, agi::Context *context
 	outline_icon = GETBUNDLE(button_color_three, 20).GetBitmap(wxSize(20, 20)).ConvertToImage();
 	shadow_icon = GETBUNDLE(button_color_four, 20).GetBitmap(wxSize(20, 20)).ConvertToImage();
 	Load(create_new);
+	preview_interface.AttachHost(parent->GetPreviewBar(), [this](int id) {
+		this->parent->SetFocus();
+		PerformAction(static_cast<Action>(id));
+	}, [this](int id, double value, bool final) {
+		UpdateExternalSlider(static_cast<Action>(id), value, final);
+	});
 	caret_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent&) {
 		if (!active || leaving || waiting_for_box) return;
 		caret_visible = !caret_visible;
@@ -316,6 +322,7 @@ void VisualToolTextBox::Reject() {
 }
 
 void VisualToolTextBox::ExitTool() {
+	preview_interface.Clear();
 	if (WindowGoing()) return;
 	agi::Context *context = c;
 	std::string command = return_tool.empty() ? "video/tool/cross" : return_tool;
@@ -732,10 +739,12 @@ std::pair<Vector2D, Vector2D> VisualToolTextBox::SliderValueBounds(Action action
 }
 
 float VisualToolTextBox::TopBarHeight() const {
+	if (preview_interface.HasExternalHost()) return 0.f;
 	return 8.f + row_height + 8.f;
 }
 
 VisualToolTextBox::Action VisualToolTextBox::ActionAt(Vector2D position) const {
+	if (preview_interface.HasExternalHost()) return Action::None;
 	for (auto action : AllActions()) {
 		auto bounds = ActionBounds(action);
 		if (position.X() >= bounds.first.X() && position.X() <= bounds.second.X() &&
@@ -772,6 +781,82 @@ void VisualToolTextBox::PerformAction(Action action) {
 		case Action::Cancel: Reject(); break;
 		default: break;
 	}
+}
+
+void VisualToolTextBox::UpdateExternalSlider(Action action, double value, bool final) {
+	if (!IsSlider(action) || !ActionEnabled(action)) return;
+	if (dragging_slider != action) {
+		if (dragging_slider != Action::None && drag_before)
+			Remember(std::move(*drag_before));
+		dragging_slider = action;
+		slider_selection = SelectedRange();
+		drag_before = document;
+	}
+	ApplySliderValue(action, value, slider_selection);
+	UpdatePreview();
+	if (final) {
+		if (drag_before) Remember(std::move(*drag_before));
+		drag_before.reset();
+		dragging_slider = Action::None;
+		parent->SetFocus();
+	}
+}
+
+void VisualToolTextBox::UpdatePreviewInterface() const {
+	using Interface = VisualToolPreviewInterface;
+	Interface::Page page;
+	auto add = [&](Action action, Interface::ControlKind kind, wxString label,
+		Interface::ControlStyle style = Interface::ControlStyle::Neutral) -> Interface::Control& {
+		Interface::Control control;
+		control.id = static_cast<int>(action);
+		control.kind = kind;
+		control.label = std::move(label);
+		control.style = style;
+		control.enabled = ActionEnabled(action);
+		page.controls.push_back(std::move(control));
+		return page.controls.back();
+	};
+	add(Action::Undo, Interface::ControlKind::Undo, wxString());
+	add(Action::Redo, Interface::ControlKind::Redo, wxString());
+	auto& font = add(Action::Font, Interface::ControlKind::Button, _("Font"));
+	font.icon_only = true;
+	font.icon = Interface::ControlIcon::Font;
+	auto icon_button = [&](Action action, wxString label, wxImage const& bitmap) {
+		auto& control = add(action, Interface::ControlKind::Button, std::move(label));
+		control.icon_only = true;
+		control.bitmap = wxBitmap(bitmap);
+	};
+	icon_button(Action::Primary, _("Text color"), primary_icon);
+	icon_button(Action::Outline, _("Border color"), outline_icon);
+	icon_button(Action::ShadowColour, _("Shadow color"), shadow_icon);
+	auto alignment = [&](Action action, wxString label, typesetting::textbox::Alignment value,
+		Interface::ControlIcon icon) {
+		auto& control = add(action, Interface::ControlKind::Button, std::move(label));
+		control.selected = document.alignment == value;
+		control.icon_only = true;
+		control.icon = icon;
+	};
+	alignment(Action::AlignLeft, _("Left"), typesetting::textbox::Alignment::Left,
+		Interface::ControlIcon::AlignLeft);
+	alignment(Action::AlignCentre, _("Centre"), typesetting::textbox::Alignment::Centre,
+		Interface::ControlIcon::AlignCentre);
+	alignment(Action::AlignRight, _("Right"), typesetting::textbox::Alignment::Right,
+		Interface::ControlIcon::AlignRight);
+	alignment(Action::AlignJustified, _("Justify"), typesetting::textbox::Alignment::Justified,
+		Interface::ControlIcon::AlignJustified);
+	for (auto action : {Action::Border, Action::Shadow, Action::LineSpacing, Action::Padding}) {
+		auto [minimum, maximum] = SliderRange(action);
+		auto& control = add(action, Interface::ControlKind::Slider, DisplayLabelFor(action));
+		control.value = SliderValue(action);
+		control.minimum = minimum;
+		control.maximum = maximum;
+		control.step = .5;
+		control.value_text = to_wx(Decimal(control.value));
+		control.width = action == Action::LineSpacing ? 175 : 155;
+	}
+	add(Action::Apply, Interface::ControlKind::Button, _("Accept"), Interface::ControlStyle::Accept);
+	add(Action::Cancel, Interface::ControlKind::Button, _("Cancel"), Interface::ControlStyle::Cancel);
+	preview_interface.SetPage(std::move(page));
 }
 
 void VisualToolTextBox::NormalizeRectangle() {
@@ -1134,6 +1219,10 @@ bool VisualToolTextBox::OnKeyEvent(wxKeyEvent& event) {
 		}
 		if (!shortcut) {
 			event.DoAllowNextEvent();
+			// wxGTK only generates the translated character event when the hook is
+			// also skipped. DoAllowNextEvent alone is sufficient on MSW, but not on
+			// GTK, where keeping the hook handled swallows all printable input.
+			event.Skip();
 			return true;
 		}
 		return true;
@@ -1189,6 +1278,9 @@ bool VisualToolTextBox::OnKeyEvent(wxKeyEvent& event) {
 	// preventing the video's hotkeys from consuming this physical key.
 	if (!shortcut) {
 		event.DoAllowNextEvent();
+		// Keep the hook unhandled so wxGTK can pass the key through its input
+		// method and emit the layout-aware wxEVT_CHAR consumed by OnTextInput.
+		event.Skip();
 		return true;
 	}
 	return false;
@@ -1259,45 +1351,35 @@ void VisualToolTextBox::DrawAlignmentIcon(Action action, Vector2D first,
 }
 
 void VisualToolTextBox::DrawTopBar() {
-	gl.SetFillColour(*wxBLACK, .76f);
-	gl.SetLineColour(*wxBLACK, 0.f, 1);
-	gl.DrawRectangle(Vector2D(0.f, 0.f), Vector2D(canvas_size.X(), TopBarHeight()));
+	UpdatePreviewInterface();
+	if (preview_interface.HasExternalHost()) return;
+	preview_interface.DrawBackground(gl, canvas_size, TopBarHeight());
 	gl_text->SetFont("Verdana", 9, false, false);
 
-	auto rounded = [&](Vector2D first, Vector2D second, wxColour colour) {
-		float radius = 6.f;
-		gl.SetFillColour(colour, 1.f);
-		gl.SetLineColour(colour, 0.f, 1);
-		gl.DrawRectangle(first + Vector2D(radius, 0.f), second - Vector2D(radius, 0.f));
-		gl.DrawRectangle(first + Vector2D(0.f, radius), second - Vector2D(0.f, radius));
-		gl.DrawCircle(first + Vector2D(radius, radius), radius);
-		gl.DrawCircle(Vector2D(second.X() - radius, first.Y() + radius), radius);
-		gl.DrawCircle(Vector2D(first.X() + radius, second.Y() - radius), radius);
-		gl.DrawCircle(second - Vector2D(radius, radius), radius);
-	};
 	for (auto action : AllActions()) {
 		auto [first, second] = ActionBounds(action);
 		bool enabled = ActionEnabled(action);
-		wxColour colour = enabled ? wxColour(55, 59, 64) : wxColour(75, 77, 80);
-		if (enabled && hovered_action == action) colour = colour.ChangeLightness(120);
 		bool alignment_active =
 			(action == Action::AlignLeft && document.alignment == typesetting::textbox::Alignment::Left) ||
 			(action == Action::AlignCentre && document.alignment == typesetting::textbox::Alignment::Centre) ||
 			(action == Action::AlignRight && document.alignment == typesetting::textbox::Alignment::Right) ||
 			(action == Action::AlignJustified && document.alignment == typesetting::textbox::Alignment::Justified);
-		if (alignment_active)
-			colour = wxColour(35, 125, 153);
-		rounded(first, second, colour);
-		gl_text->SetColour(agi::Color(255, 255, 255, 255));
 		if (action == Action::Undo || action == Action::Redo) {
-			float direction = action == Action::Undo ? -1.f : 1.f;
-			Vector2D centre = (first + second) * .5f;
-			gl.SetLineColour(enabled ? *wxWHITE : wxColour(150, 150, 150), 1.f, 2);
-			gl.DrawLine(centre - Vector2D(direction * 6.f, 0.f), centre + Vector2D(direction * 6.f, 0.f));
-			gl.DrawLine(centre + Vector2D(direction * 6.f, 0.f), centre + Vector2D(direction * 2.f, -4.f));
-			gl.DrawLine(centre + Vector2D(direction * 6.f, 0.f), centre + Vector2D(direction * 2.f, 4.f));
+			preview_interface.DrawHistory(gl, {first, second}, action == Action::Redo,
+				enabled, hovered_action == action);
 			continue;
 		}
+		if (action == Action::Apply || action == Action::Cancel) {
+			auto style = action == Action::Apply ?
+				VisualToolPreviewInterface::ControlStyle::Accept :
+				VisualToolPreviewInterface::ControlStyle::Cancel;
+			preview_interface.DrawButton(gl, *gl_text, {first, second}, DisplayLabelFor(action),
+				style, enabled, hovered_action == action);
+			continue;
+		}
+		preview_interface.DrawPanel(gl, {first, second}, enabled,
+			hovered_action == action, alignment_active);
+		gl_text->SetColour(agi::Color(255, 255, 255, 255));
 		if (action == Action::Font) {
 			gl_text->SetFont("Verdana", 9, true, false);
 			gl_text->SetColour(agi::Color(255, 255, 255, 255));

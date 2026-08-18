@@ -48,6 +48,7 @@
 class VideoController;
 class VideoOutGL;
 class VisualToolBase;
+class VisualToolPreviewBar;
 class wxComboBox;
 class wxSlider;
 class wxTextCtrl;
@@ -118,8 +119,11 @@ class VideoDisplay final : public wxGLCanvas {
 
 	/// The active visual typesetting tool
 	std::unique_ptr<VisualToolBase> tool;
+	agi::signal::Signal<> AnnounceToolChanged;
 	/// The toolbar used by individual typesetting tools
 	wxToolBar* toolBar;
+	/// Native strip immediately above this canvas for non-destructive preview controls.
+	VisualToolPreviewBar *previewBar;
 
 	/// The OpenGL context for this display
 	std::unique_ptr<wxGLContext> glContext;
@@ -244,6 +248,7 @@ public:
 		wxComboBox *zoomBox,
 		wxComboBox *speedBox,
 		wxSlider *brightnessSlider,
+		VisualToolPreviewBar *previewBar,
 		wxWindow* parent,
 		agi::Context *context);
 	~VideoDisplay();
@@ -270,11 +275,16 @@ public:
 	Vector2D GetMousePosition() const;
 
 	void SetTool(std::unique_ptr<VisualToolBase> new_tool);
+	DEFINE_SIGNAL_ADDERS(AnnounceToolChanged, AddToolChangeListener)
+	VisualToolPreviewBar *GetPreviewBar() const { return previewBar; }
 	/// Prevent the second click of a textbox-dismissal double click from being
 	/// interpreted by the fallback cross tool as a positioning command.
 	void SuppressTextboxDoubleClick(wxPoint position);
 
-	void SetSubTool(int subtool) const { tool->SetSubTool(subtool); };
+	void SetSubTool(int subtool) {
+		tool->SetSubTool(subtool);
+		AnnounceToolChanged();
+	};
 
 	void UpdateTool(int subtool) const { tool->UpdateTool(subtool); };
 

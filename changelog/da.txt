@@ -1,3 +1,23 @@
+Version 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Den øverste bjælke er fjernet fra videoen og er blevet mere kompakt
+- Flytning under forvrængning flytter i sin egen perspektiv og håndterer ekstreme \org-værdier
+- Forvrængning + Fri transformation tilføjer automatisk \q2
+- Automatisk perspektivfunktion
+    - placerer de valgte linjer i perspektiv med 4 punkter
+    - arbejder ud fra et gult tilpasseligt reference-rektangel
+    - hvis den aktive linje er en maske, bruges den som rektangel
+    - kan flyttes efter placering for finjustering i det pågældende perspektiv
+- Gradientlinjer har fået 2 muligheder i højrekliksmenuen: de kan kopieres og indsættes i en ny tekst, og redigering kan åbnes
+- Finjustering af farvevælger
+- Rettelse af tekstboks
+- Forhåndsvisningslinjer kan løbe uden for videoen ved oprettelse af masker
+- Det er muligt at kopiere en hel linje ved søgning i undertekster
+- Bevarer markeringen af tekstboksen ved højreklik efter markering fra højre
+- Penslen løser det samme med færre punkter (bezier)
+- Maskeoprettelse tillader også bezier, der kan skiftes med dobbelt ALT
+- Undertekstens gennemsigtighed kan ændres visuelt
+
 Version 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Tekstboksfunktion i menuen Formázás

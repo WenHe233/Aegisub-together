@@ -23,7 +23,6 @@
 #include "visual_feature.h"
 #include "visual_tool.h"
 
-#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -61,7 +60,8 @@ enum class VisualToolTransformAction {
 	/// answers the same question as the two above, which is why it rules them out.
 	MaintainDecor,
 	RecalcBlur,
-	RecalcClip
+	RecalcClip,
+	AutoPerspectiveSize
 };
 
 /// Bend or distort the selected drawings by dragging handles over the video.
@@ -76,6 +76,21 @@ enum class VisualToolTransformAction {
 /// and forth cannot make the shape creep.
 class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	VisualToolTransformMode mode;
+	/// A guided distort in which the target quadrilateral is drawn as four directed points.
+	bool auto_perspective = false;
+	/// Uniform percentage applied to the whole selection in the target's perspective plane.
+	double auto_perspective_size = 100.0;
+	/// The rectangle the selection is proportioned by, as four points of its own. Seeded from
+	/// the active line's shape and then left to the user, who can drag them: no rectangle fits
+	/// every shape, and the one the fit is measured from is worth being able to say exactly.
+	Vector2D source_corners[4];
+	bool source_moved = false;
+	static constexpr size_t no_feature = static_cast<size_t>(-1);
+	/// Where the four source handles begin in `features`, or no_feature while they are hidden.
+	size_t source_feature_first = no_feature;
+	/// The unfinished target path. It is cleared as soon as four valid points are applied,
+	/// so the construction points never obscure the result being judged.
+	std::vector<Vector2D> auto_perspective_points;
 
 	std::unique_ptr<OpenGLText> gl_text;
 
@@ -176,6 +191,9 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 		/// without moving anything; one that is would collapse into a single row.
 		bool has_wrap_style = false;
 		bool wrapped = false;
+		/// Tag-based transforms must keep multi-word text on the authored rows. Without \q2
+		/// libass may reflow it after the transform changes its apparent width.
+		bool ensure_q2 = false;
 
 		/// What the line said when the tool opened, so that only what really changed is
 		/// written back.
@@ -224,10 +242,6 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Whether anything has been dragged yet, which is what makes Apply worth pressing.
 	bool touched = false;
 
-	/// Whether any selected line is long enough that the margins could still re-break it, in
-	/// which case the bar says so.
-	bool wrap_hint = false;
-
 	/// Whether the lines that could not be converted have already been complained about,
 	/// so it is said once per session rather than on every refresh.
 	bool reported = false;
@@ -257,6 +271,11 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 		/// Whether the lines had been broken up for the lean yet, so a step back can put
 		/// them together again.
 		bool split = false;
+		/// Auto perspective: the four points the fit is measured from, and whether a target
+		/// had been drawn at all - so a step back can take one away again.
+		Vector2D source_corners[4];
+		bool source_moved = false;
+		bool touched = false;
 	};
 	std::vector<HistoryState> undo_history;
 	std::vector<HistoryState> redo_history;
@@ -272,7 +291,6 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	bool recalc_clip = true;
 
 	VisualToolTransformAction hovered_action = VisualToolTransformAction::None;
-	mutable std::map<std::string, float> text_width_cache;
 
 	/// Whether any line has a border or a shadow worth drawing as a shape, which is what decides
 	/// whether accepting adds lines to the file or only rewrites them.
@@ -281,11 +299,6 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Whether any selected line has a border or a shadow that the switches can only come close to,
 	/// so that the bar can say as much. Nothing to say once they are being kept as shapes.
 	bool DecorHint() const;
-
-	/// Whether a line's letters are already inside the shape that stands for its border, painted
-	/// the same colour - in which case drawing them again adds nothing and the line of letters is
-	/// left out altogether.
-	bool Covered(TagLine const& source) const;
 
 	/// Work out the shapes that stand for every line's border and shadow, for the lines that have
 	/// not had theirs worked out yet. Measuring a line costs a font and a walk along every letter
@@ -352,6 +365,22 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	void EnsureShearSplit();
 	/// Measure the box the handles sit on, from the lines as they now stand.
 	void BuildBox();
+	/// Narrow the box down to the active line, which is what auto perspective fits.
+	void BuildAutoPerspectiveBox();
+	/// The nth handle. The features are an intrusive list, and there are never more than a
+	/// handful of them, so walking to one costs nothing worth a lookup table.
+	VisualDraggableFeature *FeatureAt(size_t index);
+	/// The selected line the tool works from, or nothing when it is not among the lines
+	/// this tool collected.
+	TagLine const *ActiveTagLine() const;
+	/// Whether auto perspective has a shape to fit, rather than only measured text.
+	bool AutoPerspectiveFitsShape() const;
+	/// A line's drawing, taken to where the renderer puts it on screen.
+	std::vector<Vector2D> ShapeOutline(TagLine const& found);
+	/// The four source points, from the active line's own shape.
+	void SeedAutoPerspectiveSource(TagLine const& found);
+	/// The map from the source quadrilateral onto the drawn one.
+	typesetting::PointMap AutoPerspectiveMap() const;
 
 	/// What one line becomes under the gesture in progress: the numbers, before anything is
 	/// decided about which of them are worth writing. The one place that works this out, so
@@ -380,6 +409,13 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	static bool Perspective(TagLine const& original);
 	/// The four corners of a line's box on screen, as it was read.
 	void LineQuad(TagLine const& original, Vector2D corners[4]) const;
+	/// Where a line stands on screen: its quadrilateral if it is turned out of the plane,
+	/// and its turned box if it is not.
+	void LineCorners(TagLine const& original, Vector2D corners[4]) const;
+	/// The largest authored perspective plane in the selection, after the distortion already
+	/// present at the start of a move. Used so even the first move follows the line's own plane.
+	bool PerspectiveMovePlane(Vector2D const held_corners[4],
+		typesetting::OrientedBox& source, Vector2D projected[4]) const;
 	/// What one line would say with the gesture applied.
 	std::string TagLineText(TagLine const& original) const;
 	/// The same gesture applied to a clip: its coordinates are script coordinates like any
@@ -387,7 +423,6 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	std::string MapClip(TagLine::Clip const& clip) const;
 	/// What clip a line carries, if any.
 	static TagLine::Clip ReadClip(AssDialogue *line);
-
 	/// Carry the transform into the tags set partway through a line. A value written there
 	/// overrides the one at the start, so without this the tail of a line would ignore the
 	/// whole gesture.
@@ -445,13 +480,18 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	void ExitTool();
 
 	wxString LabelFor(VisualToolTransformAction action) const;
-	float MeasuredTextWidth(wxString const& label, bool bold) const;
+	void UpdatePreviewInterface() const;
 	std::pair<Vector2D, Vector2D> ActionBounds(VisualToolTransformAction action) const;
 	float TopBarHeight() const;
 	VisualToolTransformAction ActionAt(Vector2D point) const;
 	bool ActionEnabled(VisualToolTransformAction action) const;
 	void Perform(VisualToolTransformAction action);
+	void UpdateAutoPerspectiveSize(double value);
 	void DrawTopBar();
+	/// The rectangle the fit is measured from, in yellow dashes.
+	void DrawAutoPerspectiveSource();
+	void DrawAutoPerspectivePath();
+	bool AddAutoPerspectivePoint(Vector2D point);
 	/// The free transform's own handles: plain outlines rather than the crossed blocks the
 	/// other tools use, because there are sixteen of them and they sit close together.
 	void DrawFreeHandles();
@@ -488,7 +528,8 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 
 public:
 	VisualToolTransform(VideoDisplay *parent, agi::Context *context,
-	                    VisualToolTransformMode mode, std::string return_tool);
+	                    VisualToolTransformMode mode, std::string return_tool,
+	                    bool auto_perspective = false);
 	~VisualToolTransform();
 
 	void OnMouseEvent(wxMouseEvent &event) override;

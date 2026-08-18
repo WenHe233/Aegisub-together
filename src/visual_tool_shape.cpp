@@ -91,7 +91,7 @@ namespace {
 		int half_width = std::max(2, corner_size / 2 - 1);
 		wxPoint points[]{{right - half_width * 2, bottom - half_width * 2},
 			{right, bottom - half_width * 2}, {right - half_width, bottom}};
-		dc.SetBrush(*wxBLACK_BRUSH);
+		dc.SetBrush(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT)));
 		dc.DrawPolygon(3, points);
 	}
 
@@ -103,7 +103,7 @@ namespace {
 		wxMemoryDC dc(bitmap);
 		dc.SetBackground(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)));
 		dc.Clear();
-		wxColour colour(20, 20, 20);
+		wxColour colour = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT);
 		dc.SetPen(wxPen(colour, std::max(2, size / 7)));
 		dc.SetBrush(filled ? wxBrush(colour) : *wxTRANSPARENT_BRUSH);
 		int a = std::max(1, size / 10);
@@ -181,7 +181,7 @@ namespace {
 		wxMemoryDC dc(bitmap);
 		dc.SetBackground(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)));
 		dc.Clear();
-		dc.SetPen(wxPen(wxColour(20, 20, 20), std::max(2, size / 8)));
+		dc.SetPen(wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT), std::max(2, size / 8)));
 		dc.SetBrush(*wxTRANSPARENT_BRUSH);
 		int a = std::max(1, size / 10);
 		int extent = std::max(4, size - a * 2 - 1);
@@ -431,6 +431,10 @@ VisualToolShape::VisualToolShape(VideoDisplay *parent, agi::Context *context)
 , gl_text(std::make_unique<OpenGLText>())
 {
 	parent->SetCursor(wxCursor(wxCURSOR_CROSS));
+	preview_interface.AttachHost(parent->GetPreviewBar(), [this](int id) {
+		this->parent->SetFocus();
+		PerformAction(static_cast<Action>(id));
+	});
 }
 
 VisualToolShape::~VisualToolShape() {
@@ -750,6 +754,7 @@ std::pair<Vector2D, Vector2D> VisualToolShape::ActionBounds(Action action) {
 }
 
 VisualToolShape::Action VisualToolShape::ActionAt(Vector2D position) {
+	if (preview_interface.HasExternalHost()) return Action::None;
 	for (Action action : {Action::Undo, Action::Redo}) {
 		bool enabled = action == Action::Undo ? !undo_history.empty() : !redo_history.empty();
 		if (!enabled) continue;
@@ -764,6 +769,53 @@ VisualToolShape::Action VisualToolShape::ActionAt(Vector2D position) {
 			position.Y() >= top_left.Y() && position.Y() <= bottom_right.Y()) return action;
 	}
 	return Action::None;
+}
+
+void VisualToolShape::PerformAction(Action action) {
+	switch (action) {
+		case Action::Undo: UndoHistory(); break;
+		case Action::Redo: RedoHistory(); break;
+		case Action::Blur:
+			ShowBlurMenu(Vector2D(parent->ScreenToClient(wxGetMousePosition())));
+			break;
+		case Action::Colour: ShowColourPicker(); break;
+		case Action::Accept: CreateShape(); break;
+		case Action::Clear: ClearPreview(); break;
+		default: break;
+	}
+}
+
+void VisualToolShape::UpdatePreviewInterface() {
+	using Interface = VisualToolPreviewInterface;
+	Interface::Page page;
+	auto add = [&](Action action, Interface::ControlKind kind, wxString label,
+		bool enabled = true, Interface::ControlStyle style = Interface::ControlStyle::Neutral) {
+		Interface::Control control;
+		control.id = static_cast<int>(action);
+		control.kind = kind;
+		control.label = std::move(label);
+		control.enabled = enabled;
+		control.style = style;
+		page.controls.push_back(std::move(control));
+	};
+	add(Action::Undo, Interface::ControlKind::Undo, wxString(), !undo_history.empty());
+	add(Action::Redo, Interface::ControlKind::Redo, wxString(), !redo_history.empty());
+	add(Action::Blur, Interface::ControlKind::Button,
+		agi::wxformat(_("Blur: %.1f"), blur));
+	Interface::Control colour;
+	colour.id = static_cast<int>(Action::Colour);
+	colour.label = _("Color");
+	colour.kind = Interface::ControlKind::Button;
+	AssDialogue *active = c->selectionController->GetActiveLine();
+	AssStyle *active_style = active ? c->ass->GetStyle(active->Style.get()) : nullptr;
+	colour.swatch = has_selected_colour ? selected_colour : to_wx(active_colour(active, active_style));
+	page.controls.push_back(std::move(colour));
+	add(Action::Accept, Interface::ControlKind::Button, _("Accept"), CanCreate(),
+		Interface::ControlStyle::Accept);
+	add(Action::Clear, Interface::ControlKind::Button, _("Cancel"), CanCreate(),
+		Interface::ControlStyle::Cancel);
+	page.message = _("Shapes will be created in a single line. Hold ALT to constrain to a regular shape.");
+	preview_interface.SetPage(std::move(page));
 }
 
 void VisualToolShape::ResetCurrentShape() {
@@ -828,31 +880,11 @@ void VisualToolShape::OnMouseEvent(wxMouseEvent& event) {
 
 	hovered_action = ActionAt(mouse_pos);
 	if (event.LeftDown()) {
-		if (hovered_action == Action::Undo) {
-			UndoHistory();
+		if (hovered_action != Action::None) {
+			PerformAction(hovered_action);
 			return;
 		}
-		if (hovered_action == Action::Redo) {
-			RedoHistory();
-			return;
-		}
-		if (hovered_action == Action::Blur) {
-			ShowBlurMenu(mouse_pos);
-			return;
-		}
-		if (hovered_action == Action::Colour) {
-			ShowColourPicker();
-			return;
-		}
-		if (hovered_action == Action::Accept) {
-			CreateShape();
-			return;
-		}
-		if (hovered_action == Action::Clear) {
-			ClearPreview();
-			return;
-		}
-		if (mouse_pos.Y() < top_bar_height) return;
+		if (!preview_interface.HasExternalHost() && mouse_pos.Y() < top_bar_height) return;
 		shape_start = shape_end = ToScriptCoords(mouse_pos);
 		freehand_points.clear();
 		if (shape == VisualShapeKind::Freehand)
@@ -925,61 +957,33 @@ void VisualToolShape::DrawShape(PendingShape const& item) {
 }
 
 void VisualToolShape::Draw() {
+	UpdatePreviewInterface();
 	for (auto const& item : pending_shapes) DrawShape(item);
 	if (drawing) {
 		auto geometry = Geometry();
 		if (geometry.size() >= 2)
 			DrawShape({std::move(geometry), shape, IsClosedShape(), filled, stroke_size, corner_radius});
 	}
+	if (preview_interface.HasExternalHost()) return;
 
-	// The drawing controls belong to the video box, not to the panned or zoomed
-	// video rectangle, so the bar always stays at the top of the canvas.
-	gl.SetFillColour(*wxBLACK, .72f);
-	gl.SetLineColour(*wxBLACK, 0.f, 1);
-	gl.DrawRectangle(Vector2D(0.f, 0.f), Vector2D(canvas_size.X(), top_bar_height));
-
-	auto rounded_rectangle = [&](Vector2D top_left, Vector2D bottom_right,
-		float radius, wxColour colour, float alpha = 1.f) {
-		float safe_radius = std::min({radius, (bottom_right.X() - top_left.X()) * .5f,
-			(bottom_right.Y() - top_left.Y()) * .5f});
-		gl.SetFillColour(colour, alpha);
-		gl.SetLineColour(colour, 0.f, 1);
-		gl.DrawRectangle(top_left + Vector2D(safe_radius, 0.f),
-			bottom_right - Vector2D(safe_radius, 0.f));
-		gl.DrawRectangle(top_left + Vector2D(0.f, safe_radius),
-			bottom_right - Vector2D(0.f, safe_radius));
-		gl.DrawCircle(top_left + Vector2D(safe_radius, safe_radius), safe_radius);
-		gl.DrawCircle(Vector2D(bottom_right.X() - safe_radius, top_left.Y() + safe_radius), safe_radius);
-		gl.DrawCircle(Vector2D(top_left.X() + safe_radius, bottom_right.Y() - safe_radius), safe_radius);
-		gl.DrawCircle(bottom_right - Vector2D(safe_radius, safe_radius), safe_radius);
-	};
+	// Portable fallback for hosts which do not provide the shared native preview strip.
+	preview_interface.DrawBackground(gl, canvas_size, top_bar_height);
 	for (auto action : {Action::Undo, Action::Redo}) {
 		auto [top_left, bottom_right] = ActionBounds(action);
 		bool enabled = action == Action::Undo ? !undo_history.empty() : !redo_history.empty();
-		wxColour colour = enabled ? wxColour(55, 59, 64) : wxColour(66, 69, 73);
-		if (enabled && hovered_action == action)
-			colour = colour.ChangeLightness(118);
-		rounded_rectangle(top_left, bottom_right, 7.f, colour, 1.f);
-		wxColour content = enabled ? *wxWHITE : wxColour(145, 148, 152);
-		gl.SetLineColour(content, 1.f, 3);
-		float direction = action == Action::Undo ? -1.f : 1.f;
-		Vector2D centre((top_left.X() + bottom_right.X()) * .5f,
-			(top_left.Y() + bottom_right.Y()) * .5f);
-		Vector2D tip = centre + Vector2D(direction * 7.f, 0.f);
-		gl.DrawLine(centre - Vector2D(direction * 7.f, 0.f), tip);
-		gl.DrawLine(tip, tip - Vector2D(direction * 5.f, 5.f));
-		gl.DrawLine(tip, tip - Vector2D(direction * 5.f, -5.f));
+		preview_interface.DrawHistory(gl, {top_left, bottom_right}, action == Action::Redo,
+			enabled, hovered_action == action);
 	}
 
 	auto draw_setting = [&](Action action, wxString const& label, wxColour swatch = wxColour()) {
 		auto [top_left, bottom_right] = ActionBounds(action);
 		bool hovered = hovered_action == action;
-		rounded_rectangle(top_left, bottom_right, 7.f,
-			hovered ? wxColour(78, 83, 89) : wxColour(55, 59, 64), 1.f);
+		preview_interface.DrawPanel(gl, {top_left, bottom_right}, true, hovered);
 		float text_left = top_left.X() + 12.f;
 		if (swatch.IsOk()) {
-			rounded_rectangle(top_left + Vector2D(9.f, 8.f), top_left + Vector2D(27.f, 26.f),
-				4.f, swatch, 1.f);
+			gl.SetFillColour(swatch, 1.f);
+			gl.SetLineColour(swatch, 0.f, 1);
+			gl.DrawRectangle(top_left + Vector2D(9.f, 8.f), top_left + Vector2D(27.f, 26.f));
 			text_left = top_left.X() + 35.f;
 		}
 		gl_text->SetColour(agi::Color(255, 255, 255, 255));
@@ -998,20 +1002,14 @@ void VisualToolShape::Draw() {
 	{
 		auto draw_button = [&](Action action, wxString const& translated_label,
 			wxColour enabled_colour) {
-			auto [top_left, bottom_right] = ActionBounds(action);
+			auto bounds = ActionBounds(action);
 			bool enabled = CanCreate();
 			bool hovered = hovered_action == action;
-			wxColour fill_colour = enabled ? enabled_colour : wxColour(66, 69, 73);
-			if (hovered && enabled) fill_colour = fill_colour.ChangeLightness(118);
-			rounded_rectangle(top_left, bottom_right, 7.f, fill_colour, 1.f);
-
-			gl_text->SetFont("Verdana", 9, true, false);
-			gl_text->SetColour(enabled ? agi::Color(255, 255, 255, 255) : agi::Color(145, 148, 152, 255));
-			int text_width, text_height;
-			std::string label = from_wx(translated_label);
-			gl_text->GetExtent(label, text_width, text_height);
-			gl_text->Print(label, static_cast<int>(top_left.X() + 12.f),
-				static_cast<int>((top_left.Y() + bottom_right.Y() - text_height) * .5f));
+			auto style = enabled_colour == wxColour(31, 153, 76) ?
+				VisualToolPreviewInterface::ControlStyle::Accept :
+				VisualToolPreviewInterface::ControlStyle::Cancel;
+			preview_interface.DrawButton(gl, *gl_text, bounds, translated_label, style,
+				enabled, hovered);
 		};
 		draw_button(Action::Accept, _("Accept (ENTER)"),
 			wxColour(31, 153, 76));
@@ -1020,13 +1018,9 @@ void VisualToolShape::Draw() {
 	}
 
 	auto [clear_top_left, clear_bottom_right] = ActionBounds(Action::Clear);
-	gl_text->SetFont("Verdana", 9, false, false);
-	gl_text->SetColour(agi::Color(225, 225, 225, 255));
-	std::string information = from_wx(_("Shapes will be created in a single line. Hold ALT to constrain to a regular shape."));
-	int information_width, information_height;
-	gl_text->GetExtent(information, information_width, information_height);
-	gl_text->Print(information, static_cast<int>(clear_bottom_right.X() + 16.f),
-		static_cast<int>((top_bar_height - information_height) * .5f));
+	preview_interface.DrawMessage(*gl_text, {clear_top_left, clear_bottom_right},
+		clear_bottom_right.X() + 16.f,
+		_("Shapes will be created in a single line. Hold ALT to constrain to a regular shape."));
 }
 
 void VisualToolShape::CreateShape() {

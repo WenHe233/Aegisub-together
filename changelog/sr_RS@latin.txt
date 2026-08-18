@@ -1,3 +1,23 @@
+Verzija 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Gornja traka je uklonjena iz videa i postala je kompaktnija
+- Pomeranje tokom deformacije pomera u sopstvenoj perspektivi i obrađuje ekstremne \org-ove
+- Deformacija + Slobodna transformacija automatski dodaje \q2
+- Automatska funkcija perspektive
+    - postavlja izabrane linije u perspektivu pomoću 4 tačke
+    - radi prema žutom prilagodljivom referentnom pravougaoniku
+    - ako je aktivna linija maska, nju uzima kao pravougaonik
+    - nakon postavljanja može da se pomera radi finog podešavanja u datoj perspektivi
+- Gradijentne linije su dobile 2 opcije u meniju desnog klika: mogu da se kopiraju i nalepе u novi tekst, kao i da se prikaže uređivanje
+- Doterivanje birača boje
+- Ispravka tekstualnog okvira
+- Linije pregleda pri kreiranju maske mogu da izađu izvan videa
+- Pri pretrazi u titlovima može da se kopira cela linija
+- Zadržavanje izbora tekstualnog okvira pri desnom kliku nakon izbora zdesna
+- Četkica rešava isto sa manje tačaka (bezier)
+- Kreiranje maske sada dozvoljava i bezier, može da se prebaci dvostrukim pritiskom na ALT
+- Vizuelno je moguće menjati providnost titla
+
 Verzija 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Funkcija tekstualnog okvira u meniju Formatiranje

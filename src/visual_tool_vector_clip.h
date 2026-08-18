@@ -85,9 +85,12 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	std::vector<Vector2D> selection_lasso;
 	enum class ColorStage { Range, Sample, Ready };
 	enum class ColorRangeShape { Rectangle, Freehand };
-	enum class ColorAction { None, RangeShape, Undo, Redo, SelectionMode, Templates, AISelect, AutoFill, SmoothEdges, EdgeSnap, Accept, Cancel };
+	enum class ColorAction { None, RangeShape, Undo, Redo, SelectionMode, Templates,
+		AISelect, AutoFill, SmoothEdges, EdgeSnap, Accept, Cancel, Tolerance, Offset,
+		SmoothTolerance, SmoothAngle, EdgeSnapRadius, BrushSize };
 	ColorStage color_stage = ColorStage::Range;
 	ColorAction hovered_color_action = ColorAction::None;
+	ColorAction external_slider_action = ColorAction::None;
 	Vector2D color_range_start;
 	Vector2D color_range_end;
 	ColorRangeShape color_range_shape = ColorRangeShape::Rectangle;
@@ -168,6 +171,10 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	float drawing_rotation = 0.f;
 	int drawing_scale_level = 1;
 
+	/// Whether the mask editor has a shape to work on. The clip tool always has one:
+	/// the clip is created by drawing it. The mask editor only edits what the selected
+	/// lines already put on the video.
+	bool HasEditableDrawing() const;
 	void Save(int precision_override = -1);
 	void Commit(wxString message="") override;
 	void OnFrameChanged() override;
@@ -242,7 +249,13 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	float ColorTopBarHeight();
 	ColorAction ColorActionAt(Vector2D point);
 	void DrawColorMode();
+	void UpdatePreviewInterface();
+	void PerformPreviewAction(ColorAction action);
+	void UpdateExternalSlider(ColorAction action, double value, bool final);
 	void AcceptColorContours();
+	/// Replace the brush's straight-segment outlines with fitted bezier curves. Called
+	/// when a stroke ends, never while one is in progress.
+	void FitBrushContours();
 	void CommitBrushContours();
 	void CloseColorMode();
 	bool DeleteActivePath();

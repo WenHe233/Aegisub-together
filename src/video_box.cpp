@@ -31,6 +31,7 @@
 
 #include "ass_dialogue.h"
 #include "ass_file.h"
+#include "async_video_provider.h"
 #include "compat.h"
 #include "format.h"
 #include "include/aegisub/context.h"
@@ -38,6 +39,7 @@
 #include "options.h"
 #include "project.h"
 #include "selection_controller.h"
+#include "theme.h"
 #include "video_controller.h"
 #include "video_display.h"
 #include "video_slider.h"
@@ -50,7 +52,8 @@
 #include <wx/textctrl.h>
 #include <wx/toolbar.h>
 
-VideoBox::VideoBox(wxWindow *parent, bool isDetached, agi::Context *context)
+VideoBox::VideoBox(wxWindow *parent, bool isDetached,
+	VisualToolPreviewBar *previewBar, agi::Context *context)
 : wxPanel(parent, -1)
 , context(context)
 {
@@ -80,10 +83,24 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached, agi::Context *context)
 
 	auto speedBox = new wxComboBox(this, -1, "1x", wxDefaultPosition, wxDefaultSize, speedChoices, wxCB_READONLY);
 
+	// Next to the two buttons that decide whether subtitles and masks are drawn at
+	// all: this one decides how strongly. It fades the rendering, so nothing in the
+	// file changes and every line keeps its own alpha tags.
+	subsOpacitySlider = new wxSlider(this, -1,
+		AsyncVideoProvider::GetDisplaySubtitlesOpacity(), 0, 100,
+		wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
+	UpdateSubsOpacityTooltip();
+	subsOpacitySlider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&) { ApplySubsOpacity(); });
+	subsOpacitySlider->Bind(wxEVT_RIGHT_DOWN, [this](wxMouseEvent&) {
+		subsOpacitySlider->SetValue(100);
+		ApplySubsOpacity();
+	});
+
 	auto brightnessSlider = new wxSlider(this, -1, 100, 0, 400, wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", 100) + " (" + _("Right click to reset") + ")");
 
-	auto videoDisplay = new VideoDisplay(visualSubToolBar, isDetached, zoomBox, speedBox, brightnessSlider, this, context);
+	auto videoDisplay = new VideoDisplay(visualSubToolBar, isDetached, zoomBox, speedBox,
+		brightnessSlider, previewBar, this, context);
 	videoDisplay->MoveBeforeInTabOrder(videoSlider);
 
 	auto toolbarSizer = new wxBoxSizer(wxVERTICAL);
@@ -96,6 +113,7 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached, agi::Context *context)
 
 	auto videoBottomSizer = new wxBoxSizer(wxHORIZONTAL);
 	videoBottomSizer->Add(mainToolbar, wxSizerFlags(0).Center());
+	videoBottomSizer->Add(subsOpacitySlider, wxSizerFlags(0).Center());
 	videoBottomSizer->Add(VideoPosition, wxSizerFlags(1).Center().Border(wxLEFT));
 	videoBottomSizer->Add(VideoSubsPos, wxSizerFlags(1).Center().Border(wxLEFT));
 	videoBottomSizer->Add(speedBox, wxSizerFlags(0).Center().Border(wxLEFT));
@@ -121,6 +139,25 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached, agi::Context *context)
 	});
 }
 
+void VideoBox::UpdateSubsOpacityTooltip() {
+	subsOpacitySlider->SetToolTip(
+		fmt_tl("Subtitle opacity: %d%%", subsOpacitySlider->GetValue()) +
+		" (" + _("Right click to reset") + ")");
+}
+
+void VideoBox::ApplySubsOpacity() {
+	UpdateSubsOpacityTooltip();
+
+	int value = subsOpacitySlider->GetValue();
+	if (AsyncVideoProvider::GetDisplaySubtitlesOpacity() == value) return;
+	AsyncVideoProvider::SetDisplaySubtitlesOpacity(value);
+
+	// The subtitles are drawn into the frame by the provider, so the frame on screen
+	// has to be made again rather than merely redrawn.
+	if (auto provider = context->project->VideoProvider())
+		provider->ResetCurrentFrame();
+}
+
 void VideoBox::UpdateTimeBoxes() {
 	if (!context->project->VideoProvider()) return;
 
@@ -131,8 +168,8 @@ void VideoBox::UpdateTimeBoxes() {
 	VideoPosition->SetValue(fmt_wx("%s - %d", agi::Time(time).GetAssFormatted(true), frame));
 	if (boost::binary_search(context->project->Keyframes(), frame)) {
 		// Set the background color to indicate this is a keyframe
-		VideoPosition->SetBackgroundColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Selection")->GetColor()));
-		VideoPosition->SetForegroundColour(to_wx(OPT_GET("Colour/Subtitle Grid/Selection")->GetColor()));
+		VideoPosition->SetBackgroundColour(app_theme::Colour("Subtitle Grid/Background/Selection"));
+		VideoPosition->SetForegroundColour(app_theme::Colour("Subtitle Grid/Selection"));
 	}
 	else {
 		VideoPosition->SetBackgroundColour(wxNullColour);

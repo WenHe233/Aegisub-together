@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "visual_tool_preview.h"
+
 #include <libaegisub/color.h>
 
 #include <array>
@@ -101,18 +103,22 @@ struct Settings {
 /// with fixed defaults and two stops using their effective fill, outline and shadow colours.
 Settings LoadSettingsForSelection(agi::Context *c);
 
+/// Read gradient settings embedded in copied ASS rows. Returns false unless both the
+/// gradient settings and source-row markers are present and valid.
+bool SettingsFromClipboard(std::string clipboard, Settings& settings);
+
 /// Non-destructive video preview for one open gradient dialog. The selection geometry is
 /// collected once so dragging a stop or the angle dial remains responsive.
-class PreviewSession {
+class PreviewSession final : public NonDestructivePreviewSession {
 	struct Impl;
 	std::unique_ptr<Impl> impl;
 
 public:
 	explicit PreviewSession(agi::Context *c);
-	~PreviewSession();
+	~PreviewSession() override;
 
 	void Update(Settings const& settings);
-	void Clear();
+	void Clear() override;
 };
 
 /// Apply the settings to the current selection and create one undo step.

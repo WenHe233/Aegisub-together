@@ -1,3 +1,23 @@
+Phiên bản 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Thanh trên đã bị loại khỏi video và trở nên gọn hơn
+- Di chuyển trong khi biến dạng sẽ di chuyển trong phối cảnh riêng của nó và xử lý các \org cực đoan
+- Biến dạng + Biến đổi tự do tự động thêm \q2
+- Chức năng phối cảnh tự động
+    - Đặt các dòng được chọn vào phối cảnh bằng 4 điểm
+    - hoạt động theo hình chữ nhật tham chiếu màu vàng có thể tùy chỉnh
+    - nếu dòng đang hoạt động là mặt nạ, nó sẽ được dùng làm hình chữ nhật tham chiếu
+    - có thể di chuyển sau khi đặt để tinh chỉnh trong phối cảnh đó
+- Các dòng gradient đã nhận được 2 tùy chọn trong menu nhấp chuột phải: có thể sao chép và dán vào văn bản mới, cũng như mở phần chỉnh sửa
+- Tinh chỉnh bộ chọn màu
+- Sửa hộp văn bản
+- Các đường xem trước khi tạo mặt nạ có thể vượt ra ngoài video
+- Khi tìm kiếm trong phụ đề, có thể sao chép toàn bộ dòng
+- Giữ lựa chọn hộp văn bản khi nhấp chuột phải sau khi chọn từ bên phải
+- Cọ thực hiện cùng một việc với ít điểm hơn (bezier)
+- Việc tạo mặt nạ cũng cho phép bezier, có thể chuyển đổi bằng cách nhấn ALT hai lần
+- Có thể thay đổi độ trong suốt của phụ đề một cách trực quan
+
 Phiên bản 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Chức năng hộp văn bản trong menu Định dạng

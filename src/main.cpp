@@ -57,6 +57,7 @@
 #include "selection_controller.h"
 #include "subs_controller.h"
 #include "subtitles_provider_libass.h"
+#include "theme.h"
 #include "utils.h"
 #include "value_event.h"
 #include "version.h"
@@ -75,8 +76,10 @@
 #include <wx/clipbrd.h>
 #include <wx/imagjpeg.h>
 #include <wx/msgdlg.h>
+#include <wx/settings.h>
 #include <wx/stackwalk.h>
 #include <wx/utils.h>
+#include <wx/window.h>
 
 namespace config {
 	agi::Options *opt = nullptr;
@@ -123,6 +126,18 @@ AegisubApp::AegisubApp() {
 		}
 	#endif
 
+}
+
+int AegisubApp::FilterEvent(wxEvent& event) {
+	if (app_theme::IsDark() && event.GetEventType() == wxEVT_SHOW) {
+		auto& show_event = static_cast<wxShowEvent&>(event);
+		if (show_event.IsShown()) {
+			if (auto *window = dynamic_cast<wxWindow *>(event.GetEventObject()))
+				app_theme::SoftenWhiteText(window);
+		}
+	}
+
+	return wxApp::FilterEvent(event);
 }
 
 namespace {
@@ -225,10 +240,16 @@ bool AegisubApp::OnInit() {
 	}
 #endif
 
-#if defined(__WXMSW__) && wxVERSION_NUMBER >= 3300
-	if (OPT_GET("App/Dark Mode")->GetBool()) {
-		MSWEnableDarkMode(wxApp::DarkMode_Always);
-	}
+#if wxCHECK_VERSION(3, 3, 0)
+	bool dark_mode = OPT_GET("App/Dark Mode")->GetBool();
+	auto appearance = dark_mode ? wxApp::Appearance::Dark : wxApp::Appearance::Light;
+	if (SetAppearance(appearance) != wxApp::AppearanceResult::Ok)
+		dark_mode = false;
+	app_theme::Initialize(dark_mode);
+#elif defined(__WXGTK__) || defined(__WXMAC__)
+	app_theme::Initialize(wxSystemSettings::GetAppearance().IsDark());
+#else
+	app_theme::Initialize(false);
 #endif
 
 	// Init commands.
@@ -342,11 +363,13 @@ bool AegisubApp::OnInit() {
 				  "bound to any key.\n"
 				  "It lets you pick the color for the selected lines from the video at "
 				  "the mouse position with a single keypress.\n\n"
-				  "Pressed twice quickly it magnifies that part of the video around the "
-				  "pointer, and lets you write the color in the dynamic "
-				  "\\t(<current millisecond>,<current millisecond>,\\c...) form as well.\n\n"
+				  "Pressed twice quickly it restores the first write and magnifies that "
+				  "part of the video around the pointer. The popup lets you select an exact "
+				  "pixel and optionally write the accepted color in the dynamic "
+				  "\\t(<current millisecond>,<current millisecond>,\\c...) form.\n\n"
 				  "From that magnified view you can also read the color along a Mocha "
-				  "motion track held on the clipboard, which writes the color the "
+				  "motion track held on the clipboard, including its position, scale and "
+				  "rotation, which writes the color the "
 				  "tracked point passes over as a sequence of \\t() tags.\n\n"
 				  "To use it, assign the \"video/colorpick/primary|outline|shadow\" "
 				  "commands to hotkeys (one key each is recommended)."),

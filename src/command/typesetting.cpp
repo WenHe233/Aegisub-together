@@ -129,6 +129,25 @@ struct typesetting_transform_distort final :
 	STR_HELP("Drag the four corners of the selected lines on the video")
 };
 
+struct typesetting_transform_auto_perspective final : public Command {
+	CMD_NAME("typesetting/transform/auto_perspective")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Auto &perspective")
+	STR_DISP("Auto perspective")
+	STR_HELP("Draw four directed points and fit the selected lines into their perspective")
+
+	bool Validate(const agi::Context *c) override {
+		return !!c->project->VideoProvider() && typesetting::CanTransform(c);
+	}
+
+	void operator()(agi::Context *c) override {
+		if (RefusedForMask(c)) return;
+		std::string back = previous_tool(c);
+		c->videoDisplay->SetTool(std::make_unique<VisualToolTransform>(c->videoDisplay, c,
+			VisualToolTransformMode::Distort, std::move(back), true));
+	}
+};
+
 struct typesetting_transform_warp final :
 	public transform_command<VisualToolTransformMode::Warp> {
 	CMD_NAME("typesetting/transform/warp")
@@ -197,6 +216,40 @@ struct typesetting_gradient final : public Command {
 	void operator()(agi::Context *c) override {
 		if (RefusedForMask(c, _("Gradient"))) return;
 		ShowGradientDialog(c);
+	}
+};
+
+struct typesetting_gradient_edit final : public Command {
+	CMD_NAME("typesetting/gradient/edit")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Edit gradient")
+	STR_DISP("Edit gradient")
+	STR_HELP("Edit the gradient settings of the selected generated gradient")
+
+	bool Validate(const agi::Context *c) override {
+		auto active = c->selectionController->GetActiveLine();
+		return active && c->imageMask->IsGradientGroup(active);
+	}
+
+	void operator()(agi::Context *c) override {
+		ShowGradientDialog(c);
+	}
+};
+
+struct typesetting_gradient_copy final : public Command {
+	CMD_NAME("typesetting/gradient/copy")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Copy gradient")
+	STR_DISP("Copy gradient")
+	STR_HELP("Copy the selected generated gradient rows and settings")
+
+	bool Validate(const agi::Context *c) override {
+		auto active = c->selectionController->GetActiveLine();
+		return active && c->imageMask->IsGradientGroup(active);
+	}
+
+	void operator()(agi::Context *c) override {
+		cmd::call("edit/line/copy", c);
 	}
 };
 
@@ -294,10 +347,13 @@ namespace cmd {
 		reg(std::make_unique<typesetting_transform_free>());
 		reg(std::make_unique<typesetting_transform_arch>());
 		reg(std::make_unique<typesetting_transform_distort>());
+		reg(std::make_unique<typesetting_transform_auto_perspective>());
 		reg(std::make_unique<typesetting_transform_warp>());
 		reg(std::make_unique<typesetting_flip_horizontal>());
 		reg(std::make_unique<typesetting_flip_vertical>());
 		reg(std::make_unique<typesetting_gradient>());
+		reg(std::make_unique<typesetting_gradient_edit>());
+		reg(std::make_unique<typesetting_gradient_copy>());
 		reg(std::make_unique<typesetting_textbox>());
 		reg(std::make_unique<typesetting_motion_auto>());
 		reg(std::make_unique<typesetting_motion_apply>());

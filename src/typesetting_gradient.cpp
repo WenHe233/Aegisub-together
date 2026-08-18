@@ -12,6 +12,7 @@
 #include "ass_dialogue.h"
 #include "ass_file.h"
 #include "ass_style.h"
+#include "compat.h"
 #include "include/aegisub/context.h"
 #include "project.h"
 #include "selection_controller.h"
@@ -1706,7 +1707,7 @@ std::string GroupDescription(AssFile const& file, AssDialogue const& line) {
 	add(parsed->primary, "\\c", "\\1a");
 	add(parsed->outline, "\\3c", "\\3a");
 	add(parsed->shadow, "\\4c", "\\4a");
-	if (parsed->motion.enabled) tags.emplace_back("Motion");
+	if (parsed->motion.enabled) tags.emplace_back(from_wx(_("Motion")));
 
 	std::string out;
 	for (auto const& tag : tags) {
@@ -1728,6 +1729,26 @@ Settings LoadSettingsForSelection(agi::Context *c) {
 		}
 	}
 	return fallback;
+}
+
+bool SettingsFromClipboard(std::string clipboard, Settings& settings) {
+	try {
+		auto encoded = TakeClipboardMarker(clipboard, gradient_clipboard_settings);
+		auto source = TakeClipboardMarker(clipboard, gradient_clipboard_source);
+		if (!encoded || !source) return false;
+		AssDialogue source_line(*source);
+		(void)source_line;
+		auto parsed = DeserializeSettings(*encoded, Settings{});
+		if (!parsed) return false;
+		// The copied geometry belongs to the source row. Preview and apply the settings using
+		// the geometry of the rows currently selected in the gradient dialog.
+		parsed->geometry.valid = false;
+		settings = std::move(*parsed);
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
 }
 
 struct PreviewSession::Impl {

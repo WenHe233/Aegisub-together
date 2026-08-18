@@ -151,6 +151,8 @@ private:
 	Action ActionAt(Vector2D position) const;
 	bool ActionEnabled(Action action) const;
 	void PerformAction(Action action);
+	void UpdatePreviewInterface() const;
+	void UpdateExternalSlider(Action action, double value, bool final);
 
 	Vector2D MoveHandlePosition() const;
 	void ScreenCorners(Vector2D out[4]) const;

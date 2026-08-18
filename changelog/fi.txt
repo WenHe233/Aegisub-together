@@ -1,3 +1,23 @@
+Versio 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Yläpalkki poistettiin videosta ja siitä tehtiin kompaktimpi
+- Vääristämisen aikana siirtäminen siirtää omassa perspektiivissään ja käsittelee äärimmäiset \org-arvot
+- Vääristäminen + Vapaa muotoilu lisää automaattisesti \q2:n
+- Automaattinen perspektiivitoiminto
+    - sijoittaa valitut rivit perspektiiviin 4 pisteen avulla
+    - toimii keltaisen mukautettavan viitesuorakulmion mukaan
+    - jos aktiivinen rivi on maski, sitä käytetään suorakulmiona
+    - sijoittamisen jälkeen sitä voi siirtää hienosäätöä varten kyseisessä perspektiivissä
+- Liukuväririvit saivat oikean painikkeen valikkoon 2 vaihtoehtoa: ne voi kopioida ja liittää uuteen tekstiin sekä avata muokkausta varten
+- Värinvalitsimen hienosäätö
+- Tekstilaatikon korjaus
+- Maskia luotaessa esikatselulinjat voivat ulottua videon ulkopuolelle
+- Tekstityksistä etsittäessä voi kopioida koko rivin
+- Tekstilaatikon valinta säilyy oikealla painikkeella tehdyn oikealta vasemmalle -valinnan jälkeen
+- Sivellin selviää samasta vähemmillä pisteillä (bezier)
+- Maskin luominen sallii myös bezier-käyrät, vaihtaminen tapahtuu kaksois-ALTilla
+- Tekstityksen läpinäkyvyyttä voi muuttaa visuaalisesti
+
 Versio 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Tekstiruututoiminto Formázás-valikossa

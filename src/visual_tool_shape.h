@@ -87,6 +87,8 @@ class VisualToolShape final : public VisualTool<VisualDraggableFeature> {
 	bool CanCreate() const;
 	std::pair<Vector2D, Vector2D> ActionBounds(Action action);
 	Action ActionAt(Vector2D position);
+	void UpdatePreviewInterface();
+	void PerformAction(Action action);
 	void FinishCurrentShape();
 	void ResetCurrentShape();
 	void PushHistory();

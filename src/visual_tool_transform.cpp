@@ -170,6 +170,30 @@ namespace {
 		return fallback;
 	}
 
+	/// Whether text contains two words separated by whitespace or an ASS hard line break.
+	/// UTF-8 bytes are deliberately treated as ordinary word bytes; whitespace and \N/\n are
+	/// ASCII in ASS, so this neither splits nor damages non-Latin text.
+	bool HasAtLeastTwoWords(std::string const& text) {
+		int words = 0;
+		bool in_word = false;
+		for (size_t i = 0; i < text.size(); ++i) {
+			unsigned char ch = static_cast<unsigned char>(text[i]);
+			bool separator = std::isspace(ch) ||
+				(text[i] == '\\' && i + 1 < text.size() &&
+				 (text[i + 1] == 'N' || text[i + 1] == 'n'));
+			if (separator) {
+				in_word = false;
+				if (text[i] == '\\') ++i;
+				continue;
+			}
+			if (!in_word) {
+				in_word = true;
+				if (++words >= 2) return true;
+			}
+		}
+		return false;
+	}
+
 	/// The same, but only from the first tag block.
 	///
 	/// This is what is in force where the line begins. Looking further in would pick up a value
@@ -188,28 +212,166 @@ namespace {
 	}
 
 	/// How far along its box a line's anchor sits, from its alignment.
+	/// The convex hull of a set of points, anticlockwise in script coordinates.
+	std::vector<Vector2D> ConvexHull(std::vector<Vector2D> const& points) {
+		if (points.size() < 3) return {};
+
+		std::vector<Vector2D> sorted = points;
+		std::sort(sorted.begin(), sorted.end(), [](Vector2D a, Vector2D b) {
+			return a.X() != b.X() ? a.X() < b.X() : a.Y() < b.Y();
+		});
+		auto turn = [](Vector2D o, Vector2D a, Vector2D b) {
+			return (double)(a.X() - o.X()) * (b.Y() - o.Y()) -
+				(double)(a.Y() - o.Y()) * (b.X() - o.X());
+		};
+
+		std::vector<Vector2D> hull(sorted.size() * 2);
+		size_t at = 0;
+		for (auto const& point : sorted) {
+			while (at >= 2 && turn(hull[at - 2], hull[at - 1], point) <= 0) --at;
+			hull[at++] = point;
+		}
+		size_t lower = at + 1;
+		for (size_t i = sorted.size() - 1; i-- > 0;) {
+			while (at >= lower && turn(hull[at - 2], hull[at - 1], sorted[i]) <= 0) --at;
+			hull[at++] = sorted[i];
+		}
+		hull.resize(at ? at - 1 : 0);
+		if (hull.size() < 3) return {};
+		return hull;
+	}
+
+	/// The hull with the vertices that hardly bend it taken out, so a shape drawn as four
+	/// corners is four corners again even when a click or a curve fit left a little wobble
+	/// along an edge.
+	std::vector<Vector2D> SimplifyHull(std::vector<Vector2D> hull, double tolerance) {
+		bool dropped = true;
+		while (dropped && hull.size() > 4) {
+			dropped = false;
+			double worst = tolerance;
+			size_t at = hull.size();
+			for (size_t i = 0; i < hull.size(); ++i) {
+				Vector2D before = hull[(i + hull.size() - 1) % hull.size()];
+				Vector2D after = hull[(i + 1) % hull.size()];
+				Vector2D edge = after - before;
+				double length = edge.Len();
+				if (length < 1e-6) continue;
+				double away = std::abs((double)(hull[i].X() - before.X()) * edge.Y() -
+					(double)(hull[i].Y() - before.Y()) * edge.X()) / length;
+				if (away >= worst) continue;
+				worst = away;
+				at = i;
+			}
+			if (at < hull.size()) {
+				hull.erase(hull.begin() + at);
+				dropped = true;
+			}
+		}
+		return hull;
+	}
+
+	/// The smallest rectangle, at any angle, that holds a convex hull.
+	///
+	/// The smallest one always has a side along a side of the hull, so every hull edge is
+	/// tried and the best kept. Returns false when the hull has no area.
+	bool MinimumAreaBox(std::vector<Vector2D> const& hull, typesetting::OrientedBox& out) {
+		if (hull.size() < 3) return false;
+
+		double best_area = 0;
+		bool found = false;
+		for (size_t i = 0; i < hull.size(); ++i) {
+			Vector2D edge = hull[(i + 1) % hull.size()] - hull[i];
+			if (edge.Len() < 1e-6f) continue;
+
+			typesetting::OrientedBox frame;
+			frame.angle = (float)(std::atan2(edge.Y(), edge.X()) * 180.0 / pi);
+			frame.centre = Vector2D(0.f, 0.f);
+
+			Vector2D low, high;
+			for (size_t j = 0; j < hull.size(); ++j) {
+				Vector2D local = frame.ToLocal(hull[j]);
+				if (!j) { low = high = local; }
+				else { low = low.Min(local); high = high.Max(local); }
+			}
+
+			Vector2D size = high - low;
+			double area = (double)size.X() * size.Y();
+			if (found && !(area < best_area)) continue;
+
+			found = true;
+			best_area = area;
+			out.angle = frame.angle;
+			out.centre = frame.ToScript((low + high) / 2);
+			out.half = size / 2;
+		}
+		return found && best_area > 0;
+	}
+
 	Vector2D AnchorFractions(int align) {
 		int horizontal = (align - 1) % 3;
 		int vertical = (align - 1) / 3;
 		return Vector2D(horizontal == 0 ? 0.f : horizontal == 1 ? .5f : 1.f,
 		                vertical == 2 ? 0.f : vertical == 1 ? .5f : 1.f);
 	}
+
+	/// A perspective target has to walk around one convex, non-degenerate quadrilateral.
+	/// The sign is deliberately not normalized: clockwise and anticlockwise point orders are
+	/// different directed mappings and Auto perspective preserves the one the user drew.
+	bool DirectedQuad(std::vector<Vector2D> const& points) {
+		if (points.size() != 4) return false;
+		double direction = 0;
+		for (int i = 0; i < 4; ++i) {
+			Vector2D first = points[(i + 1) % 4] - points[i];
+			Vector2D second = points[(i + 2) % 4] - points[(i + 1) % 4];
+			double cross = first.X() * second.Y() - first.Y() * second.X();
+			if (std::abs(cross) < 1e-3) return false;
+			if (!direction) direction = cross;
+			else if ((cross > 0) != (direction > 0)) return false;
+		}
+		return true;
+	}
 }
 
 VisualToolTransform::VisualToolTransform(VideoDisplay *parent, agi::Context *context,
                                          VisualToolTransformMode mode,
-                                         std::string return_tool)
+                                         std::string return_tool,
+                                         bool auto_perspective)
 : VisualTool<VisualDraggableFeature>(parent, context)
 , mode(mode)
+, auto_perspective(auto_perspective)
 , gl_text(std::make_unique<OpenGLText>())
 , return_tool(std::move(return_tool))
 {
+	// A projective distortion must leave blur exactly as authored. Recomputing it from a
+	// perspective solution is especially unstable because that solution has no single scale.
+	if (mode == VisualToolTransformMode::Distort)
+		recalc_blur = false;
+
+	// Auto perspective exposes no decoration recalculation choices. The line geometry follows
+	// the directed quadrilateral, existing decoration values stay as authored, and only an
+	// existing clip is carried through the same map automatically.
+	if (auto_perspective) {
+		recalc_bord = false;
+		recalc_shad = false;
+		maintain_decor = false;
+		recalc_blur = false;
+		recalc_clip = true;
+	}
 	selection_connection = context->selectionController->AddSelectionListener(
 		[this] { ExitTool(); });
 	connections.push_back(context->ass->AddCommitListener(
 		&VisualToolTransform::OnFileReplaced, this));
 	if (context->parent)
 		context->parent->Bind(wxEVT_CHAR_HOOK, &VisualToolTransform::OnCharHook, this);
+	preview_interface.AttachHost(parent->GetPreviewBar(), [this](int id) {
+		// Focus first: Apply and Cancel can synchronously replace and destroy this tool.
+		this->parent->SetFocus();
+		Perform(static_cast<VisualToolTransformAction>(id));
+	}, [this](int id, double value, bool) {
+		if (static_cast<VisualToolTransformAction>(id) ==
+			VisualToolTransformAction::AutoPerspectiveSize)
+			UpdateAutoPerspectiveSize(value);
+	});
 	Collect();
 }
 
@@ -358,15 +520,13 @@ void VisualToolTransform::SendPreview() {
 						extra.push_back(true);
 					}
 				}
-				// A shape painted the letters' own colour is already holding them, so they have
-				// nothing left to add.
-				if (!Covered(found)) {
-					AssDialogue copy(*found.line);
-					copy.Text = TagLineText(found);
-					copy.Comment = false;
-					copies.push_back(std::move(copy));
-					extra.push_back(true);
-				}
+				// The shape preserves the border, not the glyph fill. Always keep the original
+				// letters on top: omitting them can expose another language layer underneath.
+				AssDialogue copy(*found.line);
+				copy.Text = TagLineText(found);
+				copy.Comment = false;
+				copies.push_back(std::move(copy));
+				extra.push_back(true);
 				continue;
 			}
 
@@ -433,7 +593,6 @@ bool VisualToolTransform::CollectTags() {
 	split_lines.clear();
 	shear_split = false;
 	split_built = false;
-	wrap_hint = false;
 	gesture_scale = Vector2D(1.f, 1.f);
 	gesture_angle = 0;
 	gesture_move = Vector2D(0.f, 0.f);
@@ -492,13 +651,33 @@ VisualToolTransform::TagLine VisualToolTransform::ReadLine(AssDialogue *line) {
 	found.blur = FirstBlockNumber(blocks, "\\blur", 0);
 	found.be = FirstBlockNumber(blocks, "\\be", 0);
 	found.clip = ReadClip(line);
-	found.has_wrap_style = TagNumber(line, "\\q", -1) >= 0;
+	double wrap_style = TagNumber(line, "\\q", -1);
+	found.has_wrap_style = wrap_style >= 0;
+	bool has_q2 = false;
+	for (auto& block : line->ParseTags()) {
+		if (block->GetType() != AssBlockType::OVERRIDE) continue;
+		for (auto const& tag : static_cast<AssDialogueBlockOverride *>(block.get())->Tags)
+			if (tag.Name == "\\q" && !tag.Params.empty() &&
+				std::abs(tag.Params[0].Get<double>(-1) - 2) <= 1e-6)
+				has_q2 = true;
+	}
 	for (auto& block : line->ParseTags())
 		if (block->GetType() == AssBlockType::DRAWING) found.drawing = true;
+	std::string stripped_text = line->GetStrippedText();
+	found.ensure_q2 = TagsMode() && !stripped_text.empty() &&
+		!has_q2 && HasAtLeastTwoWords(stripped_text);
 	found.angle = (float)FirstBlockNumber(blocks, "\\frz",
 		FirstBlockNumber(blocks, "\\fr", style->angle));
 	found.angle_x = FirstBlockNumber(blocks, "\\frx", 0);
 	found.angle_y = FirstBlockNumber(blocks, "\\fry", 0);
+	// Guided perspective always starts from a flat row. The authored perspective and
+	// shear tags are removed from the preview copy and solved again from the four points.
+	if (auto_perspective) {
+		found.shear = Vector2D();
+		found.angle_x = 0;
+		found.angle_y = 0;
+		found.org = Vector2D();
+	}
 	found.align = GetLineAlignment(line);
 
 	// For text the extents start at zero, but a drawing's own coordinates can start
@@ -526,10 +705,6 @@ VisualToolTransform::TagLine VisualToolTransform::ReadLine(AssDialogue *line) {
 		double room = std::max(0, script_w - margin[0] - margin[1]);
 		found.wrapped = room > 0 && found.size.X() > room + 1;
 	}
-
-	// Long lines are the ones the margins can still re-break, and there is nothing this tool
-	// can do about that - so it says so instead.
-	if (!found.drawing && line->GetStrippedText().size() > 30) wrap_hint = true;
 
 	found.start_pos = found.pos;
 	found.start_org = found.org;
@@ -593,6 +768,8 @@ void VisualToolTransform::EnsureDecor() {
 std::pair<Vector2D, Vector2D> VisualToolTransform::MovedEnds(TagLine const& original,
 	Applied const& applied) const {
 	if (!original.placed.moving) return {applied.pos, applied.pos};
+	if (auto_perspective)
+		return {MapPoint(original.placed.first), MapPoint(original.placed.second)};
 
 	// The gesture's own map, applied to each end from where the line stood. On the frame on screen
 	// the two ends mix back to exactly the point the handle was let go at, whatever the map was,
@@ -627,12 +804,6 @@ bool VisualToolTransform::DecorHint() const {
 	if (maintain_decor || !TagsMode()) return false;
 	for (auto const& found : tag_lines)
 		if (found.bord.Len() > .01f || found.shad.Len() > .01f) return true;
-	return false;
-}
-
-bool VisualToolTransform::Covered(TagLine const& source) const {
-	for (auto const& decor : source.decor)
-		if (decor.has_border && decor.covers_letters) return true;
 	return false;
 }
 
@@ -713,6 +884,26 @@ std::string VisualToolTransform::DecorLineText(TagLine const& original,
 	return head + body + "{\\p0}";
 }
 
+void VisualToolTransform::LineCorners(TagLine const& original, Vector2D corners[4]) const {
+	// A line turned out of the plane sits on screen as a quadrilateral, so that is what has
+	// to be gone round - its unturned box is somewhere else entirely.
+	if (Perspective(original)) {
+		LineQuad(original, corners);
+		return;
+	}
+
+	Vector2D fractions = AnchorFractions(original.align);
+	Vector2D top_left = original.pos + original.ink -
+		Vector2D(original.size.X() * fractions.X(), original.size.Y() * fractions.Y());
+	Vector2D pivot = original.org ? original.org : original.pos;
+	for (int corner = 0; corner < 4; ++corner) {
+		Vector2D at = top_left +
+			Vector2D(corner == 1 || corner == 2 ? original.size.X() : 0.f,
+			         corner >= 2 ? original.size.Y() : 0.f);
+		corners[corner] = RotateAbout(at, pivot, original.angle);
+	}
+}
+
 void VisualToolTransform::BuildBox() {
 	if (tag_lines.empty()) return;
 
@@ -729,28 +920,10 @@ void VisualToolTransform::BuildBox() {
 	Vector2D low, high;
 	bool first = true;
 	for (auto const& found : tag_lines) {
-		// A line turned out of the plane sits on screen as a quadrilateral, so that is what
-		// the frame has to go round - its unturned box is somewhere else entirely.
-		if (Perspective(found)) {
-			Vector2D corners[4];
-			LineQuad(found, corners);
-			for (auto const& corner : corners) {
-				Vector2D local = frame.ToLocal(corner);
-				if (first) { low = high = local; first = false; }
-				else { low = low.Min(local); high = high.Max(local); }
-			}
-			continue;
-		}
-
-		Vector2D fractions = AnchorFractions(found.align);
-		Vector2D top_left = found.pos + found.ink -
-			Vector2D(found.size.X() * fractions.X(), found.size.Y() * fractions.Y());
-		Vector2D pivot = found.org ? found.org : found.pos;
-		for (int corner = 0; corner < 4; ++corner) {
-			Vector2D at = top_left +
-				Vector2D(corner == 1 || corner == 2 ? found.size.X() : 0.f,
-				         corner >= 2 ? found.size.Y() : 0.f);
-			Vector2D local = frame.ToLocal(RotateAbout(at, pivot, found.angle));
+		Vector2D corners[4];
+		LineCorners(found, corners);
+		for (auto const& corner : corners) {
+			Vector2D local = frame.ToLocal(corner);
 			if (first) { low = high = local; first = false; }
 			else { low = low.Min(local); high = high.Max(local); }
 		}
@@ -766,9 +939,14 @@ void VisualToolTransform::BuildBox() {
 	// A frame larger than the video cannot be grabbed - its handles end up off screen, and only
 	// zooming right out brings them back. It is a control frame and nothing more: the lines
 	// follow the map it describes whatever size it is, so it is kept inside the script.
+	//
+	// Auto perspective has no such handles: the target is the quadrilateral that was drawn, and
+	// this box is only the rectangle that is mapped onto it. Trimming it there would trim the
+	// source of the map instead of a control, which squeezes and shifts the result - and a mask
+	// large enough to reach the edge of the frame is exactly the case where it happened.
 	int script_w = 0, script_h = 0;
 	c->ass->GetResolution(script_w, script_h);
-	if (script_w > 0 && script_h > 0) {
+	if (!auto_perspective && script_w > 0 && script_h > 0) {
 		// A little inside the edge, so the handles on the far side are never flush against it.
 		const float inset = 20.f;
 		box.half = box.half.Min(Vector2D(script_w * .5f - inset, script_h * .5f - inset));
@@ -776,6 +954,156 @@ void VisualToolTransform::BuildBox() {
 		box.centre = box.centre.Max(box.half + Vector2D(inset, inset)).Min(
 			Vector2D(script_w - inset, script_h - inset) - box.half);
 	}
+
+	BuildAutoPerspectiveBox();
+}
+
+VisualToolTransform::TagLine const *VisualToolTransform::ActiveTagLine() const {
+	AssDialogue *active = c->selectionController->GetActiveLine();
+	auto found = std::find_if(tag_lines.begin(), tag_lines.end(),
+		[&](TagLine const& line) { return line.line == active; });
+	return found == tag_lines.end() ? nullptr : &*found;
+}
+
+bool VisualToolTransform::AutoPerspectiveFitsShape() const {
+	TagLine const *found = ActiveTagLine();
+	return found && found->drawing;
+}
+
+void VisualToolTransform::BuildAutoPerspectiveBox() {
+	if (!auto_perspective) return;
+
+	// The four points are drawn where the active line is to end up, so a shape is the source of
+	// the map - not the box round everything that happens to be selected. It lands on the points
+	// exactly, and the rest of the selection follows it through the same map, keeping its size
+	// and its place relative to it.
+	//
+	// Measured the other way the fit depended on how far the other lines reached, which is not
+	// always where they are drawn: a row turned about its anchor sweeps a much larger box than
+	// the glyphs occupy, and letter spacing is not in the measurement at all. Both quietly made
+	// the block too big and left the active line short of the points drawn to be filled.
+	//
+	// Only a shape has an outline to be measured though. Text is measured rather than drawn, and
+	// one row of a selection is a worse answer than the box round all of it - so for text the
+	// box stays as it was built, round everything.
+	TagLine const *found = ActiveTagLine();
+	if (!found || !found->drawing) {
+		if (!source_moved) box.Corners(source_corners);
+		return;
+	}
+
+	// A drawing is not an upright rectangle. The mask on a sign leans a degree or two, and its
+	// upright bounding box then has a triangle of air at every corner - fitted to the four
+	// points, that air is fitted with it and the shape lands short of them. The smallest
+	// rectangle that holds the outline is the one the shape really lies in, so that is what
+	// the box becomes.
+	std::vector<Vector2D> hull = SimplifyHull(ConvexHull(ShapeOutline(*found)), 1.0);
+	typesetting::OrientedBox tight;
+	if (MinimumAreaBox(hull, tight)) {
+		// A shape with no direction of its own - a circle, a blob - has a smallest rectangle at
+		// almost any angle, and picking one of them would tilt the frame for no reason. The
+		// tilt is only taken when it is worth something.
+		Vector2D upright[4];
+		LineCorners(*found, upright);
+		Vector2D low = upright[0], high = upright[0];
+		for (int i = 1; i < 4; ++i) { low = low.Min(upright[i]); high = high.Max(upright[i]); }
+		double straight = (double)(high.X() - low.X()) * (high.Y() - low.Y());
+		double tilted = 4.0 * tight.half.X() * tight.half.Y();
+		if (!(straight > 0) || tilted < straight * .98) {
+			box = tight;
+			box.half = box.half.Max(Vector2D(4.f, 4.f));
+			shear_frame_angle = box.angle;
+			SeedAutoPerspectiveSource(*found);
+			return;
+		}
+	}
+
+	typesetting::OrientedBox frame;
+	frame.angle = found->angle;
+	frame.centre = Vector2D(0.f, 0.f);
+
+	Vector2D line_corners[4];
+	LineCorners(*found, line_corners);
+	Vector2D low, high;
+	for (int i = 0; i < 4; ++i) {
+		Vector2D local = frame.ToLocal(line_corners[i]);
+		if (!i) { low = high = local; }
+		else { low = low.Min(local); high = high.Max(local); }
+	}
+
+	box.angle = frame.angle;
+	shear_frame_angle = frame.angle;
+	box.centre = frame.ToScript((low + high) / 2);
+	box.half = ((high - low) / 2).Max(Vector2D(4.f, 4.f));
+	SeedAutoPerspectiveSource(*found);
+}
+
+VisualDraggableFeature *VisualToolTransform::FeatureAt(size_t index) {
+	size_t at = 0;
+	for (auto& feature : features)
+		if (at++ == index) return &feature;
+	return nullptr;
+}
+
+std::vector<Vector2D> VisualToolTransform::ShapeOutline(TagLine const& found) {
+	// The drawing's own points, taken to where the renderer puts them: scaled, shifted by what
+	// the alignment does to its box, and turned by \frz about whatever it turns about.
+	std::vector<Vector2D> outline = GetLineDrawingPoints(found.line);
+	Vector2D fractions = AnchorFractions(found.align);
+	Vector2D shift(found.size.X() * fractions.X(), found.size.Y() * fractions.Y());
+	Vector2D pivot = found.org ? found.org : found.pos;
+	for (auto& point : outline)
+		point = RotateAbout(found.pos - shift +
+			Vector2D(point.X() * found.scale.X() / 100.f,
+			         point.Y() * found.scale.Y() / 100.f),
+			pivot, found.angle);
+	return outline;
+}
+
+void VisualToolTransform::SeedAutoPerspectiveSource(TagLine const& found) {
+	if (source_moved) return;
+	box.Corners(source_corners);
+
+	// A rectangle is only ever an approximation of a shape. When the shape is itself a
+	// quadrilateral - which a hand-drawn sign mask nearly always is - its own four corners are
+	// the exact answer, and nothing is left over at them to be stretched with the rest.
+	std::vector<Vector2D> quad = SimplifyHull(ConvexHull(ShapeOutline(found)), 2.0);
+	if (quad.size() != 4) return;
+
+	// In the order the box uses, so a corner of the source and a corner of the target mean the
+	// same corner of the picture.
+	bool taken[4] = {false, false, false, false};
+	for (int i = 0; i < 4; ++i) {
+		double best = 0;
+		int at = -1;
+		for (int j = 0; j < 4; ++j) {
+			if (taken[j]) continue;
+			double away = (quad[j] - source_corners[i]).Len();
+			if (at >= 0 && !(away < best)) continue;
+			best = away;
+			at = j;
+		}
+		if (at < 0) return;
+		taken[at] = true;
+		source_corners[i] = quad[at];
+	}
+}
+
+typesetting::PointMap VisualToolTransform::AutoPerspectiveMap() const {
+	auto forward = typesetting::QuadMap(box, corners);
+	// Until the four points are drawn there is no target, and the source must not act on its
+	// own: it would distort the lines before anything had been asked of it.
+	if (!touched) return forward;
+
+	Vector2D upright[4];
+	box.Corners(upright);
+	bool untouched = true;
+	for (int i = 0; i < 4; ++i)
+		untouched = untouched && (source_corners[i] - upright[i]).Len() < 1e-3f;
+	if (untouched) return forward;
+
+	auto inverse = typesetting::QuadInverseMap(box, source_corners);
+	return [inverse, forward](Vector2D point) { return forward(inverse(point)); };
 }
 
 namespace {
@@ -845,6 +1173,43 @@ void VisualToolTransform::LineQuad(TagLine const& original, Vector2D corners[4])
 		script_res / layout_res, corners);
 }
 
+bool VisualToolTransform::PerspectiveMovePlane(Vector2D const held_corners[4],
+	typesetting::OrientedBox& source, Vector2D projected[4]) const {
+	// The distortion is applied after the renderer's authored perspective. Compose the current
+	// distortion onto a representative line plane, so moving through it works both before and
+	// after a corner of the distortion frame has been changed.
+	auto held_distortion = typesetting::QuadMap(box, held_corners);
+	double best_area = 0;
+	for (auto const& found : tag_lines) {
+		if (!Perspective(found)) continue;
+
+		Vector2D line_corners[4], moved_corners[4];
+		LineQuad(found, line_corners);
+		bool finite = true;
+		for (int i = 0; i < 4; ++i) {
+			moved_corners[i] = held_distortion(line_corners[i]);
+			finite = finite && std::isfinite(moved_corners[i].X()) &&
+				std::isfinite(moved_corners[i].Y());
+		}
+		if (!finite) continue;
+
+		double twice_area = 0;
+		for (int i = 0; i < 4; ++i)
+			twice_area += moved_corners[i].X() * moved_corners[(i + 1) % 4].Y() -
+				moved_corners[(i + 1) % 4].X() * moved_corners[i].Y();
+		double area = std::abs(twice_area) * .5;
+		if (!(area > best_area) || area < 1e-3) continue;
+
+		best_area = area;
+		source.angle = 0;
+		source.centre = (found.box_first + found.box_second) / 2;
+		source.half = ((found.box_second - found.box_first) / 2).Max(
+			Vector2D(.5f, .5f));
+		std::copy(moved_corners, moved_corners + 4, projected);
+	}
+	return best_area > 0;
+}
+
 VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 	TagLine const& original) const {
 	Applied out;
@@ -857,15 +1222,30 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 	if (mode == VisualToolTransformMode::Distort || Perspective(original)) {
 		Vector2D corners[4];
 		LineQuad(original, corners);
-		for (auto& corner : corners) corner = MapPoint(corner);
+		for (auto& corner : corners) {
+			// Auto perspective sizes the selection as one object in the source plane. Scaling
+			// every line around its own anchor would change the glyphs but leave the distances
+			// between rows behind; doing it around the common box centre keeps the whole layout
+			// proportional, and mapping afterwards makes it follow the target perspective.
+			if (auto_perspective) {
+				float factor = static_cast<float>(auto_perspective_size / 100.0);
+				corner = box.centre + (corner - box.centre) * factor;
+			}
+			corner = MapPoint(corner);
+		}
 
 		Vector2D pivot = original.org ? original.org : original.pos;
+		// A distortion is most stable when expressed around the quad itself. Keeping a remote
+		// authored origin is mathematically equivalent, but produces extreme pos/scale values
+		// and loses precision. Free transform keeps its origin because there the compact affine
+		// form is normally retained.
+		Vector2D preferred_org = mode == VisualToolTransformMode::Distort ?
+			Vector2D() : MapPoint(pivot);
 		auto solved = typesetting::SolvePerspective(corners, original.align,
 			original.box_first, original.box_second, script_res / layout_res,
-			MapPoint(pivot));
-		// The origin the line already had is only a preference: it keeps the tags close to
-		// what they were, but a particular one can leave the arithmetic with nothing to solve.
-		// The middle of the quadrilateral always has something.
+			preferred_org);
+		// A preferred origin can still leave the arithmetic with nothing to solve. The middle
+		// of the quadrilateral is the stable fallback.
 		if (!solved.ok)
 			solved = typesetting::SolvePerspective(corners, original.align,
 				original.box_first, original.box_second, script_res / layout_res, Vector2D());
@@ -1007,8 +1387,19 @@ void VisualToolTransform::RebaseGesture() {
 }
 
 std::string VisualToolTransform::TagLineText(TagLine const& original) const {
+	// Opening Auto perspective is not itself an edit. Until four points have produced a target,
+	// the renderer must receive the authored line byte-for-byte; tag neutralisation belongs only
+	// to the internal calculation state.
+	if (auto_perspective && !touched)
+		return original.line->Text.get();
+
 	AssDialogue copy(*original.line);
 	auto *tool = const_cast<VisualToolTransform *>(this);
+	if (auto_perspective)
+		for (auto const *tag : {"\\frx", "\\fry", "\\fax", "\\fay", "\\org"})
+			tool->RemoveOverride(&copy, tag);
+	if (original.ensure_q2)
+		tool->SetOverride(&copy, "\\q", "2");
 
 	// One map for the whole selection; what each line has to say to follow it depends on the
 	// map it already had. Compared with what the line said when the tool opened, not with the
@@ -1457,6 +1848,7 @@ void VisualToolTransform::Collect() {
 	if (line != session_line) {
 		// Another line is another job, and the history belonged to the old one.
 		session_line = line;
+		source_moved = false;
 		reported = false;
 		undo_history.clear();
 		redo_history.clear();
@@ -1471,7 +1863,14 @@ void VisualToolTransform::Collect() {
 		return;
 	}
 
-	CollectTextBox();
+	// A textbox document expresses its rectangle through its generated rows. Treating it as
+	// one document here would resize that rectangle; Auto perspective deliberately places
+	// the individual rows without changing their dimensions.
+	if (!auto_perspective) CollectTextBox();
+	else {
+		textbox_document.reset();
+		textbox_lines.clear();
+	}
 
 	// These modes say everything in tags, so they need no drawings and convert nothing: they
 	// read the lines as they are.
@@ -1515,10 +1914,12 @@ void VisualToolTransform::Collect() {
 			// A distort is a lean, and a lean is exactly what an upright pen cannot follow - so
 			// the pair are kept as shapes from the start here, and the two switches that answer
 			// the same question the other way are off to match.
-			maintain_decor = true;
-			recalc_bord = false;
-			recalc_shad = false;
-			EnsureDecor();
+			if (!auto_perspective) {
+				maintain_decor = true;
+				recalc_bord = false;
+				recalc_shad = false;
+				EnsureDecor();
+			}
 		}
 
 		LockEditing(true);
@@ -1795,6 +2196,28 @@ void VisualToolTransform::PlaceFeatures() {
 	features.clear();
 	sel_features.clear();
 	if (!Active()) return;
+	if (auto_perspective) {
+		distort_map = AutoPerspectiveMap();
+		source_feature_first = no_feature;
+		if (!auto_perspective_points.empty()) return;
+		if (touched) {
+			auto feature = std::make_unique<VisualDraggableFeature>();
+			feature->type = DRAG_BIG_SQUARE;
+			feature->layer = 2;
+			features.push_back(*feature.release());
+		}
+		// The four points the proportion is measured from, so it can be said exactly rather
+		// than guessed at from a rectangle round the shape.
+		source_feature_first = features.size();
+		for (int i = 0; i < 4; ++i) {
+			auto feature = std::make_unique<VisualDraggableFeature>();
+			feature->type = DRAG_SMALL_SQUARE;
+			feature->layer = 1;
+			features.push_back(*feature.release());
+		}
+		SyncFeatures();
+		return;
+	}
 
 	int count = HandleCount();
 	for (int i = 0; i < count; ++i) {
@@ -1837,6 +2260,24 @@ void VisualToolTransform::SyncFeatures() {
 	// A feature is hit-tested against the mouse in pixels, so where it sits is a canvas
 	// position. The handles themselves are kept in script coordinates, because that is
 	// what the shape is measured in and what has to survive a zoom.
+	if (auto_perspective) {
+		distort_map = AutoPerspectiveMap();
+		if (source_feature_first != no_feature)
+			for (int i = 0; i < 4; ++i)
+				if (auto *handle = FeatureAt(source_feature_first + i))
+					handle->pos = FromScriptCoords(source_corners[i]);
+		if (source_feature_first != no_feature && source_feature_first > 0) {
+			Vector2D screen[4];
+			for (int i = 0; i < 4; ++i) screen[i] = FromScriptCoords(corners[i]);
+			Vector2D middle = (screen[0] + screen[1] + screen[2] + screen[3]) / 4;
+			Vector2D bottom = (screen[2] + screen[3]) / 2;
+			Vector2D away = bottom - middle;
+			features.front().pos = bottom +
+				(away.Len() > 1e-3 ? away.Unit() * 30.f : Vector2D(0.f, 30.f));
+		}
+		return;
+	}
+
 	int index = 0;
 	for (auto& feature : features) {
 		Vector2D at = FromScriptCoords(HandlePosition(index));
@@ -1900,6 +2341,9 @@ VisualToolTransform::HistoryState VisualToolTransform::Capture() const {
 	state.frame_linear = frame_linear;
 	state.frame_offset = frame_offset;
 	state.split = shear_split;
+	for (int i = 0; i < 4; ++i) state.source_corners[i] = source_corners[i];
+	state.source_moved = source_moved;
+	state.touched = touched;
 	return state;
 }
 
@@ -1915,6 +2359,16 @@ void VisualToolTransform::RestoreState(HistoryState const& state) {
 		frame_linear = state.frame_linear;
 		frame_offset = state.frame_offset;
 		shear_split = state.split && !split_lines.empty();
+	}
+	if (auto_perspective) {
+		for (int i = 0; i < 4; ++i) source_corners[i] = state.source_corners[i];
+		source_moved = state.source_moved;
+		// Whether there is a target at all is part of the step: undoing the four points has to
+		// take the handle that moves them away with them.
+		touched = state.touched;
+		PlaceFeatures();
+		Rebuild();
+		return;
 	}
 	SyncFeatures();
 	Rebuild();
@@ -1965,8 +2419,8 @@ void VisualToolTransform::Accept() {
 			ExitTool();
 			return;
 		}
-		wxString what = mode == VisualToolTransformMode::Distort ?
-			_("distort") : _("free transform");
+		wxString what = auto_perspective ? _("auto perspective") :
+			mode == VisualToolTransformMode::Distort ? _("distort") : _("free transform");
 		if (maintain_decor) EnsureDecor();
 		bool adding = shear_split || (maintain_decor && HasDecor());
 		if (!adding) {
@@ -2006,9 +2460,9 @@ void VisualToolTransform::Accept() {
 					if (decor.has_border) out.push_back(DecorLineText(source, decor, false));
 				}
 			}
-			// The letters go last, unless a shape painted their own colour is already holding them:
-			// a widened shape has the letters inside it, so drawing them again adds nothing.
-			if (!(maintain_decor && Covered(source))) out.push_back(TagLineText(source));
+			// The letters always go last. Decoration shapes preserve the outline/shadow; they
+			// must never replace the glyph fill itself.
+			out.push_back(TagLineText(source));
 			return out;
 		};
 
@@ -2104,6 +2558,7 @@ void VisualToolTransform::Reject() {
 void VisualToolTransform::ExitTool() {
 	if (leaving) return;
 	leaving = true;
+	preview_interface.Clear();
 	LockEditing(false);
 	if (WindowGoing()) return;
 
@@ -2137,68 +2592,105 @@ wxString VisualToolTransform::LabelFor(VisualToolTransformAction action) const {
 		case VisualToolTransformAction::RecalcBord: return _("recalculate bord");
 		case VisualToolTransformAction::RecalcShad: return _("recalculate shad");
 		case VisualToolTransformAction::MaintainDecor: return _("maintain bord & shad");
-		case VisualToolTransformAction::RecalcBlur: return _("recalculate blur");
 		case VisualToolTransformAction::RecalcClip: return _("recalculate clip");
+		case VisualToolTransformAction::AutoPerspectiveSize: return _("Size");
 		default: return wxString();
 	}
 }
 
-float VisualToolTransform::MeasuredTextWidth(wxString const& label, bool bold) const {
-	// Measured rather than guessed, because a translated label is a different width,
-	// and cached because the layout is worked out for every button on every repaint.
-	std::string key = (bold ? "b:" : "r:") + from_wx(label);
-	auto found = text_width_cache.find(key);
-	if (found != text_width_cache.end()) return found->second;
-	gl_text->SetFont("Verdana", 9, bold, false);
-	int text_width, text_height;
-	gl_text->GetExtent(from_wx(label), text_width, text_height);
-	float width = static_cast<float>(text_width);
-	text_width_cache.emplace(key, width);
-	return width;
+void VisualToolTransform::UpdatePreviewInterface() const {
+	using Interface = VisualToolPreviewInterface;
+	Interface::Page page;
+
+	auto add = [&](VisualToolTransformAction action, Interface::ControlKind kind,
+		Interface::ControlStyle style = Interface::ControlStyle::Neutral,
+		bool selected = false) -> Interface::Control& {
+		Interface::Control control;
+		control.id = static_cast<int>(action);
+		control.kind = kind;
+		control.label = LabelFor(action);
+		control.style = style;
+		control.enabled = ActionEnabled(action);
+		control.selected = selected;
+		page.controls.push_back(std::move(control));
+		return page.controls.back();
+	};
+
+	if (auto_perspective) {
+		add(VisualToolTransformAction::Undo, Interface::ControlKind::Undo);
+		add(VisualToolTransformAction::Redo, Interface::ControlKind::Redo);
+		add(VisualToolTransformAction::Apply, Interface::ControlKind::Button,
+			Interface::ControlStyle::Accept);
+		add(VisualToolTransformAction::Cancel, Interface::ControlKind::Button,
+			Interface::ControlStyle::Cancel);
+		auto& size = add(VisualToolTransformAction::AutoPerspectiveSize,
+			Interface::ControlKind::Slider);
+		size.value = auto_perspective_size;
+		size.minimum = 25;
+		size.maximum = 200;
+		size.step = 1;
+		size.value_text = to_wx(agi::format("%.0f%%", auto_perspective_size));
+		size.width = 170;
+		wxString message = touched && auto_perspective_points.empty() ?
+			_("Redraw the 4 points.") : _("Draw 4 points.");
+		// Only worth saying when one line really is the measure of the others.
+		if (tag_lines.size() > 1 && AutoPerspectiveFitsShape())
+			if (AssDialogue *active = c->selectionController->GetActiveLine()) {
+				std::string pattern =
+					from_wx(_("Line %d is fitted to the points, the rest follow it."));
+				message += " " + to_wx(agi::format(pattern.c_str(), active->Row + 1));
+			}
+		message += " " + _("The yellow dashed rectangle is the reference.");
+		page.message = message;
+		preview_interface.SetPage(std::move(page));
+		return;
+	}
+
+	add(VisualToolTransformAction::Undo, Interface::ControlKind::Undo);
+	add(VisualToolTransformAction::Redo, Interface::ControlKind::Redo);
+	add(VisualToolTransformAction::Apply, Interface::ControlKind::Button,
+		Interface::ControlStyle::Accept);
+	add(VisualToolTransformAction::Cancel, Interface::ControlKind::Button,
+		Interface::ControlStyle::Cancel);
+	page.controls.push_back({0, Interface::ControlKind::Spacer});
+
+	if (TagsMode()) {
+		add(VisualToolTransformAction::RecalcBord, Interface::ControlKind::Toggle,
+			Interface::ControlStyle::Neutral, recalc_bord);
+		add(VisualToolTransformAction::RecalcShad, Interface::ControlKind::Toggle,
+			Interface::ControlStyle::Neutral, recalc_shad);
+		add(VisualToolTransformAction::MaintainDecor, Interface::ControlKind::Toggle,
+			Interface::ControlStyle::Neutral, maintain_decor);
+	}
+	add(VisualToolTransformAction::RecalcClip, Interface::ControlKind::Toggle,
+		Interface::ControlStyle::Neutral, recalc_clip);
+
+	if (TagsMode() && DecorHint())
+		page.message = _("The bord and the shad can be scatchy, using the maintain option is "
+			"advised. It will transform into a shape.");
+	preview_interface.SetPage(std::move(page));
 }
 
 std::pair<Vector2D, Vector2D> VisualToolTransform::ActionBounds(
 	VisualToolTransformAction action) const {
-	constexpr float top = 10.f;
-	constexpr float height = 34.f;
-	constexpr float gap = 8.f;
-
-	if (action == VisualToolTransformAction::Undo)
-		return {Vector2D(12.f, top), Vector2D(46.f, top + height)};
-	if (action == VisualToolTransformAction::Redo)
-		return {Vector2D(54.f, top), Vector2D(88.f, top + height)};
-
-	float left = 88.f + gap;
-	for (auto item : {VisualToolTransformAction::Apply, VisualToolTransformAction::Cancel}) {
-		float width = MeasuredTextWidth(LabelFor(item), true) + 24.f;
-		if (item == action) return {Vector2D(left, top), Vector2D(left + width, top + height)};
-		left += width + gap;
-	}
-
-	// The border, the shadow and the blur are only worth a switch where they are still tags;
-	// the shape modes bake them into the outline. The clip is a switch in every mode - it is
-	// script coordinates whatever the text became.
-	left += 8.f;
-	for (auto item : {VisualToolTransformAction::RecalcBord,
-		VisualToolTransformAction::RecalcShad, VisualToolTransformAction::MaintainDecor,
-		VisualToolTransformAction::RecalcBlur, VisualToolTransformAction::RecalcClip}) {
-		if (!ActionEnabled(item)) continue;
-		float width = MeasuredTextWidth(LabelFor(item), false) + 26.f;
-		if (item == action)
-			return {Vector2D(left, top), Vector2D(left + width, top + height)};
-		left += width + 10.f;
-	}
-	return {Vector2D(left, top), Vector2D(left, top + height)};
+	UpdatePreviewInterface();
+	return preview_interface.BoundsFor(static_cast<int>(action), *gl_text, canvas_size);
 }
 
 float VisualToolTransform::TopBarHeight() const {
-	float bottom = ActionBounds(VisualToolTransformAction::Cancel).second.Y();
-	// The advice gets a line of its own under the buttons.
-	if (TagsMode() && (wrap_hint || DecorHint())) bottom += 20.f;
-	return bottom + 10.f;
+	UpdatePreviewInterface();
+	if (preview_interface.HasExternalHost()) return 0.f;
+	return preview_interface.Height(*gl_text, canvas_size);
 }
 
 bool VisualToolTransform::ActionEnabled(VisualToolTransformAction action) const {
+	if (auto_perspective)
+		return action == VisualToolTransformAction::Undo ? !undo_history.empty() :
+			action == VisualToolTransformAction::Redo ? !redo_history.empty() :
+			action == VisualToolTransformAction::Apply ? touched :
+			action == VisualToolTransformAction::Cancel ? true :
+			action == VisualToolTransformAction::AutoPerspectiveSize ? touched : false;
+
 	switch (action) {
 		case VisualToolTransformAction::Undo: return !undo_history.empty();
 		case VisualToolTransformAction::Redo: return !redo_history.empty();
@@ -2224,18 +2716,10 @@ bool VisualToolTransform::ActionEnabled(VisualToolTransformAction action) const 
 
 VisualToolTransformAction VisualToolTransform::ActionAt(Vector2D point) const {
 	if (!Active()) return VisualToolTransformAction::None;
-	for (auto action : {VisualToolTransformAction::Undo, VisualToolTransformAction::Redo,
-		VisualToolTransformAction::Apply, VisualToolTransformAction::Cancel,
-		VisualToolTransformAction::RecalcBord, VisualToolTransformAction::RecalcShad,
-		VisualToolTransformAction::MaintainDecor,
-		VisualToolTransformAction::RecalcBlur, VisualToolTransformAction::RecalcClip}) {
-		if (!ActionEnabled(action)) continue;
-		auto [top_left, bottom_right] = ActionBounds(action);
-		if (point.X() >= top_left.X() && point.X() <= bottom_right.X() &&
-			point.Y() >= top_left.Y() && point.Y() <= bottom_right.Y())
-			return action;
-	}
-	return VisualToolTransformAction::None;
+	UpdatePreviewInterface();
+	if (preview_interface.HasExternalHost()) return VisualToolTransformAction::None;
+	return static_cast<VisualToolTransformAction>(
+		preview_interface.HitTest(point, *gl_text, canvas_size));
 }
 
 void VisualToolTransform::Perform(VisualToolTransformAction action) {
@@ -2278,119 +2762,110 @@ void VisualToolTransform::Perform(VisualToolTransformAction action) {
 	}
 }
 
+void VisualToolTransform::UpdateAutoPerspectiveSize(double value) {
+	if (!auto_perspective) return;
+	auto_perspective_size = std::clamp(value, 25.0, 200.0);
+	if (touched) Rebuild();
+	else parent->Render();
+	UpdatePreviewInterface();
+}
+
 void VisualToolTransform::DrawTopBar() {
-	gl.SetFillColour(*wxBLACK, .72f);
-	gl.SetLineColour(*wxBLACK, 0.f, 1);
-	gl.DrawRectangle(Vector2D(0.f, 0.f), Vector2D(canvas_size.X(), TopBarHeight()));
+	UpdatePreviewInterface();
+	if (preview_interface.HasExternalHost()) return;
+	preview_interface.Draw(gl, *gl_text, canvas_size, static_cast<int>(hovered_action));
+}
 
-	auto rounded_rectangle = [&](Vector2D top_left, Vector2D bottom_right,
-		float radius, wxColour colour) {
-		float safe_radius = std::min({radius, (bottom_right.X() - top_left.X()) * .5f,
-			(bottom_right.Y() - top_left.Y()) * .5f});
-		gl.SetFillColour(colour, 1.f);
-		gl.SetLineColour(colour, 0.f, 1);
-		gl.DrawRectangle(top_left + Vector2D(safe_radius, 0.f), bottom_right - Vector2D(safe_radius, 0.f));
-		gl.DrawRectangle(top_left + Vector2D(0.f, safe_radius), bottom_right - Vector2D(0.f, safe_radius));
-		gl.DrawCircle(top_left + Vector2D(safe_radius, safe_radius), safe_radius);
-		gl.DrawCircle(Vector2D(bottom_right.X() - safe_radius, top_left.Y() + safe_radius), safe_radius);
-		gl.DrawCircle(Vector2D(top_left.X() + safe_radius, bottom_right.Y() - safe_radius), safe_radius);
-		gl.DrawCircle(bottom_right - Vector2D(safe_radius, safe_radius), safe_radius);
-	};
-
-	for (auto action : {VisualToolTransformAction::Undo, VisualToolTransformAction::Redo}) {
-		auto [top_left, bottom_right] = ActionBounds(action);
-		bool enabled = ActionEnabled(action);
-		wxColour colour = enabled ? wxColour(55, 59, 64) : wxColour(66, 69, 73);
-		if (enabled && hovered_action == action) colour = colour.ChangeLightness(118);
-		rounded_rectangle(top_left, bottom_right, 7.f, colour);
-
-		wxColour content = enabled ? *wxWHITE : wxColour(145, 148, 152);
-		gl.SetLineColour(content, 1.f, 3);
-		float direction = action == VisualToolTransformAction::Undo ? -1.f : 1.f;
-		Vector2D centre((top_left.X() + bottom_right.X()) * .5f,
-			(top_left.Y() + bottom_right.Y()) * .5f);
-		Vector2D tip = centre + Vector2D(direction * 7.f, 0.f);
-		gl.DrawLine(centre - Vector2D(direction * 7.f, 0.f), tip);
-		gl.DrawLine(tip, tip - Vector2D(direction * 5.f, 5.f));
-		gl.DrawLine(tip, tip - Vector2D(direction * 5.f, -5.f));
+bool VisualToolTransform::AddAutoPerspectivePoint(Vector2D point) {
+	if (auto_perspective_points.empty()) {
+		features.clear();
+		sel_features.clear();
+		source_feature_first = no_feature;
+	}
+	auto_perspective_points.push_back(point);
+	if (auto_perspective_points.size() < 4) {
+		parent->Render();
+		return false;
 	}
 
-	for (auto action : {VisualToolTransformAction::Apply, VisualToolTransformAction::Cancel}) {
-		auto [top_left, bottom_right] = ActionBounds(action);
-		bool enabled = ActionEnabled(action);
-		wxColour colour = action == VisualToolTransformAction::Apply ?
-			wxColour(31, 153, 76) : wxColour(183, 54, 61);
-		if (!enabled) colour = wxColour(66, 69, 73);
-		else if (hovered_action == action) colour = colour.ChangeLightness(118);
-		rounded_rectangle(top_left, bottom_right, 7.f, colour);
-
-		gl_text->SetFont("Verdana", 9, true, false);
-		gl_text->SetColour(enabled ? agi::Color(255, 255, 255, 255) :
-			agi::Color(145, 148, 152, 255));
-		std::string text = from_wx(LabelFor(action));
-		int text_width, text_height;
-		gl_text->GetExtent(text, text_width, text_height);
-		gl_text->Print(text, static_cast<int>(top_left.X() + 12.f),
-			static_cast<int>((top_left.Y() + bottom_right.Y() - text_height) * .5f));
+	// Keep the first three when the closing point would fold or cross the plane. The next
+	// click replaces only that last attempt, which makes correcting it feel like mask drawing.
+	if (!DirectedQuad(auto_perspective_points)) {
+		auto_perspective_points.pop_back();
+		parent->Render();
+		return false;
 	}
 
-	if (TagsMode() && (wrap_hint || DecorHint())) {
-		auto row = ActionBounds(VisualToolTransformAction::Cancel);
-		gl_text->SetFont("Verdana", 9, false, false);
-		// Down the left edge, where the row begins, rather than under whichever button happens
-		// to be there. The word about the border comes first, since it is about what the gesture
-		// is going to do rather than about what the renderer might do afterwards.
-		float left = 12.f;
-		auto say = [&](std::string const& advice, agi::Color colour) {
-			gl_text->SetColour(colour);
-			int advice_width, advice_height;
-			gl_text->GetExtent(advice, advice_width, advice_height);
-			gl_text->Print(advice, static_cast<int>(left),
-				static_cast<int>(row.second.Y() + 4.f));
-			left += advice_width + 18.f;
-		};
-		if (DecorHint())
-			say(from_wx(_("The bord and the shad can be scatchy, using the maintain option is "
-				"advised. It will transform into a shape.")), agi::Color(220, 223, 226, 255));
-		if (wrap_hint)
-			say(from_wx(_("If the rows move by themselves, use \\q2.")),
-				agi::Color(220, 223, 226, 255));
+	PushHistory();
+	for (int i = 0; i < 4; ++i) corners[i] = auto_perspective_points[i];
+	auto_perspective_points.clear();
+	touched = true;
+	PlaceFeatures();
+	Rebuild();
+	return true;
+}
+
+void VisualToolTransform::DrawAutoPerspectiveSource() {
+	// What the four points are fitted from: the active line's own box. Shown so the proportion
+	// the result is stretched by is something to be seen rather than worked out backwards from
+	// the outcome - a tall box on a wide quadrilateral says at a glance why the text spreads.
+	wxColour yellow(255, 255, 0);
+	gl.SetLineColour(yellow, 1.f, 1);
+	for (int i = 0; i < 4; ++i)
+		gl.DrawDashedLine(FromScriptCoords(source_corners[i]),
+			FromScriptCoords(source_corners[(i + 1) % 4]), 6.f);
+
+	if (source_feature_first == no_feature) return;
+	for (int i = 0; i < 4; ++i) {
+		auto *handle = FeatureAt(source_feature_first + i);
+		if (!handle) continue;
+		// Solid and outlined more heavily under the pointer, so it is clear which one a drag
+		// would take hold of before the drag starts.
+		bool under_mouse = handle == active_feature;
+		gl.SetLineColour(yellow, 1.f, under_mouse ? 2 : 1);
+		gl.SetFillColour(yellow, under_mouse ? .9f : .35f);
+		handle->Draw(gl);
+	}
+}
+
+void VisualToolTransform::DrawAutoPerspectivePath() {
+	if (auto_perspective_points.empty()) {
+		// Only the handle that moves the whole target, which exists once there is one. The
+		// source handles are drawn with the rectangle they belong to.
+		if (!touched || source_feature_first == 0 || features.empty()) return;
+		Vector2D bottom = (FromScriptCoords(corners[2]) + FromScriptCoords(corners[3])) / 2;
+		wxColour outline = to_wx(line_color_secondary_opt->GetColor());
+		wxColour fill = to_wx(highlight_color_primary_opt->GetColor());
+		gl.SetLineColour(outline, 1.f, 1);
+		gl.DrawLine(bottom, features.front().pos);
+		gl.SetFillColour(fill, .3f);
+		features.front().Draw(gl);
+		return;
 	}
 
-	// Plain tick boxes with their labels beside them: these are settings, not buttons, and
-	// they should not look like something to press.
-	for (auto action : {VisualToolTransformAction::RecalcBord,
-		VisualToolTransformAction::RecalcShad, VisualToolTransformAction::MaintainDecor,
-		VisualToolTransformAction::RecalcBlur, VisualToolTransformAction::RecalcClip}) {
-		if (!ActionEnabled(action)) continue;
-		bool on = action == VisualToolTransformAction::RecalcBord ? recalc_bord :
-			action == VisualToolTransformAction::RecalcShad ? recalc_shad :
-			action == VisualToolTransformAction::MaintainDecor ? maintain_decor :
-			action == VisualToolTransformAction::RecalcBlur ? recalc_blur : recalc_clip;
-		auto [top_left, bottom_right] = ActionBounds(action);
-		float middle = (top_left.Y() + bottom_right.Y()) * .5f;
-		Vector2D mark(top_left.X() + 8.f, middle);
+	wxColour path = to_wx(line_color_secondary_opt->GetColor());
+	gl.SetLineColour(path, 1.f, 2);
+	for (size_t i = 1; i < auto_perspective_points.size(); ++i)
+		gl.DrawLine(FromScriptCoords(auto_perspective_points[i - 1]),
+			FromScriptCoords(auto_perspective_points[i]));
 
-		gl.SetLineColour(hovered_action == action ? *wxWHITE : wxColour(190, 194, 198),
-			1.f, 1);
-		gl.SetFillColour(*wxBLACK, .45f);
-		gl.DrawRectangle(mark - Vector2D(7.f, 7.f), mark + Vector2D(7.f, 7.f));
-		if (on) {
-			gl.SetLineColour(wxColour(120, 220, 140), 1.f, 2);
-			gl.DrawLine(mark + Vector2D(-4.f, 0.f), mark + Vector2D(-1.f, 4.f));
-			gl.DrawLine(mark + Vector2D(-1.f, 4.f), mark + Vector2D(5.f, -5.f));
-		}
-		gl.SetFillColour(*wxBLACK, 0.f);
-
-		gl_text->SetFont("Verdana", 9, false, false);
-		gl_text->SetColour(on ? agi::Color(255, 255, 255, 255) :
-			agi::Color(170, 174, 178, 255));
-		std::string text_out = from_wx(LabelFor(action));
-		int text_width, text_height;
-		gl_text->GetExtent(text_out, text_width, text_height);
-		gl_text->Print(text_out, static_cast<int>(mark.X() + 12.f),
-			static_cast<int>(middle - text_height * .5f));
+	// The moving edge and its closing edge preview the same connected contour used by the
+	// mask tools. Only the fixed, clicked points are retained.
+	Vector2D pointer = mouse_pos;
+	// The preview follows the cursor into the letterbox too, since a click there places a
+	// corner as well; stopping the dashed edges at the video rect pointed them at a spot
+	// where nothing would appear. mouse_pos is tested for validity because leaving the
+	// display resets it to a near-zero float rather than NaN, which would otherwise pass
+	// the top bar test on its own.
+	if (pointer && pointer.Y() >= TopBarHeight()) {
+		Vector2D last = FromScriptCoords(auto_perspective_points.back());
+		gl.DrawDashedLine(last, pointer, 5.f);
+		if (auto_perspective_points.size() > 1)
+			gl.DrawDashedLine(pointer, FromScriptCoords(auto_perspective_points.front()), 5.f);
 	}
+
+	for (auto const& point : auto_perspective_points)
+		DrawCorner(FromScriptCoords(point), false);
 }
 
 void VisualToolTransform::DrawCorner(Vector2D at, bool current) {
@@ -2505,6 +2980,12 @@ void VisualToolTransform::Commit(wxString) {
 
 bool VisualToolTransform::InitializeDrag(VisualDraggableFeature *feature) {
 	if (!Active()) return false;
+	if (auto_perspective) {
+		PushHistory();
+		for (int i = 0; i < 4; ++i) hold_corners[i] = corners[i];
+		hold_start = ToScriptCoords(feature->pos);
+		return true;
+	}
 
 	if (mode == VisualToolTransformMode::Free) {
 		// A handle here does not stand for itself, it stands for the whole gesture - so only
@@ -2558,6 +3039,40 @@ bool VisualToolTransform::InitializeDrag(VisualDraggableFeature *feature) {
 
 void VisualToolTransform::UpdateDrag(VisualDraggableFeature *feature) {
 	if (!Active()) return;
+	if (auto_perspective) {
+		if (source_feature_first != no_feature) {
+			size_t index = 0;
+			for (auto& other : features) {
+				if (&other == feature) break;
+				++index;
+			}
+			if (index >= source_feature_first && index < source_feature_first + 4) {
+				source_corners[index - source_feature_first] = ToScriptCoords(feature->pos);
+				source_moved = true;
+				SyncFeatures();
+				Rebuild();
+				return;
+			}
+		}
+
+		auto inverse = typesetting::QuadInverseMap(box, hold_corners);
+		auto plane = typesetting::QuadMap(box, hold_corners);
+		Vector2D moved = inverse(ToScriptCoords(feature->pos)) - inverse(hold_start);
+		Vector2D source[4], next[4];
+		box.Corners(source);
+		for (int i = 0; i < 4; ++i) {
+			Vector2D shifted = source[i] + moved;
+			if (typesetting::QuadDepth(box, hold_corners, shifted) <= 1e-4) return;
+			next[i] = plane(shifted);
+			if (!std::isfinite(next[i].X()) || !std::isfinite(next[i].Y()) ||
+				std::abs(next[i].X()) > 1e5f || std::abs(next[i].Y()) > 1e5f) return;
+		}
+		std::copy(next, next + 4, corners);
+		SyncFeatures();
+		touched = true;
+		Rebuild();
+		return;
+	}
 
 	// Only the handle under the mouse says anything in the free transform, and it says it
 	// about the whole box.
@@ -2583,6 +3098,7 @@ void VisualToolTransform::UpdateDrag(VisualDraggableFeature *feature) {
 }
 
 bool VisualToolTransform::InitializeHold() {
+	if (auto_perspective) return false;
 	if (mode == VisualToolTransformMode::Free) {
 		// Anywhere inside the box moves it, which is the one gesture that needs no handle.
 		if (tag_lines.empty()) return false;
@@ -2674,8 +3190,28 @@ void VisualToolTransform::UpdateHold() {
 	}
 
 	if (mode == VisualToolTransformMode::Distort) {
-		Vector2D moved = ToScriptCoords(mouse_pos) - hold_start;
-		for (int i = 0; i < 4; ++i) corners[i] = hold_corners[i] + moved;
+		// Prefer the perspective already authored on the selected rows. If there is none, the
+		// distortion's own quadrilateral is the plane, which becomes projective as soon as one
+		// of its corners is moved.
+		typesetting::OrientedBox move_source = box;
+		Vector2D move_corners[4];
+		if (!PerspectiveMovePlane(hold_corners, move_source, move_corners))
+			std::copy(hold_corners, hold_corners + 4, move_corners);
+
+		auto inverse = typesetting::QuadInverseMap(move_source, move_corners);
+		auto plane = typesetting::QuadMap(move_source, move_corners);
+		Vector2D moved = inverse(ToScriptCoords(mouse_pos)) - inverse(hold_start);
+		Vector2D next[4];
+		for (int i = 0; i < 4; ++i) {
+			Vector2D shifted = inverse(hold_corners[i]) + moved;
+			// Do not let a drag cross the plane's vanishing line, where coordinates turn inside
+			// out and become unbounded. The last valid position remains on screen instead.
+			if (typesetting::QuadDepth(move_source, move_corners, shifted) <= 1e-4) return;
+			next[i] = plane(shifted);
+			if (!std::isfinite(next[i].X()) || !std::isfinite(next[i].Y()) ||
+				std::abs(next[i].X()) > 1e5f || std::abs(next[i].Y()) > 1e5f) return;
+		}
+		std::copy(next, next + 4, corners);
 		SyncFeatures();
 		touched = true;
 		Rebuild();
@@ -2727,15 +3263,32 @@ void VisualToolTransform::OnMouseEvent(wxMouseEvent& event) {
 		hovered_action = VisualToolTransformAction::None;
 		parent->Render();
 	}
+	if (auto_perspective && event.LeftDown()) {
+		Vector2D point(event.GetPosition());
+		bool on_handle = auto_perspective_points.empty() &&
+			std::any_of(features.begin(), features.end(), [&](VisualDraggableFeature& feature) {
+				return (point - feature.pos).Len() <= 12.f;
+			});
+		if (on_handle) {
+			VisualTool<VisualDraggableFeature>::OnMouseEvent(event);
+			return;
+		}
+		// A perspective quad routinely has corners past the frame edge, so a click outside
+		// the video is accepted; the top bar already returned above.
+		AddAutoPerspectivePoint(ToScriptCoords(point));
+		return;
+	}
 	VisualTool<VisualDraggableFeature>::OnMouseEvent(event);
 }
 
 bool VisualToolTransform::HandleKey(int key, bool control, bool shift) {
 	if (!Active()) return false;
-
 	if (control && (key == 'Z' || key == 'Y')) {
 		bool redo = key == 'Y' || shift;
 		if (redo ? RedoHistory() : UndoHistory()) return true;
+		// With nothing left to undo the guided page still keeps the keys: behind an unapplied
+		// preview they would otherwise reach the file's own history.
+		if (auto_perspective) return true;
 		// Nothing left to step back to. Undoing past the start of a session would undo
 		// whatever the user did before it, with a preview still on screen to confuse them,
 		// so it closes the preview instead.
@@ -2797,6 +3350,13 @@ void VisualToolTransform::Draw() {
 		static_cast<float>(shaded_area_alpha_opt->GetDouble() * .55));
 	gl.DrawRectangle(video_pos, video_pos + video_size);
 	gl.SetFillColour(*wxBLACK, 0.f);
+
+	if (auto_perspective) {
+		DrawAutoPerspectiveSource();
+		DrawAutoPerspectivePath();
+		DrawTopBar();
+		return;
+	}
 
 	// The mesh, in thin dashed red. Dashed by drawing every other piece of the curve
 	// rather than by dashing each piece, which at this size would come out solid.

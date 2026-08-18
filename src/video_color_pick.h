@@ -35,9 +35,9 @@ bool CanPick(const agi::Context *c);
 /// One press of a colour-pick hotkey.
 ///
 /// A single press takes the colour under the pointer and writes it to the selected
-/// lines. Pressing the same one again straight away opens a magnified view of the
-/// video around that point instead, for when the pixel is small or its edge matters,
-/// and for choosing whether the colour goes in as a \t() transition.
+/// lines as a plain tag. Pressing the same one again straight away restores the
+/// overwritten colour and opens a magnified view of the video around that point, for
+/// choosing the exact pixel and whether the accepted colour goes in as a \t().
 void Invoke(agi::Context *c, Target target);
 
 } // namespace video_color_pick

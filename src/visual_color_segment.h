@@ -10,6 +10,7 @@
 #include "vector2d.h"
 
 #include <cstdint>
+#include <unordered_set>
 #include <memory>
 #include <string>
 #include <vector>
@@ -68,6 +69,23 @@ std::vector<std::vector<Vector2D>> SplitSelfTouchingContours(
 /// not to cut across the outline band the snap just enclosed.
 constexpr double snapped_smooth_tolerance = 4.0;
 
+/// How far a fitted curve may sit from the outline it replaces. Well under half a pixel,
+/// so turning an outline into curves cannot visibly move its edge.
+constexpr double contour_fit_tolerance = .25;
+
+/// Identify a vertex by position, so a fit can be told which vertices to leave exactly
+/// where they are. Quantised finely enough that only a vertex which really is the same one
+/// matches, and coarsely enough to survive the rounding a coordinate picks up on the way.
+uint64_t ContourVertexKey(Vector2D point);
+
+/// Replace a dense closed outline with the fewest bezier curves that still follow it,
+/// staying within `tolerance` of it everywhere. Sharp corners are cut rather than drawn
+/// through, as are any vertices whose ContourVertexKey appears in `keep_vertices`, which is
+/// how geometry the user drew by hand survives a fit of the shape it has been merged into.
+/// Returns an empty list when the outline is too short, or when the fit cannot be trusted.
+std::vector<SplineCurve> FitClosedContour(std::vector<Vector2D> const& contour,
+	double tolerance, std::unordered_set<uint64_t> const& keep_vertices = {});
+
 /// Round a traced contour into line and bezier segments. `tolerance` is the
 /// corner radius in pixels and `angle_threshold` the interior angle at or below
 /// which a corner counts as deliberate and is left sharp.
@@ -122,7 +140,7 @@ wxBitmap MakeVisualSelectionModeBitmap(VisualSelectionMode mode, int size = 20);
 wxBitmap MakeVisualVectorClipBrushBitmap(bool add, int size = 20, bool dropdown = true);
 wxBitmap MakeVisualAISelectionBitmap(int size = 20);
 /// Icon for the range shape chooser: a dashed rectangle, or a mouse for freehand.
-wxBitmap MakeVisualRangeShapeBitmap(bool freehand, int size = 20);
+wxBitmap MakeVisualRangeShapeBitmap(bool freehand, int size = 20, bool dark = false);
 
 /// Return whether a screen-space brush stroke can change the current selection.
 bool WouldVectorBrushStrokeChange(std::vector<std::vector<Vector2D>> const& contours,

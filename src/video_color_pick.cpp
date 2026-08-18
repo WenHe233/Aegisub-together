@@ -31,7 +31,6 @@
 #include "compat.h"
 #include "dialogs.h"
 #include "include/aegisub/context.h"
-#include "options.h"
 #include "project.h"
 #include "selection_controller.h"
 #include "text_selection_controller.h"
@@ -48,7 +47,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdio>
+#include <functional>
+#include <map>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -58,13 +60,13 @@
 #include <wx/button.h>
 #include <wx/checkbox.h>
 #include <wx/dcbuffer.h>
+#include <wx/dcclient.h>
 #include <wx/msgdlg.h>
 #include <wx/popupwin.h>
 #include <wx/progdlg.h>
 #include <wx/settings.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
-#include <wx/timer.h>
 
 namespace video_color_pick {
 namespace {
@@ -75,6 +77,35 @@ struct TagNames {
 	const char *tag;
 	const char *alt;
 };
+
+/// Breaks a label into lines no wider than `width`. wxStaticText has Wrap() for this;
+/// a check box has to be handed the newlines, and MSW switches its label to multi-line
+/// drawing as soon as it contains one.
+wxString WrapLabel(wxWindow *window, wxString const& text, int width) {
+	wxClientDC dc(window);
+	dc.SetFont(window->GetFont());
+	wxString wrapped, line;
+	size_t at = 0;
+	while (at <= text.size()) {
+		size_t space = text.find(' ', at);
+		wxString word = text.substr(at, space == wxString::npos ? wxString::npos : space - at);
+		at = space == wxString::npos ? text.size() + 1 : space + 1;
+		if (word.empty()) continue;
+		wxString candidate = line.empty() ? word : line + " " + word;
+		if (!line.empty() && dc.GetTextExtent(candidate).GetWidth() > width) {
+			if (!wrapped.empty()) wrapped += "\n";
+			wrapped += line;
+			line = word;
+		}
+		else
+			line = candidate;
+	}
+	if (!line.empty()) {
+		if (!wrapped.empty()) wrapped += "\n";
+		wrapped += line;
+	}
+	return wrapped;
+}
 
 TagNames NamesFor(Target target) {
 	switch (target) {
@@ -103,6 +134,8 @@ constexpr int DOUBLE_PRESS_MS = 200;
 constexpr int MAGNIFIER_COLUMNS = 17;
 constexpr int MAGNIFIER_ROWS = 13;
 constexpr int MAGNIFIER_SCALE = 12;
+/// The border every row of the picker popup keeps to the window edge.
+constexpr int popup_margin = 6;
 
 // ---------------------------------------------------------------- frame sampling
 
@@ -207,6 +240,14 @@ bool IsOurTransition(AssOverrideTag const& tag, std::vector<Target> const& targe
 	return ours;
 }
 
+bool IsTransitionAtTime(AssOverrideTag const& tag, int time) {
+	return tag.Name == "\\t" && tag.Params.size() >= 4 &&
+		!tag.Params[0].omitted && !tag.Params[1].omitted &&
+		tag.Params[0].Get<int>() == time && tag.Params[1].Get<int>() == time &&
+		!tag.Params.back().omitted &&
+		tag.Params.back().GetType() == VariableDataType::BLOCK;
+}
+
 /// The body of a transition that sets every one of these targets to one colour:
 /// "\c&H..&\3c&H..&". One transition for the lot rather than one each, because they
 /// all happen at the same moment and reading three of them in a row says nothing the
@@ -250,11 +291,38 @@ void SetTransition(parsed_line& parsed, std::vector<Target> const& targets,
 		return;
 	}
 
-	ovr->Tags.erase(
-		std::remove_if(ovr->Tags.begin(), ovr->Tags.end(),
-			[&](AssOverrideTag const& tag) { return IsOurTransition(tag, targets); }),
-		ovr->Tags.end());
-	ovr->AddTag(insert);
+	// Reuse an existing transform at this exact instant. This keeps unrelated scale,
+	// rotation, alpha and colour events together, while replacing only the colour tags
+	// selected by this pick. Transforms at other times remain untouched.
+	AssDialogueBlockOverride *same_time = nullptr;
+	for (auto& tag : ovr->Tags) {
+		if (!IsTransitionAtTime(tag, time)) continue;
+		auto body = tag.Params.back().Get<AssDialogueBlockOverride*>();
+		if (!body) continue;
+		body->Tags.erase(
+			std::remove_if(body->Tags.begin(), body->Tags.end(),
+				[&](AssOverrideTag const& inner) {
+					return IsColourOf(inner.Name, targets);
+				}),
+			body->Tags.end());
+		same_time = body;
+	}
+
+	if (same_time) {
+		for (Target target : targets)
+			same_time->AddTag(NamesFor(target).tag + value);
+		ovr->Tags.erase(
+			std::remove_if(ovr->Tags.begin(), ovr->Tags.end(),
+				[&](AssOverrideTag const& tag) {
+					if (!IsTransitionAtTime(tag, time)) return false;
+					auto body = tag.Params.back().Get<AssDialogueBlockOverride*>();
+					return body && body->Tags.empty();
+				}),
+			ovr->Tags.end());
+	}
+	else {
+		ovr->AddTag(insert);
+	}
 	parsed.line->UpdateText(parsed.blocks);
 }
 
@@ -296,8 +364,9 @@ int Apply(agi::Context *c, std::vector<Target> const& targets, agi::Color colour
 	for (auto line : sel) {
 		parsed_line parsed(line);
 		int time = midpoint - line->Start - TRANSITION_LEAD_MS;
+		int first_frame = c->videoController->FrameAtTime(line->Start, agi::vfr::START);
 
-		if (transition && time > MINIMUM_TRANSITION_MS) {
+		if (transition && c->videoController->GetFrameN() > first_frame) {
 			SetTransition(parsed, targets, value, time, norm_caret, caret);
 		}
 		else {
@@ -325,26 +394,57 @@ std::string Trim(std::string value) {
 	return value;
 }
 
-/// A tracked position per frame, as After Effects writes it and as Aegisub-Motion
-/// reads it off the clipboard.
+/// Tracked position, scale and rotation keyframes, as After Effects writes them and
+/// as Aegisub-Motion reads them off the clipboard.
 struct MotionTrack {
 	int source_width = 0;
 	int source_height = 0;
-	std::vector<std::pair<double, double>> position;
+	std::map<int, std::pair<double, double>> position;
+	std::map<int, std::pair<double, double>> scale;
+	std::map<int, double> rotation;
 };
+
+std::pair<double, double> SamplePair(
+		std::map<int, std::pair<double, double>> const& values, int frame,
+		std::pair<double, double> fallback) {
+	if (values.empty()) return fallback;
+	auto after = values.lower_bound(frame);
+	if (after == values.begin()) return after->second;
+	if (after == values.end()) return std::prev(after)->second;
+	if (after->first == frame) return after->second;
+	auto before = std::prev(after);
+	double amount = static_cast<double>(frame - before->first) /
+		(after->first - before->first);
+	return {
+		before->second.first + (after->second.first - before->second.first) * amount,
+		before->second.second + (after->second.second - before->second.second) * amount
+	};
+}
+
+double SampleScalar(std::map<int, double> const& values, int frame, double fallback) {
+	if (values.empty()) return fallback;
+	auto after = values.lower_bound(frame);
+	if (after == values.begin()) return after->second;
+	if (after == values.end()) return std::prev(after)->second;
+	if (after->first == frame) return after->second;
+	auto before = std::prev(after);
+	double amount = static_cast<double>(frame - before->first) /
+		(after->first - before->first);
+	return before->second + (after->second - before->second) * amount;
+}
 
 /// Parse the clipboard's idea of a motion track.
 ///
 /// The format is what Mocha exports and what a-mo/DataHandler.moon accepts: a header
-/// naming the source size, then a "Position" section whose rows are indented and
-/// start with a frame number. Only the position is wanted here - scale and rotation
-/// say nothing about colour - so the other sections are skipped rather than parsed.
+/// naming the source size, then Position, Scale and Rotation sections whose rows are
+/// indented and start with a frame number.
 std::optional<MotionTrack> ParseMotionTrack(std::string const& text) {
 	if (text.find("Adobe After Effects 6.0 Keyframe Data") == std::string::npos)
 		return {};
 
 	MotionTrack track;
-	bool in_position = false;
+	enum class Section { None, Position, Scale, Rotation };
+	Section section = Section::None;
 
 	std::istringstream input(text);
 	std::string line;
@@ -354,9 +454,12 @@ std::optional<MotionTrack> ParseMotionTrack(std::string const& text) {
 
 		bool indented = line.front() == '\t' || line.front() == ' ';
 		if (!indented) {
-			// A section header. Anything that is not Position turns collection off,
-			// so rows belonging to Scale or Rotation cannot be mistaken for it.
-			in_position = Trim(line) == "Position";
+			std::string header = Trim(line);
+			if (header == "Position") section = Section::Position;
+			else if (header == "Scale") section = Section::Scale;
+			else if (header.find("Rotation") != std::string::npos)
+				section = Section::Rotation;
+			else section = Section::None;
 			continue;
 		}
 
@@ -375,13 +478,26 @@ std::optional<MotionTrack> ParseMotionTrack(std::string const& text) {
 				continue;
 			}
 		}
-		if (!in_position) continue;
-
-		// "<frame> <x> <y> [<z>]". The header row of the section names its columns
-		// instead, and fails to parse, which is how it gets skipped.
+		// Section header rows name their columns and fail these numeric parses, which
+		// is how they are skipped. Mocha normally supplies one row per frame, but the
+		// maps and interpolation also support sparse After Effects keyframes.
 		double frame = 0, x = 0, y = 0;
-		if (sscanf(body.c_str(), "%lf %lf %lf", &frame, &x, &y) == 3)
-			track.position.emplace_back(x, y);
+		int key = 0;
+		if (section == Section::Position &&
+			sscanf(body.c_str(), "%lf %lf %lf", &frame, &x, &y) == 3) {
+			key = static_cast<int>(std::lround(frame));
+			track.position[key] = {x, y};
+		}
+		else if (section == Section::Scale &&
+			sscanf(body.c_str(), "%lf %lf %lf", &frame, &x, &y) == 3) {
+			key = static_cast<int>(std::lround(frame));
+			track.scale[key] = {x, y};
+		}
+		else if (section == Section::Rotation &&
+			sscanf(body.c_str(), "%lf %lf", &frame, &x) == 2) {
+			key = static_cast<int>(std::lround(frame));
+			track.rotation[key] = x;
+		}
 	}
 
 	if (track.source_width <= 0 || track.source_height <= 0 || track.position.empty())
@@ -462,7 +578,7 @@ bool HasTimedColours(AssDialogue *line, std::vector<Target> const& targets) {
 /// Follow a tracked point through the active line and write the colour it passes
 /// over. Returns false only when the clipboard has nothing usable on it.
 bool ImportFromMotion(agi::Context *c, std::vector<Target> const& targets,
-                      wxWindow *parent) {
+		wxPoint picked_pixel, wxWindow *parent, int commit_id) {
 	auto track = ParseMotionTrack(GetClipboard());
 	if (!track)
 		return false;
@@ -483,8 +599,41 @@ bool ImportFromMotion(agi::Context *c, std::vector<Target> const& targets,
 
 	int first_frame = c->videoController->FrameAtTime(line->Start, agi::vfr::START);
 	int last_frame = c->videoController->FrameAtTime(line->End, agi::vfr::START);
-	int count = std::min<int>((int)track->position.size(), last_frame - first_frame + 1);
+	int track_first = track->position.begin()->first;
+	int track_last = track->position.rbegin()->first;
+	if (!track->scale.empty()) track_last = std::max(track_last, track->scale.rbegin()->first);
+	if (!track->rotation.empty())
+		track_last = std::max(track_last, track->rotation.rbegin()->first);
+	int count = std::min(track_last - track_first + 1, last_frame - first_frame + 1);
 	if (count <= 0) return true;
+
+	// Treat the picked pixel as a point attached to the motion track at the current
+	// frame. Converting it into the track's local coordinates once lets position,
+	// non-uniform scale and rotation carry that exact point through every frame.
+	int reference_index = std::clamp(c->videoController->GetFrameN() - first_frame,
+		0, count - 1);
+	int reference_key = track_first + reference_index;
+	auto reference_frame = c->videoController->GetFrame(first_frame + reference_index, true);
+	if (!reference_frame || reference_frame->width == 0 || reference_frame->height == 0)
+		return true;
+	double picked_x = picked_pixel.x * track->source_width /
+		static_cast<double>(reference_frame->width);
+	double picked_y = picked_pixel.y * track->source_height /
+		static_cast<double>(reference_frame->height);
+	auto reference_position = SamplePair(track->position, reference_key, {0.0, 0.0});
+	auto reference_scale = SamplePair(track->scale, reference_key, {100.0, 100.0});
+	double reference_rotation = SampleScalar(track->rotation, reference_key, 0.0) *
+		3.14159265358979323846 / 180.0;
+	double dx = picked_x - reference_position.first;
+	double dy = picked_y - reference_position.second;
+	double reference_cos = std::cos(reference_rotation);
+	double reference_sin = std::sin(reference_rotation);
+	double scale_x = std::abs(reference_scale.first) < 1e-6 ? 1.0 :
+		reference_scale.first / 100.0;
+	double scale_y = std::abs(reference_scale.second) < 1e-6 ? 1.0 :
+		reference_scale.second / 100.0;
+	double local_x = (reference_cos * dx + reference_sin * dy) / scale_x;
+	double local_y = (-reference_sin * dx + reference_cos * dy) / scale_y;
 
 	// Every frame has to be decoded to be sampled, so a long line is a real wait.
 	std::unique_ptr<wxProgressDialog> progress;
@@ -504,8 +653,21 @@ bool ImportFromMotion(agi::Context *c, std::vector<Target> const& targets,
 		auto sampled = [&]() -> std::optional<agi::Color> {
 			auto shot = c->videoController->GetFrame(frame, true);
 			if (!shot || shot->width == 0) return {};
-			int x = (int)(track->position[index].first * shot->width / track->source_width);
-			int y = (int)(track->position[index].second * shot->height / track->source_height);
+			int key = track_first + index;
+			auto position = SamplePair(track->position, key, reference_position);
+			auto scale = SamplePair(track->scale, key, {100.0, 100.0});
+			double rotation = SampleScalar(track->rotation, key, 0.0) *
+				3.14159265358979323846 / 180.0;
+			double transformed_x = local_x * scale.first / 100.0;
+			double transformed_y = local_y * scale.second / 100.0;
+			double cosine = std::cos(rotation);
+			double sine = std::sin(rotation);
+			double tracked_x = position.first + cosine * transformed_x - sine * transformed_y;
+			double tracked_y = position.second + sine * transformed_x + cosine * transformed_y;
+			int x = static_cast<int>(std::lround(
+				tracked_x * shot->width / track->source_width));
+			int y = static_cast<int>(std::lround(
+				tracked_y * shot->height / track->source_height));
 			if (x < 0 || y < 0 || (size_t)x >= shot->width || (size_t)y >= shot->height)
 				return {};
 			if (shot->flipped) y = (int)shot->height - 1 - y;
@@ -529,7 +691,8 @@ bool ImportFromMotion(agi::Context *c, std::vector<Target> const& targets,
 		return true;
 
 	ApplyTrackedColours(c, line, targets, stops);
-	c->ass->Commit(_("import colors from motion"), AssFile::COMMIT_DIAG_TEXT, -1, line);
+	c->ass->Commit(_("import colors from motion"), AssFile::COMMIT_DIAG_TEXT,
+		commit_id, line);
 	return true;
 }
 
@@ -541,30 +704,31 @@ bool ImportFromMotion(agi::Context *c, std::vector<Target> const& targets,
 class MagnifierCanvas final : public wxWindow {
 	agi::Context *c;
 	wxPoint centre;
+	std::function<void()> pick;
 	/// Which pixel a click has settled on. Starts on the one the gesture began at,
 	/// so doing nothing but double-clicking takes the same colour a single press
 	/// would have.
 	wxPoint chosen;
-	std::function<void (agi::Color)> onAccept;
 
 public:
 	MagnifierCanvas(wxWindow *parent, agi::Context *c, wxPoint centre,
-	                std::function<void (agi::Color)> onAccept)
+	                std::function<void()> pick)
 	: wxWindow(parent, wxID_ANY, wxDefaultPosition,
 		wxSize(MAGNIFIER_COLUMNS * MAGNIFIER_SCALE, MAGNIFIER_ROWS * MAGNIFIER_SCALE))
-	, c(c), centre(centre), chosen(centre), onAccept(std::move(onAccept))
+	, c(c), centre(centre), pick(std::move(pick)), chosen(centre)
 	{
 		SetBackgroundStyle(wxBG_STYLE_PAINT);
 		Bind(wxEVT_PAINT, &MagnifierCanvas::OnPaint, this);
-		// A single click only marks a pixel; the colour is taken on a double click.
-		// Otherwise the first click would close the popup, and there would be no way
-		// to pick a colour and then reach the motion import in the same visit.
 		Bind(wxEVT_LEFT_DOWN, &MagnifierCanvas::OnSelect, this);
-		Bind(wxEVT_LEFT_DCLICK, &MagnifierCanvas::OnAccept, this);
+		Bind(wxEVT_LEFT_DCLICK, &MagnifierCanvas::OnPick, this);
 	}
 
 	/// The frame moved under us, so the pixels did too.
 	void Reread() { Refresh(); }
+	wxPoint PickedPixel() const { return chosen; }
+	std::optional<agi::Color> PickedColour() const {
+		return FrameSampler(c).At(chosen.x, chosen.y);
+	}
 
 private:
 	/// Which video pixel a point in this window stands for.
@@ -618,89 +782,123 @@ private:
 		Refresh();
 	}
 
-	void OnAccept(wxMouseEvent& evt) {
+	void OnPick(wxMouseEvent& evt) {
 		chosen = SourceAt(evt.GetPosition());
-		FrameSampler frame(c);
-		if (auto colour = frame.At(chosen.x, chosen.y))
-			onAccept(*colour);
+		Refresh();
+		pick();
 	}
+
 };
 
 /// The magnified view with its two choices above it.
 ///
-/// A transient popup so that clicking anywhere else puts it away, and a timer that
-/// puts it away when the pointer wanders off it - which is the gesture for "never
-/// mind" and is what the script's users are used to from the built-in eyedropper.
+/// A transient popup for choosing the exact source pixel and optional timed write.
 class MagnifierPopup final : public wxPopupTransientWindow {
 	agi::Context *c;
 	Target target;
 	int commit_id;
 
 	wxCheckBox *transition;
-	wxCheckBox *remember;
 	/// The two colours this press is not for, so one pick can set more than one.
 	std::vector<std::pair<Target, wxCheckBox*>> also;
 	MagnifierCanvas *canvas;
-	wxTimer leave_timer;
 	agi::signal::Connection seek_connection;
+	agi::signal::Connection selection_connection;
+	agi::signal::Connection active_line_connection;
+	agi::signal::Connection tool_connection;
+	agi::signal::Connection text_selection_connection;
+	wxWindow *key_window;
+	int text_selection_start;
+	int text_selection_end;
+	int insertion_point;
+	bool dismissing = false;
+	bool applying = false;
 
 public:
 	MagnifierPopup(agi::Context *c, Target target, wxPoint centre, int commit_id)
 	: wxPopupTransientWindow(c->videoDisplay, wxBORDER_SIMPLE)
 	, c(c), target(target), commit_id(commit_id)
+	, key_window(c->parent)
+	, text_selection_start(c->textSelectionController->GetSelectionStart())
+	, text_selection_end(c->textSelectionController->GetSelectionEnd())
+	, insertion_point(c->textSelectionController->GetInsertionPoint())
 	{
 		transition = new wxCheckBox(this, wxID_ANY, "");
-		transition->SetValue(OPT_GET("Video/Color Pick/Auto Transition")->GetBool());
+		transition->SetValue(false);
 
-		remember = new wxCheckBox(this, wxID_ANY, _("remember for future use"));
-
-		auto *also_row = new wxBoxSizer(wxHORIZONTAL);
-		also_row->Add(new wxStaticText(this, wxID_ANY, _("also add for:")), 0,
-			wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+		auto *also_label = new wxStaticText(this, wxID_ANY, _("also add for:"));
+		auto *also_boxes = new wxBoxSizer(wxHORIZONTAL);
+		int also_width = also_label->GetBestSize().GetWidth() + 6;
 		for (Target other : {Target::Primary, Target::Outline, Target::Shadow}) {
 			// The colour that was asked for is being written anyway, so offering it
 			// here would only be a checkbox that cannot mean anything.
 			if (other == target) continue;
 			auto *box = new wxCheckBox(this, wxID_ANY, NamesFor(other).tag);
-			also_row->Add(box, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
+			also_boxes->Add(box, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
+			also_width += box->GetBestSize().GetWidth() + 8;
 			also.emplace_back(other, box);
 		}
+		// One line while the translation fits beside the boxes, two when it does not:
+		// the popup is as wide as the magnifier and nothing here may widen it.
+		wxSizer *also_row;
+		if (also_width <= ContentWidth()) {
+			auto *row = new wxBoxSizer(wxHORIZONTAL);
+			row->Add(also_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+			row->Add(also_boxes, 0, wxALIGN_CENTER_VERTICAL);
+			also_row = row;
+		}
+		else {
+			auto *column = new wxBoxSizer(wxVERTICAL);
+			column->Add(also_label, 0);
+			column->Add(also_boxes, 0, wxTOP, 2);
+			also_row = column;
+		}
 
-		canvas = new MagnifierCanvas(this, c, centre,
-			[this](agi::Color colour) { Chose(colour); });
+		canvas = new MagnifierCanvas(this, c, centre, [this] { Pick(); });
 
 		auto *import = new wxButton(this, wxID_ANY, _("import from motion"));
 		import->Bind(wxEVT_BUTTON, &MagnifierPopup::OnImport, this);
 
-		// Says what the click does, because a single click no longer finishes and
-		// there would otherwise be nothing to suggest a second one.
-		auto *hint = new wxStaticText(this, wxID_ANY, _("accept color by doubleclick"));
+		auto *buttons = new wxBoxSizer(wxHORIZONTAL);
+		auto *accept = new wxButton(this, wxID_ANY, _("Pick"));
+		auto *close = new wxButton(this, wxID_ANY, _("Close"));
+		accept->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { Pick(); });
+		close->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { Dismiss(); });
+		buttons->Add(accept, 1, wxEXPAND | wxRIGHT, 6);
+		buttons->Add(close, 1, wxEXPAND);
+
+		auto *hint = new wxStaticText(this, wxID_ANY,
+			_("Select a pixel, then pick the color."), wxDefaultPosition, wxDefaultSize,
+			wxALIGN_CENTRE_HORIZONTAL);
 		wxFont hint_font = hint->GetFont();
 		hint_font.SetStyle(wxFONTSTYLE_ITALIC);
 		hint->SetFont(hint_font);
 		hint->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
 
 		auto *sizer = new wxBoxSizer(wxVERTICAL);
-		sizer->Add(transition, 0, wxLEFT | wxRIGHT | wxTOP, 6);
-		// Indented, because it is not a choice of its own: it says whether the one
-		// above it should also apply to the presses after this one.
-		sizer->Add(remember, 0, wxLEFT | wxRIGHT, 22);
-		sizer->Add(also_row, 0, wxLEFT | wxRIGHT | wxTOP, 6);
-		sizer->Add(canvas, 0, wxALL, 6);
-		sizer->Add(import, 0, wxEXPAND | wxLEFT | wxRIGHT, 6);
-		sizer->Add(hint, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, 4);
-		SetSizerAndFit(sizer);
+		sizer->Add(transition, 0, wxLEFT | wxRIGHT | wxTOP, popup_margin);
+		sizer->Add(also_row, 0, wxLEFT | wxRIGHT | wxTOP, popup_margin);
+		sizer->Add(canvas, 0, wxALL, popup_margin);
+		sizer->Add(import, 0, wxEXPAND | wxLEFT | wxRIGHT, popup_margin);
+		sizer->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, popup_margin);
+		sizer->Add(hint, 0, wxEXPAND | wxALL, popup_margin);
+		hint->Wrap(ContentWidth());
+		SetSizer(sizer);
 
 		UpdateTransitionLabel();
-
-		leave_timer.SetOwner(this);
-		Bind(wxEVT_TIMER, &MagnifierPopup::OnLeaveCheck, this);
-		leave_timer.Start(120);
 
 		// The label names the time the transition would be written with, and that
 		// time is a property of the frame on screen, so stepping the video has to
 		// rewrite it - and redraw the pixels, which have also just changed.
 		seek_connection = c->videoController->AddSeekListener(&MagnifierPopup::OnSeek, this);
+		selection_connection = c->selectionController->AddSelectionListener(
+			[this] { Dismiss(); });
+		active_line_connection = c->selectionController->AddActiveLineListener(
+			[this](AssDialogue *) { Dismiss(); });
+		tool_connection = c->videoDisplay->AddToolChangeListener([this] { Dismiss(); });
+		text_selection_connection = c->textSelectionController->AddSelectionListener(
+			&MagnifierPopup::OnTextSelectionChanged, this);
+		key_window->Bind(wxEVT_CHAR_HOOK, &MagnifierPopup::OnKeyDown, this);
 	}
 
 private:
@@ -709,29 +907,55 @@ private:
 		canvas->Reread();
 	}
 
+	void OnKeyDown(wxKeyEvent& event) {
+		if (event.GetKeyCode() == WXK_LEFT) {
+			c->videoController->PrevFrame();
+			return;
+		}
+		if (event.GetKeyCode() == WXK_RIGHT) {
+			c->videoController->NextFrame();
+			return;
+		}
+		event.Skip();
+	}
+
+	void OnTextSelectionChanged() {
+		auto controller = c->textSelectionController.get();
+		bool changed = text_selection_start != controller->GetSelectionStart() ||
+			text_selection_end != controller->GetSelectionEnd() ||
+			insertion_point != controller->GetInsertionPoint();
+		if (changed && !applying) Dismiss();
+	}
+
 	void UpdateTransitionLabel() {
 		int time = TransitionTime(c);
 		// The tag already carries its own "c" - \c, \3c, \4c - so the format must not
 		// add another one.
-		transition->SetLabel(wxString::Format(_("add with \\t(%d,%d,%s...)"),
-			time, time, NamesFor(target).tag));
+		// The check box reserves its indicator and a space before the text, and MSW
+		// pads a multi-line label by the indicator again; wrapping to what is left
+		// of the magnifier keeps the whole row inside the popup.
+		int reserved = 2 * transition->GetCharHeight() + transition->GetCharWidth();
+		transition->SetLabel(WrapLabel(transition,
+			wxString::Format(_("as \\t(%d,%d,%s...)"), time, time,
+				NamesFor(target).tag),
+			std::max(1, ContentWidth() - reserved)));
+		auto line = c->selectionController->GetActiveLine();
+		bool first_frame = !line || c->videoController->GetFrameN() ==
+			c->videoController->FrameAtTime(line->Start, agi::vfr::START);
+		transition->Enable(!first_frame);
+		if (first_frame) transition->SetValue(false);
 
-		// Deliberately never disabled. Below the threshold a transition would start
-		// where the line does and so does nothing, and the write falls back to a
-		// plain tag on its own - but greying the boxes out for that made them look
-		// broken, and "remember" is about later presses anyway, where the time will
-		// usually be a different one.
-
-		GetSizer()->SetSizeHints(this);
-		Layout();
+		FitToMagnifier();
 	}
 
-	/// Away from the popup means cancel. Polling rather than watching for a leave
-	/// event, because a leave fires when the pointer crosses onto one of the child
-	/// controls too, and that is not leaving.
-	void OnLeaveCheck(wxTimerEvent&) {
-		if (!GetScreenRect().Inflate(4).Contains(wxGetMousePosition()))
-			Dismiss();
+	/// The popup is exactly the magnifier plus its border. Everything above the image
+	/// wraps to that width, so the fitted height is all that is left to take.
+	static int ContentWidth() { return MAGNIFIER_COLUMNS * MAGNIFIER_SCALE; }
+
+	void FitToMagnifier() {
+		GetSizer()->Fit(this);
+		SetClientSize(ContentWidth() + 2 * popup_margin, GetClientSize().GetHeight());
+		Layout();
 	}
 
 	/// The colour asked for, plus any of the other two that were ticked.
@@ -742,15 +966,20 @@ private:
 		return targets;
 	}
 
-	void Chose(agi::Color colour) {
+	void Pick() {
+		auto colour = canvas->PickedColour();
+		if (!colour) return;
 		bool wants = transition->GetValue();
-		if (remember->GetValue())
-			OPT_SET("Video/Color Pick/Auto Transition")->SetBool(wants);
 
 		// One undo entry for the lot: the same id is carried through, so writing
 		// three colours from one click stays one step to undo.
-		Apply(c, ChosenTargets(), colour, wants, commit_id);
-		Dismiss();
+		applying = true;
+		commit_id = Apply(c, ChosenTargets(), *colour, wants, commit_id);
+		text_selection_start = c->textSelectionController->GetSelectionStart();
+		text_selection_end = c->textSelectionController->GetSelectionEnd();
+		insertion_point = c->textSelectionController->GetInsertionPoint();
+		applying = false;
+		if (!wants) Dismiss();
 	}
 
 	void OnImport(wxCommandEvent&) {
@@ -759,17 +988,24 @@ private:
 		// focus somewhere else entirely when it closes - another application, in
 		// practice - because the popup it belonged to is already on its way out.
 		auto targets = ChosenTargets();
+		auto picked = canvas->PickedPixel();
 		wxWindow *owner = c->parent;
 		Dismiss();
 
-		if (!ImportFromMotion(c, targets, owner))
+		if (!ImportFromMotion(c, targets, picked, owner, commit_id))
 			wxMessageBox(_("There is no valid motion track on the clipboard."),
 				_("Import from motion"), wxOK | wxICON_EXCLAMATION, owner);
 	}
 
 	void OnDismiss() override {
-		leave_timer.Stop();
+		if (dismissing) return;
+		dismissing = true;
 		seek_connection.Disconnect();
+		selection_connection.Disconnect();
+		active_line_connection.Disconnect();
+		tool_connection.Disconnect();
+		text_selection_connection.Disconnect();
+		key_window->Unbind(wxEVT_CHAR_HOOK, &MagnifierPopup::OnKeyDown, this);
 		CallAfter([this] { Destroy(); });
 	}
 };
@@ -783,6 +1019,7 @@ struct LastPress {
 	wxMilliClock_t when = 0;
 	Target target = Target::Primary;
 	int commit_id = -1;
+	std::vector<std::pair<AssDialogue *, std::string>> before;
 	bool valid = false;
 };
 LastPress last_press;
@@ -805,15 +1042,25 @@ void Invoke(agi::Context *c, Target target) {
 		return;
 
 	wxMilliClock_t now = wxGetLocalTimeMillis();
+	auto const& selection = c->selectionController->GetSelectedSet();
+	bool same_selection = last_press.before.size() == selection.size() &&
+		std::all_of(last_press.before.begin(), last_press.before.end(),
+			[&](auto const& entry) { return selection.count(entry.first) != 0; });
 	bool second = last_press.valid && last_press.target == target &&
-		now - last_press.when < DOUBLE_PRESS_MS;
+		now - last_press.when < DOUBLE_PRESS_MS && same_selection;
 
 	if (second) {
-		// The first press has already written a colour. The magnifier amends that
-		// same undo entry rather than adding another, so the pair reads as the one
-		// action it was, and whatever is chosen here replaces what was taken there.
+		// The first press must remain useful on its own, but once it becomes the first
+		// half of a double press its plain colour is only a preview. Restore every
+		// overwritten line before opening the magnifier; accepting later amends this
+		// same undo entry, while closing leaves the original colours in place.
+		for (auto const& [line, text] : last_press.before)
+			line->Text = text;
+		int commit_id = c->ass->Commit(_("pick color from video"),
+			AssFile::COMMIT_DIAG_TEXT, last_press.commit_id,
+			last_press.before.size() == 1 ? last_press.before.front().first : nullptr);
 		last_press.valid = false;
-		auto *popup = new MagnifierPopup(c, target, *at, last_press.commit_id);
+		auto *popup = new MagnifierPopup(c, target, *at, commit_id);
 		wxPoint mouse = wxGetMousePosition();
 		wxSize size = popup->GetSize();
 		popup->Position(wxPoint(mouse.x - size.GetWidth() / 2,
@@ -828,8 +1075,11 @@ void Invoke(agi::Context *c, Target target) {
 
 	last_press.when = now;
 	last_press.target = target;
-	last_press.commit_id = Apply(c, {target}, *colour,
-		OPT_GET("Video/Color Pick/Auto Transition")->GetBool(), -1);
+	last_press.before.clear();
+	last_press.before.reserve(selection.size());
+	for (auto line : selection)
+		last_press.before.emplace_back(line, line->Text.get());
+	last_press.commit_id = Apply(c, {target}, *colour, false, -1);
 	last_press.valid = true;
 }
 

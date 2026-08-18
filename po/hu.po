@@ -14,6 +14,38 @@ msgstr ""
 "X-Generator: Poedit 1.6.9\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: ../src/preferences.cpp:257
+msgid "Dark Mode"
+msgstr "Sötét mód"
+
+#: ../src/preferences.cpp:258
+msgid "Enable dark mode"
+msgstr "Sötét mód engedélyezése"
+
+#: ../src/preferences.cpp:352
+msgid "Dark Colors"
+msgstr "Sötét színek"
+
+#: ../src/preferences.cpp:358
+msgid "Progress"
+msgstr "Folyamatjelző"
+
+#: ../src/preferences.cpp:354
+msgid "Subtitle edit box"
+msgstr "Feliratszerkesztő"
+
+#: ../src/preferences.cpp:371
+msgid "Subtitle grid"
+msgstr "Felirattáblázat"
+
+#: ../src/preferences.cpp:790
+msgid "Aegisub needs to be restarted so that the new appearance can be applied. Restart now?"
+msgstr "Az új megjelenés alkalmazásához újra kell indítani az Aegisubot. Újraindítja most?"
+
+#: ../src/command/app.cpp:167 ../src/preferences.cpp:791
+msgid "Restart Aegisub?"
+msgstr "Újraindítja az Aegisubot?"
+
 #: ../src/ass_style.cpp:196
 msgid "Auto-detect base direction (libass only)"
 msgstr ""
@@ -6727,6 +6759,11 @@ msgstr "Dupla kattintás az opciók listázásáért"
 msgid "Brightness: %d%%"
 msgstr "Fényerő: %d%%"
 
+#: ../src/video_box.cpp
+#, c-format
+msgid "Subtitle opacity: %d%%"
+msgstr "Felirat láthatósága: %d%%"
+
 msgid "All fonts"
 msgstr "Minden betűtípus"
 
@@ -6803,7 +6840,76 @@ msgid "Image Mask (%d lines)"
 msgstr "Kép maszk (%d sor)"
 
 msgid "Gradient (%d lines, text: %s)"
-msgstr "Gradient (%d sor, szöveg: %s)"
+msgstr "Színátmenet (%d sor, szöveg: %s)"
+
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Textbox (%d lines, text: %s)"
+msgstr "Szövegdoboz (%d sor, szöveg: %s)"
+
+#: ../src/command/typesetting.cpp ../src/command/vis_tool.cpp
+msgid "Textbox"
+msgstr "Szövegdoboz"
+
+#: ../src/command/typesetting.cpp
+msgid "Put the selected lines into a wrapping textbox drawn on the video"
+msgstr "A kijelölt sorok elhelyezése a videón rajzolt, automatikusan tördelő szövegdobozba"
+
+#: ../src/command/vis_tool.cpp
+msgid "Show and edit the selected textbox"
+msgstr "A kijelölt szövegdoboz megjelenítése és szerkesztése"
+
+#: ../src/typesetting_textbox.cpp
+msgid "apply text box"
+msgstr "szövegdoboz alkalmazása"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Accept (CTRL+ENTER)"
+msgstr "Elfogadás (CTRL+ENTER)"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Align centre"
+msgstr "Középre igazítás"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Align left"
+msgstr "Balra igazítás"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Align right"
+msgstr "Jobbra igazítás"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Border"
+msgstr "Bord"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Border color"
+msgstr "Bord szín"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Centre"
+msgstr "Közép"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Justify"
+msgstr "Sorkizárt"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Line spacing"
+msgstr "Sorköz"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Padding"
+msgstr "Belső margó"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Spacing"
+msgstr "Sorköz"
+
+#: ../src/visual_tool_textbox.cpp
+msgid "Text color"
+msgstr "Szövegszín"
 
 msgid "Combined Group Background"
 msgstr "Összevont sorok háttere"
@@ -7292,6 +7398,30 @@ msgstr "Az AI-válasz érvénytelen vagy ismétlődő feliratsorra hivatkozott."
 msgid "AI analysis in progress"
 msgstr "AI-elemzés folyamatban"
 
+msgid "Replaying the latest AI post-check without an AI connection."
+msgstr "A legutóbbi AI-utóellenőrzés ismételt átnézése AI-kapcsolat nélkül."
+
+msgid "Previously accepted"
+msgstr "Korábban elfogadva"
+
+msgid "There is no latest AI post-check available for this subtitle."
+msgstr "Ehhez a felirathoz nem érhető el legutóbbi AI-utóellenőrzés."
+
+msgid "New AI post-check"
+msgstr "Új AI-utóellenőrzés"
+
+msgid "Start a new AI post-check and approve corrections one by one"
+msgstr "Új AI-utóellenőrzés indítása, majd a javítások egyenkénti jóváhagyása"
+
+msgid "Latest"
+msgstr "Legutóbbi"
+
+msgid "Latest AI post-check"
+msgstr "Legutóbbi AI-utóellenőrzés"
+
+msgid "Review the latest AI post-check again without an active AI connection"
+msgstr "A legutóbbi AI-utóellenőrzés ismételt átnézése aktív AI-kapcsolat nélkül"
+
 msgid "Back"
 msgstr "Vissza"
 
@@ -7553,6 +7683,9 @@ msgstr "Kész."
 
 msgid "Copy to &Clipboard"
 msgstr "Másolás a &vágólapra"
+
+msgid "Copy to Clipboard (&full line)"
+msgstr "Másolás a vágólapra (&teljes sor)"
 
 msgid "&Open Result"
 msgstr "Találat &megnyitása"
@@ -8401,13 +8534,9 @@ msgid "pick color from video"
 msgstr "szín felvétele a videóról"
 
 #: ../src/video_color_pick.cpp
-msgid "remember for future use"
-msgstr "legyen ez az alapértelmezett"
-
-#: ../src/video_color_pick.cpp
 #, c-format
-msgid "add with \\t(%d,%d,%s...)"
-msgstr "hozzáadás \\t(%d,%d,%s...) formában"
+msgid "as \\t(%d,%d,%s...)"
+msgstr "\\t(%d,%d,%s...) formában"
 
 #: ../src/video_color_pick.cpp
 msgid "also add for:"
@@ -8438,12 +8567,16 @@ msgid "This line already has timed colors for that tag, from an earlier import o
 msgstr "Ezen a soron már vannak időzített színek ehhez a taghoz, egy korábbi importból vagy egy átmenettel készült színvételből.\nAz import felülírja őket. Folytatod?"
 
 #: ../src/main.cpp
-msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\n\nPressed twice quickly it magnifies that part of the video around the pointer, and lets you write the color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form as well.\n\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, which writes the color the tracked point passes over as a sequence of \\t() tags.\n\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
-msgstr "Új színválasztó funkció került bevezetésre, mely szándékosan nem lett automatikusan hozzárendelve semmilyen gombhoz.\nSegítségével lehetőséged van, hogy a kijelölt sorok színe a videóból közvetlenül az egér pozíciójából származzon egyetlen gombnyomással.\n\nKétszer gyorsan nyomva pedig az egér körül felnagyítja a videó azon részét és lehetőséged van dinamikusan \\t(<aktuális milisecond>,<aktuális milisecond>,\\c...) formátumban is beírni a színt.\n\nA felnagyított nézetből a vágólapon lévő mocha motion track mentén is beolvashatod a színt: ilyenkor a program a követett pont alatti színt \\t() tagek sorozataként írja be.\n\nA használatához társítsd a \"video/colorpick/primary|outline|shadow\" commandot gyorsgombokhoz (javasolt egy gombhoz)."
+msgid "A new color picking feature has been added, and on purpose it is not bound to any key.\nIt lets you pick the color for the selected lines from the video at the mouse position with a single keypress.\n\nPressed twice quickly it restores the first write and magnifies that part of the video around the pointer. The popup lets you select an exact pixel and optionally write the accepted color in the dynamic \\t(<current millisecond>,<current millisecond>,\\c...) form.\n\nFrom that magnified view you can also read the color along a Mocha motion track held on the clipboard, including its position, scale and rotation, which writes the color the tracked point passes over as a sequence of \\t() tags.\n\nTo use it, assign the \"video/colorpick/primary|outline|shadow\" commands to hotkeys (one key each is recommended)."
+msgstr "Új színválasztó funkció került bevezetésre, mely szándékosan nem lett automatikusan hozzárendelve semmilyen gombhoz.\nSegítségével a kijelölt sorok színét egyetlen gombnyomással átveheted az egér alatti videóképpontból.\n\nKétszer gyorsan megnyomva visszaállítja az első színbeírást, és felnagyítja a videó egér körüli részét. A felugró ablakban pontos képpontot választhatsz, az elfogadott színt pedig igény szerint dinamikus \\t(<aktuális ezredmásodperc>,<aktuális ezredmásodperc>,\\c...) formában írhatod be.\n\nA felnagyított nézetből a vágólapon lévő Mocha motion track mentén is beolvashatod a színt, annak pozícióját, méretezését és forgatását is figyelembe véve. Ilyenkor a program a követett pont alatti színt \\t() tagek sorozataként írja be.\n\nA használatához társítsd a \"video/colorpick/primary|outline|shadow\" parancsokat gyorsbillentyűkhöz (mindegyikhez egy-egy gomb javasolt)."
 
 #: ../src/video_color_pick.cpp
-msgid "accept color by doubleclick"
-msgstr "szín elfogadása dupla kattintással"
+msgid "Pick"
+msgstr "Kiválaszt"
+
+#: ../src/video_color_pick.cpp
+msgid "Select a pixel, then pick the color."
+msgstr "Válassz ki egy képpontot, majd vedd fel a színt."
 
 #: ../src/libresrc/default_menu_platform.json
 msgid "T&ypesetting"
@@ -8564,6 +8697,39 @@ msgstr "A kijelölt sorok ívelése fel vagy le, a videón húzással"
 #: ../src/command/typesetting.cpp
 msgid "Drag the four corners of the selected lines on the video"
 msgstr "A kijelölt sorok négy sarkának húzása a videón"
+
+#: ../src/command/typesetting.cpp
+msgid "Auto &perspective"
+msgstr "Automatikus &perspektíva"
+
+#: ../src/command/typesetting.cpp
+msgid "Auto perspective"
+msgstr "Automatikus perspektíva"
+
+#: ../src/command/typesetting.cpp
+msgid "Draw four directed points and fit the selected lines into their perspective"
+msgstr "Négy irányhelyes pont rajzolása és a kijelölt sorok perspektívába illesztése"
+
+#: ../src/visual_tool_transform.cpp
+msgid "Draw 4 points."
+msgstr "Rajzolj 4 pontot."
+
+#: ../src/visual_tool_transform.cpp
+msgid "Redraw the 4 points."
+msgstr "Rajzold újra a 4 pontot."
+
+#: ../src/visual_tool_transform.cpp
+#, c-format
+msgid "Line %d is fitted to the points, the rest follow it."
+msgstr "A %d. sor illeszkedik a pontokra, a többi ehhez igazodik."
+
+#: ../src/visual_tool_transform.cpp
+msgid "The yellow dashed rectangle is the reference."
+msgstr "A sárga szaggatott téglalap a viszonyítási alap."
+
+#: ../src/visual_tool_transform.cpp
+msgid "auto perspective"
+msgstr "automatikus perspektíva"
 
 #: ../src/command/typesetting.cpp
 msgid "&Warp"
@@ -8705,12 +8871,29 @@ msgstr ""
 "A bord és a shad értéke elcsúszhat, a megtartás opció bekapcsolása javasolt, "
 "ekkor alakzattal helyettesítődnek."
 
-msgid "If the rows move by themselves, use \\q2."
-msgstr "Ha a sorok automatikusan elmozdulnának, használd a \\q2-t."
-
 #: ../src/command/typesetting.cpp ../src/dialog_gradient.cpp
 msgid "Gradient"
-msgstr "Gradient"
+msgstr "Színátmenet"
+
+#: ../src/command/typesetting.cpp
+msgid "Edit gradient"
+msgstr "Színátmenet szerkesztése"
+
+#: ../src/command/typesetting.cpp
+msgid "Edit the gradient settings of the selected generated gradient"
+msgstr "A kijelölt létrehozott színátmenet beállításainak szerkesztése"
+
+#: ../src/command/typesetting.cpp
+msgid "Copy gradient"
+msgstr "Színátmenet másolása"
+
+#: ../src/command/typesetting.cpp
+msgid "Copy the selected generated gradient rows and settings"
+msgstr "A kijelölt létrehozott színátmenet sorainak és beállításainak másolása"
+
+#: ../src/dialog_gradient.cpp
+msgid "Paste gradient"
+msgstr "Színátmenet beillesztése"
 
 #: ../src/command/typesetting.cpp
 msgid "Create a linear, radial or per-character colour gradient on the selected lines"
@@ -8742,7 +8925,7 @@ msgstr "Húzd a szögtárcsát, vagy adj meg pontos értéket. A videón törté
 
 #: ../src/dialog_gradient.cpp
 msgid "With shapes there will be no clips and you can give additional clip, blur, etc. You can edit the gradient after saving."
-msgstr "Alakzatokká alakítva nincsen clip és így lehet további clipet, blurt, egyebet alkalmazni. Szerkesztheted a gradientet mentés után."
+msgstr "Alakzatokká alakítva nincsen clip és így lehet további clipet, blurt, egyebet alkalmazni. Szerkesztheted a színátmenetet mentés után."
 
 #: ../src/dialog_gradient.cpp
 msgid "Enable at least one color block."
@@ -8830,7 +9013,7 @@ msgstr "Szélső színek folytatása"
 
 #: ../src/dialog_gradient.cpp
 msgid "Repeat gradient"
-msgstr "Gradient ismétlése"
+msgstr "Színátmenet ismétlése"
 
 #: ../src/dialog_gradient.cpp
 msgid "First stop color"
@@ -8938,7 +9121,7 @@ msgstr "Következő képkocka"
 
 #: ../src/dialog_gradient.cpp
 msgid "Gradient help"
-msgstr "Gradient súgó"
+msgstr "Színátmenet súgó"
 
 #: ../src/dialog_gradient.cpp
 msgid ""
@@ -8956,21 +9139,21 @@ msgid ""
 "Playback\n"
 "The framed Play button plays the line once. The plain Play button repeats it. Pause stops playback. The arrow buttons step one video frame."
 msgstr ""
-"Gradient típusa\n"
-"A lineáris gradient a kiválasztott szöget követi. A radiális gradient a kijelölt szöveg középpontjából terjed kifelé.\n\n"
+"Színátmenet típusa\n"
+"A lineáris színátmenet a kiválasztott szöget követi. A radiális színátmenet a kijelölt szöveg középpontjából terjed kifelé.\n\n"
 "Kimenet\n"
-"A Clip vágott feliratsor-másolatokat hoz létre. A Karakterenként minden karakterhez külön rendeli a gradientet. Az Alakzatokkal a szöveget, a bordot és az árnyékot clip nélküli, szerkeszthető vektoralakzatokká alakítja.\n\n"
+"A Clip vágott feliratsor-másolatokat hoz létre. A Karakterenként minden karakterhez külön rendeli a színátmenetet. Az Alakzatokkal a szöveget, a bordot és az árnyékot clip nélküli, szerkeszthető vektoralakzatokká alakítja.\n\n"
 "A Pixeltávolság sávonként a térbeli részletességet szabályozza. A kisebb érték simább eredményt, de több létrehozott sort jelent. A csíkosság elleni átfedés kissé egymásra húzza a ferde, radiális és alakzatos sávokat; a téglalapos clipek mindig nullát használnak.\n\n"
 "Színpontok\n"
 "Kattints a sávra új színpont hozzáadásához, húzd a négyzetét a pozicionáláshoz, kattints rá a szín és az alpha szerkesztéséhez, vagy jobb kattintással távolítsd el.\n\n"
 "Mozgás\n"
 "Az Egyszer a választott időtartam alatt mozgat a két pozíció között. Az Ismétlés minden ciklusban újraindul. Az Oda-vissza váltogatja az irányt. A sorhoz igazított mód a teljes sorhosszt használja. A Sor végének használata az Egyszer módot a felirat végén fejezi be.\n\n"
-"A Gyorsítás az időgörbét módosítja: az 1 lineáris, az 1 feletti érték lassabban, az 1 alatti gyorsabban indul. A pozíciók a gradient tartományának százalékai; a 0 alatti és 100 feletti értékek a szövegen kívülre helyezik. A mozgó tartományon kívül a legközelebbi szélső szín folytatódik.\n\n"
-"A kezdő, középső és végső szélesség a mozgó gradient méretét adja meg az elején, félidőben és a végén. Így vékony–széles–vékony fénycsóva is készíthető.\n\n"
+"A Gyorsítás az időgörbét módosítja: az 1 lineáris, az 1 feletti érték lassabban, az 1 alatti gyorsabban indul. A pozíciók a színátmenet tartományának százalékai; a 0 alatti és 100 feletti értékek a szövegen kívülre helyezik. A mozgó tartományon kívül a legközelebbi szélső szín folytatódik.\n\n"
+"A kezdő, középső és végső szélesség a mozgó színátmenet méretét adja meg az elején, félidőben és a végén. Így vékony–széles–vékony fénycsóva is készíthető.\n\n"
 "Lejátszás\n"
 "A keretezett Play gomb egyszer játssza le a sort. A sima Play gomb ismétli. A Pause leállítja a lejátszást. A nyílgombok egyetlen videóképkockát lépnek."
 
 #: ../src/base_grid.cpp
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
-msgstr "Gradient (%d sor, %s, szöveg: %s)"
+msgstr "Színátmenet (%d sor, %s, szöveg: %s)"

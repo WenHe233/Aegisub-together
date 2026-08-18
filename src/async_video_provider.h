@@ -69,7 +69,11 @@ class AsyncVideoProvider {
 	/// lines have actually changed
 	bool NeedUpdate(std::vector<AssDialogueBase const*> const& visible_lines);
 
-	std::shared_ptr<VideoFrame> ProcFrame(int frame, double time, bool raw = false, bool forceSub = false);
+	/// @param subs_opacity 0-100; the video display's fade. Everything that reads a
+	///        frame for keeps - saving a snapshot, the colour picker, automation -
+	///        goes through GetFrame() and leaves this at 100.
+	std::shared_ptr<VideoFrame> ProcFrame(int frame, double time, bool raw = false,
+		bool forceSub = false, int subs_opacity = 100);
 
 	/// Produce a frame if req_version is still the current version
 	void ProcAsync(uint_fast32_t req_version, bool check_updated, bool forceSub = false, bool discard_stale = true);
@@ -95,6 +99,12 @@ class AsyncVideoProvider {
 	VideoFrame GetBlankFrame(bool white);
 
 public:
+	/// How solid the subtitles are drawn on the video display, 0-100. Deliberately
+	/// not an option: the slider is a way of looking at the video for a moment, so
+	/// every session starts back at 100 rather than inheriting a faded one.
+	static void SetDisplaySubtitlesOpacity(int opacity);
+	static int GetDisplaySubtitlesOpacity();
+
 	/// @brief Load the passed subtitle file
 	/// @param subs File to load
 	///

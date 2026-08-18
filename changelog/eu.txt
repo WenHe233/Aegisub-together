@@ -1,3 +1,23 @@
+Bertsioa 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Goiko barra bideotik kendu da eta trinkoagoa bihurtu da
+- Distortsioan zehar mugitzeak bere perspektiban mugitzen du eta muturreko \org balioak kudeatzen ditu
+- Distortsioa + Doako eraldaketak automatikoki gehitzen du \q2
+- Perspektiba automatikoaren funtzioa
+    - 4 punturekin hautatutako lerroak perspektiban kokatzen ditu
+    - erreferentziazko laukizuzen hori pertsonalizagarriaren arabera lan egiten du
+    - lerro aktiboa maskara bada, laukizuzen gisa erabiltzen du
+    - kokatu ondoren mugitu daiteke, emandako perspektiban doitzeko
+- Gradiente-lerroek 2 aukera jaso dituzte eskuineko klikaren menuan: testu berri batera kopiatu eta itsatsi daitezke, eta edizioa ere ireki daiteke
+- Kolore-hautatzailearen hobekuntzak
+- Testu-koadroaren zuzenketa
+- Maskara bat sortzean, aurrebistako lerroak bideotik kanpora irten daitezke
+- Azpitituluetan bilatzean, lerro osoa kopiatu ahal izatea
+- Testu-koadroaren hautapena mantentzea eskuinetik hautatu ondoren eskuineko klik egitean
+- Pintzelak gauza bera puntu gutxiagorekin egiten du (bezier)
+- Maskarak sortzean bezier ere onartzen da, eta ALT bikoitzarekin alda daiteke
+- Azpitituluen opakutasuna bisualki alda daiteke
+
 Bertsioa 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Testu-koadroaren funtzioa Formázás menuan

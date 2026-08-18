@@ -48,7 +48,10 @@ class SubtitlesProvider {
 public:
 	virtual ~SubtitlesProvider() = default;
 	void LoadSubtitles(AssFile *subs, int time = -1);
-	virtual void DrawSubtitles(VideoFrame &dst, double time)=0;
+	/// @param opacity 0-100; how solid the subtitles are drawn. Only the video
+	///        display asks for anything but 100, so saved frames, the colour
+	///        picker and scripts are unaffected by it.
+	virtual void DrawSubtitles(VideoFrame &dst, double time, int opacity = 100)=0;
 	virtual void Reinitialize() { }
 };
 

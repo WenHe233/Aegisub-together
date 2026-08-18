@@ -48,6 +48,7 @@
 #include "selection_controller.h"
 #include "subs_controller.h"
 #include "typesetting_gradient.h"
+#include "theme.h"
 #include "video_controller.h"
 
 #include <libaegisub/util.h>
@@ -78,7 +79,7 @@ enum {
 };
 
 BaseGrid::BaseGrid(wxWindow* parent, agi::Context *context)
-: wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS | (OPT_GET("App/Dark Mode")->GetBool() ? wxBORDER_SIMPLE : wxSUNKEN_BORDER))
+: wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS | (app_theme::IsDark() ? wxBORDER_SIMPLE : wxSUNKEN_BORDER))
 , scrollBar(new wxScrollBar(this, GRID_SCROLLBAR, wxDefaultPosition, wxDefaultSize, wxSB_VERTICAL))
 , context(context)
 , columns(GetGridColumns())
@@ -115,21 +116,22 @@ BaseGrid::BaseGrid(wxWindow* parent, agi::Context *context)
 
 		OPT_SUB("Subtitle/Grid/Font Face", &BaseGrid::UpdateStyle, this),
 		OPT_SUB("Subtitle/Grid/Font Size", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Active Border", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Background/Background", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Background/Comment", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Background/Inframe", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Background/Selected Comment", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Background/Selection", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Background/Open Fold", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Background/Closed Fold", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Background/Image Mask", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Collision", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Header", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Left Column", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Lines", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Selection", &BaseGrid::UpdateStyle, this),
-		OPT_SUB("Colour/Subtitle Grid/Standard", &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Active Border"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Background"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Comment"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Inframe"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Selected Comment"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Selection"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Open Fold"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Closed Fold"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Image Mask"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Collision"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/CPS Error"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Header"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Left Column"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Lines"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Selection"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Standard"), &BaseGrid::UpdateStyle, this),
 
 		OPT_SUB("Subtitle/Grid/Highlight Subtitles in Frame", &BaseGrid::OnHighlightVisibleChange, this),
 		OPT_SUB("Subtitle/Grid/Hide Overrides", [&](agi::OptionValue const&) { Refresh(false); }),
@@ -230,16 +232,16 @@ void BaseGrid::UpdateStyle() {
 	lineHeight = dc.GetCharHeight() + 4;
 
 	// Set row brushes
-	row_colors.Default.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Background")->GetColor()));
-	row_colors.Header.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Header")->GetColor()));
-	row_colors.Selection.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Selection")->GetColor()));
-	row_colors.Comment.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Comment")->GetColor()));
-	row_colors.Visible.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Inframe")->GetColor()));
-	row_colors.SelectedComment.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Selected Comment")->GetColor()));
-	row_colors.FoldOpen.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Open Fold")->GetColor()));
-	row_colors.FoldClosed.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Closed Fold")->GetColor()));
-	row_colors.LeftCol.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Left Column")->GetColor()));
-	row_colors.ImageMask.SetColour(to_wx(OPT_GET("Colour/Subtitle Grid/Background/Image Mask")->GetColor()));
+	row_colors.Default.SetColour(app_theme::Colour("Subtitle Grid/Background/Background"));
+	row_colors.Header.SetColour(app_theme::Colour("Subtitle Grid/Header"));
+	row_colors.Selection.SetColour(app_theme::Colour("Subtitle Grid/Background/Selection"));
+	row_colors.Comment.SetColour(app_theme::Colour("Subtitle Grid/Background/Comment"));
+	row_colors.Visible.SetColour(app_theme::Colour("Subtitle Grid/Background/Inframe"));
+	row_colors.SelectedComment.SetColour(app_theme::Colour("Subtitle Grid/Background/Selected Comment"));
+	row_colors.FoldOpen.SetColour(app_theme::Colour("Subtitle Grid/Background/Open Fold"));
+	row_colors.FoldClosed.SetColour(app_theme::Colour("Subtitle Grid/Background/Closed Fold"));
+	row_colors.LeftCol.SetColour(app_theme::Colour("Subtitle Grid/Left Column"));
+	row_colors.ImageMask.SetColour(app_theme::Colour("Subtitle Grid/Background/Image Mask"));
 
 	if (width_helper)
 		width_helper->ClearCache();
@@ -467,12 +469,12 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 	dc.DrawRectangle(0, lineHeight, columns[0]->Width(), h-lineHeight);
 
 	// Row colors
-	wxColour text_standard(to_wx(OPT_GET("Colour/Subtitle Grid/Standard")->GetColor()));
-	wxColour text_selection(to_wx(OPT_GET("Colour/Subtitle Grid/Selection")->GetColor()));
-	wxColour text_collision(to_wx(OPT_GET("Colour/Subtitle Grid/Collision")->GetColor()));
+	wxColour text_standard(app_theme::Colour("Subtitle Grid/Standard"));
+	wxColour text_selection(app_theme::Colour("Subtitle Grid/Selection"));
+	wxColour text_collision(app_theme::Colour("Subtitle Grid/Collision"));
 
 	// First grid row
-	wxPen grid_pen(to_wx(OPT_GET("Colour/Subtitle Grid/Lines")->GetColor()));
+	wxPen grid_pen(app_theme::Colour("Subtitle Grid/Lines"));
 	dc.SetPen(grid_pen);
 	dc.DrawLine(0, 0, w, 0);
 	dc.SetPen(*wxTRANSPARENT_PEN);
@@ -697,7 +699,7 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 			int activeVisRow = it->second;
 
 			if (activeVisRow >= yPos && activeVisRow < yPos + nDraw) {
-				dc.SetPen(wxPen(to_wx(OPT_GET("Colour/Subtitle Grid/Active Border")->GetColor())));
+				dc.SetPen(wxPen(app_theme::Colour("Subtitle Grid/Active Border")));
 				dc.SetBrush(*wxTRANSPARENT_BRUSH);
 				dc.DrawRectangle(0, (activeVisRow - yPos + 1) * lineHeight, w, lineHeight + 1);
 			}
@@ -907,16 +909,28 @@ void BaseGrid::OnContextMenu(wxContextMenuEvent &evt) {
 		pos = ScreenToClient(pos);
 
 	int row = pos.y / lineHeight + yPos - 1;
-	AssDialogue* d = GetVisDialogue(row);
+	AssDialogue* d = pos == wxDefaultPosition ?
+		context->selectionController->GetActiveLine() : GetVisDialogue(row);
 
-	if (d && context->imageMask->IsGroupStart(d) && !context->selectionController->GetSelectedSet().count(d)) {
+	if (d && (context->imageMask->IsGroupStart(d) || context->imageMask->IsGradientGroup(d)) &&
+		!context->selectionController->GetSelectedSet().count(d)) {
 		SelectRow(row, false);
 		context->selectionController->SetActiveLine(d);
 	}
 
 	if (pos == wxDefaultPosition || pos.y > lineHeight) {
-		if (!context_menu) context_menu = menu::GetMenu("grid_context", (wxID_HIGHEST + 1) + 8000, context);
-		menu::OpenPopupMenu(context_menu.get(), this);
+		if (d && context->imageMask->IsGradientGroup(d)) {
+			if (!gradient_context_menu)
+				gradient_context_menu = menu::GetMenu("grid_context_gradient",
+					(wxID_HIGHEST + 1) + 8500, context);
+			menu::OpenPopupMenu(gradient_context_menu.get(), this);
+		}
+		else {
+			if (!context_menu)
+				context_menu = menu::GetMenu("grid_context",
+					(wxID_HIGHEST + 1) + 8000, context);
+			menu::OpenPopupMenu(context_menu.get(), this);
+		}
 	}
 	else {
 		wxMenu menu;

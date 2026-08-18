@@ -1,3 +1,23 @@
+Version 4.7 ---
+https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
+- Top bar removed from the video and made more compact
+- Moving during distortion moves in its own perspective and handles extreme \orgs
+- Distortion + Free Transform automatically adds \q2
+- Automatic perspective function
+    - places the selected lines in perspective using 4 points
+    - works according to a customizable yellow reference rectangle
+    - if the active line is a mask, it uses that as the rectangle
+    - can be moved after placement for fine-tuning in the given perspective
+- Gradient lines received 2 options in the right-click menu: they can be copied and pasted onto a new text, and editing
+- Color picker refinement
+- Textbox fix
+- Preview lines may extend outside the video when creating a mask
+- When searching in subtitles, it is possible to copy the entire line
+- Textbox selection remains after right-clicking following a selection from the right
+- Brush achieves the same with fewer points (Bezier)
+- Mask creation also allows Bezier, can be switched with double ALT
+- Subtitle opacity can be changed visually
+
 Version 4.6 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.6/Aegisub-nyaa-edition-v4.6-update.zip
 - Text box function in the Formatting menu

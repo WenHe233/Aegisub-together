@@ -39,6 +39,7 @@
 #include "selection_controller.h"
 #include "text_selection_controller.h"
 #include "thesaurus.h"
+#include "theme.h"
 #include "utils.h"
 
 #include <libaegisub/ass/dialogue_parser.h>
@@ -143,8 +144,6 @@ SubsTextEditCtrl::SubsTextEditCtrl(wxWindow* parent, wxSize wsize, long style, a
 	Subscribe("Normal");
 	Subscribe("Comment");
 	Subscribe("Drawing Command");
-	Subscribe("Drawing X");
-	Subscribe("Drawing Y");
 	OPT_SUB("Colour/Subtitle/Syntax/Underline/Drawing Endpoint", &SubsTextEditCtrl::SetStyles, this);
 	Subscribe("Brackets");
 	Subscribe("Slashes");
@@ -155,7 +154,7 @@ SubsTextEditCtrl::SubsTextEditCtrl(wxWindow* parent, wxSize wsize, long style, a
 	Subscribe("Karaoke Template");
 	Subscribe("Karaoke Variable");
 
-	OPT_SUB("Colour/Subtitle/Background", &SubsTextEditCtrl::SetStyles, this);
+	OPT_SUB(app_theme::ColourOption("Subtitle/Background"), &SubsTextEditCtrl::SetStyles, this);
 	OPT_SUB("Subtitle/Highlight/Syntax", &SubsTextEditCtrl::UpdateStyle, this);
 	OPT_SUB("App/Call Tips", &SubsTextEditCtrl::UpdateCallTip, this);
 
@@ -176,8 +175,8 @@ SubsTextEditCtrl::~SubsTextEditCtrl() {
 }
 
 void SubsTextEditCtrl::Subscribe(std::string const& name) {
-	OPT_SUB("Colour/Subtitle/Syntax/" + name, &SubsTextEditCtrl::SetStyles, this);
-	OPT_SUB("Colour/Subtitle/Syntax/Background/" + name, &SubsTextEditCtrl::SetStyles, this);
+	OPT_SUB(app_theme::ColourOption("Subtitle/Syntax/" + name), &SubsTextEditCtrl::SetStyles, this);
+	OPT_SUB(app_theme::ColourOption("Subtitle/Syntax/Background/" + name), &SubsTextEditCtrl::SetStyles, this);
 	OPT_SUB("Colour/Subtitle/Syntax/Bold/" + name, &SubsTextEditCtrl::SetStyles, this);
 }
 
@@ -217,8 +216,8 @@ void SubsTextEditCtrl::OnKeyDown(wxKeyEvent &event) {
 void SubsTextEditCtrl::SetSyntaxStyle(int id, wxFont &font, std::string const& name, wxColor const& default_background) {
 	StyleSetFont(id, font);
 	StyleSetBold(id, OPT_GET("Colour/Subtitle/Syntax/Bold/" + name)->GetBool());
-	StyleSetForeground(id, to_wx(OPT_GET("Colour/Subtitle/Syntax/" + name)->GetColor()));
-	const agi::OptionValue *background = OPT_GET("Colour/Subtitle/Syntax/Background/" + name);
+	StyleSetForeground(id, app_theme::Colour("Subtitle/Syntax/" + name));
+	const agi::OptionValue *background = OPT_GET(app_theme::ColourOption("Subtitle/Syntax/Background/" + name));
 	if (background->GetType() == agi::OptionType::Color)
 		StyleSetBackground(id, to_wx(background->GetColor()));
 	else
@@ -232,16 +231,16 @@ void SubsTextEditCtrl::SetStyles() {
 	if (!fontname.empty()) font.SetFaceName(fontname);
 	font.SetPointSize(OPT_GET("Subtitle/Edit Box/Font Size")->GetInt());
 
-	auto default_background = to_wx(OPT_GET("Colour/Subtitle/Background")->GetColor());
+	auto default_background = app_theme::Colour("Subtitle/Background");
 
 	namespace ss = agi::ass::SyntaxStyle;
 	SetSyntaxStyle(ss::NORMAL, font, "Normal", default_background);
 	SetSyntaxStyle(ss::COMMENT, font, "Comment", default_background);
 	SetSyntaxStyle(ss::DRAWING_CMD, font, "Drawing Command", default_background);
-	SetSyntaxStyle(ss::DRAWING_X, font, "Drawing X", default_background);
-	SetSyntaxStyle(ss::DRAWING_Y, font, "Drawing Y", default_background);
-	SetSyntaxStyle(ss::DRAWING_ENDPOINT_X, font, "Drawing X", default_background);
-	SetSyntaxStyle(ss::DRAWING_ENDPOINT_Y, font, "Drawing Y", default_background);
+	SetSyntaxStyle(ss::DRAWING_X, font, "Normal", default_background);
+	SetSyntaxStyle(ss::DRAWING_Y, font, "Normal", default_background);
+	SetSyntaxStyle(ss::DRAWING_ENDPOINT_X, font, "Normal", default_background);
+	SetSyntaxStyle(ss::DRAWING_ENDPOINT_Y, font, "Normal", default_background);
 	StyleSetUnderline(ss::DRAWING_ENDPOINT_X, OPT_GET("Colour/Subtitle/Syntax/Underline/Drawing Endpoint")->GetBool());
 	StyleSetUnderline(ss::DRAWING_ENDPOINT_Y, OPT_GET("Colour/Subtitle/Syntax/Underline/Drawing Endpoint")->GetBool());
 	SetSyntaxStyle(ss::OVERRIDE, font, "Brackets", default_background);
@@ -363,12 +362,23 @@ void SubsTextEditCtrl::Paste() {
 	SetSelectionEnd(sel_start);
 }
 
+void SubsTextEditCtrl::RestoreSelection(int anchor, int caret) {
+	// Not SetSelection: wxStyledTextCtrl implements it as SCI_SETSELECTIONSTART followed by
+	// SCI_SETSELECTIONEND, and Scintilla clamps both of those to anchor <= caret. A selection
+	// dragged right to left has the anchor at the higher position, so the first message
+	// collapsed the range onto the anchor and the second collapsed it onto the caret, which is
+	// why restoring only ever worked for selections made left to right. SCI_SETANCHOR and
+	// SCI_SETCURRENTPOS each move one end and leave the other alone, so the direction survives.
+	SetAnchor(anchor);
+	SetCurrentPos(caret);
+}
+
 void SubsTextEditCtrl::OnRightDown(wxMouseEvent &event) {
 	right_click_pending = true;
 	right_click_anchor = GetAnchor();
 	right_click_caret = GetCurrentPos();
 	right_click_position = PositionFromPoint(event.GetPosition());
-	SetSelection(right_click_anchor, right_click_caret);
+	RestoreSelection(right_click_anchor, right_click_caret);
 	// Do not pass the click to Scintilla: its native handler can move the caret or
 	// discard the selection before WM_CONTEXTMENU opens our existing popup menu.
 }
@@ -378,7 +388,7 @@ void SubsTextEditCtrl::OnContextMenu(wxContextMenuEvent &event) {
 	int activePos;
 	if (right_click_pending) {
 		activePos = right_click_position;
-		SetSelection(right_click_anchor, right_click_caret);
+		RestoreSelection(right_click_anchor, right_click_caret);
 		right_click_pending = false;
 	}
 	else if (pos == wxDefaultPosition)

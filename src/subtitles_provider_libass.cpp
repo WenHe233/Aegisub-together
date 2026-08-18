@@ -44,6 +44,7 @@
 #include <libaegisub/log.h>
 #include <libaegisub/util.h>
 
+#include <algorithm>
 #include <atomic>
 #include <boost/gil.hpp>
 #include <memory>
@@ -124,7 +125,7 @@ public:
 		if (!ass_track) throw agi::InternalError("libass failed to load subtitles.");
 	}
 
-	void DrawSubtitles(VideoFrame &dst, double time) override;
+	void DrawSubtitles(VideoFrame &dst, double time, int opacity) override;
 
 	void Reinitialize() override {
 		// No need to reinit if we're not even done with the initial init
@@ -163,7 +164,7 @@ LibassSubtitlesProvider::~LibassSubtitlesProvider() {
 #define _b(c) (((c)>>8)&0xFF)
 #define _a(c) ((c)&0xFF)
 
-void LibassSubtitlesProvider::DrawSubtitles(VideoFrame &frame,double time) {
+void LibassSubtitlesProvider::DrawSubtitles(VideoFrame &frame, double time, int opacity_percent) {
 	ass_set_frame_size(renderer(), frame.width, frame.height);
 	// Note: this relies on Aegisub always rendering at video storage res
 	ass_set_storage_size(renderer(), frame.width, frame.height);
@@ -179,8 +180,13 @@ void LibassSubtitlesProvider::DrawSubtitles(VideoFrame &frame,double time) {
 	if (frame.flipped)
 		dst = flipped_up_down_view(dst);
 
+	// The opacity slider fades what the video shows without touching a single line,
+	// so it scales the alpha every image is blended with. Blending the finished frame
+	// with the raw one would come to the same result and cost a frame copy per frame.
+	unsigned int layer_opacity = static_cast<unsigned int>(std::clamp(opacity_percent, 0, 100));
+
 	for (; img; img = img->next) {
-		unsigned int opacity = 255 - ((unsigned int)_a(img->color));
+		unsigned int opacity = (255 - (unsigned int)_a(img->color)) * layer_opacity / 100;
 		unsigned int r = (unsigned int)_r(img->color);
 		unsigned int g = (unsigned int)_g(img->color);
 		unsigned int b = (unsigned int)_b(img->color);

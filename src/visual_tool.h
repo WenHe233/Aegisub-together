@@ -19,6 +19,7 @@
 #include "gl_wrap.h"
 #include "vector2d.h"
 #include "options.h"
+#include "visual_tool_preview.h"
 
 #include <libaegisub/owning_intrusive_list.h>
 #include <libaegisub/signal.h>
@@ -80,6 +81,9 @@ protected:
 	std::vector<agi::signal::Connection> connections;
 
 	OpenGLWrapper gl;
+	/// Shared presentation model for non-destructive visual-tool previews. A tool supplies
+	/// controls and behavior; this object supplies uniform layout, hit testing and rendering.
+	mutable VisualToolPreviewInterface preview_interface;
 
 	/// Called when the user double-clicks
 	virtual void OnDoubleClick() { }
@@ -144,6 +148,9 @@ protected:
 	///	containing both text and drawings.
 	/// Returns a rough estimate when getting the precise extents fails
 	std::pair<Vector2D, Vector2D> GetLineBaseExtents(AssDialogue *diag);
+	/// The outline of a line's drawing, in the coordinates its extents are measured in.
+	/// Curves are sampled. Empty when the line is not a drawing.
+	std::vector<Vector2D> GetLineDrawingPoints(AssDialogue *diag);
 	void GetLineClip(AssDialogue *diag, Vector2D &p1, Vector2D &p2, bool &inverse);
 	std::string GetLineVectorClip(AssDialogue *diag, int &scale, bool &inverse);
 
