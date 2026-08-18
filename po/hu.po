@@ -7366,6 +7366,30 @@ msgstr "Az AI-válasz érvénytelen vagy ismétlődő feliratsorra hivatkozott."
 msgid "AI analysis in progress"
 msgstr "AI-elemzés folyamatban"
 
+msgid "Replaying the latest AI post-check without an AI connection."
+msgstr "A legutóbbi AI-utóellenőrzés ismételt átnézése AI-kapcsolat nélkül."
+
+msgid "Previously accepted"
+msgstr "Korábban elfogadva"
+
+msgid "There is no latest AI post-check available for this subtitle."
+msgstr "Ehhez a felirathoz nem érhető el legutóbbi AI-utóellenőrzés."
+
+msgid "New AI post-check"
+msgstr "Új AI-utóellenőrzés"
+
+msgid "Start a new AI post-check and approve corrections one by one"
+msgstr "Új AI-utóellenőrzés indítása, majd a javítások egyenkénti jóváhagyása"
+
+msgid "Latest"
+msgstr "Legutóbbi"
+
+msgid "Latest AI post-check"
+msgstr "Legutóbbi AI-utóellenőrzés"
+
+msgid "Review the latest AI post-check again without an active AI connection"
+msgstr "A legutóbbi AI-utóellenőrzés ismételt átnézése aktív AI-kapcsolat nélkül"
+
 msgid "Back"
 msgstr "Vissza"
 
