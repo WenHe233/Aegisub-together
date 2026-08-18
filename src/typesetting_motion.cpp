@@ -131,6 +131,124 @@ Homography TransformMap(Sample const& current, Sample const& reference) {
 	return out;
 }
 
+Sample LinearSample(Track const& track, size_t index) {
+	if (track.samples.empty()) return {};
+	index = std::min(index, track.samples.size() - 1);
+	if (track.samples.size() == 1) return track.samples.front();
+	double progress = static_cast<double>(index) / (track.samples.size() - 1);
+	auto const& first = track.samples.front();
+	auto const& last = track.samples.back();
+	auto blend = [progress](Vector2D left, Vector2D right) {
+		return left * static_cast<float>(1.0 - progress) + right * static_cast<float>(progress);
+	};
+	Sample out;
+	out.source_frame = static_cast<int>(std::lround(
+		first.source_frame * (1.0 - progress) + last.source_frame * progress));
+	out.position = blend(first.position, last.position);
+	out.scale = blend(first.scale, last.scale);
+	double turn = std::remainder(last.rotation - first.rotation, 360.0);
+	out.rotation = first.rotation + turn * progress;
+	for (size_t corner = 0; corner < out.corners.size(); ++corner)
+		out.corners[corner] = blend(first.corners[corner], last.corners[corner]);
+	return out;
+}
+
+Homography FilteredMap(Track const& track, size_t sample, size_t reference,
+	ApplyOptions::Components const& components, bool linear) {
+	if (track.samples.empty()) return {};
+	sample = std::min(sample, track.samples.size() - 1);
+	reference = std::min(reference, track.samples.size() - 1);
+	Sample current = linear ? LinearSample(track, sample) : track.samples[sample];
+	Sample origin = linear ? LinearSample(track, reference) : track.samples[reference];
+	if (track.kind == TrackKind::Transform) {
+		if (!components.track_x) current.position = Vector2D(origin.position.X(), current.position.Y());
+		if (!components.track_y) current.position = Vector2D(current.position.X(), origin.position.Y());
+		if (!components.scale) current.scale = origin.scale;
+		if (!components.rotate) current.rotation = origin.rotation;
+		return TransformMap(current, origin);
+	}
+
+	auto centre = [](std::array<Vector2D, 4> const& corners) {
+		Vector2D value;
+		for (auto corner : corners) value = value + corner;
+		return value / 4.f;
+	};
+	Vector2D origin_centre = centre(origin.corners);
+	Vector2D current_centre = centre(current.corners);
+	double numerator_a = 0, numerator_b = 0, denominator = 0;
+	for (size_t index = 0; index < origin.corners.size(); ++index) {
+		Vector2D from = origin.corners[index] - origin_centre;
+		Vector2D to = current.corners[index] - current_centre;
+		numerator_a += from.X() * to.X() + from.Y() * to.Y();
+		numerator_b += from.X() * to.Y() - from.Y() * to.X();
+		denominator += from.SquareLen();
+	}
+	double a = denominator > 1e-9 ? numerator_a / denominator : 1.0;
+	double b = denominator > 1e-9 ? numerator_b / denominator : 0.0;
+	double scale = std::hypot(a, b);
+	double angle = std::atan2(b, a);
+	if (!std::isfinite(scale) || scale < 1e-9) scale = 1.0;
+	if (!std::isfinite(angle)) angle = 0.0;
+	auto rotate = [](Vector2D point, double radians) {
+		double cosine = std::cos(radians), sine = std::sin(radians);
+		return Vector2D(static_cast<float>(point.X() * cosine - point.Y() * sine),
+			static_cast<float>(point.X() * sine + point.Y() * cosine));
+	};
+	Vector2D target_centre(
+		components.track_x ? current_centre.X() : origin_centre.X(),
+		components.track_y ? current_centre.Y() : origin_centre.Y());
+	double output_scale = components.scale ? scale : 1.0;
+	double output_angle = components.rotate ? angle : 0.0;
+	std::array<Vector2D, 4> target;
+	for (size_t index = 0; index < target.size(); ++index) {
+		Vector2D local = components.perspective ?
+			rotate(current.corners[index] - current_centre, -angle) /
+				static_cast<float>(scale) : origin.corners[index] - origin_centre;
+		target[index] = target_centre + rotate(
+			local * static_cast<float>(output_scale), output_angle);
+	}
+	return FromQuads(origin.corners, target);
+}
+
+Homography Compose(Homography const& after, Homography const& before) {
+	Homography out;
+	for (size_t row = 0; row < 3; ++row) {
+		for (size_t column = 0; column < 3; ++column) {
+			out.value[row * 3 + column] = 0;
+			for (size_t at = 0; at < 3; ++at)
+				out.value[row * 3 + column] +=
+					after.value[row * 3 + at] * before.value[at * 3 + column];
+		}
+	}
+	return out;
+}
+
+Homography AppliedMap(Track const& transform_track,
+	std::optional<Track> const& perspective_track, size_t sample, size_t reference,
+	ApplyOptions::Components const& components, bool linear) {
+	// A tracker adapter may provide one complete Corner Pin track. Manual Apply
+	// keeps transform and perspective data separate so Mocha's full Corner Pin
+	// motion cannot accidentally replace or duplicate Position/Scale/Rotation.
+	if (transform_track.kind == TrackKind::CornerPin || !components.perspective)
+		return FilteredMap(transform_track, sample, reference, components, linear);
+
+	auto transform_components = components;
+	transform_components.perspective = false;
+	Homography transform = FilteredMap(transform_track, sample, reference,
+		transform_components, linear);
+	if (!perspective_track) return transform;
+
+	ApplyOptions::Components perspective_components;
+	perspective_components.track_x = false;
+	perspective_components.track_y = false;
+	perspective_components.scale = false;
+	perspective_components.rotate = false;
+	perspective_components.perspective = true;
+	Homography perspective = FilteredMap(*perspective_track, sample, reference,
+		perspective_components, linear);
+	return Compose(transform, perspective);
+}
+
 using param_vec = const std::vector<AssOverrideParameter> *;
 
 param_vec FindTag(std::vector<std::unique_ptr<AssDialogueBlock>>& blocks,
@@ -260,6 +378,343 @@ void SetFirstTag(std::string& text, std::string const& name, std::string value,
 	text.replace(0, close + 1, block);
 }
 
+using AnimationState = std::unordered_map<std::string, std::vector<double>>;
+
+std::string AnimationKey(std::string name) {
+	if (name == "\\c") return "\\1c";
+	if (name == "\\fr") return "\\frz";
+	return name;
+}
+
+bool ReadAnimationValue(AssOverrideTag const& tag, std::vector<double>& value) {
+	std::string name = AnimationKey(tag.Name);
+	if ((name == "\\clip" || name == "\\iclip") && tag.Params.size() == 4 &&
+		std::none_of(tag.Params.begin(), tag.Params.end(),
+			[](AssOverrideParameter const& parameter) { return parameter.omitted; })) {
+		value.clear();
+		for (auto const& parameter : tag.Params) value.push_back(parameter.Get<double>());
+		return true;
+	}
+	if (tag.Params.empty() || tag.Params.front().omitted) return false;
+	if (name == "\\alpha" || name == "\\1a" || name == "\\2a" ||
+		name == "\\3a" || name == "\\4a") {
+		value = {static_cast<double>(tag.Params.front().Get<int>())};
+		return true;
+	}
+	if (name == "\\1c" || name == "\\2c" || name == "\\3c" || name == "\\4c") {
+		auto colour = tag.Params.front().Get<agi::Color>();
+		value = {static_cast<double>(colour.r), static_cast<double>(colour.g),
+			static_cast<double>(colour.b)};
+		return true;
+	}
+	if (name == "\\fs" || name == "\\fsp" || name == "\\fscx" ||
+		name == "\\fscy" || name == "\\frz" || name == "\\frx" ||
+		name == "\\fry" || name == "\\bord" || name == "\\xbord" ||
+		name == "\\ybord" || name == "\\shad" || name == "\\xshad" ||
+		name == "\\yshad" || name == "\\be" || name == "\\blur" ||
+		name == "\\fax" || name == "\\fay") {
+		value = {tag.Params.front().Get<double>()};
+		return true;
+	}
+	return false;
+}
+
+void StoreAnimationValue(AnimationState& state, std::string const& raw_name,
+	std::vector<double> const& value) {
+	std::string name = AnimationKey(raw_name);
+	state[name] = value;
+	if (name == "\\alpha")
+		for (auto channel : {"\\1a", "\\2a", "\\3a", "\\4a"}) state[channel] = value;
+	else if (name == "\\bord") {
+		state["\\xbord"] = value;
+		state["\\ybord"] = value;
+	}
+	else if (name == "\\shad") {
+		state["\\xshad"] = value;
+		state["\\yshad"] = value;
+	}
+}
+
+AnimationState InitialAnimationState(agi::Context *context, AssDialogue const& line) {
+	AssStyle fallback;
+	auto style = context->ass->GetStyle(line.Style);
+	if (!style) style = &fallback;
+	int width = 0, height = 0;
+	context->ass->GetResolution(width, height);
+	AnimationState state;
+	auto store = [&](char const *name, std::initializer_list<double> values) {
+		state[name] = std::vector<double>(values);
+	};
+	store("\\fs", {style->fontsize});
+	store("\\fsp", {style->spacing});
+	store("\\fscx", {style->scalex});
+	store("\\fscy", {style->scaley});
+	store("\\frz", {style->angle});
+	for (auto name : {"\\frx", "\\fry", "\\be", "\\blur", "\\fax", "\\fay"})
+		store(name, {0});
+	store("\\bord", {style->outline_w});
+	store("\\xbord", {style->outline_w});
+	store("\\ybord", {style->outline_w});
+	store("\\shad", {style->shadow_w});
+	store("\\xshad", {style->shadow_w});
+	store("\\yshad", {style->shadow_w});
+	store("\\alpha", {0});
+	store("\\1a", {static_cast<double>(style->primary.a)});
+	store("\\2a", {static_cast<double>(style->secondary.a)});
+	store("\\3a", {static_cast<double>(style->outline.a)});
+	store("\\4a", {static_cast<double>(style->shadow.a)});
+	store("\\1c", {static_cast<double>(style->primary.r),
+		static_cast<double>(style->primary.g), static_cast<double>(style->primary.b)});
+	store("\\2c", {static_cast<double>(style->secondary.r),
+		static_cast<double>(style->secondary.g), static_cast<double>(style->secondary.b)});
+	store("\\3c", {static_cast<double>(style->outline.r),
+		static_cast<double>(style->outline.g), static_cast<double>(style->outline.b)});
+	store("\\4c", {static_cast<double>(style->shadow.r),
+		static_cast<double>(style->shadow.g), static_cast<double>(style->shadow.b)});
+	store("\\clip", {0, 0, static_cast<double>(width), static_cast<double>(height)});
+	store("\\iclip", {0, 0, static_cast<double>(width), static_cast<double>(height)});
+	return state;
+}
+
+std::string FormatAnimationTag(std::string name, std::vector<double> const& value) {
+	name = AnimationKey(std::move(name));
+	auto byte = [](double item) {
+		return static_cast<int>(std::clamp(std::lround(item), 0l, 255l));
+	};
+	if (name == "\\alpha" || name == "\\1a" || name == "\\2a" ||
+		name == "\\3a" || name == "\\4a")
+		return agi::format("%s&H%02X&", name, byte(value.front()));
+	if (name == "\\1c" || name == "\\2c" || name == "\\3c" || name == "\\4c")
+		return agi::format("%s&H%02X%02X%02X&", name, byte(value[2]),
+			byte(value[1]), byte(value[0]));
+	if (name == "\\clip" || name == "\\iclip")
+		return name + "(" + Number(value[0]) + "," + Number(value[1]) + "," +
+			Number(value[2]) + "," + Number(value[3]) + ")";
+	if (name == "\\fs" || name == "\\be")
+		return name + std::to_string(static_cast<int>(std::lround(value.front())));
+	return name + Number(value.front());
+}
+
+void InterpolateTransforms(agi::Context *context, AssDialogue& line, int relative_ms) {
+	auto blocks = line.ParseTags();
+	auto state = InitialAnimationState(context, line);
+	bool changed = false;
+	int duration = static_cast<int>(line.End - line.Start);
+	for (auto block : blocks | agi::of_type<AssDialogueBlockOverride>()) {
+		std::vector<AssOverrideTag> rewritten;
+		for (auto& tag : block->Tags) {
+			if (tag.Name != "\\t" || tag.Params.size() < 4 || tag.Params.back().omitted ||
+				tag.Params.back().GetType() != VariableDataType::BLOCK) {
+				std::vector<double> value;
+				if (ReadAnimationValue(tag, value)) StoreAnimationValue(state, tag.Name, value);
+				if (tag.Name == "\\r") state = InitialAnimationState(context, line);
+				rewritten.push_back(std::move(tag));
+				continue;
+			}
+			changed = true;
+			int start = tag.Params[0].Get(0);
+			int end = tag.Params[1].Get(duration);
+			if (!end) end = duration;
+			double accel = tag.Params[2].Get(1.0);
+			double linear = end == start ? (relative_ms >= end ? 1.0 : 0.0) :
+				static_cast<double>(relative_ms - start) / (end - start);
+			double progress = linear <= 0 ? 0 : linear >= 1 ? 1 :
+				std::pow(linear, accel);
+			auto effect = tag.Params.back().Get<AssDialogueBlockOverride *>();
+			if (!effect) continue;
+			for (auto const& inner : effect->Tags) {
+				std::vector<double> target;
+				if (!ReadAnimationValue(inner, target)) continue;
+				std::string key = AnimationKey(inner.Name);
+				auto found = state.find(key);
+				std::vector<double> current = found == state.end() ?
+					std::vector<double>(target.size(), 0.0) : found->second;
+				if (current.size() != target.size()) current.assign(target.size(), 0.0);
+				for (size_t index = 0; index < target.size(); ++index)
+					current[index] += (target[index] - current[index]) * progress;
+				rewritten.emplace_back(FormatAnimationTag(key, current));
+				StoreAnimationValue(state, key, current);
+			}
+		}
+		block->Tags = std::move(rewritten);
+	}
+	if (changed) line.UpdateText(blocks);
+}
+
+std::optional<double> FadeAlphaAt(AssOverrideTag const& tag, int relative_ms,
+	int duration) {
+	double a1 = 0, a2 = 0, a3 = 0;
+	int t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+	if (tag.Name == "\\fad" && tag.Params.size() >= 2 &&
+		!tag.Params[0].omitted && !tag.Params[1].omitted) {
+		a1 = 255; a2 = 0; a3 = 255;
+		t2 = tag.Params[0].Get<int>();
+		t3 = duration - tag.Params[1].Get<int>();
+		t4 = duration;
+	}
+	else if (tag.Name == "\\fade" && tag.Params.size() >= 7 &&
+		std::none_of(tag.Params.begin(), tag.Params.end(),
+			[](AssOverrideParameter const& parameter) { return parameter.omitted; })) {
+		a1 = tag.Params[0].Get<double>();
+		a2 = tag.Params[1].Get<double>();
+		a3 = tag.Params[2].Get<double>();
+		t1 = tag.Params[3].Get<int>();
+		t2 = tag.Params[4].Get<int>();
+		t3 = tag.Params[5].Get<int>();
+		t4 = tag.Params[6].Get<int>();
+	}
+	else return std::nullopt;
+	auto blend = [](double before, double after, int at, int start, int end) {
+		if (end <= start) return after;
+		double progress = std::clamp(static_cast<double>(at - start) / (end - start),
+			0.0, 1.0);
+		return before + (after - before) * progress;
+	};
+	if (relative_ms < t1) return a1;
+	if (relative_ms < t2) return blend(a1, a2, relative_ms, t1, t2);
+	if (relative_ms < t3) return a2;
+	if (relative_ms < t4) return blend(a2, a3, relative_ms, t3, t4);
+	return a3;
+}
+
+int FadeAdjustedAlpha(int alpha, double fade_alpha) {
+	double opacity = (255.0 - std::clamp(fade_alpha, 0.0, 255.0)) / 255.0;
+	return static_cast<int>(std::clamp(std::lround(255.0 - opacity * (255 - alpha)),
+		0l, 255l));
+}
+
+void InterpolateFade(agi::Context *context, AssDialogue& line, int relative_ms) {
+	auto blocks = line.ParseTags();
+	std::optional<double> fade_alpha;
+	int duration = static_cast<int>(line.End - line.Start);
+	for (auto block : blocks | agi::of_type<AssDialogueBlockOverride>())
+		for (auto const& tag : block->Tags)
+			if (!fade_alpha) fade_alpha = FadeAlphaAt(tag, relative_ms, duration);
+	if (!fade_alpha) return;
+
+	AssStyle fallback;
+	auto style = context->ass->GetStyle(line.Style);
+	if (!style) style = &fallback;
+	std::array<int, 4> effective_alpha = {
+		style->primary.a, style->secondary.a, style->outline.a, style->shadow.a
+	};
+	double border = FirstNumber(blocks, "\\bord", style->outline_w);
+	bool border_used = std::abs(FirstNumber(blocks, "\\xbord", border)) > 1e-9 ||
+		std::abs(FirstNumber(blocks, "\\ybord", border)) > 1e-9;
+	double shadow = FirstNumber(blocks, "\\shad", style->shadow_w);
+	bool shadow_used = std::abs(FirstNumber(blocks, "\\xshad", shadow)) > 1e-9 ||
+		std::abs(FirstNumber(blocks, "\\yshad", shadow)) > 1e-9;
+	bool karaoke_used = false;
+	AssDialogueBlockOverride *first_override = nullptr;
+	for (auto block : blocks | agi::of_type<AssDialogueBlockOverride>()) {
+		if (!first_override) first_override = block;
+		for (auto const& tag : block->Tags) {
+			std::string key = AnimationKey(tag.Name);
+			if ((key == "\\bord" || key == "\\xbord" || key == "\\ybord") &&
+				!tag.Params.empty() && !tag.Params.front().omitted &&
+				std::abs(tag.Params.front().Get<double>()) > 1e-9)
+				border_used = true;
+			if ((key == "\\shad" || key == "\\xshad" || key == "\\yshad") &&
+				!tag.Params.empty() && !tag.Params.front().omitted &&
+				std::abs(tag.Params.front().Get<double>()) > 1e-9)
+				shadow_used = true;
+			if (key == "\\k" || key == "\\K" || key == "\\kf" || key == "\\ko")
+				karaoke_used = true;
+		}
+	}
+	if (first_override) {
+		for (auto const& tag : first_override->Tags) {
+			std::string key = AnimationKey(tag.Name);
+			if (key == "\\r") {
+				effective_alpha = {
+					style->primary.a, style->secondary.a, style->outline.a, style->shadow.a
+				};
+			}
+			else if (key == "\\alpha" && !tag.Params.empty() && !tag.Params.front().omitted) {
+				effective_alpha.fill(tag.Params.front().Get<int>());
+			}
+			else if (key.size() == 3 && key[0] == '\\' && key[2] == 'a' &&
+				key[1] >= '1' && key[1] <= '4' && !tag.Params.empty() &&
+				!tag.Params.front().omitted) {
+				effective_alpha[static_cast<size_t>(key[1] - '1')] =
+					tag.Params.front().Get<int>();
+			}
+		}
+	}
+	std::array<int, 4> adjusted_alpha;
+	for (size_t channel = 0; channel < adjusted_alpha.size(); ++channel)
+		adjusted_alpha[channel] = FadeAdjustedAlpha(effective_alpha[channel], *fade_alpha);
+	bool shared_alpha = adjusted_alpha[0] == adjusted_alpha[2] &&
+		adjusted_alpha[0] == adjusted_alpha[3];
+	if (!border_used) shared_alpha = adjusted_alpha[0] == adjusted_alpha[3];
+	if (!shadow_used) shared_alpha = border_used ?
+		adjusted_alpha[0] == adjusted_alpha[2] : true;
+
+	for (auto block : blocks | agi::of_type<AssDialogueBlockOverride>()) {
+		std::vector<AssOverrideTag> rewritten;
+		for (auto& tag : block->Tags) {
+			if (FadeAlphaAt(tag, relative_ms, duration)) continue;
+			std::string key = AnimationKey(tag.Name);
+			if ((key == "\\alpha" || key == "\\1a" || key == "\\2a" ||
+				key == "\\3a" || key == "\\4a") && !tag.Params.empty() &&
+				!tag.Params.front().omitted) {
+				if (block != first_override) {
+					int adjusted = FadeAdjustedAlpha(tag.Params.front().Get<int>(), *fade_alpha);
+					rewritten.emplace_back(agi::format("%s&H%02X&", key, adjusted));
+				}
+			}
+			else rewritten.push_back(std::move(tag));
+		}
+		block->Tags = std::move(rewritten);
+	}
+	std::vector<std::string> alpha_tags;
+	if (shared_alpha) {
+		alpha_tags.push_back(agi::format("\\alpha&H%02X&", adjusted_alpha[0]));
+		if (karaoke_used && adjusted_alpha[1] != adjusted_alpha[0])
+			alpha_tags.push_back(agi::format("\\2a&H%02X&", adjusted_alpha[1]));
+	}
+	else {
+		alpha_tags.push_back(agi::format("\\1a&H%02X&", adjusted_alpha[0]));
+		if (karaoke_used) alpha_tags.push_back(agi::format("\\2a&H%02X&", adjusted_alpha[1]));
+		if (border_used) alpha_tags.push_back(agi::format("\\3a&H%02X&", adjusted_alpha[2]));
+		if (shadow_used) alpha_tags.push_back(agi::format("\\4a&H%02X&", adjusted_alpha[3]));
+	}
+	if (first_override) {
+		for (auto const& tag : alpha_tags) first_override->Tags.emplace_back(tag);
+		line.UpdateText(blocks);
+	}
+	else {
+		std::string alpha_prefix = "{";
+		for (auto const& tag : alpha_tags) alpha_prefix += tag;
+		alpha_prefix += "}";
+		line.Text = alpha_prefix + line.Text.get();
+	}
+}
+
+void InterpolateMove(agi::Context *context, AssDialogue& line, int at_ms) {
+	auto blocks = line.ParseTags();
+	auto move = FindTag(blocks, "\\move");
+	if (!move) return;
+	int align = Alignment(context, line, blocks);
+	Vector2D position = Position(context, line, blocks, align, at_ms);
+	for (auto block : blocks | agi::of_type<AssDialogueBlockOverride>())
+		block->Tags.erase(std::remove_if(block->Tags.begin(), block->Tags.end(),
+			[](AssOverrideTag const& tag) { return tag.Name == "\\move"; }), block->Tags.end());
+	line.UpdateText(blocks);
+	std::string text = line.Text.get();
+	SetFirstTag(text, "\\pos", "(" + Number(position.X()) + "," + Number(position.Y()) + ")");
+	line.Text = text;
+}
+
+void InterpolateAnimations(agi::Context *context, AssDialogue& line, int at_ms) {
+	// Sample at the frame midpoint. The legacy script samples fades at the frame
+	// start, which makes the first generated frame fully invisible for \\fad.
+	int relative_ms = at_ms - static_cast<int>(line.Start);
+	InterpolateTransforms(context, line, relative_ms);
+	InterpolateFade(context, line, relative_ms);
+	InterpolateMove(context, line, at_ms);
+}
+
 std::string MapLine(agi::Context *context, AssDialogue& line, Homography const& matrix,
 	ApplyOptions const& options, bool map_clips, int at_ms) {
 	auto blocks = line.ParseTags();
@@ -354,6 +809,110 @@ std::string MapLine(agi::Context *context, AssDialogue& line, Homography const& 
 	return text;
 }
 
+bool HasClip(AssDialogue& line) {
+	auto blocks = line.ParseTags();
+	return FindTag(blocks, "\\clip") || FindTag(blocks, "\\iclip");
+}
+
+std::optional<std::string> FirstTagText(
+	std::vector<std::unique_ptr<AssDialogueBlock>>& blocks, char const *name) {
+	for (auto block : blocks | agi::of_type<AssDialogueBlockOverride>())
+		for (auto const& tag : block->Tags)
+			if (tag.Name == name) return static_cast<std::string>(tag);
+	return std::nullopt;
+}
+
+void AppendFirstOverride(std::string& text, std::string const& tags) {
+	if (tags.empty()) return;
+	if (text.empty() || text[0] != '{') text = "{}" + text;
+	size_t close = text.find('}');
+	if (close == std::string::npos) { text = "{}" + text; close = 1; }
+	text.insert(close, tags);
+}
+
+std::vector<std::string> FirstOverrideTransforms(AssDialogue const& source) {
+	AssDialogue line(source);
+	auto blocks = line.ParseTags();
+	for (auto block : blocks | agi::of_type<AssDialogueBlockOverride>()) {
+		std::vector<std::string> transforms;
+		for (auto const& tag : block->Tags)
+			if (tag.Name == "\\t") transforms.push_back(static_cast<std::string>(tag));
+		return transforms;
+	}
+	return {};
+}
+
+void RestoreFirstOverrideTransforms(AssDialogue& line,
+	std::vector<std::string> const& transforms) {
+	if (transforms.empty()) return;
+	auto blocks = line.ParseTags();
+	for (auto block : blocks | agi::of_type<AssDialogueBlockOverride>()) {
+		block->Tags.erase(std::remove_if(block->Tags.begin(), block->Tags.end(),
+			[](AssOverrideTag const& tag) { return tag.Name == "\\t"; }), block->Tags.end());
+		for (auto const& transform : transforms) block->Tags.emplace_back(transform);
+		line.UpdateText(blocks);
+		return;
+	}
+}
+
+AssDialogue BuildLinearLine(agi::Context *context, AssDialogue const& source,
+	Homography const& first_map, Homography const& last_map,
+	ApplyOptions const& options, int first_midpoint, int last_midpoint) {
+	AssDialogue first(source), last(source);
+	first.Comment = false;
+	last.Comment = false;
+	first.ExtradataIds = std::vector<uint32_t>();
+	last.ExtradataIds = std::vector<uint32_t>();
+	if (options.clip_only) return first;
+	auto original_transforms = FirstOverrideTransforms(source);
+	first.Text = MapLine(context, first, first_map, options, false, first_midpoint);
+	last.Text = MapLine(context, last, last_map, options, false, last_midpoint);
+	RestoreFirstOverrideTransforms(first, original_transforms);
+	RestoreFirstOverrideTransforms(last, original_transforms);
+	auto first_blocks = first.ParseTags();
+	auto last_blocks = last.ParseTags();
+	std::string text = first.Text.get();
+	auto first_position_tag = FindTag(first_blocks, "\\pos");
+	auto last_position_tag = FindTag(last_blocks, "\\pos");
+	int duration = static_cast<int>(source.End - source.Start);
+	int begin_time = std::clamp(first_midpoint - static_cast<int>(source.Start), 0, duration);
+	int end_time = std::clamp(last_midpoint - static_cast<int>(source.Start), begin_time, duration);
+	if (first_position_tag && first_position_tag->size() >= 2 && last_position_tag &&
+		last_position_tag->size() >= 2) {
+		Vector2D first_position((*first_position_tag)[0].Get<float>(),
+			(*first_position_tag)[1].Get<float>());
+		Vector2D last_position((*last_position_tag)[0].Get<float>(),
+			(*last_position_tag)[1].Get<float>());
+		if ((last_position - first_position).Len() < .0005f)
+			SetFirstTag(text, "\\pos", "(" + Number(first_position.X()) + "," +
+				Number(first_position.Y()) + ")", {"\\move"});
+		else
+			SetFirstTag(text, "\\move", "(" + Number(first_position.X()) + "," +
+				Number(first_position.Y()) + "," + Number(last_position.X()) + "," +
+				Number(last_position.Y()) + "," + std::to_string(begin_time) + "," +
+				std::to_string(end_time) + ")", {"\\pos"});
+	}
+	std::string effect;
+	for (auto name : {"\\fscx", "\\fscy", "\\fax", "\\fay", "\\frz", "\\frx",
+		"\\fry", "\\bord", "\\xbord", "\\ybord", "\\shad", "\\xshad",
+		"\\yshad", "\\blur"}) {
+		auto before = FirstTagText(first_blocks, name);
+		auto after = FirstTagText(last_blocks, name);
+		if (after && before != after) effect += *after;
+	}
+	if (!effect.empty()) {
+		if (end_time > begin_time)
+			AppendFirstOverride(text, agi::format("\\t(%d,%d,%s)", begin_time,
+				end_time, effect));
+		else
+			AppendFirstOverride(text, effect);
+	}
+	first.Text = text;
+	first.Start = source.Start;
+	first.End = source.End;
+	return first;
+}
+
 imagemask::Raster Warp(imagemask::Raster const& source, Homography const& map,
 	int script_width, int script_height) {
 	if (!source.IsOk()) return {};
@@ -376,8 +935,10 @@ imagemask::Raster Warp(imagemask::Raster const& source, Homography const& map,
 	out.x = left; out.y = top; out.width = right - left; out.height = bottom - top;
 	out.rgba.assign(static_cast<size_t>(out.width) * out.height * 4, 0);
 	auto sample = [&](int x, int y, int channel) -> double {
-		x = std::clamp(x, 0, source.width - 1);
-		y = std::clamp(y, 0, source.height - 1);
+		// The area outside the raster is transparent. Clamping to the closest
+		// source pixel duplicates the edge during a fractional transform and
+		// creates a visibly thicker, opaque rim around a moving ImageMask.
+		if (x < 0 || y < 0 || x >= source.width || y >= source.height) return 0;
 		return source.rgba[(static_cast<size_t>(y) * source.width + x) * 4 + channel];
 	};
 	for (int y = 0; y < out.height; ++y) {
@@ -489,7 +1050,7 @@ Homography Track::MapAt(size_t sample, size_t reference) const {
 }
 
 std::optional<Track> ParseMocha(std::string const& text, int script_width,
-	int script_height, std::string& error) {
+	int script_height, TrackKind expected_kind, std::string& error) {
 	error.clear();
 	if (text.find("Adobe After Effects") == std::string::npos) {
 		error = "A bemenet nem After Effects/Mocha keyframe data.";
@@ -567,7 +1128,7 @@ std::optional<Track> ParseMocha(std::string const& text, int script_width,
 	track.source_height = source_height;
 	bool corner_pin = std::all_of(corners.begin(), corners.end(),
 		[](auto const& values) { return !values.empty(); });
-	if (corner_pin) {
+	if (expected_kind == TrackKind::CornerPin && corner_pin) {
 		track.kind = TrackKind::CornerPin;
 		track.adapter = "mocha-corner-pin";
 		for (auto const& [frame, point] : corners[0]) {
@@ -581,7 +1142,7 @@ std::optional<Track> ParseMocha(std::string const& text, int script_width,
 			if (complete) track.samples.push_back(sample);
 		}
 	}
-	else if (!position.empty()) {
+	else if (expected_kind == TrackKind::Transform && !position.empty()) {
 		track.kind = TrackKind::Transform;
 		track.adapter = "mocha-transform";
 		Vector2D last_scale(100, 100);
@@ -595,18 +1156,48 @@ std::optional<Track> ParseMocha(std::string const& text, int script_width,
 		}
 	}
 	if (track.samples.empty()) {
-		error = "Nem találtam teljes Position/Scale/Rotation vagy négysarkos Corner Pin adatsort.";
+		error = expected_kind == TrackKind::CornerPin ?
+			"Nem találtam teljes négysarkos Corner Pin adatsort." :
+			"Nem találtam Position/Scale/Rotation transzformációs adatsort.";
 		return std::nullopt;
 	}
 	return track;
 }
 
 bool Apply(agi::Context *context, Track const& main_track,
-	std::optional<Track> const& clip_track, ApplyOptions const& options,
-	std::string& error) {
+	std::optional<Track> const& main_perspective_track,
+	std::optional<Track> const& clip_track,
+	std::optional<Track> const& clip_perspective_track,
+	ApplyOptions const& options, std::string& error) {
 	error.clear();
 	if (!context || !context->videoController || !main_track.IsOk()) {
 		error = "Nincs alkalmazható motion adat vagy videó.";
+		return false;
+	}
+	if (!options.main.Any()) {
+		error = "Válassz legalább egy alkalmazandó motion komponenst.";
+		return false;
+	}
+	if (clip_track && options.map_clips && !options.clip.Any()) {
+		error = "Válassz legalább egy alkalmazandó clip motion komponenst.";
+		return false;
+	}
+	if (main_perspective_track && main_perspective_track->kind != TrackKind::CornerPin) {
+		error = "A fő Perspective mezőbe Corner Pin adat szükséges.";
+		return false;
+	}
+	if (clip_perspective_track && clip_perspective_track->kind != TrackKind::CornerPin) {
+		error = "A clip Perspective mezőbe Corner Pin adat szükséges.";
+		return false;
+	}
+	if (options.main.perspective && main_track.kind == TrackKind::Transform &&
+		!main_perspective_track) {
+		error = "A Perspective be van kapcsolva; illeszd be a fő Corner Pin adatot.";
+		return false;
+	}
+	if (clip_track && options.map_clips && options.clip.perspective &&
+		clip_track->kind == TrackKind::Transform && !clip_perspective_track) {
+		error = "A clip Perspective be van kapcsolva; illeszd be a clip Corner Pin adatot.";
 		return false;
 	}
 	auto selected = context->selectionController->GetSelectedSet();
@@ -620,28 +1211,27 @@ bool Apply(agi::Context *context, Track const& main_track,
 		selection_end = std::max(selection_end,
 			context->videoController->FrameAtTime(line->End, agi::vfr::END));
 	}
-	if (options.relative_to_selection &&
-		main_track.samples.size() < static_cast<size_t>(selection_end - selection_start + 1)) {
-		error = "A motion adat rövidebb a kijelölt képkockatartománynál.";
+	size_t required_frames = static_cast<size_t>(selection_end - selection_start + 1);
+	auto require_length = [&](Track const& track, char const *name) {
+		if (track.samples.size() == required_frames) return true;
+		error = agi::format("A %s frame-száma (%zu) nem egyezik a kijelölt sor "
+			"frame-számával (%zu).", name, track.samples.size(), required_frames);
+		return false;
+	};
+	if (!require_length(main_track, "Transformation Data") ||
+		(main_perspective_track && !require_length(*main_perspective_track,
+			"Perspective - Corner Pin")) ||
+		(clip_track && !require_length(*clip_track, "clip Transformation Data")) ||
+		(clip_perspective_track && !require_length(*clip_perspective_track,
+			"clip Perspective - Corner Pin")))
+		return false;
+	if (options.reference_sample >= required_frames ||
+		(options.clip_reference_sample && *options.clip_reference_sample >= required_frames)) {
+		error = "A referenciaképkocka kívül esik a motion adaton.";
 		return false;
 	}
-	if (options.relative_to_selection && clip_track &&
-		clip_track->samples.size() < static_cast<size_t>(selection_end - selection_start + 1)) {
-		error = "A külön clip motion adat rövidebb a kijelölt képkockatartománynál.";
-		return false;
-	}
-	auto sample_for_frame = [&](Track const& track, int frame) -> size_t {
-		if (options.relative_to_selection)
-			return static_cast<size_t>(frame - selection_start);
-		auto found = std::lower_bound(track.samples.begin(), track.samples.end(), frame,
-			[](Sample const& sample, int target) { return sample.source_frame < target; });
-		if (found == track.samples.end()) return track.samples.size() - 1;
-		if (found == track.samples.begin() || found->source_frame == frame)
-			return static_cast<size_t>(found - track.samples.begin());
-		auto previous = found - 1;
-		return frame - previous->source_frame <= found->source_frame - frame ?
-			static_cast<size_t>(previous - track.samples.begin()) :
-			static_cast<size_t>(found - track.samples.begin());
+	auto sample_for_frame = [&](int frame) {
+		return static_cast<size_t>(frame - selection_start);
 	};
 
 	struct Work {
@@ -670,11 +1260,35 @@ bool Apply(agi::Context *context, Track const& main_track,
 		if (mask && !raster) { error = "Az ImageMask képe nem olvasható vissza."; return false; }
 		int script_width = 0, script_height = 0;
 		context->ass->GetResolution(script_width, script_height);
+		bool linear_line = options.linear && !mask &&
+			(!options.map_clips || !HasClip(*item.originals.front()));
+		if (linear_line) {
+			size_t first_sample = sample_for_frame(start_frame);
+			size_t last_sample = sample_for_frame(end_frame);
+			Homography first_map = AppliedMap(main_track, main_perspective_track,
+				first_sample, options.reference_sample, options.main, true);
+			Homography last_map = AppliedMap(main_track, main_perspective_track,
+				last_sample, options.reference_sample, options.main, true);
+			int first_start = std::max(static_cast<int>(item.originals.front()->Start),
+				context->videoController->TimeAtFrame(start_frame, agi::vfr::START));
+			int first_end = std::min(static_cast<int>(item.originals.front()->End),
+				context->videoController->TimeAtFrame(start_frame, agi::vfr::END));
+			int last_start = std::max(static_cast<int>(item.originals.front()->Start),
+				context->videoController->TimeAtFrame(end_frame, agi::vfr::START));
+			int last_end = std::min(static_cast<int>(item.originals.front()->End),
+				context->videoController->TimeAtFrame(end_frame, agi::vfr::END));
+			item.output.push_back(BuildLinearLine(context, *item.originals.front(),
+				first_map, last_map, options, (first_start + first_end) / 2,
+				(last_start + last_end) / 2));
+			work.push_back(std::move(item));
+			continue;
+		}
 		std::string previous_signature;
 		size_t previous_begin = 0;
 		for (int frame = start_frame; frame <= end_frame; ++frame) {
-			size_t sample = sample_for_frame(main_track, frame);
-			Homography main_map = main_track.MapAt(sample, options.reference_sample);
+			size_t sample = sample_for_frame(frame);
+			Homography main_map = AppliedMap(main_track, main_perspective_track, sample,
+				options.reference_sample, options.main, options.linear);
 			int start = std::max(static_cast<int>(item.originals.front()->Start),
 				context->videoController->TimeAtFrame(frame, agi::vfr::START));
 			int end = std::min(static_cast<int>(item.originals.front()->End),
@@ -689,16 +1303,28 @@ bool Apply(agi::Context *context, Track const& main_track,
 				AssDialogue generated_line(*item.originals.front());
 				generated_line.Comment = false;
 				generated_line.ExtradataIds = std::vector<uint32_t>();
-				generated_line.Text = MapLine(context, generated_line, main_map, options,
-					options.map_clips && !clip_track, (start + end) / 2);
+				int sample_time = (start + end) / 2;
+				if (options.interpolate_animations)
+					InterpolateAnimations(context, generated_line, sample_time);
+				if (!options.clip_only)
+					generated_line.Text = MapLine(context, generated_line, main_map, options,
+						options.map_clips && !clip_track, sample_time);
+				else if (options.map_clips && !clip_track) {
+					typesetting::OrientedBox bounds;
+					bounds.centre = Vector2D(script_width / 2.f, script_height / 2.f);
+					bounds.half = Vector2D(script_width / 2.f, script_height / 2.f);
+					generated_line.Text = typesetting::TransformClips(generated_line.Text.get(),
+						[&main_map](Vector2D point) { return main_map.Map(point); }, bounds);
+				}
 				generated_line.Start = start;
 				generated_line.End = end;
 				if (options.map_clips && clip_track) {
-					size_t clip_sample = sample_for_frame(*clip_track, frame);
+					size_t clip_sample = sample_for_frame(frame);
 					size_t clip_reference = options.clip_reference_sample.value_or(
 						options.reference_sample);
-					Homography clip_map = clip_track->MapAt(clip_sample,
-						std::min(clip_reference, clip_track->samples.size() - 1));
+					Homography clip_map = AppliedMap(*clip_track, clip_perspective_track, clip_sample,
+						std::min(clip_reference, clip_track->samples.size() - 1),
+						options.clip, options.linear);
 					typesetting::OrientedBox bounds;
 					bounds.centre = Vector2D(script_width / 2.f, script_height / 2.f);
 					bounds.half = Vector2D(script_width / 2.f, script_height / 2.f);

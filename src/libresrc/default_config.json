@@ -714,8 +714,7 @@
 				"Configured" : false,
 				"Format" : 0,
 				"Directory" : "?video",
-				"FFmpeg" : "",
-				"CRF" : 18
+				"Own Folder" : false
 			}
 		},
 		"Visual" : {

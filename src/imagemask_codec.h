@@ -35,10 +35,11 @@ bool IsLine(AssDialogue const *line);
 /// Reconstruct a raster from either codec. The returned origin is in script pixels.
 std::optional<Raster> Decode(std::vector<AssDialogue *> const& lines);
 
-/// Encode with integer geometry. The encoder compares a vertically merged rectangle
-/// representation with a row representation and keeps the shorter result.
+/// Encode exact RGBA pixels with integer geometry. Only identical pixels are merged;
+/// the encoder compares a vertically merged rectangle representation with a row
+/// representation and keeps the shorter lossless result.
 std::vector<AssDialogue> Encode(Raster const& raster, AssDialogue const& prototype,
-	int start_ms, int end_ms, int colour_tolerance = 25);
+	int start_ms, int end_ms);
 
 /// Stable comparison key used to merge unchanged consecutive motion frames.
 std::string Signature(std::vector<AssDialogue> const& lines);

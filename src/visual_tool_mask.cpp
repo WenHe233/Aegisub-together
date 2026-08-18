@@ -54,8 +54,6 @@
 
 namespace {
 	constexpr int button_id_base = 1600;
-	constexpr int image_colour_tolerance = 25;
-
 	namespace bg = boost::geometry;
 	using MaskPoint = bg::model::d2::point_xy<double>;
 	using MaskPolygon = bg::model::polygon<MaskPoint>;
@@ -3155,7 +3153,7 @@ std::vector<AssDialogue *> VisualToolMask::ConvertImageToAss(wxImage image, AssD
 	}
 
 	auto encoded = imagemask::Encode(raster, *source, static_cast<int>(start),
-		static_cast<int>(end), image_colour_tolerance);
+		static_cast<int>(end));
 	std::vector<AssDialogue *> lines;
 	lines.reserve(encoded.size());
 	for (auto& line : encoded) lines.push_back(new AssDialogue(std::move(line)));

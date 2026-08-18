@@ -20,7 +20,7 @@ enum class AutoMotionAction {
 	TrackY,
 	Scale,
 	Rotate,
-	Perspective
+	Linear
 };
 
 class VisualToolAutoMotion final : public VisualToolBase {
@@ -33,9 +33,9 @@ class VisualToolAutoMotion final : public VisualToolBase {
 	bool leaving = false;
 	bool track_x = true;
 	bool track_y = true;
-	bool track_scale = false;
+	bool track_scale = true;
 	bool track_rotate = false;
-	bool track_perspective = false;
+	bool linear = false;
 	AutoMotionAction hovered_action = AutoMotionAction::None;
 	agi::signal::Connection selection_connection;
 	std::string return_tool;
@@ -44,13 +44,14 @@ class VisualToolAutoMotion final : public VisualToolBase {
 	void RunTracking();
 	Vector2D ClampToScript(Vector2D point) const;
 	wxString LabelFor(AutoMotionAction action) const;
-	float MeasuredTextWidth(wxString const& label, bool bold) const;
 	std::pair<Vector2D, Vector2D> ActionBounds(AutoMotionAction action) const;
 	AutoMotionAction ActionAt(Vector2D point) const;
 	bool HasOutputComponent() const;
 	bool ActionEnabled(AutoMotionAction action) const;
 	bool ActionChecked(AutoMotionAction action) const;
 	void Perform(AutoMotionAction action);
+	void UpdatePreviewInterface() const;
+	float TopBarHeight() const;
 	void DrawTopBar();
 	bool HandleKey(int key);
 	void OnCharHook(wxKeyEvent& event);

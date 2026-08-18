@@ -149,12 +149,7 @@ Raster Crop(Raster const& source) {
 	return out;
 }
 
-std::vector<std::vector<Run>> MakeRuns(Raster const& image, int tolerance) {
-	int step = std::max(1, tolerance / 2);
-	auto quantise = [step](unsigned char value) {
-		int rounded = (static_cast<int>(value) + step / 2) / step * step;
-		return static_cast<unsigned char>(std::min(255, rounded));
-	};
+std::vector<std::vector<Run>> MakeRuns(Raster const& image) {
 	std::vector<std::vector<Run>> rows(static_cast<size_t>(image.height));
 	for (int y = 0; y < image.height; ++y) {
 		auto& runs = rows[y];
@@ -163,9 +158,9 @@ std::vector<std::vector<Run>> MakeRuns(Raster const& image, int tolerance) {
 			Colour colour;
 			colour.alpha = image.rgba[offset + 3];
 			if (colour.alpha) {
-				colour.red = quantise(image.rgba[offset]);
-				colour.green = quantise(image.rgba[offset + 1]);
-				colour.blue = quantise(image.rgba[offset + 2]);
+				colour.red = image.rgba[offset];
+				colour.green = image.rgba[offset + 1];
+				colour.blue = image.rgba[offset + 2];
 			}
 			if (!runs.empty() && runs.back().colour.Key() == colour.Key())
 				runs.back().end = x + 1;
@@ -245,18 +240,32 @@ std::vector<AssDialogue> EncodeRows(Raster const& image,
 		size_t first_index = static_cast<size_t>(first - rows[y].begin());
 		size_t last_index = rows[y].size() - 1 -
 			static_cast<size_t>(last - rows[y].rbegin());
-		Colour current = first->colour;
-		std::string text = StyleTags(image.x + first->start, image.y + y, current);
-		for (size_t index = first_index; index <= last_index; ++index) {
-			auto const& run = rows[y][index];
-			if (run.colour.Key() != current.Key()) {
+		for (size_t index = first_index; index <= last_index;) {
+			// A transparent run at the beginning of a split block can be represented
+			// exactly by moving that block's integer position to the next visible run.
+			while (index <= last_index && !rows[y][index].colour.alpha) ++index;
+			if (index > last_index) break;
+			int block_start = rows[y][index].start;
+			Colour current = rows[y][index].colour;
+			std::string text = StyleTags(image.x + block_start, image.y + y, current);
+			bool has_shape = false;
+			for (; index <= last_index; ++index) {
+				auto const& run = rows[y][index];
+				std::string addition;
+				if (run.colour.Key() != current.Key()) {
+					addition = agi::format("{\\1c&H%02X%02X%02X&\\1a&H%02X&}",
+						run.colour.blue, run.colour.green, run.colour.red,
+						255 - run.colour.alpha);
+				}
+				addition += Rectangle(0, 0, run.end - run.start, band_end - y);
+				if (has_shape && text.size() + addition.size() > maximum_drawing_bytes)
+					break;
+				text += std::move(addition);
+				has_shape = true;
 				current = run.colour;
-				text += agi::format("{\\1c&H%02X%02X%02X&\\1a&H%02X&}",
-					current.blue, current.green, current.red, 255 - current.alpha);
 			}
-			text += Rectangle(0, 0, run.end - run.start, band_end - y);
+			lines.push_back(MakeLine(prototype, start_ms, end_ms, std::move(text)));
 		}
-		lines.push_back(MakeLine(prototype, start_ms, end_ms, std::move(text)));
 		y = band_end;
 	}
 	return lines;
@@ -371,10 +380,10 @@ std::optional<Raster> Decode(std::vector<AssDialogue *> const& lines) {
 }
 
 std::vector<AssDialogue> Encode(Raster const& source, AssDialogue const& prototype,
-	int start_ms, int end_ms, int colour_tolerance) {
+	int start_ms, int end_ms) {
 	Raster image = Crop(source);
 	if (!image.IsOk()) return {};
-	auto rows = MakeRuns(image, colour_tolerance);
+	auto rows = MakeRuns(image);
 	auto rectangles = MergeRectangles(rows);
 	auto vertical = EncodeRectangles(image, rectangles, prototype, start_ms, end_ms);
 	auto horizontal = EncodeRows(image, rows, prototype, start_ms, end_ms);

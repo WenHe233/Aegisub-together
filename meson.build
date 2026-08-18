@@ -108,6 +108,13 @@ deps += cc.find_library('dl', required: false)
 
 deps += dependency('iconv', fallback: ['iconv', 'libiconv_dep'])
 
+# Motion trim video export is encoded in-process. These are linked directly so
+# no command-line encoder or executable discovery is part of the feature.
+deps += dependency('libavformat', default_options: ['tests=disabled'])
+deps += dependency('libavcodec', default_options: ['tests=disabled'])
+deps += dependency('libavutil', default_options: ['tests=disabled'])
+deps += dependency('libswscale', default_options: ['tests=disabled'])
+
 deps += dependency('libass', version: '>=0.9.7',
                    fallback: ['libass', 'libass_dep'])
 

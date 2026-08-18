@@ -40,7 +40,12 @@ VisualToolAutoMotion::VisualToolAutoMotion(VideoDisplay *parent,
 		[this] { ExitTool(); });
 	if (context->parent)
 		context->parent->Bind(wxEVT_CHAR_HOOK, &VisualToolAutoMotion::OnCharHook, this);
+	preview_interface.AttachHost(parent->GetPreviewBar(), [this](int id) {
+		this->parent->SetFocus();
+		Perform(static_cast<AutoMotionAction>(id));
+	});
 	parent->SetCursor(wxCursor(wxCURSOR_CROSS));
+	UpdatePreviewInterface();
 }
 
 VisualToolAutoMotion::~VisualToolAutoMotion() {
@@ -103,7 +108,8 @@ void VisualToolAutoMotion::RunTracking() {
 	settings.track_y = track_y;
 	settings.scale = track_scale;
 	settings.rotate = track_rotate;
-	settings.perspective = track_perspective;
+	settings.linear = linear;
+	UpdatePreviewInterface();
 	auto track = typesetting::motion::TrackRegion(c, top_left, bottom_right,
 		first_frame, last_frame, reference_frame, settings,
 		[&](int complete, int total) {
@@ -113,13 +119,16 @@ void VisualToolAutoMotion::RunTracking() {
 	if (track) {
 		typesetting::motion::ApplyOptions options;
 		options.reference_sample = static_cast<size_t>(reference_frame - first_frame);
-		if (typesetting::motion::Apply(c, *track, std::nullopt, options, error)) {
+		options.main = {track_x, track_y, track_scale, track_rotate, false};
+		if (typesetting::motion::Apply(c, *track, std::nullopt, std::nullopt,
+			std::nullopt, options, error)) {
 			busy = false;
 			ExitTool();
 			return;
 		}
 	}
 	busy = false;
+	UpdatePreviewInterface();
 	if (!error.empty() && error != "Auto motion cancelled.")
 		wxMessageBox(to_wx(error), _("Auto motion"), wxOK | wxICON_WARNING, c->parent);
 }
@@ -128,7 +137,7 @@ void VisualToolAutoMotion::OnMouseEvent(wxMouseEvent& event) {
 	if (busy || leaving) return;
 	Vector2D point(event.GetPosition());
 	auto action = ActionAt(point);
-	if (action != AutoMotionAction::None || point.Y() < 70.f) {
+	if (action != AutoMotionAction::None || point.Y() < TopBarHeight()) {
 		if (hovered_action != action) {
 			hovered_action = action;
 			parent->Render();
@@ -156,6 +165,7 @@ void VisualToolAutoMotion::OnMouseEvent(wxMouseEvent& event) {
 		if (parent->HasCapture()) parent->ReleaseMouse();
 		has_region = std::abs(region_end.X() - region_start.X()) >= 2.f &&
 			std::abs(region_end.Y() - region_start.Y()) >= 2.f;
+		UpdatePreviewInterface();
 	}
 	parent->Render();
 }
@@ -188,37 +198,21 @@ wxString VisualToolAutoMotion::LabelFor(AutoMotionAction action) const {
 		case AutoMotionAction::TrackY: return _("Y");
 		case AutoMotionAction::Scale: return _("Scale");
 		case AutoMotionAction::Rotate: return _("Rotate");
-		case AutoMotionAction::Perspective: return _("Perspective");
+		case AutoMotionAction::Linear: return _("Linear");
 		default: return {};
 	}
 }
 
-float VisualToolAutoMotion::MeasuredTextWidth(wxString const& label, bool bold) const {
-	gl_text->SetFont("Verdana", 9, bold, false);
-	int width = 0, height = 0;
-	gl_text->GetExtent(from_wx(label), width, height);
-	return static_cast<float>(width);
-}
-
 std::pair<Vector2D, Vector2D> VisualToolAutoMotion::ActionBounds(
 	AutoMotionAction action) const {
-	constexpr float top = 10.f;
-	constexpr float height = 34.f;
-	constexpr float gap = 8.f;
-	float left = 12.f;
-	for (auto item : {AutoMotionAction::Accept, AutoMotionAction::Cancel}) {
-		float width = MeasuredTextWidth(LabelFor(item), true) + 24.f;
-		if (item == action) return {Vector2D(left, top), Vector2D(left + width, top + height)};
-		left += width + gap;
-	}
-	left += 10.f;
-	for (auto item : {AutoMotionAction::TrackX, AutoMotionAction::TrackY,
-		AutoMotionAction::Scale, AutoMotionAction::Rotate, AutoMotionAction::Perspective}) {
-		float width = MeasuredTextWidth(LabelFor(item), false) + 28.f;
-		if (item == action) return {Vector2D(left, top), Vector2D(left + width, top + height)};
-		left += width + gap;
-	}
-	return {Vector2D(left, top), Vector2D(left, top + height)};
+	UpdatePreviewInterface();
+	return preview_interface.BoundsFor(static_cast<int>(action), *gl_text, canvas_size);
+}
+
+float VisualToolAutoMotion::TopBarHeight() const {
+	UpdatePreviewInterface();
+	if (preview_interface.HasExternalHost()) return 0.f;
+	return preview_interface.Height(*gl_text, canvas_size);
 }
 
 bool VisualToolAutoMotion::ActionEnabled(AutoMotionAction action) const {
@@ -228,7 +222,7 @@ bool VisualToolAutoMotion::ActionEnabled(AutoMotionAction action) const {
 }
 
 bool VisualToolAutoMotion::HasOutputComponent() const {
-	return track_x || track_y || track_scale || track_rotate || track_perspective;
+	return track_x || track_y || track_scale || track_rotate;
 }
 
 bool VisualToolAutoMotion::ActionChecked(AutoMotionAction action) const {
@@ -237,15 +231,17 @@ bool VisualToolAutoMotion::ActionChecked(AutoMotionAction action) const {
 		case AutoMotionAction::TrackY: return track_y;
 		case AutoMotionAction::Scale: return track_scale;
 		case AutoMotionAction::Rotate: return track_rotate;
-		case AutoMotionAction::Perspective: return track_perspective;
+		case AutoMotionAction::Linear: return linear;
 		default: return false;
 	}
 }
 
 AutoMotionAction VisualToolAutoMotion::ActionAt(Vector2D point) const {
+	UpdatePreviewInterface();
+	if (preview_interface.HasExternalHost()) return AutoMotionAction::None;
 	for (auto action : {AutoMotionAction::Accept, AutoMotionAction::Cancel,
 		AutoMotionAction::TrackX, AutoMotionAction::TrackY, AutoMotionAction::Scale,
-		AutoMotionAction::Rotate, AutoMotionAction::Perspective}) {
+		AutoMotionAction::Rotate, AutoMotionAction::Linear}) {
 		if (!ActionEnabled(action)) continue;
 		auto [top_left, bottom_right] = ActionBounds(action);
 		if (point.X() >= top_left.X() && point.X() <= bottom_right.X() &&
@@ -264,80 +260,46 @@ void VisualToolAutoMotion::Perform(AutoMotionAction action) {
 		case AutoMotionAction::TrackY: track_y = !track_y; break;
 		case AutoMotionAction::Scale: track_scale = !track_scale; break;
 		case AutoMotionAction::Rotate: track_rotate = !track_rotate; break;
-		case AutoMotionAction::Perspective: track_perspective = !track_perspective; break;
+		case AutoMotionAction::Linear: linear = !linear; break;
 		default: return;
 	}
+	UpdatePreviewInterface();
 	parent->Render();
 }
 
-void VisualToolAutoMotion::DrawTopBar() {
-	gl.SetFillColour(*wxBLACK, .72f);
-	gl.SetLineColour(*wxBLACK, 0.f, 1);
-	gl.DrawRectangle(Vector2D(0.f, 0.f), Vector2D(canvas_size.X(), 70.f));
-
-	auto rounded_rectangle = [&](Vector2D top_left, Vector2D bottom_right,
-		float radius, wxColour colour) {
-		float safe = std::min({radius, (bottom_right.X() - top_left.X()) * .5f,
-			(bottom_right.Y() - top_left.Y()) * .5f});
-		gl.SetFillColour(colour, 1.f);
-		gl.SetLineColour(colour, 0.f, 1);
-		gl.DrawRectangle(top_left + Vector2D(safe, 0), bottom_right - Vector2D(safe, 0));
-		gl.DrawRectangle(top_left + Vector2D(0, safe), bottom_right - Vector2D(0, safe));
-		gl.DrawCircle(top_left + Vector2D(safe, safe), safe);
-		gl.DrawCircle(Vector2D(bottom_right.X() - safe, top_left.Y() + safe), safe);
-		gl.DrawCircle(Vector2D(top_left.X() + safe, bottom_right.Y() - safe), safe);
-		gl.DrawCircle(bottom_right - Vector2D(safe, safe), safe);
+void VisualToolAutoMotion::UpdatePreviewInterface() const {
+	using Interface = VisualToolPreviewInterface;
+	Interface::Page page;
+	auto add = [&](AutoMotionAction action, Interface::ControlKind kind,
+		Interface::ControlStyle style = Interface::ControlStyle::Neutral) {
+		Interface::Control control;
+		control.id = static_cast<int>(action);
+		control.kind = kind;
+		control.label = LabelFor(action);
+		control.style = style;
+		control.enabled = ActionEnabled(action);
+		control.selected = ActionChecked(action);
+		page.controls.push_back(std::move(control));
 	};
-
-	for (auto action : {AutoMotionAction::Accept, AutoMotionAction::Cancel}) {
-		auto [top_left, bottom_right] = ActionBounds(action);
-		bool enabled = ActionEnabled(action);
-		wxColour colour = action == AutoMotionAction::Accept ?
-			wxColour(31, 153, 76) : wxColour(183, 54, 61);
-		if (!enabled) colour = wxColour(66, 69, 73);
-		else if (hovered_action == action) colour = colour.ChangeLightness(118);
-		rounded_rectangle(top_left, bottom_right, 7.f, colour);
-		gl_text->SetFont("Verdana", 9, true, false);
-		gl_text->SetColour(enabled ? agi::Color(255, 255, 255, 255) :
-			agi::Color(145, 148, 152, 255));
-		std::string text = from_wx(LabelFor(action));
-		int width = 0, height = 0;
-		gl_text->GetExtent(text, width, height);
-		gl_text->Print(text, static_cast<int>(top_left.X() + 12.f),
-			static_cast<int>((top_left.Y() + bottom_right.Y() - height) * .5f));
-	}
-
+	add(AutoMotionAction::Accept, Interface::ControlKind::Button,
+		Interface::ControlStyle::Accept);
+	add(AutoMotionAction::Cancel, Interface::ControlKind::Button,
+		Interface::ControlStyle::Cancel);
+	page.controls.push_back({0, Interface::ControlKind::Spacer});
 	for (auto action : {AutoMotionAction::TrackX, AutoMotionAction::TrackY,
-		AutoMotionAction::Scale, AutoMotionAction::Rotate, AutoMotionAction::Perspective}) {
-		auto [top_left, bottom_right] = ActionBounds(action);
-		float middle = (top_left.Y() + bottom_right.Y()) * .5f;
-		Vector2D mark(top_left.X() + 8.f, middle);
-		gl.SetLineColour(hovered_action == action ? *wxWHITE : wxColour(190, 194, 198),
-			1.f, 1);
-		gl.SetFillColour(*wxBLACK, .45f);
-		gl.DrawRectangle(mark - Vector2D(7, 7), mark + Vector2D(7, 7));
-		if (ActionChecked(action)) {
-			gl.SetLineColour(wxColour(120, 220, 140), 1.f, 2);
-			gl.DrawLine(mark + Vector2D(-4, 0), mark + Vector2D(-1, 4));
-			gl.DrawLine(mark + Vector2D(-1, 4), mark + Vector2D(5, -4));
-		}
-		gl_text->SetFont("Verdana", 9, false, false);
-		gl_text->SetColour(agi::Color(230, 232, 235, 255));
-		std::string label = from_wx(LabelFor(action));
-		int width = 0, height = 0;
-		gl_text->GetExtent(label, width, height);
-		gl_text->Print(label, static_cast<int>(top_left.X() + 20.f),
-			static_cast<int>((top_left.Y() + bottom_right.Y() - height) * .5f));
-	}
-
-	gl_text->SetFont("Verdana", 9, false, false);
-	gl_text->SetColour(agi::Color(220, 223, 226, 255));
-	wxString status = has_region && !HasOutputComponent() ?
-		_("Select at least one motion component.") : has_region ?
-		_("Tracking region ready. Adjust the motion components or select a new region.") :
+		AutoMotionAction::Scale, AutoMotionAction::Rotate, AutoMotionAction::Linear})
+		add(action, Interface::ControlKind::Toggle);
+	page.message = busy ? _("Tracking the selected region...") :
+		has_region && !HasOutputComponent() ? _("Select at least one motion component.") :
+		has_region ? _("Tracking region ready. Adjust the motion components or select a new region.") :
 		_("Select a stable tracking region, choose the motion components, then accept.");
-	std::string message = from_wx(status);
-	gl_text->Print(message, 12, 50);
+	preview_interface.SetPage(std::move(page));
+}
+
+void VisualToolAutoMotion::DrawTopBar() {
+	UpdatePreviewInterface();
+	if (preview_interface.HasExternalHost()) return;
+	preview_interface.Draw(gl, *gl_text, canvas_size, static_cast<int>(hovered_action));
 }
 
 bool VisualToolAutoMotion::HandleKey(int key) {

@@ -43,15 +43,30 @@ struct Track {
 	Homography MapAt(size_t sample, size_t reference) const;
 };
 
-/// Parse Mocha's After Effects Transform Data or Corner Pin text. File contents and
-/// clipboard contents use the same adapter; future trackers plug in beside this one.
+/// Parse the requested Mocha After Effects Transform Data or Corner Pin track.
+/// File contents and clipboard contents use the same adapter; future trackers plug
+/// in beside this one.
 std::optional<Track> ParseMocha(std::string const& text, int script_width,
-	int script_height, std::string& error);
+	int script_height, TrackKind expected_kind, std::string& error);
 
 struct ApplyOptions {
+	struct Components {
+		bool track_x = true;
+		bool track_y = true;
+		bool scale = true;
+		bool rotate = true;
+		bool perspective = true;
+
+		bool Any() const { return track_x || track_y || scale || rotate || perspective; }
+	};
+
 	size_t reference_sample = 0;
 	std::optional<size_t> clip_reference_sample;
-	bool relative_to_selection = true;
+	Components main;
+	Components clip;
+	bool interpolate_animations = true;
+	bool linear = false;
+	bool clip_only = false;
 	bool map_clips = true;
 	bool scale_border = true;
 	bool scale_shadow = true;
@@ -60,8 +75,10 @@ struct ApplyOptions {
 
 /// Apply frame-by-frame and store lossless source rows as extradata for Revert.
 bool Apply(agi::Context *context, Track const& main_track,
-	std::optional<Track> const& clip_track, ApplyOptions const& options,
-	std::string& error);
+	std::optional<Track> const& main_perspective_track,
+	std::optional<Track> const& clip_track,
+	std::optional<Track> const& clip_perspective_track,
+	ApplyOptions const& options, std::string& error);
 
 /// Restore every selected motion group, including ImageMask groups, in one undo step.
 bool Revert(agi::Context *context, std::string& error);

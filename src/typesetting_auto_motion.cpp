@@ -126,12 +126,36 @@ std::vector<Vector2D> FeaturePoints(GrayFrame const& frame,
 	double spacing_squared = spacing * spacing;
 	std::vector<Vector2D> out;
 	out.reserve(settings.maximum_features);
-	for (auto const& candidate : candidates) {
+	int grid_columns = std::max(1, settings.grid_columns);
+	int grid_rows = std::max(1, settings.grid_rows);
+	std::vector<bool> occupied(static_cast<size_t>(grid_columns * grid_rows));
+	auto cell_for = [&](Vector2D point) {
+		int column = std::clamp(static_cast<int>((point.X() - left) * grid_columns /
+			std::max(1, right - left + 1)), 0, grid_columns - 1);
+		int row = std::clamp(static_cast<int>((point.Y() - top) * grid_rows /
+			std::max(1, bottom - top + 1)), 0, grid_rows - 1);
+		return static_cast<size_t>(row * grid_columns + column);
+	};
+	auto select = [&](Vector2D point) {
 		bool separated = std::all_of(out.begin(), out.end(), [&](Vector2D selected) {
-			return (selected - candidate.second).SquareLen() >= spacing_squared;
+			return (selected - point).SquareLen() >= spacing_squared;
 		});
-		if (!separated) continue;
-		out.push_back(candidate.second);
+		if (!separated) return false;
+		out.push_back(point);
+		return true;
+	};
+	// First take the strongest corner from each grid cell. A globally sorted
+	// list alone tends to cluster on text edges, which makes scale and rotation
+	// estimates unnecessarily noisy even when position tracking is sound.
+	for (auto const& candidate : candidates) {
+		size_t cell = cell_for(candidate.second);
+		if (occupied[cell] || !select(candidate.second)) continue;
+		occupied[cell] = true;
+		if (out.size() >= static_cast<size_t>(settings.maximum_features)) return out;
+	}
+	// Fill any remaining capacity with the best well-separated corners.
+	for (auto const& candidate : candidates) {
+		if (!select(candidate.second)) continue;
 		if (out.size() >= static_cast<size_t>(settings.maximum_features)) break;
 	}
 	return out;
@@ -337,169 +361,16 @@ std::optional<Similarity> EstimateSimilarity(std::vector<Match> const& matches,
 	return result;
 }
 
-bool SolveLinear(std::array<std::array<double, 9>, 8> matrix,
-	std::array<double, 8>& result) {
-	for (size_t column = 0; column < 8; ++column) {
-		size_t pivot = column;
-		for (size_t row = column + 1; row < 8; ++row)
-			if (std::abs(matrix[row][column]) > std::abs(matrix[pivot][column])) pivot = row;
-		if (std::abs(matrix[pivot][column]) < 1e-9) return false;
-		if (pivot != column) std::swap(matrix[pivot], matrix[column]);
-		double divisor = matrix[column][column];
-		for (size_t at = column; at <= 8; ++at) matrix[column][at] /= divisor;
-		for (size_t row = 0; row < 8; ++row) {
-			if (row == column) continue;
-			double factor = matrix[row][column];
-			for (size_t at = column; at <= 8; ++at)
-				matrix[row][at] -= factor * matrix[column][at];
-		}
-	}
-	for (size_t row = 0; row < 8; ++row) result[row] = matrix[row][8];
-	return true;
-}
-
-std::optional<Homography> FitProjective(std::vector<Match> const& matches,
-	std::vector<size_t> const& indices) {
-	if (indices.size() < 4) return std::nullopt;
-	double from_x = 0, from_y = 0, to_x = 0, to_y = 0;
-	for (size_t index : indices) {
-		from_x += matches[index].from.X(); from_y += matches[index].from.Y();
-		to_x += matches[index].to.X(); to_y += matches[index].to.Y();
-	}
-	double count = static_cast<double>(indices.size());
-	from_x /= count; from_y /= count; to_x /= count; to_y /= count;
-	double from_distance = 0, to_distance = 0;
-	for (size_t index : indices) {
-		from_distance += std::hypot(matches[index].from.X() - from_x,
-			matches[index].from.Y() - from_y);
-		to_distance += std::hypot(matches[index].to.X() - to_x,
-			matches[index].to.Y() - to_y);
-	}
-	from_distance /= count; to_distance /= count;
-	if (from_distance < 1e-6 || to_distance < 1e-6) return std::nullopt;
-	double from_scale = std::sqrt(2.0) / from_distance;
-	double to_scale = std::sqrt(2.0) / to_distance;
-	std::array<std::array<double, 9>, 8> normal{};
-	auto add_row = [&](std::array<double, 8> const& row, double value) {
-		for (size_t y = 0; y < 8; ++y) {
-			for (size_t x = 0; x < 8; ++x) normal[y][x] += row[y] * row[x];
-			normal[y][8] += row[y] * value;
-		}
-	};
-	for (size_t index : indices) {
-		auto const& match = matches[index];
-		double x = (match.from.X() - from_x) * from_scale;
-		double y = (match.from.Y() - from_y) * from_scale;
-		double u = (match.to.X() - to_x) * to_scale;
-		double v = (match.to.Y() - to_y) * to_scale;
-		add_row({x, y, 1, 0, 0, 0, -u * x, -u * y}, u);
-		add_row({0, 0, 0, x, y, 1, -v * x, -v * y}, v);
-	}
-	std::array<double, 8> solved{};
-	if (!SolveLinear(normal, solved)) return std::nullopt;
-	if (!std::all_of(solved.begin(), solved.end(), [](double value) {
-		return std::isfinite(value);
-	})) return std::nullopt;
-	using Matrix = std::array<double, 9>;
-	auto multiply = [](Matrix const& left, Matrix const& right) {
-		Matrix out{};
-		for (size_t row = 0; row < 3; ++row)
-			for (size_t column = 0; column < 3; ++column)
-				for (size_t at = 0; at < 3; ++at)
-					out[row * 3 + column] += left[row * 3 + at] * right[at * 3 + column];
-		return out;
-	};
-	Matrix normalized = {solved[0], solved[1], solved[2], solved[3], solved[4],
-		solved[5], solved[6], solved[7], 1};
-	Matrix normalize_from = {from_scale, 0, -from_scale * from_x,
-		0, from_scale, -from_scale * from_y, 0, 0, 1};
-	Matrix denormalize_to = {1 / to_scale, 0, to_x,
-		0, 1 / to_scale, to_y, 0, 0, 1};
-	Matrix values = multiply(denormalize_to, multiply(normalized, normalize_from));
-	if (std::abs(values[8]) < 1e-12) return std::nullopt;
-	for (auto& value : values) value /= values[8];
-	Homography out;
-	out.value = values;
-	return out;
-}
-
-double QuadArea(std::array<Vector2D, 4> const& quad) {
-	double area = 0;
-	for (size_t i = 0; i < 4; ++i) {
-		auto const& first = quad[i];
-		auto const& second = quad[(i + 1) % 4];
-		area += first.X() * second.Y() - first.Y() * second.X();
-	}
-	return area * .5;
-}
-
-bool Plausible(Homography const& map, std::array<Vector2D, 4> const& quad,
-	bool incremental) {
-	std::array<Vector2D, 4> mapped;
-	double minimum_edge = incremental ? .78 : .3;
-	double maximum_edge = incremental ? 1.28 : 3.0;
-	for (size_t i = 0; i < 4; ++i) {
-		mapped[i] = map.Map(quad[i]);
-		if (!std::isfinite(mapped[i].X()) || !std::isfinite(mapped[i].Y())) return false;
-		double before = (quad[(i + 1) % 4] - quad[i]).Len();
-		double after = (mapped[(i + 1) % 4] - mapped[i]).Len();
-		if (before < 1 || after / before < minimum_edge || after / before > maximum_edge)
-			return false;
-	}
-	double old_area = QuadArea(quad), new_area = QuadArea(mapped);
-	if (old_area * new_area <= 0) return false;
-	double ratio = std::abs(new_area / old_area);
-	return incremental ? ratio >= .6 && ratio <= 1.65 : ratio >= .15 && ratio <= 6;
-}
-
-std::optional<Homography> EstimateProjective(std::vector<Match> const& matches,
-	std::array<Vector2D, 4> const& quad, bool incremental) {
-	if (matches.size() < 6) return std::nullopt;
-	std::vector<size_t> best_inliers;
-	double best_error = std::numeric_limits<double>::max();
-	for (size_t a = 0; a + 3 < matches.size(); ++a)
-		for (size_t b = a + 1; b + 2 < matches.size(); ++b)
-			for (size_t c = b + 1; c + 1 < matches.size(); ++c)
-				for (size_t d = c + 1; d < matches.size(); ++d) {
-					auto candidate = FitProjective(matches, {a, b, c, d});
-					if (!candidate || !Plausible(*candidate, quad, incremental)) continue;
-					std::vector<size_t> inliers;
-					double error = 0;
-					for (size_t index = 0; index < matches.size(); ++index) {
-						double residual = (candidate->Map(matches[index].from) -
-							matches[index].to).Len();
-						if (residual <= 2.0) { inliers.push_back(index); error += residual; }
-					}
-					if (inliers.size() > best_inliers.size() ||
-						(inliers.size() == best_inliers.size() && error < best_error)) {
-						best_inliers = std::move(inliers);
-						best_error = error;
-					}
-				}
-	if (best_inliers.size() < MinimumInliers(matches.size(), 6)) return std::nullopt;
-	auto result = FitProjective(matches, best_inliers);
-	if (!result || !Plausible(*result, quad, incremental)) return std::nullopt;
-	return result;
-}
-
 std::optional<std::array<Vector2D, 4>> EstimateQuad(std::vector<Match> matches,
 	std::array<Vector2D, 4> const& source, AutoTrackSettings const& settings,
 	bool incremental) {
 	std::array<Vector2D, 4> out = source;
-	if (settings.perspective) {
-		if (matches.size() > 14) matches.resize(14);
-		auto map = EstimateProjective(matches, source, incremental);
-		if (!map) return std::nullopt;
-		for (auto& corner : out) corner = map->Map(corner);
-	}
-	else {
-		// Output component switches must not weaken the internal tracker. Even an
-		// X/Y-only result needs a similarity model to keep following a region that
-		// rotates or changes size.
-		auto map = EstimateSimilarity(matches, incremental);
-		if (!map) return std::nullopt;
-		for (auto& corner : out) corner = map->Map(corner);
-	}
+	// Output component switches must not weaken the internal tracker. Even an
+	// X/Y-only result needs a similarity model to keep following a region that
+	// rotates or changes size.
+	auto map = EstimateSimilarity(matches, incremental);
+	if (!map) return std::nullopt;
+	for (auto& corner : out) corner = map->Map(corner);
 	if (incremental) {
 		double maximum = settings.search_radius * 2.5 + 2;
 		for (size_t index = 0; index < out.size(); ++index)
@@ -516,11 +387,10 @@ std::optional<std::array<Vector2D, 4>> RelockToReference(GrayFrame const& refere
 	std::vector<Match> corner_matches;
 	for (size_t index = 0; index < reference_quad.size(); ++index)
 		corner_matches.push_back({reference_quad[index], prediction[index]});
-	auto predictor = FitProjective(corner_matches, {0, 1, 2, 3});
-	if (!predictor) return std::nullopt;
+	Similarity predictor = Fit(corner_matches, {0, 1, 2, 3});
 	std::vector<Match> matches;
 	for (auto point : reference_points) {
-		Vector2D expected = predictor->Map(point);
+		Vector2D expected = predictor.Map(point);
 		if (auto matched = MatchPatch(reference, current, point, expected,
 			search_radius, settings)) matches.push_back({point, *matched});
 	}
@@ -535,10 +405,34 @@ double MaximumCornerDistance(std::array<Vector2D, 4> const& first,
 	return distance;
 }
 
+bool RegionIsIdentical(GrayFrame const& previous, GrayFrame const& next,
+	std::array<Vector2D, 4> const& quad) {
+	if (previous.width != next.width || previous.height != next.height) return false;
+	Vector2D low = quad[0], high = quad[0];
+	for (auto point : quad) { low = low.Min(point); high = high.Max(point); }
+	int left = std::clamp(static_cast<int>(std::floor(low.X())), 0, previous.width - 1);
+	int top = std::clamp(static_cast<int>(std::floor(low.Y())), 0, previous.height - 1);
+	int right = std::clamp(static_cast<int>(std::ceil(high.X())), left + 1, previous.width);
+	int bottom = std::clamp(static_cast<int>(std::ceil(high.Y())), top + 1, previous.height);
+	int compared = 0;
+	for (int y = top; y < bottom; ++y) {
+		for (int x = left; x < right; ++x) {
+			if (!InsideQuad(quad, Vector2D(x + .5f, y + .5f))) continue;
+			++compared;
+			if (previous.At(x, y) != next.At(x, y)) return false;
+		}
+	}
+	return compared > 0;
+}
+
 bool Advance(GrayFrame const& previous, GrayFrame const& next,
 	GrayFrame const& reference, std::array<Vector2D, 4> const& reference_quad,
 	std::vector<Vector2D> const& reference_points, std::array<Vector2D, 4>& quad,
 	AutoTrackSettings const& settings) {
+	// Held/duplicated source frames must reuse the exact previous transform.
+	// Running sub-pixel correlation on identical pixels can otherwise introduce
+	// tiny scale or position noise and prevents equal subtitle events from merging.
+	if (RegionIsIdentical(previous, next, quad)) return true;
 	auto points = FeaturePoints(previous, quad, settings);
 	std::vector<Match> matches;
 	for (auto point : points)
@@ -568,38 +462,128 @@ Vector2D Centre(std::array<Vector2D, 4> const& quad) {
 	return centre / 4.f;
 }
 
-Vector2D Rotate(Vector2D point, double angle) {
-	double cosine = std::cos(angle), sine = std::sin(angle);
-	return Vector2D(static_cast<float>(point.X() * cosine - point.Y() * sine),
-		static_cast<float>(point.X() * sine + point.Y() * cosine));
+struct SimilarityObservation {
+	Vector2D centre;
+	double scale = 1.0;
+	double angle = 0.0;
+};
+
+std::vector<double> Smooth(std::vector<double> const& input) {
+	if (input.size() < 3) return input;
+	std::vector<double> output(input.size());
+	constexpr int weight[] = {1, 2, 3, 2, 1};
+	for (size_t index = 0; index < input.size(); ++index) {
+		double sum = 0, total = 0;
+		for (int offset = -2; offset <= 2; ++offset) {
+			int at = std::clamp(static_cast<int>(index) + offset, 0,
+				static_cast<int>(input.size()) - 1);
+			double current_weight = weight[offset + 2];
+			sum += input[static_cast<size_t>(at)] * current_weight;
+			total += current_weight;
+		}
+		output[index] = sum / total;
+	}
+	return output;
 }
 
-std::array<Vector2D, 4> FilterComponents(std::array<Vector2D, 4> const& reference,
-	std::array<Vector2D, 4> const& tracked, AutoTrackSettings const& settings) {
+std::vector<double> MedianSmooth(std::vector<double> const& input) {
+	if (input.size() < 3) return input;
+	std::vector<double> output(input.size());
+	for (size_t index = 0; index < input.size(); ++index) {
+		std::array<double, 3> values = {
+			input[index ? index - 1 : index], input[index],
+			input[std::min(index + 1, input.size() - 1)]
+		};
+		std::sort(values.begin(), values.end());
+		output[index] = values[1];
+	}
+	return output;
+}
+
+void Linearise(std::vector<double>& values, size_t reference_index) {
+	if (values.size() < 2 || reference_index >= values.size()) return;
+	auto original = values;
+	if (reference_index) {
+		for (size_t index = 0; index <= reference_index; ++index) {
+			double progress = static_cast<double>(index) / reference_index;
+			values[index] = original.front() * (1 - progress) +
+				original[reference_index] * progress;
+		}
+	}
+	if (reference_index + 1 < values.size()) {
+		size_t length = values.size() - reference_index - 1;
+		for (size_t index = reference_index; index < values.size(); ++index) {
+			double progress = static_cast<double>(index - reference_index) / length;
+			values[index] = original[reference_index] * (1 - progress) +
+				original.back() * progress;
+		}
+	}
+}
+
+std::vector<SimilarityObservation> StabilisedSimilarity(
+	std::vector<std::array<Vector2D, 4>> const& quads,
+	std::array<Vector2D, 4> const& reference, size_t reference_index, bool linear) {
+	std::vector<SimilarityObservation> observations;
+	observations.reserve(quads.size());
 	Vector2D reference_centre = Centre(reference);
-	Vector2D tracked_centre = Centre(tracked);
-	std::vector<Match> corner_matches;
-	std::vector<size_t> indices;
-	for (size_t index = 0; index < reference.size(); ++index) {
-		corner_matches.push_back({reference[index], tracked[index]});
-		indices.push_back(index);
+	double previous_angle = 0;
+	for (auto const& quad : quads) {
+		Vector2D tracked_centre = Centre(quad);
+		std::vector<Match> matches;
+		std::vector<size_t> indices;
+		for (size_t index = 0; index < reference.size(); ++index) {
+			matches.push_back({reference[index], quad[index]});
+			indices.push_back(index);
+		}
+		Similarity fitted = Fit(matches, indices);
+		double scale = std::hypot(fitted.a, fitted.b);
+		double angle = std::atan2(fitted.b, fitted.a);
+		if (!std::isfinite(scale) || scale < 1e-6) scale = 1;
+		if (!std::isfinite(angle)) angle = previous_angle;
+		while (angle - previous_angle > 3.14159265358979) angle -= 2 * 3.14159265358979;
+		while (angle - previous_angle < -3.14159265358979) angle += 2 * 3.14159265358979;
+		previous_angle = angle;
+		observations.push_back({tracked_centre, scale, angle});
 	}
-	Similarity overall = Fit(corner_matches, indices);
-	double tracked_scale = std::hypot(overall.a, overall.b);
-	double tracked_angle = std::atan2(overall.b, overall.a);
-	if (!std::isfinite(tracked_scale) || tracked_scale < 1e-6) tracked_scale = 1;
-	Vector2D target_centre(settings.track_x ? tracked_centre.X() : reference_centre.X(),
-		settings.track_y ? tracked_centre.Y() : reference_centre.Y());
-	double output_scale = settings.scale ? tracked_scale : 1;
-	double output_angle = settings.rotate ? tracked_angle : 0;
-	std::array<Vector2D, 4> out;
-	for (size_t i = 0; i < 4; ++i) {
-		Vector2D local = settings.perspective ?
-			Rotate(tracked[i] - tracked_centre, -tracked_angle) /
-				static_cast<float>(tracked_scale) : reference[i] - reference_centre;
-		out[i] = target_centre + Rotate(local * static_cast<float>(output_scale), output_angle);
+	if (observations.empty()) return observations;
+	std::vector<double> x, y, scale, angle;
+	for (auto const& value : observations) {
+		x.push_back(value.centre.X());
+		y.push_back(value.centre.Y());
+		scale.push_back(value.scale);
+		angle.push_back(value.angle);
 	}
-	return out;
+	if (linear && observations.size() > 1) {
+		Linearise(x, reference_index);
+		Linearise(y, reference_index);
+		Linearise(scale, reference_index);
+		Linearise(angle, reference_index);
+	}
+	else {
+		x = Smooth(MedianSmooth(x));
+		y = Smooth(MedianSmooth(y));
+		scale = Smooth(MedianSmooth(scale));
+		angle = Smooth(MedianSmooth(angle));
+		if (reference_index < observations.size()) {
+			x[reference_index] = reference_centre.X();
+			y[reference_index] = reference_centre.Y();
+			scale[reference_index] = 1.0;
+			angle[reference_index] = 0.0;
+		}
+	}
+	auto scale_bounds = std::minmax_element(scale.begin(), scale.end());
+	auto angle_bounds = std::minmax_element(angle.begin(), angle.end());
+	if (*scale_bounds.second - *scale_bounds.first < .012 &&
+		std::max(std::abs(*scale_bounds.first - 1), std::abs(*scale_bounds.second - 1)) < .012)
+		std::fill(scale.begin(), scale.end(), 1.0);
+	constexpr double angle_noise_floor = .75 * 3.14159265358979 / 180.0;
+	if (*angle_bounds.second - *angle_bounds.first < angle_noise_floor &&
+		std::max(std::abs(*angle_bounds.first), std::abs(*angle_bounds.second)) < angle_noise_floor)
+		std::fill(angle.begin(), angle.end(), 0.0);
+	for (size_t index = 0; index < observations.size(); ++index)
+		observations[index] = {Vector2D(static_cast<float>(x[index]), static_cast<float>(y[index])),
+			scale[index], angle[index]};
+	return observations;
 }
 
 } // namespace
@@ -614,8 +598,7 @@ std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 		error = "The Auto Motion frame range is invalid.";
 		return std::nullopt;
 	}
-	if (!settings.track_x && !settings.track_y && !settings.scale &&
-		!settings.rotate && !settings.perspective) {
+	if (!settings.track_x && !settings.track_y && !settings.scale && !settings.rotate) {
 		error = "Select at least one motion component.";
 		return std::nullopt;
 	}
@@ -648,7 +631,7 @@ std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 
 	GrayFrame reference = MakeGray(*reference_video);
 	auto reference_points = FeaturePoints(reference, reference_quad, settings);
-	int minimum_features = settings.perspective ? 6 : 4;
+	int minimum_features = 4;
 	if (static_cast<int>(reference_points.size()) < minimum_features) {
 		error = "The selected region does not contain enough distinct, stable corners to track.";
 		return std::nullopt;
@@ -690,20 +673,27 @@ std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 		if (!report()) { error = "Auto motion cancelled."; return std::nullopt; }
 	}
 	Track track;
-	track.kind = TrackKind::CornerPin;
 	track.source_width = reference_video->width;
 	track.source_height = reference_video->height;
-	track.adapter = settings.perspective ? "native-auto-projective-stabilized" :
-		"native-auto-similarity-stabilized";
+	track.adapter = settings.linear ?
+		"native-auto-similarity-linear" : "native-auto-similarity-stabilized";
 	track.samples.reserve(quads.size());
+	size_t reference_index = static_cast<size_t>(reference_frame - first_frame);
+	track.kind = TrackKind::Transform;
+	auto observations = StabilisedSimilarity(quads, reference_quad,
+		reference_index, settings.linear);
+	Vector2D reference_centre = Centre(reference_quad);
 	for (int frame = first_frame; frame <= last_frame; ++frame) {
+		auto const& observed = observations[static_cast<size_t>(frame - first_frame)];
 		Sample sample;
 		sample.source_frame = frame;
-		auto native = FilterComponents(reference_quad,
-			quads[static_cast<size_t>(frame - first_frame)], settings);
-		for (size_t corner = 0; corner < 4; ++corner)
-			sample.corners[corner] = Vector2D(native[corner].X() / x_scale,
-				native[corner].Y() / y_scale);
+		sample.position = Vector2D(
+			static_cast<float>((settings.track_x ? observed.centre.X() : reference_centre.X()) / x_scale),
+			static_cast<float>((settings.track_y ? observed.centre.Y() : reference_centre.Y()) / y_scale));
+		double output_scale = settings.scale ? observed.scale : 1.0;
+		sample.scale = Vector2D(static_cast<float>(output_scale * 100),
+			static_cast<float>(output_scale * 100));
+		sample.rotation = settings.rotate ? observed.angle * 180.0 / 3.14159265358979 : 0.0;
 		track.samples.push_back(sample);
 	}
 	return track;
