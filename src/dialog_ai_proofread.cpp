@@ -13,6 +13,7 @@
 #include "options.h"
 #include "project.h"
 #include "selection_controller.h"
+#include "theme.h"
 #include "video_controller.h"
 
 #include <libaegisub/character_count.h>
@@ -640,6 +641,7 @@ public:
 		status = new wxStaticText(this, wxID_ANY, _("Preparing AI analysis..."));
 		analysis->Add(status, wxSizerFlags().Expand().Border(wxBOTTOM, 6));
 		progress = new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, FromDIP(wxSize(-1, 12)));
+		app_theme::StyleProgress(progress);
 		analysis->Add(progress, wxSizerFlags().Expand());
 		main->Add(analysis, wxSizerFlags().Expand().Border(wxALL, 12));
 

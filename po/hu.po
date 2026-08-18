@@ -14,6 +14,38 @@ msgstr ""
 "X-Generator: Poedit 1.6.9\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: ../src/preferences.cpp:257
+msgid "Dark Mode"
+msgstr "Sötét mód"
+
+#: ../src/preferences.cpp:258
+msgid "Enable dark mode"
+msgstr "Sötét mód engedélyezése"
+
+#: ../src/preferences.cpp:352
+msgid "Dark Colors"
+msgstr "Sötét színek"
+
+#: ../src/preferences.cpp:358
+msgid "Progress"
+msgstr "Folyamatjelző"
+
+#: ../src/preferences.cpp:354
+msgid "Subtitle edit box"
+msgstr "Feliratszerkesztő"
+
+#: ../src/preferences.cpp:371
+msgid "Subtitle grid"
+msgstr "Felirattáblázat"
+
+#: ../src/preferences.cpp:790
+msgid "Aegisub needs to be restarted so that the new appearance can be applied. Restart now?"
+msgstr "Az új megjelenés alkalmazásához újra kell indítani az Aegisubot. Újraindítja most?"
+
+#: ../src/command/app.cpp:167 ../src/preferences.cpp:791
+msgid "Restart Aegisub?"
+msgstr "Újraindítja az Aegisubot?"
+
 #: ../src/ass_style.cpp:196
 msgid "Auto-detect base direction (libass only)"
 msgstr ""
