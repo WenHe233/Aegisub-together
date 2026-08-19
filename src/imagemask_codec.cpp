@@ -14,9 +14,7 @@
 #include <cstdint>
 #include <iterator>
 #include <limits>
-#include <map>
 #include <regex>
-#include <tuple>
 
 namespace imagemask {
 namespace {
@@ -42,28 +40,7 @@ struct Run {
 	int end = 0;
 	Colour colour;
 
-	bool operator==(Run const& other) const {
-		return start == other.start && end == other.end &&
-			colour.Key() == other.colour.Key();
-	}
 };
-
-struct Rect {
-	int left = 0;
-	int top = 0;
-	int right = 0;
-	int bottom = 0;
-	Colour colour;
-};
-
-Colour ColourFromKey(uint32_t key) {
-	return {
-		static_cast<unsigned char>((key >> 24) & 0xff),
-		static_cast<unsigned char>((key >> 16) & 0xff),
-		static_cast<unsigned char>((key >> 8) & 0xff),
-		static_cast<unsigned char>(key & 0xff)
-	};
-}
 
 int Hex(std::string const& value, int fallback) {
 	try { return std::stoi(value, nullptr, 16); }
@@ -149,7 +126,8 @@ Raster Crop(Raster const& source) {
 	return out;
 }
 
-std::vector<std::vector<Run>> MakeRuns(Raster const& image) {
+std::vector<std::vector<Run>> MakeRuns(Raster const& image,
+	ProgressCallback const& progress, size_t progress_total) {
 	std::vector<std::vector<Run>> rows(static_cast<size_t>(image.height));
 	for (int y = 0; y < image.height; ++y) {
 		auto& runs = rows[y];
@@ -167,76 +145,27 @@ std::vector<std::vector<Run>> MakeRuns(Raster const& image) {
 			else
 				runs.push_back({x, x + 1, colour});
 		}
+		if (progress) progress(static_cast<size_t>(y) + 1, progress_total);
 	}
 	return rows;
 }
 
-std::vector<Rect> MergeRectangles(std::vector<std::vector<Run>> const& rows) {
-	using ActiveKey = std::tuple<uint32_t, int, int>;
-	std::map<ActiveKey, size_t> active;
-	std::vector<Rect> rectangles;
-	for (int y = 0; y < static_cast<int>(rows.size()); ++y) {
-		std::map<ActiveKey, size_t> next;
-		for (auto const& run : rows[y]) {
-			if (!run.colour.alpha) continue;
-			ActiveKey key{run.colour.Key(), run.start, run.end};
-			auto found = active.find(key);
-			if (found != active.end()) {
-				rectangles[found->second].bottom = y + 1;
-				next.emplace(key, found->second);
-			}
-			else {
-				rectangles.push_back({run.start, y, run.end, y + 1, run.colour});
-				next.emplace(key, rectangles.size() - 1);
-			}
-		}
-		active = std::move(next);
-	}
-	return rectangles;
-}
-
-std::vector<AssDialogue> EncodeRectangles(Raster const& image,
-	std::vector<Rect> const& rectangles, AssDialogue const& prototype,
-	int start_ms, int end_ms) {
-	std::map<uint32_t, std::vector<Rect const *>> by_colour;
-	for (auto const& rect : rectangles)
-		by_colour[rect.colour.Key()].push_back(&rect);
-
-	std::vector<AssDialogue> lines;
-	for (auto const& [key, group] : by_colour) {
-		Colour colour = ColourFromKey(key);
-		std::string drawing;
-		auto flush = [&] {
-			if (drawing.empty()) return;
-			lines.push_back(MakeLine(prototype, start_ms, end_ms,
-				StyleTags(0, 0, colour) + drawing));
-			drawing.clear();
-		};
-		for (auto rect : group) {
-			std::string shape = Rectangle(image.x + rect->left, image.y + rect->top,
-				image.x + rect->right, image.y + rect->bottom);
-			if (!drawing.empty() && drawing.size() + shape.size() + 1 > maximum_drawing_bytes)
-				flush();
-			if (!drawing.empty()) drawing += " ";
-			drawing += std::move(shape);
-		}
-		flush();
-	}
-	return lines;
-}
-
 std::vector<AssDialogue> EncodeRows(Raster const& image,
 	std::vector<std::vector<Run>> const& rows, AssDialogue const& prototype,
-	int start_ms, int end_ms) {
+	int start_ms, int end_ms, ProgressCallback const& progress,
+	size_t progress_offset, size_t progress_total) {
 	std::vector<AssDialogue> lines;
 	for (int y = 0; y < image.height;) {
 		int band_end = y + 1;
-		while (band_end < image.height && rows[band_end] == rows[y]) ++band_end;
 		auto first = std::find_if(rows[y].begin(), rows[y].end(),
 			[](Run const& run) { return run.colour.alpha != 0; });
 		auto last = std::find_if(rows[y].rbegin(), rows[y].rend(),
 			[](Run const& run) { return run.colour.alpha != 0; });
-		if (first == rows[y].end()) { y = band_end; continue; }
+		if (first == rows[y].end()) {
+			y = band_end;
+			if (progress) progress(progress_offset + y, progress_total);
+			continue;
+		}
 		size_t first_index = static_cast<size_t>(first - rows[y].begin());
 		size_t last_index = rows[y].size() - 1 -
 			static_cast<size_t>(last - rows[y].rbegin());
@@ -267,14 +196,9 @@ std::vector<AssDialogue> EncodeRows(Raster const& image,
 			lines.push_back(MakeLine(prototype, start_ms, end_ms, std::move(text)));
 		}
 		y = band_end;
+		if (progress) progress(progress_offset + y, progress_total);
 	}
 	return lines;
-}
-
-size_t EncodedBytes(std::vector<AssDialogue> const& lines) {
-	size_t bytes = 0;
-	for (auto const& line : lines) bytes += line.Text.get().size();
-	return bytes;
 }
 
 struct PaintedRect {
@@ -380,17 +304,13 @@ std::optional<Raster> Decode(std::vector<AssDialogue *> const& lines) {
 }
 
 std::vector<AssDialogue> Encode(Raster const& source, AssDialogue const& prototype,
-	int start_ms, int end_ms) {
+	int start_ms, int end_ms, ProgressCallback progress) {
 	Raster image = Crop(source);
 	if (!image.IsOk()) return {};
-	auto rows = MakeRuns(image);
-	auto rectangles = MergeRectangles(rows);
-	auto vertical = EncodeRectangles(image, rectangles, prototype, start_ms, end_ms);
-	auto horizontal = EncodeRows(image, rows, prototype, start_ms, end_ms);
-	if (horizontal.empty()) return vertical;
-	if (vertical.empty()) return horizontal;
-	return EncodedBytes(vertical) <= EncodedBytes(horizontal) ?
-		std::move(vertical) : std::move(horizontal);
+	size_t progress_total = static_cast<size_t>(image.height) * 2;
+	auto rows = MakeRuns(image, progress, progress_total);
+	return EncodeRows(image, rows, prototype, start_ms, end_ms, progress,
+		static_cast<size_t>(image.height), progress_total);
 }
 
 std::string Signature(std::vector<AssDialogue> const& lines) {

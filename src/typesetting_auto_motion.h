@@ -32,8 +32,8 @@ struct AutoTrackSettings {
 	bool linear = false;
 };
 
-/// Follow a screen-space region with an internal similarity model, then retain
-/// only the position, scale and rotation components requested in the settings.
+/// Follow a screen-space region with position, independent X/Y scale and
+/// rotation, then retain only the components requested in the settings.
 std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 	Vector2D bottom_right, int first_frame, int last_frame, int reference_frame,
 	AutoTrackSettings const& settings, std::function<bool(int, int)> progress,

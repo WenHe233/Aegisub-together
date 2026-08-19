@@ -717,6 +717,17 @@
 				"Own Folder" : false
 			}
 		},
+		"Image Insert" : {
+			"Compression" : 40,
+			"Compression Version" : 0,
+			"Resize" : 100.0,
+			"Pixel Size" : 1,
+			"Alpha Image" : false,
+			"Mode" : 0,
+			"Directory" : "",
+			"Basic Image" : "",
+			"Basic Alpha" : ""
+		},
 		"Visual" : {
 			"Perspective": {
 				"Outer": false,

@@ -4,6 +4,8 @@
 // purpose with or without fee is hereby granted.
 
 #include "typesetting_motion.h"
+#include "typesetting_motion_tags.h"
+#include "typesetting_motion_transform.h"
 
 #include "ass_dialogue.h"
 #include "ass_file.h"
@@ -44,29 +46,10 @@ constexpr char motion_id_key[] = "aegisub/motion-id";
 constexpr char motion_source_key[] = "aegisub/motion-source";
 constexpr char source_separator = '\x1e';
 
-std::string Trim(std::string text) {
-	auto space = [](unsigned char c) { return std::isspace(c); };
-	text.erase(text.begin(), std::find_if_not(text.begin(), text.end(), space));
-	text.erase(std::find_if_not(text.rbegin(), text.rend(), space).base(), text.end());
-	return text;
-}
-
-std::string Lower(std::string text) {
-	std::transform(text.begin(), text.end(), text.begin(),
-		[](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-	return text;
-}
-
-std::vector<double> Numbers(std::string const& line) {
-	static std::regex number(R"([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)");
-	std::vector<double> values;
-	for (auto at = std::sregex_iterator(line.begin(), line.end(), number);
-		at != std::sregex_iterator(); ++at) {
-		try { values.push_back(std::stod(at->str())); }
-		catch (...) { }
-	}
-	return values;
-}
+using detail::Number;
+using detail::RemoveFirstTag;
+using detail::SetFirstTag;
+using detail::SetFirstTagUnlessDefault;
 
 bool SolveLinear(double matrix[8][9], double out[8]) {
 	for (int column = 0; column < 8; ++column) {
@@ -111,26 +94,6 @@ Homography FromQuads(std::array<Vector2D, 4> const& from,
 	return out;
 }
 
-Homography TransformMap(Sample const& current, Sample const& reference) {
-	double sx = std::abs(reference.scale.X()) > 1e-9 ?
-		current.scale.X() / reference.scale.X() : 1.0;
-	double sy = std::abs(reference.scale.Y()) > 1e-9 ?
-		current.scale.Y() / reference.scale.Y() : sx;
-	// AE rotation is clockwise in its y-down screen coordinates. ASS \frz is the
-	// opposite sign, but the homography here works directly in screen coordinates.
-	double radians = (current.rotation - reference.rotation) * 3.14159265358979 / 180.0;
-	double cosine = std::cos(radians), sine = std::sin(radians);
-	double a = cosine * sx, b = -sine * sy;
-	double c = sine * sx, d = cosine * sy;
-	Homography out;
-	out.value = {a, b,
-		current.position.X() - a * reference.position.X() - b * reference.position.Y(),
-		c, d,
-		current.position.Y() - c * reference.position.X() - d * reference.position.Y(),
-		0, 0, 1};
-	return out;
-}
-
 Sample LinearSample(Track const& track, size_t index) {
 	if (track.samples.empty()) return {};
 	index = std::min(index, track.samples.size() - 1);
@@ -165,7 +128,7 @@ Homography FilteredMap(Track const& track, size_t sample, size_t reference,
 		if (!components.track_y) current.position = Vector2D(current.position.X(), origin.position.Y());
 		if (!components.scale) current.scale = origin.scale;
 		if (!components.rotate) current.rotation = origin.rotation;
-		return TransformMap(current, origin);
+		return detail::TransformMap(current, origin);
 	}
 
 	auto centre = [](std::array<Vector2D, 4> const& corners) {
@@ -352,30 +315,6 @@ std::pair<Vector2D, Vector2D> BaseExtents(agi::Context *context, AssDialogue& li
 		height += row_height;
 	}
 	return {Vector2D(0, 0), Vector2D(std::max(1.0, width), std::max(1.0, height))};
-}
-
-std::string Number(double value) {
-	std::string out = agi::format("%.3f", value);
-	while (out.size() > 1 && out.back() == '0') out.pop_back();
-	if (!out.empty() && out.back() == '.') out.pop_back();
-	return out == "-0" ? "0" : out;
-}
-
-void SetFirstTag(std::string& text, std::string const& name, std::string value,
-	std::vector<std::string> aliases = {}) {
-	if (text.empty() || text[0] != '{') text = "{}" + text;
-	size_t close = text.find('}');
-	if (close == std::string::npos) { text = "{}" + text; close = 1; }
-	std::string block = text.substr(0, close + 1);
-	auto remove = [&](std::string const& tag) {
-		std::string plain = tag.size() && tag[0] == '\\' ? tag.substr(1) : tag;
-		std::regex pattern("\\\\" + plain + R"((?:\([^)]*\)|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?))");
-		block = std::regex_replace(block, pattern, "");
-	};
-	remove(name);
-	for (auto const& alias : aliases) remove(alias);
-	block.insert(block.size() - 1, name + std::move(value));
-	text.replace(0, close + 1, block);
 }
 
 using AnimationState = std::unordered_map<std::string, std::vector<double>>;
@@ -706,13 +645,15 @@ void InterpolateMove(agi::Context *context, AssDialogue& line, int at_ms) {
 	line.Text = text;
 }
 
-void InterpolateAnimations(agi::Context *context, AssDialogue& line, int at_ms) {
-	// Sample at the frame midpoint. The legacy script samples fades at the frame
-	// start, which makes the first generated frame fully invisible for \\fad.
-	int relative_ms = at_ms - static_cast<int>(line.Start);
+void InterpolateAnimations(agi::Context *context, AssDialogue& line,
+	int midpoint_ms, int frame_start_ms) {
+	// The legacy script samples transforms at the frame midpoint and \move at the
+	// frame start. Fades intentionally use the midpoint too, fixing the script's
+	// fully invisible first generated frame for \fad.
+	int relative_ms = midpoint_ms - static_cast<int>(line.Start);
 	InterpolateTransforms(context, line, relative_ms);
 	InterpolateFade(context, line, relative_ms);
-	InterpolateMove(context, line, at_ms);
+	InterpolateMove(context, line, frame_start_ms);
 }
 
 std::string MapLine(agi::Context *context, AssDialogue& line, Homography const& matrix,
@@ -759,15 +700,18 @@ std::string MapLine(agi::Context *context, AssDialogue& line, Homography const& 
 	std::string text = line.Text.get();
 	SetFirstTag(text, "\\pos", "(" + Number(solved.pos.X()) + "," +
 		Number(solved.pos.Y()) + ")", {"\\move"});
-	SetFirstTag(text, "\\org", "(" + Number(solved.org.X()) + "," +
-		Number(solved.org.Y()) + ")");
-	SetFirstTag(text, "\\fscx", Number(solved.scale.X()));
-	SetFirstTag(text, "\\fscy", Number(solved.scale.Y()));
-	SetFirstTag(text, "\\fax", Number(solved.shear_x));
-	SetFirstTag(text, "\\fay", Number(solved.shear_y));
-	SetFirstTag(text, "\\frz", Number(solved.angle_z), {"\\fr"});
-	SetFirstTag(text, "\\frx", Number(solved.angle_x));
-	SetFirstTag(text, "\\fry", Number(solved.angle_y));
+	if ((solved.org - solved.pos).Len() < .0005f)
+		RemoveFirstTag(text, "\\org");
+	else
+		SetFirstTag(text, "\\org", "(" + Number(solved.org.X()) + "," +
+			Number(solved.org.Y()) + ")");
+	SetFirstTagUnlessDefault(text, "\\fscx", solved.scale.X(), style->scalex);
+	SetFirstTagUnlessDefault(text, "\\fscy", solved.scale.Y(), style->scaley);
+	SetFirstTagUnlessDefault(text, "\\fax", solved.shear_x, 0);
+	SetFirstTagUnlessDefault(text, "\\fay", solved.shear_y, 0);
+	SetFirstTagUnlessDefault(text, "\\frz", solved.angle_z, style->angle, {"\\fr"});
+	SetFirstTagUnlessDefault(text, "\\frx", solved.angle_x, 0);
+	SetFirstTagUnlessDefault(text, "\\fry", solved.angle_y, 0);
 
 	Vector2D mapped = matrix.Map(position);
 	double growth_x = (matrix.Map(position + Vector2D(1, 0)) - mapped).Len();
@@ -778,26 +722,30 @@ std::string MapLine(agi::Context *context, AssDialogue& line, Homography const& 
 		if (FindTag(blocks, "\\xbord") || FindTag(blocks, "\\ybord")) {
 			double xborder = FirstNumber(blocks, "\\xbord", border);
 			double yborder = FirstNumber(blocks, "\\ybord", border);
-			SetFirstTag(text, "\\xbord", Number(xborder * growth_x), {"\\bord"});
-			SetFirstTag(text, "\\ybord", Number(yborder * growth_y), {"\\bord"});
+			SetFirstTagUnlessDefault(text, "\\xbord", xborder * growth_x,
+				style->outline_w, {"\\bord"});
+			SetFirstTagUnlessDefault(text, "\\ybord", yborder * growth_y,
+				style->outline_w, {"\\bord"});
 		}
 		else
-			SetFirstTag(text, "\\bord", Number(border * growth));
+			SetFirstTagUnlessDefault(text, "\\bord", border * growth, style->outline_w);
 	}
 	if (options.scale_shadow) {
 		double shadow = FirstNumber(blocks, "\\shad", style->shadow_w);
 		if (FindTag(blocks, "\\xshad") || FindTag(blocks, "\\yshad")) {
 			double xshadow = FirstNumber(blocks, "\\xshad", shadow);
 			double yshadow = FirstNumber(blocks, "\\yshad", shadow);
-			SetFirstTag(text, "\\xshad", Number(xshadow * growth_x), {"\\shad"});
-			SetFirstTag(text, "\\yshad", Number(yshadow * growth_y), {"\\shad"});
+			SetFirstTagUnlessDefault(text, "\\xshad", xshadow * growth_x,
+				style->shadow_w, {"\\shad"});
+			SetFirstTagUnlessDefault(text, "\\yshad", yshadow * growth_y,
+				style->shadow_w, {"\\shad"});
 		}
 		else
-			SetFirstTag(text, "\\shad", Number(shadow * growth));
+			SetFirstTagUnlessDefault(text, "\\shad", shadow * growth, style->shadow_w);
 	}
 	if (options.scale_blur) {
 		double blur = FirstNumber(blocks, "\\blur", 0);
-		if (blur > 0) SetFirstTag(text, "\\blur", Number(blur * growth));
+		SetFirstTagUnlessDefault(text, "\\blur", blur * growth, 0);
 	}
 	if (map_clips) {
 		typesetting::OrientedBox bounds;
@@ -1046,122 +994,7 @@ Homography Track::MapAt(size_t sample, size_t reference) const {
 	reference = std::min(reference, samples.size() - 1);
 	if (kind == TrackKind::CornerPin)
 		return FromQuads(samples[reference].corners, samples[sample].corners);
-	return TransformMap(samples[sample], samples[reference]);
-}
-
-std::optional<Track> ParseMocha(std::string const& text, int script_width,
-	int script_height, TrackKind expected_kind, std::string& error) {
-	error.clear();
-	if (text.find("Adobe After Effects") == std::string::npos) {
-		error = "A bemenet nem After Effects/Mocha keyframe data.";
-		return std::nullopt;
-	}
-	std::istringstream input(text);
-	std::vector<std::string> lines;
-	std::string line;
-	int source_width = 0, source_height = 0;
-	while (std::getline(input, line)) {
-		if (!line.empty() && line.back() == '\r') line.pop_back();
-		lines.push_back(line);
-		auto lower = Lower(line);
-		auto values = Numbers(line);
-		if (lower.find("source width") != std::string::npos && !values.empty())
-			source_width = static_cast<int>(values.back());
-		if (lower.find("source height") != std::string::npos && !values.empty())
-			source_height = static_cast<int>(values.back());
-	}
-	if (source_width <= 0 || source_height <= 0) {
-		error = "A Mocha-adatból hiányzik a Source Width vagy Source Height.";
-		return std::nullopt;
-	}
-	double scale_x = static_cast<double>(script_width) / source_width;
-	double scale_y = static_cast<double>(script_height) / source_height;
-	enum class Section { None, Position, Scale, Rotation, UpperLeft, UpperRight, LowerRight, LowerLeft };
-	Section section = Section::None;
-	std::map<int, Vector2D> position, scale;
-	std::map<int, double> rotation;
-	std::array<std::map<int, Vector2D>, 4> corners;
-	for (auto const& raw : lines) {
-		std::string stripped = Trim(raw);
-		std::string lower = Lower(stripped);
-		bool indented = !raw.empty() && std::isspace(static_cast<unsigned char>(raw.front()));
-		if (!indented && !stripped.empty()) {
-			// Mocha's legacy AE Corner Pin export names the four pins by the
-			// CC Power Pin property ids. Newer exports use readable corner names.
-			if (lower.find("cc power pin-0002") != std::string::npos) section = Section::UpperLeft;
-			else if (lower.find("cc power pin-0003") != std::string::npos) section = Section::UpperRight;
-			else if (lower.find("cc power pin-0005") != std::string::npos) section = Section::LowerRight;
-			else if (lower.find("cc power pin-0004") != std::string::npos) section = Section::LowerLeft;
-			else if (lower == "position") section = Section::Position;
-			else if (lower == "scale") section = Section::Scale;
-			else if (lower == "rotation") section = Section::Rotation;
-			else if (lower.find("upper left") != std::string::npos) section = Section::UpperLeft;
-			else if (lower.find("upper right") != std::string::npos) section = Section::UpperRight;
-			else if (lower.find("lower right") != std::string::npos) section = Section::LowerRight;
-			else if (lower.find("lower left") != std::string::npos) section = Section::LowerLeft;
-			else section = Section::None;
-			continue;
-		}
-		auto values = Numbers(raw);
-		if (values.size() < 2 || lower.find("frame") != std::string::npos) continue;
-		int frame = static_cast<int>(std::lround(values[0]));
-		switch (section) {
-			case Section::Position:
-				if (values.size() >= 3) position[frame] = Vector2D(values[1] * scale_x, values[2] * scale_y);
-				break;
-			case Section::Scale:
-				scale[frame] = Vector2D(values[1], values.size() >= 3 ? values[2] : values[1]);
-				break;
-			case Section::Rotation: rotation[frame] = values[1]; break;
-			case Section::UpperLeft: case Section::UpperRight:
-			case Section::LowerRight: case Section::LowerLeft:
-				if (values.size() >= 3) {
-					int index = static_cast<int>(section) - static_cast<int>(Section::UpperLeft);
-					corners[index][frame] = Vector2D(values[1] * scale_x, values[2] * scale_y);
-				}
-				break;
-			default: break;
-		}
-	}
-	Track track;
-	track.source_width = source_width;
-	track.source_height = source_height;
-	bool corner_pin = std::all_of(corners.begin(), corners.end(),
-		[](auto const& values) { return !values.empty(); });
-	if (expected_kind == TrackKind::CornerPin && corner_pin) {
-		track.kind = TrackKind::CornerPin;
-		track.adapter = "mocha-corner-pin";
-		for (auto const& [frame, point] : corners[0]) {
-			Sample sample; sample.source_frame = frame; sample.corners[0] = point;
-			bool complete = true;
-			for (int index = 1; index < 4; ++index) {
-				auto found = corners[index].find(frame);
-				if (found == corners[index].end()) { complete = false; break; }
-				sample.corners[index] = found->second;
-			}
-			if (complete) track.samples.push_back(sample);
-		}
-	}
-	else if (expected_kind == TrackKind::Transform && !position.empty()) {
-		track.kind = TrackKind::Transform;
-		track.adapter = "mocha-transform";
-		Vector2D last_scale(100, 100);
-		double last_rotation = 0;
-		for (auto const& [frame, point] : position) {
-			if (auto found = scale.find(frame); found != scale.end()) last_scale = found->second;
-			if (auto found = rotation.find(frame); found != rotation.end()) last_rotation = found->second;
-			Sample sample; sample.source_frame = frame; sample.position = point;
-			sample.scale = last_scale; sample.rotation = last_rotation;
-			track.samples.push_back(sample);
-		}
-	}
-	if (track.samples.empty()) {
-		error = expected_kind == TrackKind::CornerPin ?
-			"Nem találtam teljes négysarkos Corner Pin adatsort." :
-			"Nem találtam Position/Scale/Rotation transzformációs adatsort.";
-		return std::nullopt;
-	}
-	return track;
+	return detail::TransformMap(samples[sample], samples[reference]);
 }
 
 bool Apply(agi::Context *context, Track const& main_track,
@@ -1305,7 +1138,7 @@ bool Apply(agi::Context *context, Track const& main_track,
 				generated_line.ExtradataIds = std::vector<uint32_t>();
 				int sample_time = (start + end) / 2;
 				if (options.interpolate_animations)
-					InterpolateAnimations(context, generated_line, sample_time);
+					InterpolateAnimations(context, generated_line, sample_time, start);
 				if (!options.clip_only)
 					generated_line.Text = MapLine(context, generated_line, main_map, options,
 						options.map_clips && !clip_track, sample_time);
