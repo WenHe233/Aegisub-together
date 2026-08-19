@@ -1001,7 +1001,8 @@ bool Apply(agi::Context *context, Track const& main_track,
 	std::optional<Track> const& main_perspective_track,
 	std::optional<Track> const& clip_track,
 	std::optional<Track> const& clip_perspective_track,
-	ApplyOptions const& options, std::string& error) {
+	ApplyOptions const& options, std::string& error,
+	ApplyProgressCallback progress) {
 	error.clear();
 	if (!context || !context->videoController || !main_track.IsOk()) {
 		error = "Nincs alkalmazható motion adat vagy videó.";
@@ -1066,6 +1067,31 @@ bool Apply(agi::Context *context, Track const& main_track,
 	auto sample_for_frame = [&](int frame) {
 		return static_cast<size_t>(frame - selection_start);
 	};
+	auto report = [&](ApplyProgressStage stage, size_t complete, size_t total) {
+		if (progress) progress(stage, complete, std::max<size_t>(1, total));
+	};
+	auto originals_for = [&](AssDialogue *line) -> std::vector<AssDialogue *> {
+		if (IsImageMaskLine(line) && context->imageMask &&
+			context->imageMask->IsInGroup(line))
+			return context->imageMask->GetGroupLines(line);
+		return std::vector<AssDialogue *>{line};
+	};
+
+	report(ApplyProgressStage::Preparing, 0, 1);
+	size_t apply_total = 0;
+	std::set<AssDialogue *> counted;
+	for (auto line : selected) {
+		if (counted.count(line)) continue;
+		auto originals = originals_for(line);
+		for (auto original : originals) counted.insert(original);
+		int start_frame = context->videoController->FrameAtTime(originals.front()->Start,
+			agi::vfr::START);
+		int end_frame = context->videoController->FrameAtTime(originals.front()->End,
+			agi::vfr::END);
+		apply_total += static_cast<size_t>(std::max(1, end_frame - start_frame + 1));
+	}
+	report(ApplyProgressStage::Preparing, 1, 1);
+	report(ApplyProgressStage::Applying, 0, apply_total);
 
 	struct Work {
 		std::vector<AssDialogue *> originals;
@@ -1073,13 +1099,11 @@ bool Apply(agi::Context *context, Track const& main_track,
 	};
 	std::vector<Work> work;
 	std::set<AssDialogue *> consumed;
+	size_t apply_complete = 0;
 	for (auto line : selected) {
 		if (consumed.count(line)) continue;
 		Work item;
-		if (IsImageMaskLine(line) && context->imageMask && context->imageMask->IsInGroup(line))
-			item.originals = context->imageMask->GetGroupLines(line);
-		else
-			item.originals = {line};
+		item.originals = originals_for(line);
 		for (auto original : item.originals) consumed.insert(original);
 		std::sort(item.originals.begin(), item.originals.end(),
 			[](auto left, auto right) { return left->Row < right->Row; });
@@ -1113,6 +1137,8 @@ bool Apply(agi::Context *context, Track const& main_track,
 			item.output.push_back(BuildLinearLine(context, *item.originals.front(),
 				first_map, last_map, options, (first_start + first_end) / 2,
 				(last_start + last_end) / 2));
+			apply_complete += static_cast<size_t>(std::max(1, end_frame - start_frame + 1));
+			report(ApplyProgressStage::Applying, apply_complete, apply_total);
 			work.push_back(std::move(item));
 			continue;
 		}
@@ -1126,11 +1152,17 @@ bool Apply(agi::Context *context, Track const& main_track,
 				context->videoController->TimeAtFrame(frame, agi::vfr::START));
 			int end = std::min(static_cast<int>(item.originals.front()->End),
 				context->videoController->TimeAtFrame(frame, agi::vfr::END));
-			if (end <= start) continue;
+			if (end <= start) {
+				++apply_complete;
+				report(ApplyProgressStage::Applying, apply_complete, apply_total);
+				continue;
+			}
 			std::vector<AssDialogue> generated;
 			if (mask) {
 				auto warped = Warp(*raster, main_map, script_width, script_height);
-				generated = imagemask::Encode(warped, *item.originals.front(), start, end);
+				auto style = context->ass->GetStyle(item.originals.front()->Style.get());
+				generated = imagemask::Encode(warped, *item.originals.front(), start, end,
+					style);
 			}
 			else {
 				AssDialogue generated_line(*item.originals.front());
@@ -1176,6 +1208,8 @@ bool Apply(agi::Context *context, Track const& main_track,
 				previous_signature = std::move(signature);
 				std::move(generated.begin(), generated.end(), std::back_inserter(item.output));
 			}
+			++apply_complete;
+			report(ApplyProgressStage::Applying, apply_complete, apply_total);
 		}
 		if (item.output.empty()) { error = "A motion nem hozott létre látható eredményt."; return false; }
 		work.push_back(std::move(item));
@@ -1184,6 +1218,11 @@ bool Apply(agi::Context *context, Track const& main_track,
 	Selection new_selection;
 	AssDialogue *new_active = nullptr;
 	std::vector<std::unique_ptr<AssDialogue>> removed;
+	size_t writing_total = 0;
+	for (auto const& item : work)
+		writing_total += item.output.size() + item.originals.size();
+	size_t writing_complete = 0;
+	report(ApplyProgressStage::Writing, 0, writing_total);
 	for (auto& item : work) {
 		auto insert_at = context->ass->Events.iterator_to(*item.originals.front());
 		std::string id = NewId();
@@ -1198,10 +1237,12 @@ bool Apply(agi::Context *context, Track const& main_track,
 			context->ass->Events.insert(insert_at, *generated);
 			new_selection.insert(generated);
 			if (!new_active) new_active = generated;
+			report(ApplyProgressStage::Writing, ++writing_complete, writing_total);
 		}
 		for (auto original : item.originals) {
 			context->ass->Events.erase(context->ass->Events.iterator_to(*original));
 			removed.emplace_back(original);
+			report(ApplyProgressStage::Writing, ++writing_complete, writing_total);
 		}
 	}
 	context->selectionController->SetSelectionAndActive(std::move(new_selection), new_active);

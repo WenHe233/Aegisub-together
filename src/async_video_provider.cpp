@@ -39,6 +39,7 @@ enum {
 namespace {
 /// Read on the provider's worker thread, written from the UI thread.
 std::atomic<int> display_subtitles_opacity{100};
+std::atomic<bool> display_subtitles_suppressed{false};
 }
 
 void AsyncVideoProvider::SetDisplaySubtitlesOpacity(int opacity) {
@@ -47,6 +48,10 @@ void AsyncVideoProvider::SetDisplaySubtitlesOpacity(int opacity) {
 
 int AsyncVideoProvider::GetDisplaySubtitlesOpacity() {
 	return display_subtitles_opacity;
+}
+
+void AsyncVideoProvider::SetDisplaySubtitlesSuppressed(bool suppressed) {
+	display_subtitles_suppressed = suppressed;
 }
 
 std::shared_ptr<VideoFrame> AsyncVideoProvider::ProcFrame(int frame_number, double time,
@@ -362,8 +367,9 @@ void AsyncVideoProvider::ProcAsync(uint_fast32_t req_version, bool check_updated
 
 	try {
 		// The only frame the fade applies to: this is the one the video box shows.
+		int opacity = display_subtitles_suppressed.load() ? 0 : display_subtitles_opacity.load();
 		auto evt = new FrameReadyEvent(ProcFrame(frame_number, time, false, forceSub,
-			display_subtitles_opacity), time);
+			opacity), time);
 		evt->SetEventType(EVT_FRAME_READY);
 		parent->QueueEvent(evt);
 	}

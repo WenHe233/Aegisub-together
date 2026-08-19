@@ -6,6 +6,7 @@
 #include "imagemask_codec.h"
 
 #include "ass_dialogue.h"
+#include "ass_style.h"
 
 #include <libaegisub/format.h>
 
@@ -73,11 +74,17 @@ std::pair<int, int> Position(std::string const& tags) {
 	catch (...) { return {0, 0}; }
 }
 
-std::string StyleTags(int x, int y, Colour colour) {
-	return agi::format("{\\an7\\pos(%d,%d)\\bord0\\shad0\\blur0\\be0"
-		"\\fscx100\\fscy100\\frz0\\frx0\\fry0\\fax0\\fay0"
-		"\\1c&H%02X%02X%02X&\\1a&H%02X&\\p1}",
-		x, y, colour.blue, colour.green, colour.red, 255 - colour.alpha);
+std::string StyleTags(int x, int y, Colour colour, AssStyle const *style) {
+	std::string tags = "{";
+	if (!style || style->alignment != 7) tags += "\\an7";
+	tags += agi::format("\\pos(%d,%d)", x, y);
+	if (!style || style->outline_w != 0.0) tags += "\\bord0";
+	if (!style || style->shadow_w != 0.0) tags += "\\shad0";
+	if (!style || style->scalex != 100.0) tags += "\\fscx100";
+	if (!style || style->scaley != 100.0) tags += "\\fscy100";
+	if (!style || style->angle != 0.0) tags += "\\frz0";
+	return tags + agi::format("\\1c&H%02X%02X%02X&\\1a&H%02X&\\p1}",
+		colour.blue, colour.green, colour.red, 255 - colour.alpha);
 }
 
 std::string Rectangle(int left, int top, int right, int bottom) {
@@ -152,7 +159,7 @@ std::vector<std::vector<Run>> MakeRuns(Raster const& image,
 
 std::vector<AssDialogue> EncodeRows(Raster const& image,
 	std::vector<std::vector<Run>> const& rows, AssDialogue const& prototype,
-	int start_ms, int end_ms, ProgressCallback const& progress,
+	int start_ms, int end_ms, AssStyle const *style, ProgressCallback const& progress,
 	size_t progress_offset, size_t progress_total) {
 	std::vector<AssDialogue> lines;
 	for (int y = 0; y < image.height;) {
@@ -176,7 +183,7 @@ std::vector<AssDialogue> EncodeRows(Raster const& image,
 			if (index > last_index) break;
 			int block_start = rows[y][index].start;
 			Colour current = rows[y][index].colour;
-			std::string text = StyleTags(image.x + block_start, image.y + y, current);
+			std::string text = StyleTags(image.x + block_start, image.y + y, current, style);
 			bool has_shape = false;
 			for (; index <= last_index; ++index) {
 				auto const& run = rows[y][index];
@@ -209,11 +216,11 @@ struct PaintedRect {
 	Colour colour;
 };
 
-std::vector<PaintedRect> ReadLine(AssDialogue const& line) {
-	std::vector<PaintedRect> out;
+template<typename Consumer>
+void ScanLine(AssDialogue const& line, Consumer&& consume) {
 	std::string text = line.Text.get();
 	size_t close = text.find('}');
-	if (close == std::string::npos) return out;
+	if (close == std::string::npos) return;
 	std::string header = text.substr(0, close + 1);
 	auto [pos_x, pos_y] = Position(header);
 	Colour colour = TagsColour(header);
@@ -239,17 +246,18 @@ std::vector<PaintedRect> ReadLine(AssDialogue const& line) {
 			if (row_layout) {
 				int width = std::abs(x1 - x0);
 				int height = std::max(1, std::abs(y1 - y0));
-				out.push_back({cursor_x, pos_y, cursor_x + width, pos_y + height, colour});
+				consume(PaintedRect{cursor_x, pos_y,
+					cursor_x + width, pos_y + height, colour});
 				cursor_x += width;
 			}
 			else {
-				out.push_back({pos_x + std::min(x0, x1), pos_y + std::min(y0, y1),
-					pos_x + std::max(x0, x1), pos_y + std::max(y0, y1), colour});
+				consume(PaintedRect{pos_x + std::min(x0, x1),
+					pos_y + std::min(y0, y1), pos_x + std::max(x0, x1),
+					pos_y + std::max(y0, y1), colour});
 			}
 		}
 		catch (...) { }
 	}
-	return out;
 }
 
 } // namespace
@@ -268,8 +276,9 @@ std::optional<Raster> Decode(std::vector<AssDialogue *> const& lines) {
 	std::vector<PaintedRect> rectangles;
 	for (auto line : lines) {
 		if (!IsLine(line)) continue;
-		auto found = ReadLine(*line);
-		std::move(found.begin(), found.end(), std::back_inserter(rectangles));
+		ScanLine(*line, [&](PaintedRect rectangle) {
+			rectangles.push_back(std::move(rectangle));
+		});
 	}
 	if (rectangles.empty()) return std::nullopt;
 	int left = std::numeric_limits<int>::max();
@@ -304,12 +313,12 @@ std::optional<Raster> Decode(std::vector<AssDialogue *> const& lines) {
 }
 
 std::vector<AssDialogue> Encode(Raster const& source, AssDialogue const& prototype,
-	int start_ms, int end_ms, ProgressCallback progress) {
+	int start_ms, int end_ms, AssStyle const *style, ProgressCallback progress) {
 	Raster image = Crop(source);
 	if (!image.IsOk()) return {};
 	size_t progress_total = static_cast<size_t>(image.height) * 2;
 	auto rows = MakeRuns(image, progress, progress_total);
-	return EncodeRows(image, rows, prototype, start_ms, end_ms, progress,
+	return EncodeRows(image, rows, prototype, start_ms, end_ms, style, progress,
 		static_cast<size_t>(image.height), progress_total);
 }
 

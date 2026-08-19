@@ -28,6 +28,10 @@ class VisualToolDragDraggableFeature final : public VisualDraggableFeature {
 public:
 	int time = 0;
 	VisualToolDragDraggableFeature *parent = nullptr;
+	DraggableFeatureType base_type = DRAG_NONE;
+	AssDialogue *image_mask_group = nullptr;
+	bool image_mask_mover = false;
+	Vector2D image_mask_offset;
 };
 
 class wxBitmapButton;
@@ -83,12 +87,15 @@ class VisualToolDrag final : public VisualTool<VisualToolDragDraggableFeature> {
 	/// @param pos Insertion point in the feature list
 	void MakeFeatures(AssDialogue *diag, feature_list::iterator pos);
 	void MakeFeatures(AssDialogue *diag);
+	void ConfigureImageMaskFeatures();
+	void SyncImageMaskSelection();
 
 	void OnSelectedSetChanged();
 
 	void OnFrameChanged() override;
 	void OnFileChanged() override;
 	void OnLineChanged() override;
+	void OnDialogueChanged() override { OnFileChanged(); }
 	void OnCoordinateSystemsChanged() override { OnFileChanged(); }
 
 	bool InitializeDrag(Feature *feature) override;

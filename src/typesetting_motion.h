@@ -8,6 +8,7 @@
 #include "vector2d.h"
 
 #include <array>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -73,12 +74,22 @@ struct ApplyOptions {
 	bool scale_blur = true;
 };
 
+enum class ApplyProgressStage {
+	Preparing,
+	Applying,
+	Writing
+};
+
+using ApplyProgressCallback = std::function<void(ApplyProgressStage stage,
+	size_t complete, size_t total)>;
+
 /// Apply frame-by-frame and store lossless source rows as extradata for Revert.
 bool Apply(agi::Context *context, Track const& main_track,
 	std::optional<Track> const& main_perspective_track,
 	std::optional<Track> const& clip_track,
 	std::optional<Track> const& clip_perspective_track,
-	ApplyOptions const& options, std::string& error);
+	ApplyOptions const& options, std::string& error,
+	ApplyProgressCallback progress = {});
 
 /// Restore every selected motion group, including ImageMask groups, in one undo step.
 bool Revert(agi::Context *context, std::string& error);

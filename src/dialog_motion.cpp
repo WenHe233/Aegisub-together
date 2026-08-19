@@ -244,12 +244,44 @@ class MotionApplyDialog final : public wxDialog {
 			main_rotate->GetValue(), main_perspective->GetValue()};
 		options.clip = {clip_x->GetValue(), clip_y->GetValue(), clip_scale->GetValue(),
 			clip_rotate->GetValue(), clip_perspective->GetValue()};
+		wxProgressDialog progress(_("Apply motion"), _("Preparing motion..."),
+			1000, this, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_ELAPSED_TIME);
+		int last_progress_value = -1;
+		int last_progress_stage = -1;
+		auto update_progress = [&](typesetting::motion::ApplyProgressStage stage,
+			size_t complete, size_t total) {
+			total = std::max<size_t>(1, total);
+			int value = 0;
+			wxString message;
+			switch (stage) {
+				case typesetting::motion::ApplyProgressStage::Preparing:
+					value = static_cast<int>(complete * 50 / total);
+					message = _("Preparing motion...");
+					break;
+				case typesetting::motion::ApplyProgressStage::Applying:
+					value = 50 + static_cast<int>(complete * 800 / total);
+					message = wxString::Format(_("Applying frame %zu of %zu"),
+						complete, total);
+					break;
+				case typesetting::motion::ApplyProgressStage::Writing:
+					value = 850 + static_cast<int>(complete * 150 / total);
+					message = wxString::Format(_("Writing subtitle row %zu of %zu"),
+						complete, total);
+					break;
+			}
+			int stage_number = static_cast<int>(stage);
+			if (value == last_progress_value && stage_number == last_progress_stage &&
+				complete < total) return;
+			last_progress_value = value;
+			last_progress_stage = stage_number;
+			progress.Update(std::clamp(value, 0, 1000), message);
+		};
 		std::string error;
 		if (!typesetting::motion::Apply(context, *primary,
 			main_perspective->GetValue() ? primary_corner : std::nullopt,
 			separate_clip->GetValue() ? clip : std::nullopt,
 			separate_clip->GetValue() && clip_perspective->GetValue() ?
-				clip_corner : std::nullopt, options, error)) {
+				clip_corner : std::nullopt, options, error, update_progress)) {
 			wxMessageBox(to_wx(error), _("Motion"), wxOK | wxICON_ERROR, this);
 			return;
 		}

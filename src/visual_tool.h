@@ -72,6 +72,9 @@ class VisualToolBase {
 	/// Called when the active line changes
 	virtual void OnLineChanged() { DoRefresh(); }
 
+	/// Called when dialogue text is changed externally, including undo/redo.
+	virtual void OnDialogueChanged() { DoRefresh(); }
+
 	/// Generic refresh to simplify tools which have no interesting state and
 	/// can simply do the same thing for any external change (i.e. most of
 	/// them). Called only by the above virtual methods.

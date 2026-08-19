@@ -348,8 +348,10 @@ bool Apply(agi::Context *context, std::vector<Input> const& inputs,
 				progress.Update(value, message(_("Preparing image")));
 			});
 		if (!raster) return false;
+		auto style = context->ass->GetStyle(input.line->Style.get());
 		auto output = imagemask::Encode(*raster, *input.line,
 			static_cast<int>(input.line->Start), static_cast<int>(input.line->End),
+			style,
 			[&](size_t complete, size_t total) {
 				int value = base + 475 + static_cast<int>(
 					complete * 500 / std::max<size_t>(1, total));

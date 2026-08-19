@@ -7,6 +7,7 @@
 
 #include "ass_dialogue.h"
 #include "ass_file.h"
+#include "async_video_provider.h"
 #include "command/command.h"
 #include "compat.h"
 #include "gl_text.h"
@@ -22,6 +23,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <optional>
 
 #include <libaegisub/color.h>
 
@@ -45,10 +47,19 @@ VisualToolAutoMotion::VisualToolAutoMotion(VideoDisplay *parent,
 		Perform(static_cast<AutoMotionAction>(id));
 	});
 	parent->SetCursor(wxCursor(wxCURSOR_CROSS));
+	AsyncVideoProvider::SetDisplaySubtitlesSuppressed(true);
+	subtitles_suppressed = true;
+	if (auto provider = context->project->VideoProvider())
+		provider->ResetCurrentFrame();
 	UpdatePreviewInterface();
 }
 
 VisualToolAutoMotion::~VisualToolAutoMotion() {
+	if (subtitles_suppressed) {
+		AsyncVideoProvider::SetDisplaySubtitlesSuppressed(false);
+		if (auto provider = c->project->VideoProvider())
+			provider->ResetCurrentFrame();
+	}
 	if (c->parent)
 		c->parent->Unbind(wxEVT_CHAR_HOOK, &VisualToolAutoMotion::OnCharHook, this);
 	if (parent->HasCapture()) parent->ReleaseMouse();
@@ -99,9 +110,6 @@ void VisualToolAutoMotion::RunTracking() {
 	int frames = last_frame - first_frame + 1;
 
 	busy = true;
-	wxProgressDialog progress(_("Auto motion"), _("Preparing tracker..."),
-		std::max(1, frames - 1), c->parent,
-		wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT | wxPD_ELAPSED_TIME);
 	std::string error;
 	typesetting::motion::AutoTrackSettings settings;
 	settings.track_x = track_x;
@@ -110,18 +118,56 @@ void VisualToolAutoMotion::RunTracking() {
 	settings.rotate = track_rotate;
 	settings.linear = linear;
 	UpdatePreviewInterface();
-	auto track = typesetting::motion::TrackRegion(c, top_left, bottom_right,
-		first_frame, last_frame, reference_frame, settings,
-		[&](int complete, int total) {
-			return progress.Update(complete,
-				wxString::Format(_("Tracking frame %d of %d"), complete, total));
-		}, error);
+	std::optional<typesetting::motion::Track> track;
+	{
+		wxProgressDialog progress(_("Auto motion"), _("Preparing tracker..."),
+			std::max(1, frames - 1), c->parent,
+			wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT | wxPD_ELAPSED_TIME);
+		track = typesetting::motion::TrackRegion(c, top_left, bottom_right,
+			first_frame, last_frame, reference_frame, settings,
+			[&](int complete, int total) {
+				return progress.Update(complete,
+					wxString::Format(_("Tracking frame %d of %d"), complete, total));
+			}, error);
+	}
 	if (track) {
 		typesetting::motion::ApplyOptions options;
 		options.reference_sample = static_cast<size_t>(reference_frame - first_frame);
 		options.main = {track_x, track_y, track_scale, track_rotate, false};
+		wxProgressDialog progress(_("Auto motion"), _("Preparing motion..."),
+			1000, c->parent, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_ELAPSED_TIME);
+		int last_progress_value = -1;
+		int last_progress_stage = -1;
+		auto update_progress = [&](typesetting::motion::ApplyProgressStage stage,
+			size_t complete, size_t total) {
+			total = std::max<size_t>(1, total);
+			int value = 0;
+			wxString message;
+			switch (stage) {
+				case typesetting::motion::ApplyProgressStage::Preparing:
+					value = static_cast<int>(complete * 50 / total);
+					message = _("Preparing motion...");
+					break;
+				case typesetting::motion::ApplyProgressStage::Applying:
+					value = 50 + static_cast<int>(complete * 800 / total);
+					message = wxString::Format(_("Applying frame %zu of %zu"),
+						complete, total);
+					break;
+				case typesetting::motion::ApplyProgressStage::Writing:
+					value = 850 + static_cast<int>(complete * 150 / total);
+					message = wxString::Format(_("Writing subtitle row %zu of %zu"),
+						complete, total);
+					break;
+			}
+			int stage_number = static_cast<int>(stage);
+			if (value == last_progress_value && stage_number == last_progress_stage &&
+				complete < total) return;
+			last_progress_value = value;
+			last_progress_stage = stage_number;
+			progress.Update(std::clamp(value, 0, 1000), message);
+		};
 		if (typesetting::motion::Apply(c, *track, std::nullopt, std::nullopt,
-			std::nullopt, options, error)) {
+			std::nullopt, options, error, update_progress)) {
 			busy = false;
 			ExitTool();
 			return;

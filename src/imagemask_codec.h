@@ -12,6 +12,7 @@
 #include <vector>
 
 class AssDialogue;
+class AssStyle;
 class wxImage;
 
 namespace imagemask {
@@ -60,7 +61,8 @@ std::optional<Raster> Decode(std::vector<AssDialogue *> const& lines);
 /// Encode RGBA pixels as Image2ASS-compatible, one-pixel-high rows with integer
 /// geometry. Adjacent pixels already grouped by Prepare are emitted as one run.
 std::vector<AssDialogue> Encode(Raster const& raster, AssDialogue const& prototype,
-	int start_ms, int end_ms, ProgressCallback progress = {});
+	int start_ms, int end_ms, AssStyle const *style,
+	ProgressCallback progress = {});
 
 /// Stable comparison key used to merge unchanged consecutive motion frames.
 std::string Signature(std::vector<AssDialogue> const& lines);

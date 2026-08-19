@@ -31,6 +31,7 @@ class VisualToolAutoMotion final : public VisualToolBase {
 	bool has_region = false;
 	bool busy = false;
 	bool leaving = false;
+	bool subtitles_suppressed = false;
 	bool track_x = true;
 	bool track_y = true;
 	bool track_scale = true;

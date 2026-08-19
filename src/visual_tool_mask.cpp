@@ -3152,8 +3152,9 @@ std::vector<AssDialogue *> VisualToolMask::ConvertImageToAss(wxImage image, AssD
 		}
 	}
 
+	auto style = c->ass->GetStyle(source->Style.get());
 	auto encoded = imagemask::Encode(raster, *source, static_cast<int>(start),
-		static_cast<int>(end));
+		static_cast<int>(end), style);
 	std::vector<AssDialogue *> lines;
 	lines.reserve(encoded.size());
 	for (auto& line : encoded) lines.push_back(new AssDialogue(std::move(line)));
