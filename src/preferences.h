@@ -52,6 +52,8 @@ public:
 	/// Add an option to be set when the OK or Apply button is clicked
 	/// @param new_value Clone of the option with the new value to copy over
 	void SetOption(std::unique_ptr<agi::OptionValue> new_value);
+	/// Apply and save a group of options immediately without committing other pending changes.
+	void SetOptionsImmediately(std::vector<std::unique_ptr<agi::OptionValue>> new_values);
 
 	/// All a function to call when the OK or Apply button is clicked
 	/// @param callback Function to call

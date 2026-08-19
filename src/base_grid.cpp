@@ -127,10 +127,15 @@ BaseGrid::BaseGrid(wxWindow* parent, agi::Context *context)
 		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Background/Image Mask"), &BaseGrid::UpdateStyle, this),
 		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Collision"), &BaseGrid::UpdateStyle, this),
 		OPT_SUB(app_theme::ColourOption("Subtitle Grid/CPS Error"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/CPS Foreground"), &BaseGrid::UpdateStyle, this),
 		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Header"), &BaseGrid::UpdateStyle, this),
 		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Left Column"), &BaseGrid::UpdateStyle, this),
 		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Lines"), &BaseGrid::UpdateStyle, this),
 		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Selection"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Selected Comment Foreground"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Selected Fold Foreground"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Selected Combined Foreground"), &BaseGrid::UpdateStyle, this),
+		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Selected Left Column Foreground"), &BaseGrid::UpdateStyle, this),
 		OPT_SUB(app_theme::ColourOption("Subtitle Grid/Standard"), &BaseGrid::UpdateStyle, this),
 
 		OPT_SUB("Subtitle/Grid/Highlight Subtitles in Frame", &BaseGrid::OnHighlightVisibleChange, this),
@@ -472,6 +477,11 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 	wxColour text_standard(app_theme::Colour("Subtitle Grid/Standard"));
 	wxColour text_selection(app_theme::Colour("Subtitle Grid/Selection"));
 	wxColour text_collision(app_theme::Colour("Subtitle Grid/Collision"));
+	wxColour text_selected_comment(app_theme::Colour("Subtitle Grid/Selected Comment Foreground"));
+	wxColour text_selected_fold(app_theme::Colour("Subtitle Grid/Selected Fold Foreground"));
+	wxColour text_selected_combined(app_theme::Colour("Subtitle Grid/Selected Combined Foreground"));
+	wxColour text_selected_left_column(app_theme::Colour("Subtitle Grid/Selected Left Column Foreground"));
+	wxColour text_original_standard(to_wx(OPT_GET("Colour/Subtitle Grid/Standard")->GetColor()));
 
 	// First grid row
 	wxPen grid_pen(app_theme::Colour("Subtitle Grid/Lines"));
@@ -491,7 +501,7 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 
 	// Paint header
 	{
-		dc.SetTextForeground(text_standard);
+		dc.SetTextForeground(app_theme::IsDark() ? text_original_standard : text_standard);
 		dc.SetBrush(row_colors.Header);
 		dc.DrawRectangle(0, 0, w, lineHeight);
 
@@ -523,6 +533,8 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		bool boldLastColumnInFrame = false;
 
 		bool inSel = !!selection.count(curDiag);
+		bool isCombined = context->imageMask->IsInGroup(curDiag);
+		bool isFold = curDiag->Fold.hasFold();
 		if (inSel && curDiag->Comment)
 			color = row_colors.SelectedComment;
 		else if (inSel)
@@ -530,7 +542,7 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 		else if (curDiag->Comment)
 			color = row_colors.Comment;
 
-		if (context->imageMask->IsInGroup(curDiag)) {
+		if (isCombined) {
 			color = row_colors.ImageMask;
 
 			if (inSel) {
@@ -553,7 +565,7 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 			visible_rows.push_back(i + yPos);
 		}
 
-		if (curDiag->Fold.hasFold()) {
+		if (isFold) {
 			if (curDiag->Fold.isFolded()) {
 				bool fullFoldSelected = false;
 
@@ -600,18 +612,28 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 			sameFoldGroup = true;
 		}
 
-		if (active_line != curDiag && !sameImageMaskGroup && !sameFoldGroup && curDiag->CollidesWith(active_line))
-			dc.SetTextForeground(text_collision);
-		else if (inSel)
-			dc.SetTextForeground(text_selection);
-		else
-			dc.SetTextForeground(text_standard);
+		bool collision = active_line != curDiag && !sameImageMaskGroup && !sameFoldGroup && curDiag->CollidesWith(active_line);
+		wxColour selected_text = isFold ? text_selected_fold
+			: isCombined ? text_selected_combined
+			: curDiag->Comment ? text_selected_comment
+			: text_selection;
+		wxColour row_text = collision ? text_collision
+			: inSel ? selected_text
+			: app_theme::IsDark() && color != row_colors.Default ? text_original_standard
+			: text_standard;
+		dc.SetTextForeground(row_text);
 
 		// Draw text
 		int x = 0;
 		int y = (i + 1) * lineHeight;
 		for (size_t j : agi::util::range(columns.size())) {
 			if (paint_columns[j]) {
+				// The first column keeps the original light palette background,
+				// even when the main grid background is dark.
+				dc.SetTextForeground(j == 0 && !collision && inSel
+					? text_selected_left_column
+					: app_theme::IsDark() && j == 0 && !collision
+					? text_original_standard : row_text);
 				bool useBoldFont = (boldFirstColumnInFrame && j == 0) || (boldLastColumnInFrame && j == columns.size() - 1);
 				wxFont oldFont = dc.GetFont();
 

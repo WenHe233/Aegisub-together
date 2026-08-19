@@ -53,7 +53,78 @@ namespace {
 		return root;
 	}
 
-	class Toolbar final : public wxToolBar {
+	class ThemedToolbar : public wxToolBar {
+		bool const use_flat_palette;
+		agi::signal::Connection toolbar_background_slot;
+		agi::signal::Connection toolbar_active_background_slot;
+
+		bool UsesDarkFlatBackground() const {
+			return app_theme::IsDark() && use_flat_palette;
+		}
+
+		void ApplyDarkFlatBackground() {
+			if (!UsesDarkFlatBackground()) return;
+			SetBackgroundColour(app_theme::Colour("UI/Toolbar Background"));
+			Refresh(false);
+		}
+
+#ifdef __WXMSW__
+		bool MSWOnNotify(int idCtrl, WXLPARAM lParam, WXLPARAM *result) override {
+			bool const handled = wxToolBar::MSWOnNotify(idCtrl, lParam, result);
+			if (!app_theme::IsDark()) return handled;
+
+			auto *header = reinterpret_cast<NMHDR *>(lParam);
+			if (!header || header->code != NM_CUSTOMDRAW) return handled;
+
+			auto *draw = reinterpret_cast<NMTBCUSTOMDRAW *>(lParam);
+			if (draw->nmcd.dwDrawStage != CDDS_ITEMPREPAINT) return handled;
+
+			auto const background = GetBackgroundColour();
+			COLORREF const background_ref = RGB(background.Red(), background.Green(), background.Blue());
+			draw->clrBtnFace = background_ref;
+			draw->clrBtnHighlight = background_ref;
+			auto const hover = background.ChangeLightness(115);
+			draw->clrHighlightHotTrack = RGB(hover.Red(), hover.Green(), hover.Blue());
+
+			if (UsesDarkFlatBackground()) {
+				auto const state = draw->nmcd.uItemState;
+				bool const checked_without_hover =
+					(state & (CDIS_CHECKED | CDIS_HOT)) == CDIS_CHECKED;
+				bool const pressed = (state & CDIS_SELECTED) != 0;
+				if (checked_without_hover || pressed) {
+					auto const active = app_theme::Colour("UI/Toolbar Active Background");
+					HBRUSH const brush = CreateSolidBrush(
+						RGB(active.Red(), active.Green(), active.Blue()));
+					FillRect(draw->nmcd.hdc, &draw->nmcd.rc, brush);
+					DeleteObject(brush);
+					*result |= TBCDRF_NOBACKGROUND;
+				}
+			}
+
+			return handled;
+		}
+#endif
+
+	public:
+		ThemedToolbar(wxWindow *parent, long style, bool use_flat_palette)
+		: wxToolBar(parent, -1, wxDefaultPosition, wxDefaultSize, style)
+		, use_flat_palette(use_flat_palette)
+		{
+			ApplyDarkFlatBackground();
+			if (UsesDarkFlatBackground()) {
+				toolbar_background_slot = OPT_SUB("Colour/Dark/UI/Toolbar Background",
+					[this](agi::OptionValue const&) { ApplyDarkFlatBackground(); });
+				toolbar_active_background_slot = OPT_SUB("Colour/Dark/UI/Toolbar Active Background",
+					[this](agi::OptionValue const&) { Refresh(false); });
+			}
+		}
+	};
+
+	bool uses_dark_flat_background(std::string const& name) {
+		return name == "audio" || name == "video" || name == "visual_tools";
+	}
+
+	class Toolbar final : public ThemedToolbar {
 		/// Window ID of first toolbar control
 		static const int TOOL_ID_BASE = 5000;
 
@@ -78,7 +149,6 @@ namespace {
 		agi::signal::Connection hotkeys_changed_slot;
 		/// Listener for changes which can show or hide contextual toolbar commands
 		agi::signal::Connection active_line_slot;
-
 		bool RefreshConditionalVisibility() {
 			for (auto const& [command, shown] : conditional_commands) {
 				if (shown != command->Validate(context)) {
@@ -114,34 +184,6 @@ namespace {
 		void OnClick(wxCommandEvent &evt) {
 			(*commands[evt.GetId() - TOOL_ID_BASE])(context);
 		}
-
-#ifdef __WXMSW__
-		bool MSWOnNotify(int idCtrl, WXLPARAM lParam, WXLPARAM *result) override {
-			bool const handled = wxToolBar::MSWOnNotify(idCtrl, lParam, result);
-			if (!app_theme::IsDark()) return handled;
-
-			auto *header = reinterpret_cast<NMHDR *>(lParam);
-			if (!header || header->code != NM_CUSTOMDRAW) return handled;
-
-			auto *draw = reinterpret_cast<NMTBCUSTOMDRAW *>(lParam);
-			if (draw->nmcd.dwDrawStage != CDDS_ITEMPREPAINT) return handled;
-
-			auto const background = GetBackgroundColour();
-			COLORREF const background_ref = RGB(background.Red(), background.Green(), background.Blue());
-			draw->clrBtnFace = background_ref;
-			draw->clrBtnHighlight = background_ref;
-			draw->clrHighlightHotTrack = background_ref;
-
-			if (draw->nmcd.uItemState & (CDIS_CHECKED | CDIS_SELECTED)) {
-				HBRUSH brush = ::CreateSolidBrush(background_ref);
-				::FillRect(draw->nmcd.hdc, &draw->nmcd.rc, brush);
-				::DeleteObject(brush);
-				*result |= TBCDRF_NOBACKGROUND;
-			}
-
-			return handled;
-		}
-#endif
 
 		/// Regenerate the toolbar when the icon size changes
 		void OnIconSizeChange(agi::OptionValue const& opt) {
@@ -220,7 +262,8 @@ namespace {
 
 	public:
 		Toolbar(wxWindow *parent, std::string name, agi::Context *c, std::string ht_context, bool vertical)
-		: wxToolBar(parent, -1, wxDefaultPosition, wxDefaultSize, wxTB_NODIVIDER | wxTB_FLAT | (vertical ? wxTB_VERTICAL : wxTB_HORIZONTAL))
+		: ThemedToolbar(parent, wxTB_NODIVIDER | wxTB_FLAT | (vertical ? wxTB_VERTICAL : wxTB_HORIZONTAL),
+			uses_dark_flat_background(name))
 		, name(std::move(name))
 		, context(c)
 		, ht_context(std::move(ht_context))
@@ -235,7 +278,7 @@ namespace {
 		}
 
 		Toolbar(wxFrame *parent, std::string name, agi::Context *c, std::string ht_context)
-		: wxToolBar(parent, -1, wxDefaultPosition, wxDefaultSize, wxTB_FLAT | wxTB_HORIZONTAL)
+		: ThemedToolbar(parent, wxTB_FLAT | wxTB_HORIZONTAL, uses_dark_flat_background(name))
 		, name(std::move(name))
 		, context(c)
 		, ht_context(std::move(ht_context))
@@ -263,5 +306,10 @@ namespace toolbar {
 
 	wxToolBar *GetToolbar(wxWindow *parent, std::string const& name, agi::Context *c, std::string const& hotkey, bool vertical) {
 		return new Toolbar(parent, name, c, hotkey, vertical);
+	}
+
+	wxToolBar *GetVisualSubToolbar(wxWindow *parent) {
+		return new ThemedToolbar(parent,
+			wxTB_VERTICAL | wxTB_BOTTOM | wxTB_NODIVIDER | wxTB_FLAT, true);
 	}
 }

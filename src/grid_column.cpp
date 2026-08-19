@@ -338,6 +338,7 @@ class GridColumnCPS final : public GridColumn {
 	const agi::OptionValue *cps_warn = OPT_GET("Subtitle/Character Counter/CPS Warning Threshold");
 	const agi::OptionValue *cps_error = OPT_GET("Subtitle/Character Counter/CPS Error Threshold");
 	const agi::OptionValue *bg_color = OPT_GET(app_theme::ColourOption("Subtitle Grid/CPS Error"));
+	const agi::OptionValue *fg_color = OPT_GET(app_theme::ColourOption("Subtitle Grid/CPS Foreground"));
 
 public:
 	COLUMN_HEADER(_("CPS"))
@@ -384,7 +385,7 @@ public:
 			dc.SetBrush(wxBrush(blend(to_wx(bg_color->GetColor()), dc.GetBrush().GetColour(), alpha)));
 			dc.SetPen(*wxTRANSPARENT_PEN);
 			dc.DrawRectangle(x, y + 1, width, ext.GetHeight() + 3);
-			dc.SetTextForeground(blend(*wxBLACK, tc, alpha));
+			dc.SetTextForeground(blend(to_wx(fg_color->GetColor()), tc, alpha));
 		}
 
 		x += (width + 2 - ext.GetWidth()) / 2;

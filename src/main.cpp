@@ -63,6 +63,7 @@
 #include "version.h"
 #include "xdg_desktop_portal_utils.h"
 
+#include <libaegisub/color.h>
 #include <libaegisub/dispatch.h>
 #include <libaegisub/format_path.h>
 #include <libaegisub/fs.h>
@@ -97,6 +98,69 @@ static const char *LastStartupState = nullptr;
 #else
 #define StartupLog(a) LastStartupState = a
 #endif
+
+namespace {
+void MigrateDarkGridPalette() {
+	auto *migrated = OPT_SET("App/Dark Grid Palette Migrated");
+	if (migrated->GetBool()) return;
+
+	struct ColourMigration {
+		const char *option;
+		agi::Color old_value;
+		agi::Color new_value;
+	};
+
+	ColourMigration const migrations[] = {
+		{"Colour/Dark/Subtitle Grid/Background/Comment", {38, 43, 54}, {216, 222, 245}},
+		{"Colour/Dark/Subtitle Grid/Background/Inframe", {53, 50, 37}, {255, 253, 234}},
+		{"Colour/Dark/Subtitle Grid/Background/Selected Comment", {38, 56, 58}, {211, 238, 238}},
+		{"Colour/Dark/Subtitle Grid/Background/Selection", {36, 70, 55}, {206, 255, 231}},
+		{"Colour/Dark/Subtitle Grid/Background/Open Fold", {43, 43, 43}, {235, 235, 235}},
+		{"Colour/Dark/Subtitle Grid/Background/Closed Fold", {54, 54, 54}, {200, 200, 200}},
+		{"Colour/Dark/Subtitle Grid/Background/Image Mask", {58, 43, 61}, {241, 222, 244}},
+		{"Colour/Dark/Subtitle Grid/Collision", {255, 107, 107}, {255, 0, 0}},
+		{"Colour/Dark/Subtitle Grid/CPS Error", {255, 107, 107}, {255, 0, 0}},
+		{"Colour/Dark/Subtitle Grid/Header", {41, 72, 90}, {165, 207, 231}},
+		{"Colour/Dark/Subtitle Grid/Left Column", {45, 70, 50}, {196, 236, 201}},
+		{"Colour/Dark/Subtitle Grid/Lines", {85, 85, 85}, {190, 190, 190}},
+		{"Colour/Dark/Subtitle Grid/Selection", {215, 215, 215}, {0, 0, 0}}
+	};
+
+	for (auto const& migration : migrations) {
+		auto *option = OPT_SET(migration.option);
+		if (option->GetColor() == migration.old_value)
+			option->SetColor(migration.new_value);
+	}
+
+	migrated->SetBool(true);
+}
+
+void MigrateDarkGridPaletteRefinement() {
+	auto *migrated = OPT_SET("App/Dark Grid Palette Refinement Migrated");
+	if (migrated->GetBool()) return;
+
+	struct ColourMigration {
+		const char *option;
+		agi::Color old_value;
+		agi::Color new_value;
+	};
+
+	ColourMigration const migrations[] = {
+		{"Colour/Dark/Subtitle Grid/Active Border", {255, 91, 239}, {196, 96, 187}},
+		{"Colour/Dark/Subtitle Grid/Background/Comment", {216, 222, 245}, {196, 202, 220}},
+		{"Colour/Dark/Subtitle Grid/Background/Selection", {206, 255, 231}, {44, 44, 44}},
+		{"Colour/Dark/Subtitle Grid/Selection", {0, 0, 0}, {215, 215, 215}}
+	};
+
+	for (auto const& migration : migrations) {
+		auto *option = OPT_SET(migration.option);
+		if (option->GetColor() == migration.old_value)
+			option->SetColor(migration.new_value);
+	}
+
+	migrated->SetBool(true);
+}
+}
 
 void AegisubApp::OnAssertFailure(const wxChar *file, int line, const wxChar *func, const wxChar *cond, const wxChar *msg) {
 	LOG_A("wx/assert") << wxString(file) << ":" << line << ":" << wxString(func) << "() " << wxString(cond) << ": " << wxString(msg);
@@ -239,6 +303,9 @@ bool AegisubApp::OnInit() {
 		}
 	}
 #endif
+
+	MigrateDarkGridPalette();
+	MigrateDarkGridPaletteRefinement();
 
 #if wxCHECK_VERSION(3, 3, 0)
 	bool dark_mode = OPT_GET("App/Dark Mode")->GetBool();

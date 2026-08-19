@@ -63,6 +63,23 @@ void adapt_image_to_dark_theme(wxImage& image) {
 		}
 	}
 }
+
+bool get_dark_bundle(const LibresrcBlob *images, size_t count,
+	const LibresrcBlob *&dark_images, size_t &dark_count)
+{
+	if (!images || count == 0) return false;
+
+#define DARK_BUNDLE(name) \
+	if (images[0].data == name[0].data) { \
+		dark_images = dark_##name; \
+		dark_count = sizeof(dark_##name) / sizeof(*dark_##name); \
+		return true; \
+	}
+#include "dark_bitmap_overrides.inc"
+#undef DARK_BUNDLE
+
+	return false;
+}
 }
 
 wxBitmap libresrc_getimage(const unsigned char *buff, size_t size, int dir, bool adapt_to_dark_theme) {
@@ -75,9 +92,9 @@ wxBitmap libresrc_getimage(const unsigned char *buff, size_t size, int dir, bool
 	return wxBitmap(image);
 }
 
-wxIcon libresrc_geticon(const unsigned char *buff, size_t size) {
+wxIcon libresrc_geticon(const unsigned char *buff, size_t size, bool adapt_to_dark_theme) {
 	wxIcon icon;
-	icon.CopyFromBitmap(libresrc_getimage(buff, size));
+	icon.CopyFromBitmap(libresrc_getimage(buff, size, 0, adapt_to_dark_theme));
 	return icon;
 }
 
@@ -90,11 +107,15 @@ wxBitmapBundle libresrc_getbitmapbundle(const LibresrcBlob *images, size_t count
 		return cached->second;
 	}
 
+	auto selected_images = images;
+	auto selected_count = count;
+	bool custom_dark = app_theme::IsDark() && get_dark_bundle(images, count, selected_images, selected_count);
+
 	wxVector<wxBitmap> bitmaps;
-	bitmaps.reserve(count);
-	for (size_t i = 0; i < count; i++) {
-		bitmaps.push_back(libresrc_getimage(images[i].data, images[i].size, dir));
-		bitmaps.back().SetScaleFactor(double(images[i].scale) / height);
+	bitmaps.reserve(selected_count);
+	for (size_t i = 0; i < selected_count; i++) {
+		bitmaps.push_back(libresrc_getimage(selected_images[i].data, selected_images[i].size, dir, !custom_dark));
+		bitmaps.back().SetScaleFactor(double(selected_images[i].scale) / height);
 	}
 
 	auto bundle = wxBitmapBundle::FromBitmaps(bitmaps);
@@ -111,9 +132,13 @@ wxIconBundle libresrc_geticonbundle(const LibresrcBlob *images, size_t count) {
 		return cached->second;
 	}
 
+	auto selected_images = images;
+	auto selected_count = count;
+	bool custom_dark = app_theme::IsDark() && get_dark_bundle(images, count, selected_images, selected_count);
+
 	wxIconBundle bundle;
-	for (size_t i = 0; i < count; i++) {
-		bundle.AddIcon(libresrc_geticon(images[i].data, images[i].size));
+	for (size_t i = 0; i < selected_count; i++) {
+		bundle.AddIcon(libresrc_geticon(selected_images[i].data, selected_images[i].size, !custom_dark));
 	}
 
 	cache[key] = bundle;

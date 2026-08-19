@@ -74,7 +74,7 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached,
 	auto zoomBox = new wxComboBox(this, -1, "75%", wxDefaultPosition, wxDefaultSize, choices, wxCB_DROPDOWN | wxTE_PROCESS_ENTER);
 
 	auto visualToolBar = toolbar::GetToolbar(this, "visual_tools", context, "Video", true);
-	auto visualSubToolBar = new wxToolBar(this, -1, wxDefaultPosition, wxDefaultSize, wxTB_VERTICAL | wxTB_BOTTOM | wxTB_NODIVIDER | wxTB_FLAT);
+	auto visualSubToolBar = toolbar::GetVisualSubToolbar(this);
 
 	wxArrayString speedChoices;
 	double speeds[] = {0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 5, 6, 8, 10};
