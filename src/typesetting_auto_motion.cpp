@@ -329,7 +329,11 @@ bool RegionIsUnchanged(GrayFrame const& previous, GrayFrame const& next,
 			int difference = std::abs(static_cast<int>(previous.At(x, y)) -
 				static_cast<int>(next.At(x, y)));
 			absolute_difference += static_cast<uint64_t>(difference);
-			if (difference > 2) ++materially_changed;
+			// Inter-frame codecs commonly move a small fraction of otherwise held
+			// pixels by three or four luma values. That is decoder texture noise, not
+			// geometric motion; actual sub-pixel movement changes many edge pixels by
+			// more than this.
+			if (difference > 4) ++materially_changed;
 		}
 	}
 	return detail::IsUnchangedRegion(compared, absolute_difference,
