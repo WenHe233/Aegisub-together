@@ -2303,9 +2303,11 @@ void VisualToolTransform::SyncFeatures() {
 			Vector2D away = at - centre;
 			if (away.Len() > 1e-3) at = at + away.Unit() * 28.f;
 			if (index >= 12 && away.Len() > 1e-3) {
+				// The lean and axis-position handles both have a twelve-pixel hit box.
+				// Keep their centres far enough apart to leave a clear, unclickable gap.
 				Vector2D tangent(-away.Y(), away.X());
 				if (index == 13 || index == 14) tangent = tangent * -1.f;
-				at = at + tangent.Unit() * 16.f;
+				at = at + tangent.Unit() * 32.f;
 			}
 		}
 		// The warp's move handle sits clear of the bottom edge, outwards from the middle of the
