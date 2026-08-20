@@ -17,6 +17,7 @@
 /// @ingroup libaegisub
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include <libaegisub/color.h>
@@ -77,6 +78,7 @@ public:
 	virtual OptionType GetType() const = 0;
 	virtual bool IsDefault() const = 0;
 	virtual void Reset() = 0;
+	virtual std::unique_ptr<OptionValue> CloneDefault() const = 0;
 
 	std::string const& GetString() const;
 	int64_t const& GetInt() const;
@@ -121,6 +123,9 @@ public:
 		OptionType GetType() const { return OptionType::type_name; }                  \
 		void Reset() { value = value_default; NotifyChanged(); }                      \
 		bool IsDefault() const { return value == value_default; }                     \
+		std::unique_ptr<OptionValue> CloneDefault() const {                            \
+			return std::make_unique<OptionValue##type_name>(GetName(), value_default);   \
+		}                                                                             \
 		void Set(const OptionValue *nv);                                              \
 	};
 
@@ -145,6 +150,9 @@ CONFIG_OPTIONVALUE(Bool, bool)
 		OptionType GetType() const { return OptionType::List##type_name; }                \
 		void Reset() { array = array_default; NotifyChanged(); }                          \
 		bool IsDefault() const { return array == array_default; }                         \
+		std::unique_ptr<OptionValue> CloneDefault() const {                               \
+			return std::make_unique<OptionValueList##type_name>(GetName(), array_default);  \
+		}                                                                                \
 		void Set(const OptionValue *nv);                                                  \
 	};
 

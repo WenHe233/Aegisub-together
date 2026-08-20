@@ -217,6 +217,36 @@ wxString category_name(std::string const& category) {
 	return to_wx(category);
 }
 
+std::vector<std::pair<std::string, int>> category_counts(ai::ProofreadResult const& result) {
+	std::vector<std::pair<std::string, int>> counts;
+	for (auto const& issue : result.issues) {
+		for (auto const& category : issue.categories) {
+			auto found = std::find_if(counts.begin(), counts.end(), [&](auto const& item) {
+				return item.first == category;
+			});
+			if (found == counts.end()) counts.emplace_back(category, 1);
+			else ++found->second;
+		}
+	}
+
+	return counts;
+}
+
+std::string corrected_effect(std::string const& original, ai::ProofreadIssue const& issue) {
+	std::string effect = original;
+	auto append = [&](std::string marker) {
+		if (effect.find(marker) != std::string::npos) return;
+		// Commas delimit ASS event fields and would be rewritten on save. A semicolon keeps
+		// multiple correction markers readable and byte-stable across save/reload.
+		if (!effect.empty()) effect += "; ";
+		effect += std::move(marker);
+	};
+	for (auto const& category : issue.categories)
+		append(category + "-corrected");
+	if (issue.categories.empty()) append("ai-corrected");
+	return effect;
+}
+
 class AIProofreadDialog final : public wxDialog {
 	agi::Context *context;
 	std::vector<AssDialogue *> target_lines;
@@ -224,6 +254,8 @@ class AIProofreadDialog final : public wxDialog {
 	std::unordered_map<int, AssDialogue *> line_by_id;
 
 	wxStaticText *status;
+	wxPanel *summary_panel;
+	wxBoxSizer *summary_sizer;
 	wxGauge *progress;
 	wxPanel *review_panel;
 	wxStaticText *line_heading;
@@ -237,6 +269,7 @@ class AIProofreadDialog final : public wxDialog {
 	wxButton *stop_playback_button;
 	wxButton *apply_button;
 	wxButton *skip_button;
+	wxButton *skip_all_button;
 	wxButton *back_button;
 	wxButton *cancel_button;
 
@@ -244,6 +277,7 @@ class AIProofreadDialog final : public wxDialog {
 	std::atomic_bool cancelled{false};
 	ai::ProofreadResult result;
 	std::unordered_map<int, std::string> original_text_by_id;
+	std::unordered_map<int, std::string> original_effect_by_id;
 	std::vector<int> decisions;
 	size_t issue_index = 0;
 	int accepted = 0;
@@ -257,6 +291,22 @@ class AIProofreadDialog final : public wxDialog {
 	std::string ApiKey() const { return ai::GetApiKey(); }
 	std::string Model() const { return OPT_GET("AI/OpenAI/Model")->GetString(); }
 	std::string TranscriptionModel() const { return "gpt-transcribe"; }
+	void UpdateCategorySummary() {
+		summary_sizer->Clear(true);
+		auto counts = category_counts(result);
+		for (size_t index = 0; index < counts.size(); ++index) {
+			auto const& [category, count] = counts[index];
+			auto label = new wxStaticText(summary_panel, wxID_ANY,
+				category_name(category) + wxString::Format(": %d", count));
+			auto flags = wxSizerFlags().CenterVertical();
+			if (index) flags.Border(wxLEFT, summary_panel->FromDIP(20));
+			summary_sizer->Add(label, flags);
+		}
+		summary_panel->Show(!counts.empty());
+		summary_panel->Layout();
+		Layout();
+	}
+
 	AssDialogue *CurrentLine() const {
 		if (issue_index >= result.issues.size()) return nullptr;
 		auto it = line_by_id.find(result.issues[issue_index].line_id);
@@ -317,8 +367,10 @@ class AIProofreadDialog final : public wxDialog {
 		progress->SetValue(0);
 		pulse_timer.Start(120);
 		review_panel->Hide();
+		summary_panel->Hide();
 		apply_button->Hide();
 		skip_button->Hide();
+		skip_all_button->Hide();
 		back_button->Hide();
 		cancel_button->SetLabel(_("Cancel request"));
 		cancel_button->Show();
@@ -355,6 +407,7 @@ class AIProofreadDialog final : public wxDialog {
 		status->SetLabel(_("Replaying the latest AI post-check without an AI connection."));
 		progress->SetRange(std::max(1, static_cast<int>(result.issues.size())));
 		progress->SetValue(0);
+		UpdateCategorySummary();
 		if (result.issues.empty()) {
 			progress->SetValue(1);
 			wxMessageBox(result.message.empty()
@@ -413,6 +466,7 @@ class AIProofreadDialog final : public wxDialog {
 			valid.push_back(std::move(issue));
 		}
 		result.issues = std::move(valid);
+		UpdateCategorySummary();
 		decisions.assign(result.issues.size(), decision_pending);
 		initial_decisions = decisions;
 		remember_session(context, result, context_lines, decisions);
@@ -460,6 +514,7 @@ class AIProofreadDialog final : public wxDialog {
 		back_button->Show();
 		back_button->Enable(issue_index > 0);
 		skip_button->Show();
+		skip_all_button->Show();
 		apply_button->SetLabel(_("Approve selected correction"));
 		apply_button->Show(!previously_accepted);
 		cancel_button->SetLabel(_("Cancel review"));
@@ -516,7 +571,9 @@ class AIProofreadDialog final : public wxDialog {
 		auto line = CurrentLine();
 		auto selection = alternatives->GetSelection();
 		if (!line || selection == wxNOT_FOUND) return;
-		line->Text = result.issues[issue_index].suggestions[selection];
+		auto const& issue = result.issues[issue_index];
+		line->Text = issue.suggestions[selection];
+		line->Effect = corrected_effect(original_effect_by_id.at(issue.line_id), issue);
 		decisions[issue_index] = selection;
 		++accepted;
 		++issue_index;
@@ -533,6 +590,16 @@ class AIProofreadDialog final : public wxDialog {
 		ShowIssue();
 	}
 
+	void SkipAll() {
+		StopPlayback();
+		for (; issue_index < result.issues.size(); ++issue_index) {
+			if (decisions[issue_index] != decision_pending) continue;
+			decisions[issue_index] = decision_skipped;
+			++skipped;
+		}
+		ShowIssue();
+	}
+
 	void Back() {
 		if (!issue_index) return;
 		StopPlayback();
@@ -542,8 +609,10 @@ class AIProofreadDialog final : public wxDialog {
 		auto const& issue = result.issues[issue_index];
 		auto line_it = line_by_id.find(issue.line_id);
 		if (decision >= 0 && initial_decision < 0) {
-			if (line_it != line_by_id.end())
+			if (line_it != line_by_id.end()) {
 				line_it->second->Text = original_text_by_id.at(issue.line_id);
+				line_it->second->Effect = original_effect_by_id.at(issue.line_id);
+			}
 			--accepted;
 		}
 		else if (decision == decision_skipped && initial_decision == decision_pending) {
@@ -558,7 +627,8 @@ class AIProofreadDialog final : public wxDialog {
 		reviewing = false;
 		progress->SetValue(progress->GetRange());
 		if (accepted > 0)
-			context->ass->Commit(_("apply AI post-check corrections"), AssFile::COMMIT_DIAG_TEXT);
+			context->ass->Commit(_("apply AI post-check corrections"),
+				AssFile::COMMIT_DIAG_TEXT | AssFile::COMMIT_DIAG_META);
 		remember_session(context, result, context_lines, decisions);
 		EndModal(wxID_OK);
 	}
@@ -568,8 +638,10 @@ class AIProofreadDialog final : public wxDialog {
 		for (size_t i = 0; i < decisions.size(); ++i) {
 			if (decisions[i] < 0 || initial_decisions[i] >= 0) continue;
 			auto line_it = line_by_id.find(result.issues[i].line_id);
-			if (line_it != line_by_id.end())
+			if (line_it != line_by_id.end()) {
 				line_it->second->Text = original_text_by_id.at(result.issues[i].line_id);
+				line_it->second->Effect = original_effect_by_id.at(result.issues[i].line_id);
+			}
 		}
 		decisions = initial_decisions;
 		remember_session(context, result, context_lines, decisions);
@@ -623,6 +695,7 @@ public:
 		for (auto line : this->target_lines) {
 			line_by_id[line->Id] = line;
 			original_text_by_id[line->Id] = line->Text.get();
+			original_effect_by_id[line->Id] = line->Effect.get();
 		}
 
 		auto main = new wxBoxSizer(wxVERTICAL);
@@ -643,6 +716,10 @@ public:
 		progress = new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, FromDIP(wxSize(-1, 12)));
 		app_theme::StyleProgress(progress);
 		analysis->Add(progress, wxSizerFlags().Expand());
+		summary_panel = new wxPanel(this);
+		summary_sizer = new wxBoxSizer(wxHORIZONTAL);
+		summary_panel->SetSizer(summary_sizer);
+		analysis->Add(summary_panel, wxSizerFlags().Expand().Border(wxTOP, 8));
 		main->Add(analysis, wxSizerFlags().Expand().Border(wxALL, 12));
 
 		review_panel = new wxPanel(this);
@@ -690,6 +767,8 @@ public:
 		auto buttons = new wxBoxSizer(wxHORIZONTAL);
 		cancel_button = new wxButton(this, wxID_ANY, _("Cancel request"));
 		buttons->Add(cancel_button);
+		skip_all_button = new wxButton(this, wxID_ANY, _("Skip all"));
+		buttons->Add(skip_all_button, wxSizerFlags().Border(wxLEFT, 8));
 		buttons->AddStretchSpacer();
 		back_button = new wxButton(this, wxID_ANY, _("Back"));
 		buttons->Add(back_button);
@@ -702,6 +781,7 @@ public:
 		review_panel->Hide();
 		apply_button->Hide();
 		skip_button->Hide();
+		skip_all_button->Hide();
 		back_button->Hide();
 		SetSizer(main);
 		SetSize(FromDIP(wxSize(680, 195)));
@@ -728,6 +808,7 @@ public:
 		play_scene_button->Enable(video_open);
 		stop_playback_button->Enable(video_open);
 		skip_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { Skip(); });
+		skip_all_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { SkipAll(); });
 		apply_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { Apply(); });
 		alternatives->Bind(wxEVT_LISTBOX, [this](wxCommandEvent&) { UpdateSelection(); });
 		CallAfter([this] {

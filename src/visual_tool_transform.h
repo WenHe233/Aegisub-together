@@ -50,6 +50,7 @@ enum class VisualToolTransformAction {
 	None,
 	Undo,
 	Redo,
+	AutoPerspectiveReset,
 	Apply,
 	Cancel,
 	/// Whether the border, the shadow and the blur are scaled along with the text.
@@ -61,7 +62,8 @@ enum class VisualToolTransformAction {
 	MaintainDecor,
 	RecalcBlur,
 	RecalcClip,
-	AutoPerspectiveSize
+	AutoPerspectiveSize,
+	AutoPerspectiveKeepOriginalSize
 };
 
 /// Bend or distort the selected drawings by dragging handles over the video.
@@ -80,6 +82,10 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	bool auto_perspective = false;
 	/// Uniform percentage applied to the whole selection in the target's perspective plane.
 	double auto_perspective_size = 100.0;
+	/// Keep the whole selection's authored dimensions, spacing and relative placement while
+	/// applying the target plane's perspective. This deliberately rules out the percentage
+	/// slider: the two controls answer the same question.
+	bool auto_perspective_keep_original_size = false;
 	/// The rectangle the selection is proportioned by, as four points of its own. Seeded from
 	/// the active line's shape and then left to the user, who can drag them: no rectangle fits
 	/// every shape, and the one the fit is measured from is worth being able to say exactly.
@@ -88,8 +94,13 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	static constexpr size_t no_feature = static_cast<size_t>(-1);
 	/// Where the four source handles begin in `features`, or no_feature while they are hidden.
 	size_t source_feature_first = no_feature;
+	/// Where the target-point handles begin. During construction there are as many as have
+	/// already been placed; after placement all four remain live.
+	size_t target_feature_first = no_feature;
+	/// The separate handle which moves the completed target as a whole.
+	size_t target_move_feature = no_feature;
 	/// The unfinished target path. It is cleared as soon as four valid points are applied,
-	/// so the construction points never obscure the result being judged.
+	/// while the same four positions continue in `corners` as editable target handles.
 	std::vector<Vector2D> auto_perspective_points;
 
 	std::unique_ptr<OpenGLText> gl_text;
@@ -238,6 +249,13 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Where the mouse was when a move or a rotation began.
 	Vector2D gesture_start;
 	float gesture_start_angle = 0;
+	enum class FreeHoldMode { None, Move, Rotate };
+	FreeHoldMode free_hold_mode = FreeHoldMode::None;
+
+	/// Dragging empty space around the arch/warp handles selects every point inside the box.
+	bool box_selecting = false;
+	bool box_select_add = false;
+	Vector2D box_select_start;
 
 	/// Whether anything has been dragged yet, which is what makes Apply worth pressing.
 	bool touched = false;
@@ -275,6 +293,7 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 		/// had been drawn at all - so a step back can take one away again.
 		Vector2D source_corners[4];
 		bool source_moved = false;
+		std::vector<Vector2D> auto_perspective_points;
 		bool touched = false;
 	};
 	std::vector<HistoryState> undo_history;
@@ -381,6 +400,9 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	void SeedAutoPerspectiveSource(TagLine const& found);
 	/// The map from the source quadrilateral onto the drawn one.
 	typesetting::PointMap AutoPerspectiveMap() const;
+	/// Build the quadrilateral occupied by the selection at its authored size, on the
+	/// perspective plane described by the four target points and centred inside them.
+	bool AutoPerspectiveOriginalSizeTarget(Vector2D target[4]) const;
 
 	/// What one line becomes under the gesture in progress: the numbers, before anything is
 	/// decided about which of them are worth writing. The one place that works this out, so
@@ -493,10 +515,12 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	void DrawAutoPerspectivePath();
 	bool AddAutoPerspectivePoint(Vector2D point);
 	/// The free transform's own handles: plain outlines rather than the crossed blocks the
-	/// other tools use, because there are sixteen of them and they sit close together.
+	/// other tools use, because they sit close together around the box.
 	void DrawFreeHandles();
+	void DrawFreeRotationGuide();
+	bool FreePointInside(Vector2D point) const;
 	/// One corner: a small empty square, which is what a corner looks like in every mode.
-	void DrawCorner(Vector2D at, bool current);
+	void DrawCorner(Vector2D at, bool current, bool selected = false);
 	/// The handles of the modes that are not the free transform. The corners are drawn as
 	/// corners; everything else is left to the framework, which already draws it well.
 	void DrawShapeHandles();
@@ -511,6 +535,7 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 
 	bool InitializeHold() override;
 	void UpdateHold() override;
+	void EndHold() override;
 
 	void DoRefresh() override;
 	void OnLineChanged() override;

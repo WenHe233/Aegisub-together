@@ -60,6 +60,7 @@
 #include <libaegisub/address_of_adaptor.h>
 #include <libaegisub/ass/karaoke.h>
 #include <libaegisub/of_type_adaptor.h>
+#include <libaegisub/split.h>
 #include <libaegisub/string.h>
 
 #include <algorithm>
@@ -796,10 +797,11 @@ static void copy_lines(agi::Context *c) {
 		str += typesetting::gradient::ClipboardMetadata(*c->ass, *d);
 		str += typesetting::textbox::ClipboardMetadata(*c->ass, *d);
 
-		if (d->SourceLineText.get().size()) {
+		std::string source_line(agi::Trim(d->SourceLineText.get()));
+		if (!source_line.empty()) {
 			str += "{:Source Line: ";
 
-			for (auto character : d->SourceLineText.get())
+			for (auto character : source_line)
 				if (character != '\n' && character != '\r')
 					str += character;
 
@@ -1087,7 +1089,8 @@ static void combine_lines(agi::Context *c, void (*combiner)(AssDialogue *, AssDi
 static void combine_karaoke(AssDialogue *first, AssDialogue *second, bool keepTypesetting) {
 	if (second) {
 		first->Text = agi::Str(first->Text.get(), "{\\k", std::to_string((second->End - second->Start) / 10), "}", second->Text.get());
-		first->SourceLineText = agi::Str(first->SourceLineText.get(), " ", second->SourceLineText.get());
+		auto source_line = agi::Str(first->SourceLineText.get(), " ", second->SourceLineText.get());
+		first->SourceLineText = std::string(agi::Trim(source_line));
 	}
 	else
 		first->Text = agi::Str("{\\k", std::to_string((first->End - first->Start) / 10), "}", first->Text.get());
@@ -1102,7 +1105,8 @@ static void combine_concat(AssDialogue *first, AssDialogue *second, bool keepTyp
 		else
 			first->Text = agi::Str(first->Text.get(), " ", remove_override_tags_keep_comments(second->Text.get()));
 
-		first->SourceLineText = agi::Str(first->SourceLineText.get(), " ", second->SourceLineText.get());
+		auto source_line = agi::Str(first->SourceLineText.get(), " ", second->SourceLineText.get());
+		first->SourceLineText = std::string(agi::Trim(source_line));
 	}
 }
 

@@ -62,10 +62,12 @@
 #include <algorithm>
 #include <functional>
 #include <unordered_set>
+#include <utility>
 
 #include <wx/bmpbuttn.h>
 #include <wx/button.h>
 #include <wx/checkbox.h>
+#include <wx/dcbuffer.h>
 #include <wx/fontenum.h>
 #include <wx/radiobut.h>
 #include <wx/settings.h>
@@ -102,6 +104,112 @@ void time_edit_char_hook(wxKeyEvent &event) {
 // in VC++ 2015 Update 2, with it instead passing a null pointer
 const auto AssDialogue_Actor = &AssDialogue::Actor;
 const auto AssDialogue_Effect = &AssDialogue::Effect;
+
+class DarkBitmapButton final : public wxControl {
+	wxBitmapBundle bitmap;
+	bool hovered = false;
+	bool pressed = false;
+
+	void RefreshState() {
+		Refresh(false);
+	}
+
+	void OnPaint(wxPaintEvent&) {
+		wxAutoBufferedPaintDC dc(this);
+
+		auto background = GetParent()->GetBackgroundColour();
+		if (!background.IsOk())
+			background = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
+		if (hovered)
+			background = app_theme::Colour("UI/Button");
+		if (pressed)
+			background = background.ChangeLightness(85);
+
+		dc.SetBackground(wxBrush(background));
+		dc.Clear();
+		if (hovered || pressed) {
+			dc.SetPen(wxPen(app_theme::Colour("UI/Button Border")));
+			dc.SetBrush(*wxTRANSPARENT_BRUSH);
+			dc.DrawRectangle(wxPoint(0, 0), GetClientSize());
+		}
+
+		auto image = bitmap.GetBitmapFor(this);
+		auto position = (GetClientSize() - image.GetLogicalSize()) / 2;
+		dc.DrawBitmap(image, position.GetX(), position.GetY(), true);
+	}
+
+	void OnEnter(wxMouseEvent&) {
+		hovered = true;
+		RefreshState();
+	}
+
+	void OnLeave(wxMouseEvent&) {
+		hovered = false;
+		RefreshState();
+	}
+
+	void OnLeftDown(wxMouseEvent&) {
+		if (!IsEnabled()) return;
+		pressed = true;
+		if (!HasCapture()) CaptureMouse();
+		SetFocus();
+		RefreshState();
+	}
+
+	void OnLeftUp(wxMouseEvent& event) {
+		if (!pressed) return;
+		pressed = false;
+		if (HasCapture()) ReleaseMouse();
+		RefreshState();
+
+		if (!GetClientRect().Contains(event.GetPosition())) return;
+		wxCommandEvent click(wxEVT_BUTTON, GetId());
+		click.SetEventObject(this);
+		ProcessWindowEvent(click);
+	}
+
+	void OnCaptureLost(wxMouseCaptureLostEvent&) {
+		pressed = false;
+		RefreshState();
+	}
+
+	void OnKeyDown(wxKeyEvent& event) {
+		if (event.GetKeyCode() != WXK_SPACE && event.GetKeyCode() != WXK_RETURN &&
+			event.GetKeyCode() != WXK_NUMPAD_ENTER)
+		{
+			event.Skip();
+			return;
+		}
+
+		wxCommandEvent click(wxEVT_BUTTON, GetId());
+		click.SetEventObject(this);
+		ProcessWindowEvent(click);
+	}
+
+public:
+	DarkBitmapButton(wxWindow *parent, wxBitmapBundle bitmap)
+	: wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
+	, bitmap(std::move(bitmap))
+	{
+		auto image = this->bitmap.GetBitmapFor(this);
+		auto size = image.GetLogicalSize() + FromDIP(wxSize(8, 8));
+		SetInitialSize(size);
+		SetMinSize(size);
+		SetBackgroundStyle(wxBG_STYLE_PAINT);
+
+		Bind(wxEVT_PAINT, &DarkBitmapButton::OnPaint, this);
+		Bind(wxEVT_ENTER_WINDOW, &DarkBitmapButton::OnEnter, this);
+		Bind(wxEVT_LEAVE_WINDOW, &DarkBitmapButton::OnLeave, this);
+		Bind(wxEVT_LEFT_DOWN, &DarkBitmapButton::OnLeftDown, this);
+		Bind(wxEVT_LEFT_UP, &DarkBitmapButton::OnLeftUp, this);
+		Bind(wxEVT_MOUSE_CAPTURE_LOST, &DarkBitmapButton::OnCaptureLost, this);
+		Bind(wxEVT_KEY_DOWN, &DarkBitmapButton::OnKeyDown, this);
+		Bind(wxEVT_SIZE, [this](wxSizeEvent& event) {
+			event.Skip();
+			Refresh(true);
+		});
+	}
+};
 }
 
 SubsEditBox::SubsEditBox(wxWindow *parent, agi::Context *context)
@@ -302,7 +410,9 @@ TimeEdit *SubsEditBox::MakeTimeCtrl(wxString const& tooltip, TimeField field) {
 
 void SubsEditBox::MakeButton(const char *cmd_name) {
 	cmd::Command *command = cmd::get(cmd_name);
-	wxBitmapButton *btn = new wxBitmapButton(this, -1, command->Icon());
+	wxWindow *btn = app_theme::IsDark()
+		? static_cast<wxWindow *>(new DarkBitmapButton(this, command->Icon()))
+		: static_cast<wxWindow *>(new wxBitmapButton(this, -1, command->Icon()));
 	ToolTipManager::Bind(btn, command->StrHelp(), "Subtitle Edit Box", cmd_name);
 
 	middle_right_sizer->Add(btn, wxSizerFlags().Expand());
@@ -573,6 +683,16 @@ void SubsEditBox::OnSize(wxSizeEvent &evt) {
 			middle_left_sizer->Detach(middle_right_sizer);
 			GetSizer()->Insert(2,middle_right_sizer,0,wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM,3);
 			button_bar_split = true;
+		}
+	}
+
+	if (app_theme::IsDark()) {
+		// Reflowing the two button rows can move a custom-painted button without
+		// invalidating its full native window on Windows. Explicit invalidation
+		// prevents partially stale icons after maximizing or restoring the frame.
+		for (wxWindow *child : GetChildren()) {
+			if (dynamic_cast<DarkBitmapButton *>(child))
+				child->Refresh(true);
 		}
 	}
 

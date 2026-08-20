@@ -20,6 +20,10 @@
 #include <wx/panel.h>
 #include <wx/scrolwin.h>
 
+#include <functional>
+#include <string>
+#include <vector>
+
 class Preferences;
 class wxControl;
 class wxFlexGridSizer;
@@ -27,6 +31,7 @@ class wxSizer;
 class wxString;
 class wxTextCtrl;
 class wxTreebook;
+namespace agi { class OptionValue; }
 
 struct PageSection {
 	// Create controls in a section with the box as a parent and add them to the sizer.
@@ -37,6 +42,11 @@ struct PageSection {
 class OptionPage : public wxScrolled<wxPanel> {
 	template<class T>
 	void Add(PageSection section, wxString const& label, T *control);
+	struct RestorableOption {
+		std::string name;
+		std::function<void(agi::OptionValue const&)> update_control;
+	};
+	std::vector<RestorableOption> restorable_options;
 public:
 	enum Style {
 		PAGE_DEFAULT    =   0x00000000,
@@ -58,6 +68,8 @@ public:
 	/// label, its glyph condition and whether it starts switched on.
 	void OptionLanguageFilterList(PageSection section, const char *opt_name);
 	void OptionFont(PageSection section, std::string opt_prefix);
+	/// Add a centered button which stages this page's options for restoration.
+	void AddRestoreDefaultsButton();
 
 	/// Enable ctrl only when cbx is checked
 	void EnableIfChecked(wxControl *cbx, wxControl *ctrl);

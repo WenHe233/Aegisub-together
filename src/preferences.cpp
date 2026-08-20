@@ -311,6 +311,16 @@ void Interface_Colours(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(syntax, _("Karaoke templates"), "Colour/Subtitle/Syntax/Karaoke Template");
 	p->OptionAdd(syntax, _("Karaoke variables"), "Colour/Subtitle/Syntax/Karaoke Variable");
 
+	auto visual_tools = p->PageSizer(_("Visual Typesetting Tools"));
+	p->OptionAdd(visual_tools, _("Primary Lines"), "Colour/Visual Tools/Lines Primary");
+	p->OptionAdd(visual_tools, _("Secondary Lines"), "Colour/Visual Tools/Lines Secondary");
+	p->OptionAdd(visual_tools, _("Primary Highlight"), "Colour/Visual Tools/Highlight Primary");
+	p->OptionAdd(visual_tools, _("Secondary Highlight"), "Colour/Visual Tools/Highlight Secondary");
+
+	// Separate sizer to prevent the colors in the visual tools section from getting resized
+	auto visual_tools_alpha = p->PageSizer(_("Visual Typesetting Tools Alpha"));
+	p->OptionAdd(visual_tools_alpha, _("Shaded Area"), "Colour/Visual Tools/Shaded Area Alpha", 0, 1, 0.1);
+
 	p->sizer = new wxBoxSizer(wxVERTICAL);
 	main_sizer->AddSpacer(5);
 	main_sizer->Add(p->sizer, wxEXPAND);
@@ -325,6 +335,10 @@ void Interface_Colours(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(grid, _("Standard background"), "Colour/Subtitle Grid/Background/Background");
 	p->OptionAdd(grid, _("Selection foreground"), "Colour/Subtitle Grid/Selection");
 	p->OptionAdd(grid, _("Selection background"), "Colour/Subtitle Grid/Background/Selection");
+	p->OptionAdd(grid, _("Selected comment foreground"), "Colour/Subtitle Grid/Selected Comment Foreground");
+	p->OptionAdd(grid, _("Selected fold foreground"), "Colour/Subtitle Grid/Selected Fold Foreground");
+	p->OptionAdd(grid, _("Selected combined foreground"), "Colour/Subtitle Grid/Selected Combined Foreground");
+	p->OptionAdd(grid, _("Selected left column foreground"), "Colour/Subtitle Grid/Selected Left Column Foreground");
 	p->OptionAdd(grid, _("Collision foreground"), "Colour/Subtitle Grid/Collision");
 	p->OptionAdd(grid, _("In frame background"), "Colour/Subtitle Grid/Background/Inframe");
 	p->OptionAdd(grid, _("Comment background"), "Colour/Subtitle Grid/Background/Comment");
@@ -337,18 +351,10 @@ void Interface_Colours(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(grid, _("Active Line Border"), "Colour/Subtitle Grid/Active Border");
 	p->OptionAdd(grid, _("Lines"), "Colour/Subtitle Grid/Lines");
 	p->OptionAdd(grid, _("CPS Error"), "Colour/Subtitle Grid/CPS Error");
-
-	auto visual_tools = p->PageSizer(_("Visual Typesetting Tools"));
-	p->OptionAdd(visual_tools, _("Primary Lines"), "Colour/Visual Tools/Lines Primary");
-	p->OptionAdd(visual_tools, _("Secondary Lines"), "Colour/Visual Tools/Lines Secondary");
-	p->OptionAdd(visual_tools, _("Primary Highlight"), "Colour/Visual Tools/Highlight Primary");
-	p->OptionAdd(visual_tools, _("Secondary Highlight"), "Colour/Visual Tools/Highlight Secondary");
-
-	// Separate sizer to prevent the colors in the visual tools section from getting resized
-	auto visual_tools_alpha = p->PageSizer(_("Visual Typesetting Tools Alpha"));
-	p->OptionAdd(visual_tools_alpha, _("Shaded Area"), "Colour/Visual Tools/Shaded Area Alpha", 0, 1, 0.1);
+	p->OptionAdd(grid, _("CPS foreground"), "Colour/Subtitle Grid/CPS Foreground");
 
 	p->sizer = main_sizer;
+	p->AddRestoreDefaultsButton();
 
 	p->SetSizerAndFit(p->sizer);
 }
@@ -357,11 +363,19 @@ void Interface_Colours(wxTreebook *book, Preferences *parent) {
 void Interface_DarkColours(wxTreebook *book, Preferences *parent) {
 	auto p = new OptionPage(book, parent, _("Dark Colors"), OptionPage::PAGE_SCROLL|OptionPage::PAGE_SUB);
 
+	delete p->sizer;
+	wxSizer *main_sizer = new wxBoxSizer(wxHORIZONTAL);
+
+	p->sizer = new wxBoxSizer(wxVERTICAL);
+	main_sizer->Add(p->sizer, wxEXPAND);
+
 	auto dark_interface = p->PageSizer(_("Interface"));
 	p->OptionAdd(dark_interface, _("Text"), "Colour/Dark/UI/Text");
 	p->OptionAdd(dark_interface, _("Selection foreground"), "Colour/Dark/UI/Selection Text");
 	p->OptionAdd(dark_interface, _("Progress"), "Colour/Dark/UI/Progress");
 	p->OptionAdd(dark_interface, _("Background"), "Colour/Dark/UI/Progress Background");
+	p->OptionAdd(dark_interface, _("Toolbar background"), "Colour/Dark/UI/Toolbar Background");
+	p->OptionAdd(dark_interface, _("Active toolbar button background"), "Colour/Dark/UI/Toolbar Active Background");
 
 	auto dark_syntax = p->PageSizer(_("Subtitle edit box"));
 	p->OptionAdd(dark_syntax, _("Background"), "Colour/Dark/Subtitle/Background");
@@ -378,11 +392,19 @@ void Interface_DarkColours(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(dark_syntax, _("Karaoke templates"), "Colour/Dark/Subtitle/Syntax/Karaoke Template");
 	p->OptionAdd(dark_syntax, _("Karaoke variables"), "Colour/Dark/Subtitle/Syntax/Karaoke Variable");
 
+	p->sizer = new wxBoxSizer(wxVERTICAL);
+	main_sizer->AddSpacer(5);
+	main_sizer->Add(p->sizer, wxEXPAND);
+
 	auto dark_grid = p->PageSizer(_("Subtitle grid"));
 	p->OptionAdd(dark_grid, _("Standard foreground"), "Colour/Dark/Subtitle Grid/Standard");
 	p->OptionAdd(dark_grid, _("Standard background"), "Colour/Dark/Subtitle Grid/Background/Background");
 	p->OptionAdd(dark_grid, _("Selection foreground"), "Colour/Dark/Subtitle Grid/Selection");
 	p->OptionAdd(dark_grid, _("Selection background"), "Colour/Dark/Subtitle Grid/Background/Selection");
+	p->OptionAdd(dark_grid, _("Selected comment foreground"), "Colour/Dark/Subtitle Grid/Selected Comment Foreground");
+	p->OptionAdd(dark_grid, _("Selected fold foreground"), "Colour/Dark/Subtitle Grid/Selected Fold Foreground");
+	p->OptionAdd(dark_grid, _("Selected combined foreground"), "Colour/Dark/Subtitle Grid/Selected Combined Foreground");
+	p->OptionAdd(dark_grid, _("Selected left column foreground"), "Colour/Dark/Subtitle Grid/Selected Left Column Foreground");
 	p->OptionAdd(dark_grid, _("Collision foreground"), "Colour/Dark/Subtitle Grid/Collision");
 	p->OptionAdd(dark_grid, _("In frame background"), "Colour/Dark/Subtitle Grid/Background/Inframe");
 	p->OptionAdd(dark_grid, _("Comment background"), "Colour/Dark/Subtitle Grid/Background/Comment");
@@ -395,6 +417,10 @@ void Interface_DarkColours(wxTreebook *book, Preferences *parent) {
 	p->OptionAdd(dark_grid, _("Active Line Border"), "Colour/Dark/Subtitle Grid/Active Border");
 	p->OptionAdd(dark_grid, _("Lines"), "Colour/Dark/Subtitle Grid/Lines");
 	p->OptionAdd(dark_grid, _("CPS Error"), "Colour/Dark/Subtitle Grid/CPS Error");
+	p->OptionAdd(dark_grid, _("CPS foreground"), "Colour/Dark/Subtitle Grid/CPS Foreground");
+
+	p->sizer = main_sizer;
+	p->AddRestoreDefaultsButton();
 
 	p->SetSizerAndFit(p->sizer);
 }
@@ -756,6 +782,15 @@ void Interface_Hotkeys::OnUpdateFilter(wxCommandEvent&) {
 void Preferences::SetOption(std::unique_ptr<agi::OptionValue> new_value) {
 	pending_changes[new_value->GetName()] = std::move(new_value);
 	applyButton->Enable(true);
+}
+
+void Preferences::SetOptionsImmediately(std::vector<std::unique_ptr<agi::OptionValue>> new_values) {
+	for (auto& value : new_values) {
+		pending_changes.erase(value->GetName());
+		OPT_SET(value->GetName())->Set(value.get());
+	}
+	applyButton->Enable(!pending_changes.empty() || !pending_callbacks.empty());
+	config::opt->Flush();
 }
 
 void Preferences::AddPendingChange(Thunk const& callback) {

@@ -141,6 +141,8 @@ wxControl *OptionPage::OptionAdd(PageSection section, const wxString &name, cons
 			section.sizer->Add(cb, 1, wxEXPAND, 0);
 			cb->SetValue(opt->GetBool());
 			cb->Bind(wxEVT_CHECKBOX, BoolUpdater(opt_name, parent));
+			restorable_options.push_back({opt_name,
+				[cb](agi::OptionValue const& value) { cb->SetValue(value.GetBool()); }});
 			return cb;
 		}
 
@@ -148,6 +150,8 @@ wxControl *OptionPage::OptionAdd(PageSection section, const wxString &name, cons
 			auto sc = new wxSpinCtrl(section.box, -1, std::to_wstring((int)opt->GetInt()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, min, max, opt->GetInt());
 			sc->Bind(wxEVT_SPINCTRL, IntUpdater(opt_name, parent));
 			Add(section, name, sc);
+			restorable_options.push_back({opt_name,
+				[sc](agi::OptionValue const& value) { sc->SetValue(value.GetInt()); }});
 			return sc;
 		}
 
@@ -155,6 +159,8 @@ wxControl *OptionPage::OptionAdd(PageSection section, const wxString &name, cons
 			auto scd = new wxSpinCtrlDouble(section.box, -1, std::to_wstring(opt->GetDouble()), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, min, max, opt->GetDouble(), inc);
 			scd->Bind(wxEVT_SPINCTRLDOUBLE, DoubleUpdater(opt_name, parent));
 			Add(section, name, scd);
+			restorable_options.push_back({opt_name,
+				[scd](agi::OptionValue const& value) { scd->SetValue(value.GetDouble()); }});
 			return scd;
 		}
 
@@ -162,6 +168,8 @@ wxControl *OptionPage::OptionAdd(PageSection section, const wxString &name, cons
 			auto text = new wxTextCtrl(section.box, -1 , to_wx(opt->GetString()));
 			text->Bind(wxEVT_TEXT, StringUpdater(opt_name, parent));
 			Add(section, name, text);
+			restorable_options.push_back({opt_name,
+				[text](agi::OptionValue const& value) { text->ChangeValue(to_wx(value.GetString())); }});
 			return text;
 		}
 
@@ -169,6 +177,8 @@ wxControl *OptionPage::OptionAdd(PageSection section, const wxString &name, cons
 			auto cb = new ColourButton(section.box, wxSize(40,10), false, opt->GetColor());
 			cb->Bind(EVT_COLOR, ColourUpdater(opt_name, parent));
 			Add(section, name, cb);
+			restorable_options.push_back({opt_name,
+				[cb](agi::OptionValue const& value) { cb->SetColor(value.GetColor()); }});
 			return cb;
 		}
 
@@ -209,6 +219,8 @@ void OptionPage::OptionChoice(PageSection section, const wxString &name, const w
 			int val = opt->GetInt();
 			cb->Select(val < (int)choices.size() ? val : 0);
 			cb->Bind(wxEVT_COMBOBOX, IntCBUpdater(opt_name, parent));
+			restorable_options.push_back({opt_name,
+				[cb](agi::OptionValue const& value) { cb->SetSelection(value.GetInt()); }});
 			break;
 		}
 		case agi::OptionType::String: {
@@ -221,12 +233,36 @@ void OptionPage::OptionChoice(PageSection section, const wxString &name, const w
 			else if (!choices.empty())
 				cb->SetSelection(0);
 			cb->Bind(wxEVT_COMBOBOX, StringChoiceUpdater(opt_name, parent, choices));
+			restorable_options.push_back({opt_name, [cb, translate](agi::OptionValue const& value) {
+				wxString selection = to_wx(value.GetString());
+				if (translate) selection = wxGetTranslation(selection);
+				cb->SetStringSelection(selection);
+			}});
 			break;
 		}
 
 		default:
 			throw agi::InternalError("Unsupported type");
 	}
+}
+
+void OptionPage::AddRestoreDefaultsButton() {
+	auto content_sizer = sizer;
+	sizer = new wxBoxSizer(wxVERTICAL);
+	sizer->Add(content_sizer, wxSizerFlags().Expand());
+
+	auto button = new wxButton(this, -1, _("Restore default colors"));
+	sizer->Add(button, wxSizerFlags().CenterHorizontal().Border(wxTOP, 5));
+	button->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<std::unique_ptr<agi::OptionValue>> default_values;
+		default_values.reserve(restorable_options.size());
+		for (auto const& option : restorable_options) {
+			auto default_value = OPT_GET(option.name)->CloneDefault();
+			option.update_control(*default_value);
+			default_values.push_back(std::move(default_value));
+		}
+		parent->SetOptionsImmediately(std::move(default_values));
+	});
 }
 
 PageSection OptionPage::PageSizer(wxString name) {

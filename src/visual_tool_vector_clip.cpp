@@ -26,6 +26,7 @@
 #include "libresrc/libresrc.h"
 #include "options.h"
 #include "selection_controller.h"
+#include "vector3d.h"
 #include "video_display.h"
 #include "video_controller.h"
 #include "video_frame.h"
@@ -358,13 +359,6 @@ namespace {
 		spline.clear();
 		spline.insert(spline.end(), rebuilt.begin(), rebuilt.end());
 		return true;
-	}
-
-	Vector2D rotate_point(Vector2D point, float angle) {
-		float sine = std::sin(angle);
-		float cosine = std::cos(angle);
-		return Vector2D(point.X() * cosine - point.Y() * sine,
-			point.X() * sine + point.Y() * cosine);
 	}
 
 	template<typename Func>
@@ -3320,21 +3314,64 @@ void VisualToolVectorClip::Commit(wxString message) {
 }
 
 Vector2D VisualToolVectorClip::DrawingToScreen(Vector2D point) const {
+	point = Vector2D(point.X() + point.Y() * drawing_shear.X(),
+		point.X() * drawing_shear.Y() + point.Y());
 	point = point + drawing_alignment_shift;
 	point = point * (drawing_scale / 100.f);
 	point = point + drawing_pos - drawing_org;
-	point = rotate_point(point, -drawing_rotation);
-	return FromScriptCoords(point + drawing_org);
+
+	Vector3D turned(point);
+	turned = turned.RotateZ(-drawing_rotation);
+	turned = turned.RotateX(-drawing_rotation_x);
+	turned = turned.RotateY(drawing_rotation_y);
+	float screen_z = 312.5f;
+	if (std::isfinite(layout_res.Y()) && std::abs(layout_res.Y()) > 1e-6f)
+		screen_z *= script_res.Y() / layout_res.Y();
+	float depth = turned.Z() + screen_z;
+	if (std::isfinite(depth) && std::abs(depth) > 1e-6f)
+		turned = turned * (screen_z / depth);
+	return FromScriptCoords(turned.XY() + drawing_org);
 }
 
 Vector2D VisualToolVectorClip::ScreenToAlignedDrawing(Vector2D point) const {
-	point = ToScriptCoords(point) - drawing_org;
-	point = rotate_point(point, drawing_rotation);
-	point = point - drawing_pos + drawing_org;
+	Vector2D projected = ToScriptCoords(point) - drawing_org;
+	float screen_z = 312.5f;
+	if (std::isfinite(layout_res.Y()) && std::abs(layout_res.Y()) > 1e-6f)
+		screen_z *= script_res.Y() / layout_res.Y();
+
+	// The projected point lies on the ray from (0, 0, -screen_z) through the
+	// screen. Intersect that ray with the line's rotated z=0 plane, then undo
+	// the rotations in reverse order.
+	Vector3D normal(0.f, 0.f, 1.f);
+	normal = normal.RotateZ(-drawing_rotation);
+	normal = normal.RotateX(-drawing_rotation_x);
+	normal = normal.RotateY(drawing_rotation_y);
+	float denominator = normal.X() * projected.X() + normal.Y() * projected.Y() +
+		normal.Z() * screen_z;
+	Vector3D turned(projected);
+	if (std::isfinite(denominator) && std::abs(denominator) > 1e-6f) {
+		float along_ray = normal.Z() * screen_z / denominator;
+		turned = Vector3D(projected * along_ray, screen_z * (along_ray - 1.f));
+	}
+	turned = turned.RotateY(-drawing_rotation_y);
+	turned = turned.RotateX(drawing_rotation_x);
+	turned = turned.RotateZ(drawing_rotation);
+	point = turned.XY() - drawing_pos + drawing_org;
 	Vector2D safe_scale(
 		std::abs(drawing_scale.X()) < 0.0001f ? 1.f : drawing_scale.X() / 100.f,
 		std::abs(drawing_scale.Y()) < 0.0001f ? 1.f : drawing_scale.Y() / 100.f);
-	return point / safe_scale;
+	point = point / safe_scale;
+
+	// Encoding works with alignment-adjusted drawing coordinates. Remove the
+	// alignment only while undoing the lean, then put it back for EncodeDrawing.
+	Vector2D leaned = point - drawing_alignment_shift;
+	float determinant = 1.f - drawing_shear.X() * drawing_shear.Y();
+	if (std::isfinite(determinant) && std::abs(determinant) > 1e-6f)
+		point = Vector2D((leaned.X() - drawing_shear.X() * leaned.Y()) / determinant,
+			(leaned.Y() - drawing_shear.Y() * leaned.X()) / determinant);
+	else
+		point = leaned;
+	return point + drawing_alignment_shift;
 }
 
 void VisualToolVectorClip::TransformSplineToScreen() {
@@ -3805,9 +3842,14 @@ void VisualToolVectorClip::DoRefresh() {
 		if (!drawing_org)
 			drawing_org = drawing_pos;
 		GetLineScale(active_line, drawing_scale);
+		float shear_x, shear_y;
+		GetLineShear(active_line, shear_x, shear_y);
+		drawing_shear = Vector2D(shear_x, shear_y);
 		float rotation_x, rotation_y, rotation_z;
 		GetLineRotation(active_line, rotation_x, rotation_y, rotation_z);
 		drawing_rotation = rotation_z * 3.14159265358979323846f / 180.f;
+		drawing_rotation_x = rotation_x * 3.14159265358979323846f / 180.f;
+		drawing_rotation_y = rotation_y * 3.14159265358979323846f / 180.f;
 		TransformSplineToScreen();
 		inverse = false;
 	}

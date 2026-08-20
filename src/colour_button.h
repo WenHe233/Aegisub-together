@@ -43,6 +43,8 @@ public:
 
 	/// Get the currently selected color
 	agi::Color GetColor() { return colour; }
+	/// Set the displayed color without emitting a change event
+	void SetColor(agi::Color color);
 };
 
 struct ColorValidator final : public wxValidator {

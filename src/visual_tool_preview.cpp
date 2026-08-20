@@ -44,8 +44,9 @@ namespace {
 			using Kind = VisualToolPreviewInterface::ControlKind;
 			using Style = VisualToolPreviewInterface::ControlStyle;
 			if (control.kind == Kind::Undo || control.kind == Kind::Redo) return 0;
-			if (control.style == Style::Accept || control.style == Style::Cancel) return 1;
-			return 2;
+			if (control.before_accept) return 1;
+			if (control.style == Style::Accept || control.style == Style::Cancel) return 2;
+			return 3;
 		};
 		std::stable_sort(page.controls.begin(), page.controls.end(),
 			[&](auto const& left, auto const& right) {
@@ -385,6 +386,7 @@ VisualToolPreviewBar::VisualToolPreviewBar(wxWindow *parent)
 	Bind(wxEVT_LEAVE_WINDOW, &VisualToolPreviewBar::OnMouseLeave, this);
 	Bind(wxEVT_LEFT_DOWN, &VisualToolPreviewBar::OnLeftDown, this);
 	Bind(wxEVT_LEFT_UP, &VisualToolPreviewBar::OnLeftUp, this);
+	Bind(wxEVT_MOUSEWHEEL, &VisualToolPreviewBar::OnMouseWheel, this);
 	Bind(wxEVT_SIZE, &VisualToolPreviewBar::OnSize, this);
 	icon_size_connection = OPT_SUB("App/Toolbar Icon Size", [this] {
 		RefreshFromSource();
@@ -417,6 +419,7 @@ void VisualToolPreviewBar::Attach(VisualToolPreviewInterface *new_source) {
 	source = new_source;
 	hovered_id = 0;
 	dragging_id = 0;
+	dragging_track = wxRect();
 	RefreshFromSource();
 }
 
@@ -431,6 +434,7 @@ void VisualToolPreviewBar::Detach(VisualToolPreviewInterface *old_source) {
 	message_bounds = wxRect();
 	hovered_id = 0;
 	dragging_id = 0;
+	dragging_track = wxRect();
 	RefreshFromSource();
 }
 
@@ -496,10 +500,15 @@ void VisualToolPreviewBar::RebuildLayout(wxDC& dc, int width) {
 			dc.GetTextExtent(control.label).GetWidth() +
 				(control.kind == VisualToolPreviewInterface::ControlKind::Toggle ? Dip(28) :
 				 control.dropdown ? Dip(30) : Dip(20)) + (control.swatch.IsOk() ? Dip(18) : 0);
+		int slider_value_width = 0;
 		if (control.kind == VisualToolPreviewInterface::ControlKind::Slider) {
 			dc.SetFont(regular);
+			slider_value_width = dc.GetTextExtent(control.value_text).GetWidth();
+			if (!control.value_text_sample.empty())
+				slider_value_width = std::max(slider_value_width,
+					dc.GetTextExtent(control.value_text_sample).GetWidth());
 			int content_width = dc.GetTextExtent(control.label).GetWidth() +
-				dc.GetTextExtent(control.value_text).GetWidth() + Dip(55);
+				slider_value_width + Dip(55);
 			item_width = std::max(item_width, content_width);
 		}
 		item_width = std::min(item_width, std::max(bar_control_height,
@@ -510,9 +519,8 @@ void VisualToolPreviewBar::RebuildLayout(wxDC& dc, int width) {
 		if (control.kind == VisualToolPreviewInterface::ControlKind::Slider) {
 			dc.SetFont(regular);
 			int label_width = dc.GetTextExtent(control.label).GetWidth();
-			int value_width = dc.GetTextExtent(control.value_text).GetWidth();
 			int track_left = bounds.x + label_width + Dip(13);
-			int track_right = bounds.GetRight() - value_width - Dip(14);
+			int track_right = bounds.GetRight() - slider_value_width - Dip(14);
 			track = wxRect(track_left, bounds.y, std::max(Dip(24), track_right - track_left),
 				bounds.height);
 		}
@@ -543,6 +551,7 @@ void VisualToolPreviewBar::RefreshFromSource() {
 		controls.clear();
 		message_bounds = wxRect();
 		hovered_id = 0;
+		dragging_track = wxRect();
 		SetCursor(wxCursor(wxCURSOR_ARROW));
 		UpdateHeight(0);
 		if (IsShown()) {
@@ -594,6 +603,8 @@ void VisualToolPreviewBar::OnLeftDown(wxMouseEvent& event) {
 		if (found.control->id != id ||
 			found.control->kind != VisualToolPreviewInterface::ControlKind::Slider) continue;
 		dragging_id = id;
+		dragging_control = *found.control;
+		dragging_track = found.track;
 		if (!HasCapture()) CaptureMouse();
 		UpdateSlider(id, event.GetX());
 		return;
@@ -609,23 +620,59 @@ void VisualToolPreviewBar::OnLeftDown(wxMouseEvent& event) {
 void VisualToolPreviewBar::OnLeftUp(wxMouseEvent& event) {
 	if (!dragging_id) return;
 	int id = dragging_id;
-	dragging_id = 0;
 	UpdateSlider(id, event.GetX(), true);
+	dragging_id = 0;
+	dragging_track = wxRect();
 	if (HasCapture()) ReleaseMouse();
 }
 
 void VisualToolPreviewBar::UpdateSlider(int id, int x, bool final) {
 	if (!source) return;
-	for (auto const& found : controls) {
-		if (found.control->id != id || found.track.width <= 0) continue;
-		auto const control = *found.control;
-		double ratio = std::clamp((x - found.track.x) /
-			static_cast<double>(std::max(1, found.track.width)), 0.0, 1.0);
+	auto update = [&](VisualToolPreviewInterface::Control const& control, wxRect const& track) {
+		double ratio = std::clamp((x - track.x) /
+			static_cast<double>(std::max(1, track.width)), 0.0, 1.0);
 		double value = control.minimum + ratio * (control.maximum - control.minimum);
 		if (control.step > 0.0) value = std::round(value / control.step) * control.step;
 		source->ActivateValue(id, std::clamp(value, control.minimum, control.maximum), final);
+	};
+	// Updating a preview value can rebuild the page and slightly change the track geometry
+	// (for example when the value text gains a digit). Keep the geometry captured on mouse-down
+	// for the whole gesture, including mouse-up, so the last event cannot move the value again.
+	if (dragging_id == id && dragging_track.width > 0) {
+		update(dragging_control, dragging_track);
 		return;
 	}
+	for (auto const& found : controls) {
+		if (found.control->id != id || found.track.width <= 0) continue;
+		update(*found.control, found.track);
+		return;
+	}
+}
+
+void VisualToolPreviewBar::OnMouseWheel(wxMouseEvent& event) {
+	if (!source || event.GetWheelAxis() != wxMOUSE_WHEEL_VERTICAL) {
+		event.Skip();
+		return;
+	}
+	int id = HitTest(event.GetPosition());
+	for (auto const& found : controls) {
+		if (found.control->id != id ||
+			found.control->kind != VisualToolPreviewInterface::ControlKind::Slider) continue;
+		auto control = *found.control;
+		int rotation = event.GetWheelRotation();
+		int delta = event.GetWheelDelta();
+		if (!rotation || !delta) return;
+		int notches = rotation / delta;
+		if (!notches) notches = rotation > 0 ? 1 : -1;
+		double step = control.step > 0.0 ? control.step :
+			(control.maximum - control.minimum) / 100.0;
+		double value = std::clamp(control.value + notches * step,
+			control.minimum, control.maximum);
+		if (control.step > 0.0) value = std::round(value / control.step) * control.step;
+		source->ActivateValue(id, value, true);
+		return;
+	}
+	event.Skip();
 }
 
 void VisualToolPreviewBar::OnSize(wxSizeEvent& event) {

@@ -167,8 +167,11 @@ class VisualToolVectorClip : public VisualTool<VisualToolVectorClipDraggableFeat
 	Vector2D drawing_pos;
 	Vector2D drawing_org;
 	Vector2D drawing_scale = Vector2D(100.f, 100.f);
+	Vector2D drawing_shear;
 	Vector2D drawing_alignment_shift;
 	float drawing_rotation = 0.f;
+	float drawing_rotation_x = 0.f;
+	float drawing_rotation_y = 0.f;
 	int drawing_scale_level = 1;
 
 	/// Whether the mask editor has a shape to work on. The clip tool always has one:

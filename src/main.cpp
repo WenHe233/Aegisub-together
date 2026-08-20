@@ -63,6 +63,7 @@
 #include "version.h"
 #include "xdg_desktop_portal_utils.h"
 
+#include <libaegisub/color.h>
 #include <libaegisub/dispatch.h>
 #include <libaegisub/format_path.h>
 #include <libaegisub/fs.h>
@@ -97,6 +98,95 @@ static const char *LastStartupState = nullptr;
 #else
 #define StartupLog(a) LastStartupState = a
 #endif
+
+namespace {
+void MigrateDarkGridPalette() {
+	auto *migrated = OPT_SET("App/Dark Grid Palette Migrated");
+	if (migrated->GetBool()) return;
+
+	struct ColourMigration {
+		const char *option;
+		agi::Color old_value;
+		agi::Color new_value;
+	};
+
+	ColourMigration const migrations[] = {
+		{"Colour/Dark/Subtitle Grid/Background/Comment", {38, 43, 54}, {216, 222, 245}},
+		{"Colour/Dark/Subtitle Grid/Background/Inframe", {53, 50, 37}, {255, 253, 234}},
+		{"Colour/Dark/Subtitle Grid/Background/Selected Comment", {38, 56, 58}, {211, 238, 238}},
+		{"Colour/Dark/Subtitle Grid/Background/Selection", {36, 70, 55}, {206, 255, 231}},
+		{"Colour/Dark/Subtitle Grid/Background/Open Fold", {43, 43, 43}, {235, 235, 235}},
+		{"Colour/Dark/Subtitle Grid/Background/Closed Fold", {54, 54, 54}, {200, 200, 200}},
+		{"Colour/Dark/Subtitle Grid/Background/Image Mask", {58, 43, 61}, {241, 222, 244}},
+		{"Colour/Dark/Subtitle Grid/Collision", {255, 107, 107}, {255, 0, 0}},
+		{"Colour/Dark/Subtitle Grid/CPS Error", {255, 107, 107}, {255, 0, 0}},
+		{"Colour/Dark/Subtitle Grid/Header", {41, 72, 90}, {165, 207, 231}},
+		{"Colour/Dark/Subtitle Grid/Left Column", {45, 70, 50}, {196, 236, 201}},
+		{"Colour/Dark/Subtitle Grid/Lines", {85, 85, 85}, {190, 190, 190}},
+		{"Colour/Dark/Subtitle Grid/Selection", {215, 215, 215}, {0, 0, 0}}
+	};
+
+	for (auto const& migration : migrations) {
+		auto *option = OPT_SET(migration.option);
+		if (option->GetColor() == migration.old_value)
+			option->SetColor(migration.new_value);
+	}
+
+	migrated->SetBool(true);
+}
+
+void MigrateDarkGridPaletteRefinement() {
+	auto *migrated = OPT_SET("App/Dark Grid Palette Refinement Migrated");
+	if (migrated->GetBool()) return;
+
+	struct ColourMigration {
+		const char *option;
+		agi::Color old_value;
+		agi::Color new_value;
+	};
+
+	ColourMigration const migrations[] = {
+		{"Colour/Dark/Subtitle Grid/Active Border", {255, 91, 239}, {196, 96, 187}},
+		{"Colour/Dark/Subtitle Grid/Background/Comment", {216, 222, 245}, {196, 202, 220}},
+		{"Colour/Dark/Subtitle Grid/Background/Selection", {206, 255, 231}, {44, 44, 44}},
+		{"Colour/Dark/Subtitle Grid/Selection", {0, 0, 0}, {215, 215, 215}}
+	};
+
+	for (auto const& migration : migrations) {
+		auto *option = OPT_SET(migration.option);
+		if (option->GetColor() == migration.old_value)
+			option->SetColor(migration.new_value);
+	}
+
+	migrated->SetBool(true);
+}
+
+void MigrateDarkComfortablePalette() {
+	auto *migrated = OPT_SET("App/Dark Comfortable Palette Migrated");
+	if (migrated->GetBool()) return;
+
+	struct ColourMigration {
+		const char *option;
+		agi::Color old_value;
+		agi::Color new_value;
+	};
+
+	ColourMigration const migrations[] = {
+		{"Colour/Dark/Subtitle Grid/Background/Image Mask", {189, 142, 192}, {184, 164, 190}},
+		{"Colour/Dark/Subtitle Grid/CPS Foreground", {255, 255, 255}, {232, 230, 225}},
+		{"Colour/Dark/UI/Selection Text", {255, 255, 255}, {232, 230, 225}},
+		{"Colour/Dark/UI/Text", {225, 225, 225}, {216, 214, 209}}
+	};
+
+	for (auto const& migration : migrations) {
+		auto *option = OPT_SET(migration.option);
+		if (option->GetColor() == migration.old_value)
+			option->SetColor(migration.new_value);
+	}
+
+	migrated->SetBool(true);
+}
+}
 
 void AegisubApp::OnAssertFailure(const wxChar *file, int line, const wxChar *func, const wxChar *cond, const wxChar *msg) {
 	LOG_A("wx/assert") << wxString(file) << ":" << line << ":" << wxString(func) << "() " << wxString(cond) << ": " << wxString(msg);
@@ -181,7 +271,6 @@ bool AegisubApp::OnInit() {
 	});
 
 	config::path = new agi::Path;
-	crash_writer::Initialize(config::path->Decode("?user"));
 
 	agi::log::log = new agi::log::LogSink;
 #ifdef _DEBUG
@@ -200,12 +289,12 @@ bool AegisubApp::OnInit() {
 		// Local config, make ?user mean ?data so all user settings are placed in install dir
 		config::path->SetToken("?user", config::path->Decode("?data"));
 		config::path->SetToken("?local", config::path->Decode("?data"));
-		crash_writer::Initialize(config::path->Decode("?user"));
 	} catch (agi::fs::FileSystemError const&) {
 		// File doesn't exist or we can't read it
 		// Might be worth displaying an error in the second case
 	}
 #endif
+	crash_writer::Initialize(config::path->Decode("?user"));
 
 	StartupLog("Create log writer");
 	auto path_log = config::path->Decode("?user/log/");
@@ -239,6 +328,10 @@ bool AegisubApp::OnInit() {
 		}
 	}
 #endif
+
+	MigrateDarkGridPalette();
+	MigrateDarkGridPaletteRefinement();
+	MigrateDarkComfortablePalette();
 
 #if wxCHECK_VERSION(3, 3, 0)
 	bool dark_mode = OPT_GET("App/Dark Mode")->GetBool();

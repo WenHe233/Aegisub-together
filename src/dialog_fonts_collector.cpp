@@ -23,6 +23,7 @@
 #include "include/aegisub/context.h"
 #include "libresrc/libresrc.h"
 #include "options.h"
+#include "theme.h"
 #include "utils.h"
 #include "value_event.h"
 
@@ -241,6 +242,8 @@ DialogFontsCollector::DialogFontsCollector(agi::Context *c)
 
 	mode = static_cast<FcMode>(mid<int>(0, OPT_GET("Tool/Fonts Collector/Action")->GetInt(), std::size(modes)));
 	collection_mode = new wxRadioBox(this, -1, _("Action"), wxDefaultPosition, wxDefaultSize, std::size(modes), modes, 1);
+	if (app_theme::IsDark())
+		collection_mode->SetForegroundColour(app_theme::Colour("UI/Text"));
 	collection_mode->SetSelection(static_cast<int>(mode));
 
 	if (c->path->Decode("?script") == "?script")
@@ -266,9 +269,28 @@ DialogFontsCollector::DialogFontsCollector(agi::Context *c)
 	collection_log->SetWrapMode(wxSTC_WRAP_WORD);
 	collection_log->SetMarginWidth(1, 0);
 	collection_log->SetReadOnly(true);
-	collection_log->StyleSetForeground(1, wxColour(0, 200, 0));
-	collection_log->StyleSetForeground(2, wxColour(200, 0, 0));
-	collection_log->StyleSetForeground(3, wxColour(200, 100, 0));
+	if (app_theme::IsDark()) {
+		auto const background = app_theme::Colour("UI/Row");
+		auto const foreground = app_theme::Colour("UI/Text");
+		collection_log->StyleSetBackground(wxSTC_STYLE_DEFAULT, background);
+		collection_log->StyleSetForeground(wxSTC_STYLE_DEFAULT, foreground);
+		collection_log->StyleClearAll();
+		collection_log->SetBackgroundColour(background);
+		collection_log->SetForegroundColour(foreground);
+		collection_log->SetCaretForeground(foreground);
+		collection_log->SetSelBackground(true, app_theme::Colour("UI/Selection"));
+		collection_log->SetSelForeground(true, app_theme::Colour("UI/Selection Text"));
+		collection_log->StyleSetForeground(1, wxColour(169, 214, 181));
+		collection_log->StyleSetForeground(2, wxColour(230, 160, 160));
+		collection_log->StyleSetForeground(3, wxColour(231, 201, 143));
+		for (int style = 0; style <= 3; ++style)
+			collection_log->StyleSetBackground(style, background);
+	}
+	else {
+		collection_log->StyleSetForeground(1, wxColour(0, 200, 0));
+		collection_log->StyleSetForeground(2, wxColour(200, 0, 0));
+		collection_log->StyleSetForeground(3, wxColour(200, 100, 0));
+	}
 	log_sizer->Add(collection_log, wxSizerFlags().Border());
 
 	wxStdDialogButtonSizer *button_sizer = CreateStdDialogButtonSizer(wxOK | wxCANCEL | wxHELP);
