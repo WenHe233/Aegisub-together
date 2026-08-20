@@ -31,6 +31,7 @@
 #include "../selection_controller.h"
 #include "../project.h"
 #include "../typesetting_transform.h"
+#include "../video_controller.h"
 #include "../video_display.h"
 #include "../visual_tool_transform.h"
 #include "../visual_tool_textbox.h"
@@ -164,6 +165,11 @@ struct flip_command : public Command {
 
 	void operator()(agi::Context *c) override {
 		if (RefusedForMask(c)) return;
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolTransform))) {
+			// A transform preview owns replacement rows in the asynchronous subtitle renderer.
+			// Tear it down before mirroring changes the real event list.
+			cmd::call("video/tool/cross", c);
+		}
 		typesetting::ShapeEditor editor(c);
 		if (!editor.ok()) {
 			if (!editor.refusals().empty()) {
@@ -179,8 +185,16 @@ struct flip_command : public Command {
 		// would only make the drawing longer.
 		editor.Build(typesetting::FlipMap(editor.Box().centre, Horizontal), false);
 		editor.Apply();
+		auto const& added = editor.applied();
+		if (!added.empty()) {
+			Selection selection(added.begin(), added.end());
+			c->selectionController->SetSelectionAndActive(std::move(selection), added.front());
+		}
 		c->ass->Commit(Horizontal ? _("flip horizontally") : _("flip vertically"),
-			AssFile::COMMIT_DIAG_FULL);
+			AssFile::COMMIT_DIAG_ADDREM | AssFile::COMMIT_DIAG_FULL);
+		// A full canonical reload is intentional here: the operation can replace one source
+		// row with several drawing rows, which must supersede every queued transform preview.
+		c->videoController->ReloadSubtitles();
 	}
 };
 

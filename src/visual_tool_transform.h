@@ -61,7 +61,8 @@ enum class VisualToolTransformAction {
 	MaintainDecor,
 	RecalcBlur,
 	RecalcClip,
-	AutoPerspectiveSize
+	AutoPerspectiveSize,
+	AutoPerspectiveKeepOriginalSize
 };
 
 /// Bend or distort the selected drawings by dragging handles over the video.
@@ -80,6 +81,9 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	bool auto_perspective = false;
 	/// Uniform percentage applied to the whole selection in the target's perspective plane.
 	double auto_perspective_size = 100.0;
+	/// Keep each line's authored scale while applying the target plane's perspective. This
+	/// deliberately rules out the percentage slider: the two controls answer the same question.
+	bool auto_perspective_keep_original_size = false;
 	/// The rectangle the selection is proportioned by, as four points of its own. Seeded from
 	/// the active line's shape and then left to the user, who can drag them: no rectangle fits
 	/// every shape, and the one the fit is measured from is worth being able to say exactly.
@@ -238,6 +242,13 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Where the mouse was when a move or a rotation began.
 	Vector2D gesture_start;
 	float gesture_start_angle = 0;
+	enum class FreeHoldMode { None, Move, Rotate };
+	FreeHoldMode free_hold_mode = FreeHoldMode::None;
+
+	/// Dragging empty space around the arch/warp handles selects every point inside the box.
+	bool box_selecting = false;
+	bool box_select_add = false;
+	Vector2D box_select_start;
 
 	/// Whether anything has been dragged yet, which is what makes Apply worth pressing.
 	bool touched = false;
@@ -493,10 +504,12 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	void DrawAutoPerspectivePath();
 	bool AddAutoPerspectivePoint(Vector2D point);
 	/// The free transform's own handles: plain outlines rather than the crossed blocks the
-	/// other tools use, because there are sixteen of them and they sit close together.
+	/// other tools use, because they sit close together around the box.
 	void DrawFreeHandles();
+	void DrawFreeRotationGuide();
+	bool FreePointInside(Vector2D point) const;
 	/// One corner: a small empty square, which is what a corner looks like in every mode.
-	void DrawCorner(Vector2D at, bool current);
+	void DrawCorner(Vector2D at, bool current, bool selected = false);
 	/// The handles of the modes that are not the free transform. The corners are drawn as
 	/// corners; everything else is left to the framework, which already draws it well.
 	void DrawShapeHandles();
@@ -511,6 +524,7 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 
 	bool InitializeHold() override;
 	void UpdateHold() override;
+	void EndHold() override;
 
 	void DoRefresh() override;
 	void OnLineChanged() override;

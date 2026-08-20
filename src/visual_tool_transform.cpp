@@ -1227,7 +1227,7 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 			// every line around its own anchor would change the glyphs but leave the distances
 			// between rows behind; doing it around the common box centre keeps the whole layout
 			// proportional, and mapping afterwards makes it follow the target perspective.
-			if (auto_perspective) {
+			if (auto_perspective && !auto_perspective_keep_original_size) {
 				float factor = static_cast<float>(auto_perspective_size / 100.0);
 				corner = box.centre + (corner - box.centre) * factor;
 			}
@@ -1249,6 +1249,23 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 		if (!solved.ok)
 			solved = typesetting::SolvePerspective(corners, original.align,
 				original.box_first, original.box_second, script_res / layout_res, Vector2D());
+		if (solved.ok && auto_perspective_keep_original_size) {
+			// The four target points still supply the plane and its perspective, but the
+			// authored scales supply its size. Shifting pos and org together is an exact
+			// screen translation, so the smaller/larger result stays centred on the target.
+			solved.scale = original.scale;
+			Vector2D kept_corners[4];
+			typesetting::PerspectiveQuad(solved, original.align, original.box_first,
+				original.box_second, script_res / layout_res, kept_corners);
+			Vector2D wanted_centre, kept_centre;
+			for (int i = 0; i < 4; ++i) {
+				wanted_centre = wanted_centre + corners[i];
+				kept_centre = kept_centre + kept_corners[i];
+			}
+			Vector2D shift = (wanted_centre - kept_centre) / 4.f;
+			solved.pos = solved.pos + shift;
+			solved.org = solved.org + shift;
+		}
 		if (solved.ok) {
 			out.perspective = true;
 			out.pos = solved.pos;
@@ -1703,7 +1720,7 @@ std::string VisualToolTransform::MapClip(TagLine::Clip const& clip) const {
 void VisualToolTransform::HandleRole(int index, Vector2D& grabbed, Vector2D& anchor,
                                     int& role) const {
 	// Four corners to size it both ways, then the middles of the four sides to size it one
-	// way, then a turning handle beyond each corner, then a leaning handle beyond each side.
+	// way, then a leaning handle beyond each side. Turning is done outside the box.
 	// What a handle drags is one point of the box; what stays is the point across from it.
 	static const Vector2D corners[4] = {
 		Vector2D(-1.f, -1.f), Vector2D(1.f, -1.f), Vector2D(1.f, 1.f), Vector2D(-1.f, 1.f)
@@ -1712,10 +1729,10 @@ void VisualToolTransform::HandleRole(int index, Vector2D& grabbed, Vector2D& anc
 		Vector2D(0.f, -1.f), Vector2D(1.f, 0.f), Vector2D(0.f, 1.f), Vector2D(-1.f, 0.f)
 	};
 
-	role = index < 8 ? 0 : index < 12 ? 1 : 2;
+	role = index < 8 ? 0 : index < 12 ? 2 : 3;
 	Vector2D unit = index < 4 ? corners[index] :
 		index < 8 ? sides[index - 4] :
-		index < 12 ? corners[index - 8] : sides[index - 12];
+		index < 12 ? sides[index - 8] : sides[index - 12];
 	grabbed = Vector2D(unit.X() * box.half.X(), unit.Y() * box.half.Y());
 	anchor = Vector2D(-unit.X() * box.half.X(), -unit.Y() * box.half.Y());
 }
@@ -2108,15 +2125,15 @@ void VisualToolTransform::MoveHandle(int index, Vector2D to) {
 				break;
 			}
 
-			if (role == 1) {
-				// Measured from the middle of the box, which is also what the box turns
-				// about - so the middle itself does not move while it turns. The text turns
-				// anticlockwise on screen, the other way round from how the screen's own
-				// angle grows, hence the subtraction.
-				Vector2D from = to - GesturePivot();
-				if (from.Len() < 1e-3) break;
-				double now = std::atan2(from.Y(), from.X()) * 180.0 / pi;
-				gesture_angle = (float)(gesture_start_angle - now);
+			if (role == 3) {
+				// Move the entire selection on the screen axis named by the handle's arrow:
+				// top/bottom are Y, left/right are X.
+				Vector2D moved = to - gesture_start;
+				bool vertical = index == 12 || index == 14;
+				Vector2D wanted = vertical ? Vector2D(0.f, moved.Y()) :
+					Vector2D(moved.X(), 0.f);
+				TransformMatrix2 inverse;
+				gesture_move = Invert(frame_linear, inverse) ? ApplyMatrix(inverse, wanted) : wanted;
 				break;
 			}
 
@@ -2185,7 +2202,6 @@ void VisualToolTransform::MoveHandle(int index, Vector2D to) {
 				// A corner takes its two direction handles with it, so the shape swings
 				// about the corner instead of the boundary snapping straight.
 				typesetting::WarpMoveCorner(net, index, to - net.corner[index]);
-				SyncFeatures();
 			}
 			else net.tangent[index - 4] = to;
 			break;
@@ -2227,12 +2243,10 @@ void VisualToolTransform::PlaceFeatures() {
 		// handle resting on one cannot steal the click.
 		bool is_corner = mode == VisualToolTransformMode::Warp && i < 4;
 		if (mode == VisualToolTransformMode::Free) {
-			// Squares to size it, small circles on the sides, triangles to turn it, small
-			// squares beyond the sides to lean it.
-			feature->type = i < 4 ? DRAG_BIG_SQUARE :
-				i < 8 ? DRAG_SMALL_CIRCLE :
-				i < 12 ? DRAG_BIG_TRIANGLE : DRAG_SMALL_SQUARE;
-			feature->layer = i < 4 ? 1 : 0;
+			// Squares to size it and smaller squares beyond the sides to lean it. Rotation
+			// owns the otherwise empty area outside the box, rather than four extra handles.
+			feature->type = i < 8 ? DRAG_BIG_SQUARE : DRAG_SMALL_SQUARE;
+			feature->layer = i < 4 || i >= 12 ? 1 : 0;
 		}
 		else if (mode == VisualToolTransformMode::Distort) {
 			// Corners, so they look and catch the mouse the way the free transform's corners do.
@@ -2287,7 +2301,12 @@ void VisualToolTransform::SyncFeatures() {
 		if (mode == VisualToolTransformMode::Free && index >= 8) {
 			Vector2D centre = FromScriptCoords(MapPoint(box.centre));
 			Vector2D away = at - centre;
-			if (away.Len() > 1e-3) at = at + away.Unit() * (index < 12 ? 16.f : 28.f);
+			if (away.Len() > 1e-3) at = at + away.Unit() * 28.f;
+			if (index >= 12 && away.Len() > 1e-3) {
+				Vector2D tangent(-away.Y(), away.X());
+				if (index == 13 || index == 14) tangent = tangent * -1.f;
+				at = at + tangent.Unit() * 16.f;
+			}
 		}
 		// The warp's move handle sits clear of the bottom edge, outwards from the middle of the
 		// patch - so it stays off the shape whichever way round the shape lies.
@@ -2594,6 +2613,8 @@ wxString VisualToolTransform::LabelFor(VisualToolTransformAction action) const {
 		case VisualToolTransformAction::MaintainDecor: return _("maintain bord & shad");
 		case VisualToolTransformAction::RecalcClip: return _("recalculate clip");
 		case VisualToolTransformAction::AutoPerspectiveSize: return _("Size");
+		case VisualToolTransformAction::AutoPerspectiveKeepOriginalSize:
+			return _("keep original size");
 		default: return wxString();
 	}
 }
@@ -2625,12 +2646,16 @@ void VisualToolTransform::UpdatePreviewInterface() const {
 			Interface::ControlStyle::Cancel);
 		auto& size = add(VisualToolTransformAction::AutoPerspectiveSize,
 			Interface::ControlKind::Slider);
+		size.enabled = touched && !auto_perspective_keep_original_size;
 		size.value = auto_perspective_size;
 		size.minimum = 25;
 		size.maximum = 200;
 		size.step = 1;
 		size.value_text = to_wx(agi::format("%.0f%%", auto_perspective_size));
 		size.width = 170;
+		add(VisualToolTransformAction::AutoPerspectiveKeepOriginalSize,
+			Interface::ControlKind::Toggle, Interface::ControlStyle::Neutral,
+			auto_perspective_keep_original_size);
 		wxString message = touched && auto_perspective_points.empty() ?
 			_("Redraw the 4 points.") : _("Draw 4 points.");
 		// Only worth saying when one line really is the measure of the others.
@@ -2689,7 +2714,9 @@ bool VisualToolTransform::ActionEnabled(VisualToolTransformAction action) const 
 			action == VisualToolTransformAction::Redo ? !redo_history.empty() :
 			action == VisualToolTransformAction::Apply ? touched :
 			action == VisualToolTransformAction::Cancel ? true :
-			action == VisualToolTransformAction::AutoPerspectiveSize ? touched : false;
+			action == VisualToolTransformAction::AutoPerspectiveSize ?
+				touched && !auto_perspective_keep_original_size :
+			action == VisualToolTransformAction::AutoPerspectiveKeepOriginalSize ? true : false;
 
 	switch (action) {
 		case VisualToolTransformAction::Undo: return !undo_history.empty();
@@ -2757,6 +2784,11 @@ void VisualToolTransform::Perform(VisualToolTransformAction action) {
 		case VisualToolTransformAction::RecalcClip:
 			recalc_clip = !recalc_clip;
 			Rebuild();
+			break;
+		case VisualToolTransformAction::AutoPerspectiveKeepOriginalSize:
+			auto_perspective_keep_original_size = !auto_perspective_keep_original_size;
+			if (touched) Rebuild();
+			else parent->Render();
 			break;
 		default: break;
 	}
@@ -2868,11 +2900,15 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 		DrawCorner(FromScriptCoords(point), false);
 }
 
-void VisualToolTransform::DrawCorner(Vector2D at, bool current) {
+void VisualToolTransform::DrawCorner(Vector2D at, bool current, bool selected) {
 	wxColour outline = to_wx(line_color_secondary_opt->GetColor());
 	wxColour active = to_wx(highlight_color_secondary_opt->GetColor());
-	gl.SetLineColour(current ? active : outline, 1.f, current ? 2 : 1);
-	gl.SetFillColour(*wxBLACK, 0.f);
+	bool soft_hover = mode == VisualToolTransformMode::Warp;
+	gl.SetLineColour(current || selected ? active : outline, 1.f,
+		selected || (current && !soft_hover) ? 2 : 1);
+	if (selected) gl.SetFillColour(active, .72f);
+	else if (current && soft_hover) gl.SetFillColour(active, .14f);
+	else gl.SetFillColour(*wxBLACK, 0.f);
 	gl.DrawRectangle(at - Vector2D(5.f, 5.f), at + Vector2D(5.f, 5.f));
 }
 
@@ -2884,6 +2920,7 @@ void VisualToolTransform::DrawShapeHandles() {
 	int index = 0;
 	for (auto& feature : features) {
 		bool current = &feature == active_feature;
+		bool selected = sel_features.count(&feature) != 0;
 		// The distort's four, and the warp's first four, are corners of the box. The warp's
 		// others steer its curves and the arch's bend its edges: those are not corners and are
 		// not drawn as any.
@@ -2892,10 +2929,14 @@ void VisualToolTransform::DrawShapeHandles() {
 		// The move handle is left to the framework: a big square is drawn as a box with a
 		// crosshair through it, which is what the drag tool's own \pos handle looks like - so
 		// the one handle that moves the shape looks like the tool that moves things.
-		if (corner) DrawCorner(feature.pos, current);
+		if (corner) DrawCorner(feature.pos, current, selected);
 		else {
-			gl.SetLineColour(outline, 1.f, 1);
-			gl.SetFillColour(current ? active_fill : base_fill, .3f);
+			bool soft_hover = mode == VisualToolTransformMode::Arch ||
+				mode == VisualToolTransformMode::Warp;
+			gl.SetLineColour(current || selected ? active_fill : outline, 1.f,
+				selected || (current && !soft_hover) ? 2 : 1);
+			gl.SetFillColour(current || selected ? active_fill : base_fill,
+				selected ? .85f : current ? (soft_hover ? .42f : .9f) : .3f);
 			feature.Draw(gl);
 		}
 		++index;
@@ -2913,35 +2954,12 @@ void VisualToolTransform::DrawFreeHandles() {
 		gl.SetFillColour(*wxBLACK, 0.f);
 
 		if (index < 8) {
-			// The corners and the sides both size the box, so they look alike: a small empty
-			// square, with nothing in it to read as a target.
 			DrawCorner(feature.pos, current);
 		}
 		else if (index < 12) {
-			// Turning: nearly a full circle with an arrow on the end of it, which is what a
-			// turn looks like everywhere else.
-			const int steps = 14;
-			const double sweep = 290.0;
-			Vector2D previous;
-			for (int step = 0; step <= steps; ++step) {
-				double radians = (step * sweep / steps - 45.0) * pi / 180.0;
-				Vector2D at = feature.pos + Vector2D((float)(std::cos(radians) * 6.0),
-				                                     (float)(std::sin(radians) * 6.0));
-				if (step) gl.DrawLine(previous, at);
-				previous = at;
-			}
-			// The arrow head, along the circle at the point it stopped.
-			double radians = (sweep - 45.0) * pi / 180.0;
-			Vector2D along((float)-std::sin(radians), (float)std::cos(radians));
-			Vector2D outward((float)std::cos(radians), (float)std::sin(radians));
-			gl.SetFillColour(current ? active : outline, .8f);
-			gl.DrawTriangle(previous + along * 4.f, previous + outward * 3.f - along * 2.f,
-			                previous - outward * 3.f - along * 2.f);
-		}
-		else {
 			// Leaning: a parallelogram, dropped the way the lean it holds goes, so it looks
 			// like what it does.
-			bool horizontal = index == 12 || index == 14;
+			bool horizontal = index == 8 || index == 10;
 			float lean = horizontal ? gesture_shear.X() : gesture_shear.Y();
 			// A lean of nothing would draw a square, which says nothing at all.
 			float tilt = std::clamp(lean, -1.f, 1.f);
@@ -2964,8 +2982,73 @@ void VisualToolTransform::DrawFreeHandles() {
 				gl.DrawLine(at + Vector2D(5.f, -5.f - slide), at + Vector2D(-5.f, -5.f + slide));
 			}
 		}
+		else {
+			// Positioning: the square and crosshair follow the drag tool's position handle,
+			// while the arrowheads say which single axis this instance moves on.
+			bool vertical = index == 12 || index == 14;
+			Vector2D axis = vertical ? Vector2D(0.f, 1.f) : Vector2D(1.f, 0.f);
+			Vector2D across(-axis.Y(), axis.X());
+			DrawCorner(feature.pos, current);
+			gl.DrawLine(feature.pos - axis * 3.f, feature.pos + axis * 3.f);
+			gl.SetFillColour(current ? active : outline, .85f);
+			gl.DrawTriangle(feature.pos - axis * 4.f,
+				feature.pos - axis + across * 2.f,
+				feature.pos - axis - across * 2.f);
+			gl.DrawTriangle(feature.pos + axis * 4.f,
+				feature.pos + axis + across * 2.f,
+				feature.pos + axis - across * 2.f);
+		}
 		++index;
 	}
+	gl.SetFillColour(*wxBLACK, 0.f);
+}
+
+bool VisualToolTransform::FreePointInside(Vector2D point) const {
+	Vector2D original[4], quad[4];
+	if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, original);
+	else box.Corners(original);
+	for (int i = 0; i < 4; ++i) quad[i] = MapPoint(original[i]);
+
+	int positive = 0, negative = 0;
+	for (int i = 0; i < 4; ++i) {
+		Vector2D edge = quad[(i + 1) % 4] - quad[i];
+		Vector2D reach = point - quad[i];
+		double side = edge.X() * reach.Y() - edge.Y() * reach.X();
+		if (side > 0) ++positive;
+		else if (side < 0) ++negative;
+	}
+	return !(positive && negative);
+}
+
+void VisualToolTransform::DrawFreeRotationGuide() {
+	if (!mouse_pos || mouse_pos.Y() < TopBarHeight() || active_feature) return;
+	if (free_hold_mode != FreeHoldMode::Rotate && FreePointInside(ToScriptCoords(mouse_pos))) return;
+
+	Vector2D pivot = FromScriptCoords(MapPoint(box.centre));
+	Vector2D reach = mouse_pos - pivot;
+	if (reach.Len() < 18.f) return;
+
+	wxColour colour = to_wx(highlight_color_secondary_opt->GetColor());
+	gl.SetLineColour(colour, .9f, 1);
+	gl.DrawLine(pivot, mouse_pos);
+
+	Vector2D icon = mouse_pos - reach.Unit() * 14.f;
+	const int steps = 12;
+	const double sweep = 285.0;
+	Vector2D previous;
+	for (int step = 0; step <= steps; ++step) {
+		double radians = (step * sweep / steps - 45.0) * pi / 180.0;
+		Vector2D at = icon + Vector2D((float)(std::cos(radians) * 6.0),
+			(float)(std::sin(radians) * 6.0));
+		if (step) gl.DrawLine(previous, at);
+		previous = at;
+	}
+	double radians = (sweep - 45.0) * pi / 180.0;
+	Vector2D along((float)-std::sin(radians), (float)std::cos(radians));
+	Vector2D outward((float)std::cos(radians), (float)std::sin(radians));
+	gl.SetFillColour(colour, .9f);
+	gl.DrawTriangle(previous + along * 4.f, previous + outward * 3.f - along * 2.f,
+		previous - outward * 3.f - along * 2.f);
 	gl.SetFillColour(*wxBLACK, 0.f);
 }
 
@@ -3007,14 +3090,11 @@ bool VisualToolTransform::InitializeDrag(VisualDraggableFeature *feature) {
 		// The leaning handles, and only those: the renderer leans each row from its own
 		// corner, so until the rows are lines of their own there is no lean that can be
 		// written for them. Recorded first, so a step back puts the lines together again.
-		if (index >= 12) EnsureShearSplit();
+		if (index >= 8 && index < 12) EnsureShearSplit();
 
 		RebaseGesture();
-		if (index >= 8 && index < 12) {
-			Vector2D from = FrameInverse(ToScriptCoords(feature->pos)) - GesturePivot();
-			gesture_start_angle = (float)(std::atan2(from.Y(), from.X()) * 180.0 / pi +
-				gesture_angle);
-		}
+		if (index >= 12)
+			gesture_start = ToScriptCoords(feature->pos);
 	}
 	// The warp's move handle stands for the whole mesh rather than for a point of it, so what
 	// the mesh was and where the handle started are what every mouse move is measured against.
@@ -3078,6 +3158,24 @@ void VisualToolTransform::UpdateDrag(VisualDraggableFeature *feature) {
 	// about the whole box.
 	if (mode == VisualToolTransformMode::Free && active_feature && feature != active_feature)
 		return;
+	if ((mode == VisualToolTransformMode::Arch || mode == VisualToolTransformMode::Warp) &&
+		sel_features.size() > 1) {
+		// The framework has already moved every selected feature to its drag target. Consume
+		// all of those targets before SyncFeatures writes their displayed positions back.
+		if (feature != *sel_features.begin()) return;
+		std::vector<std::pair<int, Vector2D>> targets;
+		int at = 0;
+		for (auto& candidate : features) {
+			if (sel_features.count(&candidate))
+				targets.emplace_back(at, ToScriptCoords(candidate.pos));
+			++at;
+		}
+		for (auto const& target : targets) MoveHandle(target.first, target.second);
+		SyncFeatures();
+		touched = true;
+		Rebuild();
+		return;
+	}
 
 	int index = 0;
 	for (auto& other : features) {
@@ -3086,7 +3184,7 @@ void VisualToolTransform::UpdateDrag(VisualDraggableFeature *feature) {
 	}
 	// Back through the frame first: a gesture is measured in the space the box was read in,
 	// and the mouse is on screen.
-	MoveHandle(index, mode == VisualToolTransformMode::Free ?
+	MoveHandle(index, mode == VisualToolTransformMode::Free && index < 12 ?
 		FrameInverse(ToScriptCoords(feature->pos)) : ToScriptCoords(feature->pos));
 
 	// All of them, not just the one being dragged: the others belong to a box that has just
@@ -3100,29 +3198,23 @@ void VisualToolTransform::UpdateDrag(VisualDraggableFeature *feature) {
 bool VisualToolTransform::InitializeHold() {
 	if (auto_perspective) return false;
 	if (mode == VisualToolTransformMode::Free) {
-		// Anywhere inside the box moves it, which is the one gesture that needs no handle.
+		// Inside the box moves it; the otherwise empty area outside turns it. Measuring the
+		// turn as an angle naturally makes a given mouse movement finer farther from the box.
 		if (tag_lines.empty()) return false;
 		Vector2D at = ToScriptCoords(mouse_pos);
 
-		// Tested against the box as it stands, not as it started: after a turn the two are
-		// different shapes, and the one on screen is the one being grabbed.
-		Vector2D original[4], quad[4];
-		if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, original);
-		else box.Corners(original);
-		for (int i = 0; i < 4; ++i) quad[i] = MapPoint(original[i]);
-		bool inside = true;
-		for (int i = 0; i < 4 && inside; ++i) {
-			Vector2D edge = quad[(i + 1) % 4] - quad[i];
-			Vector2D reach = at - quad[i];
-			// The corners run one way round, so being inside means being on the same side
-			// of every edge.
-			if (edge.X() * reach.Y() - edge.Y() * reach.X() < 0) inside = false;
-		}
-		if (!inside) return false;
-
 		PushHistory();
 		RebaseGesture();
-		gesture_start = FrameInverse(at);
+		if (FreePointInside(at)) {
+			free_hold_mode = FreeHoldMode::Move;
+			gesture_start = FrameInverse(at);
+		}
+		else {
+			Vector2D from = FrameInverse(at) - GesturePivot();
+			if (from.Len() < 1e-3) return false;
+			free_hold_mode = FreeHoldMode::Rotate;
+			gesture_start_angle = (float)(std::atan2(from.Y(), from.X()) * 180.0 / pi);
+		}
 		return true;
 	}
 
@@ -3182,7 +3274,14 @@ bool VisualToolTransform::InitializeHold() {
 
 void VisualToolTransform::UpdateHold() {
 	if (mode == VisualToolTransformMode::Free) {
-		gesture_move = FrameInverse(ToScriptCoords(mouse_pos)) - gesture_start;
+		if (free_hold_mode == FreeHoldMode::Move)
+			gesture_move = FrameInverse(ToScriptCoords(mouse_pos)) - gesture_start;
+		else if (free_hold_mode == FreeHoldMode::Rotate) {
+			Vector2D from = FrameInverse(ToScriptCoords(mouse_pos)) - GesturePivot();
+			if (from.Len() < 1e-3) return;
+			double now = std::atan2(from.Y(), from.X()) * 180.0 / pi;
+			gesture_angle = (float)(gesture_start_angle - now);
+		}
 		SyncFeatures();
 		touched = true;
 		Rebuild();
@@ -3243,7 +3342,32 @@ void VisualToolTransform::UpdateHold() {
 	Rebuild();
 }
 
+void VisualToolTransform::EndHold() {
+	free_hold_mode = FreeHoldMode::None;
+}
+
 void VisualToolTransform::OnMouseEvent(wxMouseEvent& event) {
+	if (box_selecting) {
+		mouse_pos = event.GetPosition();
+		if (event.LeftIsDown()) {
+			parent->Render();
+			return;
+		}
+
+		box_selecting = false;
+		Vector2D low = box_select_start.Min(mouse_pos);
+		Vector2D high = box_select_start.Max(mouse_pos);
+		if (!box_select_add) sel_features.clear();
+		for (auto& feature : features)
+			if (feature.pos.X() >= low.X() && feature.pos.X() <= high.X() &&
+				feature.pos.Y() >= low.Y() && feature.pos.Y() <= high.Y())
+				SetSelection(&feature, false);
+		if (parent->HasCapture()) parent->ReleaseMouse();
+		parent->SetFocus();
+		parent->Render();
+		return;
+	}
+
 	if (Active() && !dragging && !holding) {
 		Vector2D point(event.GetPosition());
 		auto action = ActionAt(point);
@@ -3262,6 +3386,32 @@ void VisualToolTransform::OnMouseEvent(wxMouseEvent& event) {
 	if (hovered_action != VisualToolTransformAction::None) {
 		hovered_action = VisualToolTransformAction::None;
 		parent->Render();
+	}
+	if (!auto_perspective &&
+		(mode == VisualToolTransformMode::Arch || mode == VisualToolTransformMode::Warp) &&
+		event.LeftDown()) {
+		Vector2D point(event.GetPosition());
+		bool on_handle = std::any_of(features.begin(), features.end(),
+			[&](VisualDraggableFeature const& feature) { return feature.IsMouseOver(point); });
+		bool on_mesh = false;
+		if (!on_handle) {
+			Vector2D control[16];
+			typesetting::WarpControls(net, control);
+			Vector2D script = ToScriptCoords(point);
+			Vector2D nearby = ToScriptCoords(point + Vector2D(8.f, 0.f));
+			double u = 0, v = 0;
+			on_mesh = typesetting::WarpLocate(control, script,
+				std::max<double>((nearby - script).Len(), 1.0), u, v);
+		}
+		if (!on_handle && !on_mesh) {
+			box_selecting = true;
+			box_select_add = event.CmdDown();
+			box_select_start = point;
+			mouse_pos = point;
+			parent->CaptureMouse();
+			parent->Render();
+			return;
+		}
 	}
 	if (auto_perspective && event.LeftDown()) {
 		Vector2D point(event.GetPosition());
@@ -3301,6 +3451,19 @@ bool VisualToolTransform::HandleKey(int key, bool control, bool shift) {
 	}
 	if (key == WXK_ESCAPE) {
 		Perform(VisualToolTransformAction::Cancel);
+		return true;
+	}
+	if (mode == VisualToolTransformMode::Free && !control &&
+		(key == WXK_LEFT || key == WXK_RIGHT || key == WXK_UP || key == WXK_DOWN)) {
+		Vector2D step(
+			key == WXK_LEFT ? -1.f : key == WXK_RIGHT ? 1.f : 0.f,
+			key == WXK_UP ? -1.f : key == WXK_DOWN ? 1.f : 0.f);
+		PushHistory();
+		RebaseGesture();
+		frame_offset = frame_offset + step;
+		SyncFeatures();
+		touched = true;
+		Rebuild();
 		return true;
 	}
 	return false;
@@ -3439,7 +3602,19 @@ void VisualToolTransform::Draw() {
 		}
 	}
 
-	if (mode == VisualToolTransformMode::Free) DrawFreeHandles();
+	if (mode == VisualToolTransformMode::Free) {
+		DrawFreeRotationGuide();
+		DrawFreeHandles();
+	}
 	else DrawShapeHandles();
+	if (box_selecting) {
+		Vector2D low = box_select_start.Min(mouse_pos);
+		Vector2D high = box_select_start.Max(mouse_pos);
+		wxColour selection = to_wx(highlight_color_secondary_opt->GetColor());
+		gl.SetLineColour(selection, 1.f, 1);
+		gl.SetFillColour(selection, .12f);
+		gl.DrawRectangle(low, high);
+		gl.SetFillColour(*wxBLACK, 0.f);
+	}
 	DrawTopBar();
 }
