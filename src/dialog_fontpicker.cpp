@@ -1962,7 +1962,11 @@ private:
         bool selected = (ListView_GetItemState(hwnd, item, LVIS_SELECTED) & LVIS_SELECTED) != 0;
         // The colour the list itself is using for this row's text, so the sample
         // reads the same way the name beside it does.
-        wxColour ink = selected
+        // The native light Windows selection is a pale band and keeps the font
+        // name dark. Match that rather than painting the hand-drawn preview in
+        // the system highlight-text colour (normally white). Dark mode uses its
+        // explicit selection text colour as before.
+        wxColour ink = selected && app_theme::IsDark()
             ? FontRowPainter::SelectionColour()
             : FontRowPainter::NormalColour();
 
