@@ -160,6 +160,32 @@ void MigrateDarkGridPaletteRefinement() {
 
 	migrated->SetBool(true);
 }
+
+void MigrateDarkComfortablePalette() {
+	auto *migrated = OPT_SET("App/Dark Comfortable Palette Migrated");
+	if (migrated->GetBool()) return;
+
+	struct ColourMigration {
+		const char *option;
+		agi::Color old_value;
+		agi::Color new_value;
+	};
+
+	ColourMigration const migrations[] = {
+		{"Colour/Dark/Subtitle Grid/Background/Image Mask", {189, 142, 192}, {184, 164, 190}},
+		{"Colour/Dark/Subtitle Grid/CPS Foreground", {255, 255, 255}, {232, 230, 225}},
+		{"Colour/Dark/UI/Selection Text", {255, 255, 255}, {232, 230, 225}},
+		{"Colour/Dark/UI/Text", {225, 225, 225}, {216, 214, 209}}
+	};
+
+	for (auto const& migration : migrations) {
+		auto *option = OPT_SET(migration.option);
+		if (option->GetColor() == migration.old_value)
+			option->SetColor(migration.new_value);
+	}
+
+	migrated->SetBool(true);
+}
 }
 
 void AegisubApp::OnAssertFailure(const wxChar *file, int line, const wxChar *func, const wxChar *cond, const wxChar *msg) {
@@ -306,6 +332,7 @@ bool AegisubApp::OnInit() {
 
 	MigrateDarkGridPalette();
 	MigrateDarkGridPaletteRefinement();
+	MigrateDarkComfortablePalette();
 
 #if wxCHECK_VERSION(3, 3, 0)
 	bool dark_mode = OPT_GET("App/Dark Mode")->GetBool();

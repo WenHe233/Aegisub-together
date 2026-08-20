@@ -9,6 +9,7 @@
 			"Save on Every Change" : false
 		},
 		"Call Tips" : false,
+		"Dark Comfortable Palette Migrated" : false,
 		"Dark Grid Palette Migrated" : false,
 		"Dark Grid Palette Refinement Migrated" : false,
 		"First Start" : true,
@@ -138,11 +139,11 @@
 					"Selection" : "rgb(57, 75, 65)",
 					"Open Fold" : "rgb(165, 163, 163)",
 					"Closed Fold" : "rgb(134, 131, 131)",
-					"Image Mask" : "rgb(189, 142, 192)"
+					"Image Mask" : "rgb(184, 164, 190)"
 				},
 				"Collision" : "rgb(221, 2, 1)",
 				"CPS Error" : "rgb(240, 3, 2)",
-				"CPS Foreground" : "rgb(255, 255, 255)",
+				"CPS Foreground" : "rgb(232, 230, 225)",
 				"Header" : "rgb(125, 162, 182)",
 				"Left Column" : "rgb(151, 186, 155)",
 				"Lines" : "rgb(53, 50, 50)",
@@ -202,8 +203,8 @@
 				"Row" : "rgb(32, 35, 39)",
 				"Row Border" : "rgb(76, 82, 90)",
 				"Selection" : "rgb(35, 96, 145)",
-				"Selection Text" : "rgb(255, 255, 255)",
-				"Text" : "rgb(225, 225, 225)",
+				"Selection Text" : "rgb(232, 230, 225)",
+				"Text" : "rgb(216, 214, 209)",
 				"Toolbar Active Background" : "rgb(85, 85, 85)",
 				"Toolbar Background" : "rgb(32, 32, 32)"
 			}

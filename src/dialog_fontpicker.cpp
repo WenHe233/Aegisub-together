@@ -38,6 +38,7 @@
 #include "font_size_object.h"
 #include "line_change_flags.h"
 #include "options.h"
+#include "theme.h"
 #include "ui_numeric_slider.cpp"
 
 #include <libaegisub/background_runner.h>
@@ -1464,7 +1465,24 @@ public:
     }
 
     static bool IsFavorite(wxString const& face) { return g_favorites.count(face) > 0; }
-    static wxColour FavoriteColour() { return wxColour(200, 170, 0); }
+    static wxColour FavoriteColour()
+    {
+        return app_theme::IsDark() ? wxColour(226, 201, 137) : wxColour(200, 170, 0);
+    }
+
+    static wxColour NormalColour()
+    {
+        return app_theme::IsDark()
+            ? app_theme::Colour("UI/Text")
+            : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+    }
+
+    static wxColour SelectionColour()
+    {
+        return app_theme::IsDark()
+            ? app_theme::Colour("UI/Selection Text")
+            : wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT);
+    }
 
     /// The sample for one face in `ink`, at the size the slider asks for, or nullptr
     /// when the store has nothing rendered for it. The returned bitmap is owned by
@@ -1904,9 +1922,12 @@ private:
         NMLVCUSTOMDRAW* draw = (NMLVCUSTOMDRAW*)lParam;
         DWORD stage = draw->nmcd.dwDrawStage;
 
-        if (stage == (CDDS_ITEMPOSTPAINT | CDDS_SUBITEM)) {
-            if (draw->iSubItem == 1)
-                DrawPreviewCell(draw);
+        // Windows does not consistently send the subitem post-paint stage for an
+        // empty virtual-list cell. Item post-paint is guaranteed once requested,
+        // and by then both columns (including the native selection background)
+        // are complete, so compose the preview there instead.
+        if (stage == CDDS_ITEMPOSTPAINT) {
+            DrawPreviewCell(draw);
             *result = CDRF_DODEFAULT;
             return true;
         }
@@ -1920,12 +1941,7 @@ private:
             return true;
         }
         if (stage == CDDS_ITEMPREPAINT) {
-            *result |= CDRF_NOTIFYSUBITEMDRAW;
-            return true;
-        }
-        if (stage == (CDDS_ITEMPREPAINT | CDDS_SUBITEM)) {
-            if (draw->iSubItem == 1)
-                *result |= CDRF_NOTIFYPOSTPAINT;
+            *result |= CDRF_NOTIFYSUBITEMDRAW | CDRF_NOTIFYPOSTPAINT;
             return true;
         }
 
@@ -1947,8 +1963,8 @@ private:
         // The colour the list itself is using for this row's text, so the sample
         // reads the same way the name beside it does.
         wxColour ink = selected
-            ? wxColour(GetRValue(draw->clrText), GetGValue(draw->clrText), GetBValue(draw->clrText))
-            : GetForegroundColour();
+            ? FontRowPainter::SelectionColour()
+            : FontRowPainter::NormalColour();
 
         wxBitmap const* bitmap = painter.PreviewFor(model->filtered[item], ink, !selected);
         if (!bitmap || !bitmap->IsOk())
@@ -2116,8 +2132,8 @@ private:
         // OnDrawBackground has already filled the row, including the highlight on a
         // selected one, so only the text colour is needed here.
         wxColour name_ink = selected
-            ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT)
-            : GetForegroundColour();
+            ? FontRowPainter::SelectionColour()
+            : FontRowPainter::NormalColour();
 
         // The same halves the native columns use, worked out per paint so a resize
         // needs nothing but a repaint.
@@ -2145,8 +2161,8 @@ private:
         // included, in the same text colour the name is using.
         painter.DrawPreview(dc, wxRect(rect.x + half + 2, rect.y, half - 4, rect.height),
             face, selected
-                ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT)
-                : GetForegroundColour(),
+                ? FontRowPainter::SelectionColour()
+                : FontRowPainter::NormalColour(),
             !selected);
     }
 

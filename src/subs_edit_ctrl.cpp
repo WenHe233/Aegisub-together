@@ -144,6 +144,8 @@ SubsTextEditCtrl::SubsTextEditCtrl(wxWindow* parent, wxSize wsize, long style, a
 	Subscribe("Normal");
 	Subscribe("Comment");
 	Subscribe("Drawing Command");
+	Subscribe("Drawing X");
+	Subscribe("Drawing Y");
 	OPT_SUB("Colour/Subtitle/Syntax/Underline/Drawing Endpoint", &SubsTextEditCtrl::SetStyles, this);
 	Subscribe("Brackets");
 	Subscribe("Slashes");
@@ -237,10 +239,10 @@ void SubsTextEditCtrl::SetStyles() {
 	SetSyntaxStyle(ss::NORMAL, font, "Normal", default_background);
 	SetSyntaxStyle(ss::COMMENT, font, "Comment", default_background);
 	SetSyntaxStyle(ss::DRAWING_CMD, font, "Drawing Command", default_background);
-	SetSyntaxStyle(ss::DRAWING_X, font, "Normal", default_background);
-	SetSyntaxStyle(ss::DRAWING_Y, font, "Normal", default_background);
-	SetSyntaxStyle(ss::DRAWING_ENDPOINT_X, font, "Normal", default_background);
-	SetSyntaxStyle(ss::DRAWING_ENDPOINT_Y, font, "Normal", default_background);
+	SetSyntaxStyle(ss::DRAWING_X, font, "Drawing X", default_background);
+	SetSyntaxStyle(ss::DRAWING_Y, font, "Drawing Y", default_background);
+	SetSyntaxStyle(ss::DRAWING_ENDPOINT_X, font, "Drawing X", default_background);
+	SetSyntaxStyle(ss::DRAWING_ENDPOINT_Y, font, "Drawing Y", default_background);
 	StyleSetUnderline(ss::DRAWING_ENDPOINT_X, OPT_GET("Colour/Subtitle/Syntax/Underline/Drawing Endpoint")->GetBool());
 	StyleSetUnderline(ss::DRAWING_ENDPOINT_Y, OPT_GET("Colour/Subtitle/Syntax/Underline/Drawing Endpoint")->GetBool());
 	SetSyntaxStyle(ss::OVERRIDE, font, "Brackets", default_background);

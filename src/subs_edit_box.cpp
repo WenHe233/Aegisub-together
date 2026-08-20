@@ -204,6 +204,10 @@ public:
 		Bind(wxEVT_LEFT_UP, &DarkBitmapButton::OnLeftUp, this);
 		Bind(wxEVT_MOUSE_CAPTURE_LOST, &DarkBitmapButton::OnCaptureLost, this);
 		Bind(wxEVT_KEY_DOWN, &DarkBitmapButton::OnKeyDown, this);
+		Bind(wxEVT_SIZE, [this](wxSizeEvent& event) {
+			event.Skip();
+			Refresh(true);
+		});
 	}
 };
 }
@@ -679,6 +683,16 @@ void SubsEditBox::OnSize(wxSizeEvent &evt) {
 			middle_left_sizer->Detach(middle_right_sizer);
 			GetSizer()->Insert(2,middle_right_sizer,0,wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM,3);
 			button_bar_split = true;
+		}
+	}
+
+	if (app_theme::IsDark()) {
+		// Reflowing the two button rows can move a custom-painted button without
+		// invalidating its full native window on Windows. Explicit invalidation
+		// prevents partially stale icons after maximizing or restoring the frame.
+		for (wxWindow *child : GetChildren()) {
+			if (dynamic_cast<DarkBitmapButton *>(child))
+				child->Refresh(true);
 		}
 	}
 
