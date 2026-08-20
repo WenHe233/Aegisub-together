@@ -242,6 +242,8 @@ DialogFontsCollector::DialogFontsCollector(agi::Context *c)
 
 	mode = static_cast<FcMode>(mid<int>(0, OPT_GET("Tool/Fonts Collector/Action")->GetInt(), std::size(modes)));
 	collection_mode = new wxRadioBox(this, -1, _("Action"), wxDefaultPosition, wxDefaultSize, std::size(modes), modes, 1);
+	if (app_theme::IsDark())
+		collection_mode->SetForegroundColour(app_theme::Colour("UI/Text"));
 	collection_mode->SetSelection(static_cast<int>(mode));
 
 	if (c->path->Decode("?script") == "?script")

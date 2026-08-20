@@ -36,6 +36,7 @@
 #include "project.h"
 #include "subs_edit_ctrl.h"
 #include "selection_controller.h"
+#include "theme.h"
 #include "video_controller.h"
 
 #include <boost/algorithm/string/classification.hpp>
@@ -83,7 +84,24 @@ DialogTranslation::DialogTranslation(agi::Context *c)
 		original_text = new wxStyledTextCtrl(original_box->GetStaticBox(), -1, wxDefaultPosition, wxSize(320, 80));
 		original_text->SetWrapMode(wxSTC_WRAP_WORD);
 		original_text->SetMarginWidth(1, 0);
-		original_text->StyleSetForeground(1, wxColour(10, 60, 200));
+		if (app_theme::IsDark()) {
+			wxColour background = app_theme::Colour("Subtitle/Background");
+			wxColour foreground = app_theme::Colour("Subtitle/Syntax/Normal");
+			original_text->SetBackgroundColour(background);
+			original_text->SetForegroundColour(foreground);
+			original_text->StyleSetBackground(wxSTC_STYLE_DEFAULT, background);
+			original_text->StyleSetForeground(wxSTC_STYLE_DEFAULT, foreground);
+			// Scintilla styles do not inherit later default-style changes automatically.
+			// Copy the dark default to every style before customising the current block.
+			original_text->StyleClearAll();
+			original_text->StyleSetBackground(1, background);
+			original_text->StyleSetForeground(1,
+				app_theme::Colour("Subtitle/Syntax/Brackets"));
+			original_text->SetCaretForeground(foreground);
+		}
+		else {
+			original_text->StyleSetForeground(1, wxColour(10, 60, 200));
+		}
 		original_text->SetReadOnly(true);
 		original_box->Add(original_text, 1, wxEXPAND, 0);
 
