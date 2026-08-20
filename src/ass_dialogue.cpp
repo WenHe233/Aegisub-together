@@ -40,6 +40,7 @@
 #include <boost/regex.hpp>
 #include <boost/spirit/include/karma_generate.hpp>
 #include <boost/spirit/include/karma_int.hpp>
+#include <algorithm>
 #include <string_view>
 
 using namespace boost::adaptors;
@@ -87,11 +88,13 @@ void AssDialogue::Parse(std::string const& raw) {
 	std::string_view str = raw;
 	if (raw.starts_with("Dialogue:")) {
 		Comment = false;
-		str.remove_prefix(10);
+		// Strip one more byte (if it exists).
+		str.remove_prefix(std::min<size_t>(raw.size(), 10));
 	}
 	else if (raw.starts_with("Comment:")) {
 		Comment = true;
-		str.remove_prefix(9);
+		// Strip one more byte (if it exists).
+		str.remove_prefix(std::min<size_t>(raw.size(), 9));
 	}
 	else
 		throw SubtitleFormatParseError("Failed parsing line: " + raw);
