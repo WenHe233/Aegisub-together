@@ -14,6 +14,54 @@ msgstr ""
 "X-Generator: Poedit 1.6.9\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: ../src/toolbar.cpp:164 ../src/toolbar.cpp:201
+msgid "Disable Dark Mode"
+msgstr "Sötét mód kikapcsolása"
+
+#: ../src/toolbar.cpp:165 ../src/toolbar.cpp:203
+msgid "Enable Dark Mode"
+msgstr "Sötét mód bekapcsolása"
+
+#: ../src/preferences_base.cpp:254
+msgid "Restore default colors"
+msgstr "Alapértelmezett színek visszaállítása"
+
+#: ../src/preferences.cpp:377
+msgid "Toolbar background"
+msgstr "Eszközsáv háttere"
+
+#: ../src/preferences.cpp:378
+msgid "Active toolbar button background"
+msgstr "Aktív eszközsáv-gomb háttere"
+
+#: ../src/preferences.cpp:338 ../src/preferences.cpp:404
+msgid "Selected comment foreground"
+msgstr "Kijelölt megjegyzés betűszíne"
+
+#: ../src/preferences.cpp:339 ../src/preferences.cpp:405
+msgid "Selected fold foreground"
+msgstr "Kijelölt összecsukott csoport betűszíne"
+
+#: ../src/preferences.cpp:340 ../src/preferences.cpp:406
+msgid "Selected combined foreground"
+msgstr "Kijelölt összevont sor betűszíne"
+
+#: ../src/preferences.cpp:341 ../src/preferences.cpp:407
+msgid "Selected left column foreground"
+msgstr "Kijelölt bal oldali oszlop betűszíne"
+
+#: ../src/preferences.cpp:346 ../src/preferences.cpp:412
+msgid "Open fold background"
+msgstr "Nyitott csoport háttere"
+
+#: ../src/preferences.cpp:347 ../src/preferences.cpp:413
+msgid "Closed fold background"
+msgstr "Összecsukott csoport háttere"
+
+#: ../src/preferences.cpp:354 ../src/preferences.cpp:420
+msgid "CPS foreground"
+msgstr "CPS betűszíne"
+
 #: ../src/preferences.cpp:257
 msgid "Dark Mode"
 msgstr "Sötét mód"
@@ -5509,7 +5557,7 @@ msgstr "Megjegyzések"
 
 #: ../src/preferences.cpp:257
 msgid "Drawing Commands"
-msgstr ""
+msgstr "Rajzparancsok"
 
 #: ../src/preferences.cpp:258
 msgid "Drawing X Coords"
@@ -5521,7 +5569,7 @@ msgstr ""
 
 #: ../src/preferences.cpp:260
 msgid "Underline Spline Endpoints"
-msgstr ""
+msgstr "Spline-végpontok aláhúzása"
 
 #: ../src/preferences.cpp:262
 msgid "Brackets"
@@ -5625,31 +5673,31 @@ msgstr "Karakterszám hiba"
 
 #: ../src/preferences.cpp:296
 msgid "Visual Typesetting Tools"
-msgstr ""
+msgstr "Vizuális szedőeszközök"
 
 #: ../src/preferences.cpp:297
 msgid "Primary Lines"
-msgstr ""
+msgstr "Elsődleges vonalak"
 
 #: ../src/preferences.cpp:298
 msgid "Secondary Lines"
-msgstr ""
+msgstr "Másodlagos vonalak"
 
 #: ../src/preferences.cpp:299
 msgid "Primary Highlight"
-msgstr ""
+msgstr "Elsődleges kiemelés"
 
 #: ../src/preferences.cpp:300
 msgid "Secondary Highlight"
-msgstr ""
+msgstr "Másodlagos kiemelés"
 
 #: ../src/preferences.cpp:303
 msgid "Visual Typesetting Tools Alpha"
-msgstr ""
+msgstr "Vizuális szedőeszközök átlátszósága"
 
 #: ../src/preferences.cpp:304
 msgid "Shaded Area"
-msgstr ""
+msgstr "Árnyékolt terület"
 
 #: ../src/preferences.cpp:313
 msgid "Backup"
