@@ -50,6 +50,7 @@ enum class VisualToolTransformAction {
 	None,
 	Undo,
 	Redo,
+	AutoPerspectiveReset,
 	Apply,
 	Cancel,
 	/// Whether the border, the shadow and the blur are scaled along with the text.
@@ -92,8 +93,13 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	static constexpr size_t no_feature = static_cast<size_t>(-1);
 	/// Where the four source handles begin in `features`, or no_feature while they are hidden.
 	size_t source_feature_first = no_feature;
+	/// Where the target-point handles begin. During construction there are as many as have
+	/// already been placed; after placement all four remain live.
+	size_t target_feature_first = no_feature;
+	/// The separate handle which moves the completed target as a whole.
+	size_t target_move_feature = no_feature;
 	/// The unfinished target path. It is cleared as soon as four valid points are applied,
-	/// so the construction points never obscure the result being judged.
+	/// while the same four positions continue in `corners` as editable target handles.
 	std::vector<Vector2D> auto_perspective_points;
 
 	std::unique_ptr<OpenGLText> gl_text;
@@ -286,6 +292,7 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 		/// had been drawn at all - so a step back can take one away again.
 		Vector2D source_corners[4];
 		bool source_moved = false;
+		std::vector<Vector2D> auto_perspective_points;
 		bool touched = false;
 	};
 	std::vector<HistoryState> undo_history;

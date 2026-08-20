@@ -2215,21 +2215,35 @@ void VisualToolTransform::PlaceFeatures() {
 	if (auto_perspective) {
 		distort_map = AutoPerspectiveMap();
 		source_feature_first = no_feature;
-		if (!auto_perspective_points.empty()) return;
+		target_feature_first = no_feature;
+		target_move_feature = no_feature;
+
+		size_t target_count = touched ? 4 : auto_perspective_points.size();
+		if (target_count) {
+			target_feature_first = features.size();
+			for (size_t i = 0; i < target_count; ++i) {
+				auto feature = std::make_unique<VisualDraggableFeature>();
+				feature->type = DRAG_BIG_SQUARE;
+				feature->layer = 2;
+				features.push_back(*feature.release());
+			}
+		}
 		if (touched) {
+			target_move_feature = features.size();
 			auto feature = std::make_unique<VisualDraggableFeature>();
 			feature->type = DRAG_BIG_SQUARE;
-			feature->layer = 2;
-			features.push_back(*feature.release());
-		}
-		// The four points the proportion is measured from, so it can be said exactly rather
-		// than guessed at from a rectangle round the shape.
-		source_feature_first = features.size();
-		for (int i = 0; i < 4; ++i) {
-			auto feature = std::make_unique<VisualDraggableFeature>();
-			feature->type = DRAG_SMALL_SQUARE;
 			feature->layer = 1;
 			features.push_back(*feature.release());
+		}
+		if (!touched && auto_perspective_points.empty()) {
+			// Before target construction begins, the source rectangle can still be stated exactly.
+			source_feature_first = features.size();
+			for (int i = 0; i < 4; ++i) {
+				auto feature = std::make_unique<VisualDraggableFeature>();
+				feature->type = DRAG_SMALL_SQUARE;
+				feature->layer = 1;
+				features.push_back(*feature.release());
+			}
 		}
 		SyncFeatures();
 		return;
@@ -2276,18 +2290,25 @@ void VisualToolTransform::SyncFeatures() {
 	// what the shape is measured in and what has to survive a zoom.
 	if (auto_perspective) {
 		distort_map = AutoPerspectiveMap();
+		if (target_feature_first != no_feature) {
+			size_t target_count = touched ? 4 : auto_perspective_points.size();
+			for (size_t i = 0; i < target_count; ++i)
+				if (auto *handle = FeatureAt(target_feature_first + i))
+					handle->pos = FromScriptCoords(touched ? corners[i] : auto_perspective_points[i]);
+		}
 		if (source_feature_first != no_feature)
 			for (int i = 0; i < 4; ++i)
 				if (auto *handle = FeatureAt(source_feature_first + i))
 					handle->pos = FromScriptCoords(source_corners[i]);
-		if (source_feature_first != no_feature && source_feature_first > 0) {
+		if (target_move_feature != no_feature) {
 			Vector2D screen[4];
 			for (int i = 0; i < 4; ++i) screen[i] = FromScriptCoords(corners[i]);
 			Vector2D middle = (screen[0] + screen[1] + screen[2] + screen[3]) / 4;
 			Vector2D bottom = (screen[2] + screen[3]) / 2;
 			Vector2D away = bottom - middle;
-			features.front().pos = bottom +
-				(away.Len() > 1e-3 ? away.Unit() * 30.f : Vector2D(0.f, 30.f));
+			if (auto *move = FeatureAt(target_move_feature))
+				move->pos = bottom +
+					(away.Len() > 1e-3 ? away.Unit() * 30.f : Vector2D(0.f, 30.f));
 		}
 		return;
 	}
@@ -2364,6 +2385,7 @@ VisualToolTransform::HistoryState VisualToolTransform::Capture() const {
 	state.split = shear_split;
 	for (int i = 0; i < 4; ++i) state.source_corners[i] = source_corners[i];
 	state.source_moved = source_moved;
+	state.auto_perspective_points = auto_perspective_points;
 	state.touched = touched;
 	return state;
 }
@@ -2384,6 +2406,7 @@ void VisualToolTransform::RestoreState(HistoryState const& state) {
 	if (auto_perspective) {
 		for (int i = 0; i < 4; ++i) source_corners[i] = state.source_corners[i];
 		source_moved = state.source_moved;
+		auto_perspective_points = state.auto_perspective_points;
 		// Whether there is a target at all is part of the step: undoing the four points has to
 		// take the handle that moves them away with them.
 		touched = state.touched;
@@ -2610,6 +2633,7 @@ wxString VisualToolTransform::LabelFor(VisualToolTransformAction action) const {
 	switch (action) {
 		case VisualToolTransformAction::Apply: return _("Accept (ENTER)");
 		case VisualToolTransformAction::Cancel: return _("Cancel (ESC)");
+		case VisualToolTransformAction::AutoPerspectiveReset: return _("Reset");
 		case VisualToolTransformAction::RecalcBord: return _("recalculate bord");
 		case VisualToolTransformAction::RecalcShad: return _("recalculate shad");
 		case VisualToolTransformAction::MaintainDecor: return _("maintain bord & shad");
@@ -2642,6 +2666,11 @@ void VisualToolTransform::UpdatePreviewInterface() const {
 	if (auto_perspective) {
 		add(VisualToolTransformAction::Undo, Interface::ControlKind::Undo);
 		add(VisualToolTransformAction::Redo, Interface::ControlKind::Redo);
+		if (touched) {
+			auto& reset = add(VisualToolTransformAction::AutoPerspectiveReset,
+				Interface::ControlKind::Button);
+			reset.before_accept = true;
+		}
 		add(VisualToolTransformAction::Apply, Interface::ControlKind::Button,
 			Interface::ControlStyle::Accept);
 		add(VisualToolTransformAction::Cancel, Interface::ControlKind::Button,
@@ -2654,20 +2683,22 @@ void VisualToolTransform::UpdatePreviewInterface() const {
 		size.maximum = 200;
 		size.step = 1;
 		size.value_text = to_wx(agi::format("%.0f%%", auto_perspective_size));
+		size.value_text_sample = "200%";
 		size.width = 170;
 		add(VisualToolTransformAction::AutoPerspectiveKeepOriginalSize,
 			Interface::ControlKind::Toggle, Interface::ControlStyle::Neutral,
 			auto_perspective_keep_original_size);
 		wxString message = touched && auto_perspective_points.empty() ?
-			_("Redraw the 4 points.") : _("Draw 4 points.");
+			_("Drag the 4 points to adjust the perspective.") : _("Draw 4 points.");
 		// Only worth saying when one line really is the measure of the others.
-		if (tag_lines.size() > 1 && AutoPerspectiveFitsShape())
+		if (!touched && tag_lines.size() > 1 && AutoPerspectiveFitsShape())
 			if (AssDialogue *active = c->selectionController->GetActiveLine()) {
 				std::string pattern =
 					from_wx(_("Line %d is fitted to the points, the rest follow it."));
 				message += " " + to_wx(agi::format(pattern.c_str(), active->Row + 1));
 			}
-		message += " " + _("The yellow dashed rectangle is the reference.");
+		if (!touched)
+			message += " " + _("The yellow dashed rectangle is the reference.");
 		page.message = message;
 		preview_interface.SetPage(std::move(page));
 		return;
@@ -2714,6 +2745,7 @@ bool VisualToolTransform::ActionEnabled(VisualToolTransformAction action) const 
 	if (auto_perspective)
 		return action == VisualToolTransformAction::Undo ? !undo_history.empty() :
 			action == VisualToolTransformAction::Redo ? !redo_history.empty() :
+			action == VisualToolTransformAction::AutoPerspectiveReset ? touched :
 			action == VisualToolTransformAction::Apply ? touched :
 			action == VisualToolTransformAction::Cancel ? true :
 			action == VisualToolTransformAction::AutoPerspectiveSize ?
@@ -2756,6 +2788,14 @@ void VisualToolTransform::Perform(VisualToolTransformAction action) {
 	switch (action) {
 		case VisualToolTransformAction::Undo: UndoHistory(); break;
 		case VisualToolTransformAction::Redo: RedoHistory(); break;
+		case VisualToolTransformAction::AutoPerspectiveReset:
+			PushHistory();
+			auto_perspective_points.clear();
+			box.Corners(corners);
+			touched = false;
+			PlaceFeatures();
+			Rebuild();
+			break;
 		case VisualToolTransformAction::Apply: Accept(); break;
 		case VisualToolTransformAction::Cancel: Reject(); break;
 		// Fine-tuning a value and keeping the pair exactly are answers to the same question, so
@@ -2811,27 +2851,26 @@ void VisualToolTransform::DrawTopBar() {
 }
 
 bool VisualToolTransform::AddAutoPerspectivePoint(Vector2D point) {
-	if (auto_perspective_points.empty()) {
-		features.clear();
-		sel_features.clear();
-		source_feature_first = no_feature;
-	}
-	auto_perspective_points.push_back(point);
-	if (auto_perspective_points.size() < 4) {
+	if (touched) return false;
+
+	auto candidate = auto_perspective_points;
+	candidate.push_back(point);
+	if (candidate.size() < 4) {
+		auto_perspective_points = std::move(candidate);
+		PlaceFeatures();
 		parent->Render();
 		return false;
 	}
 
 	// Keep the first three when the closing point would fold or cross the plane. The next
 	// click replaces only that last attempt, which makes correcting it feel like mask drawing.
-	if (!DirectedQuad(auto_perspective_points)) {
-		auto_perspective_points.pop_back();
+	if (!DirectedQuad(candidate)) {
 		parent->Render();
 		return false;
 	}
 
 	PushHistory();
-	for (int i = 0; i < 4; ++i) corners[i] = auto_perspective_points[i];
+	for (int i = 0; i < 4; ++i) corners[i] = candidate[i];
 	auto_perspective_points.clear();
 	touched = true;
 	PlaceFeatures();
@@ -2840,6 +2879,8 @@ bool VisualToolTransform::AddAutoPerspectivePoint(Vector2D point) {
 }
 
 void VisualToolTransform::DrawAutoPerspectiveSource() {
+	if (touched) return;
+
 	// What the four points are fitted from: the active line's own box. Shown so the proportion
 	// the result is stretched by is something to be seen rather than worked out backwards from
 	// the outcome - a tall box on a wide quadrilateral says at a glance why the text spreads.
@@ -2863,17 +2904,39 @@ void VisualToolTransform::DrawAutoPerspectiveSource() {
 }
 
 void VisualToolTransform::DrawAutoPerspectivePath() {
+	auto draw_target = [&](size_t index, Vector2D point, bool quiet) {
+		auto *handle = target_feature_first == no_feature ? nullptr :
+			FeatureAt(target_feature_first + index);
+		bool under_mouse = handle && handle == active_feature;
+		wxColour outline = to_wx(line_color_secondary_opt->GetColor());
+		wxColour active = to_wx(highlight_color_secondary_opt->GetColor());
+		gl.SetLineColour(under_mouse ? active : outline,
+			under_mouse ? 1.f : quiet ? .46f : 1.f, under_mouse ? 2 : 1);
+		gl.SetFillColour(*wxBLACK, 0.f);
+		Vector2D at = handle ? handle->pos : FromScriptCoords(point);
+		gl.DrawRectangle(at - Vector2D(5.f, 5.f), at + Vector2D(5.f, 5.f));
+	};
+
 	if (auto_perspective_points.empty()) {
-		// Only the handle that moves the whole target, which exists once there is one. The
-		// source handles are drawn with the rectangle they belong to.
-		if (!touched || source_feature_first == 0 || features.empty()) return;
+		if (!touched) return;
+
+		wxColour path = to_wx(line_color_secondary_opt->GetColor());
+		gl.SetLineColour(path, .42f, 1);
+		for (int i = 0; i < 4; ++i)
+			gl.DrawLine(FromScriptCoords(corners[i]), FromScriptCoords(corners[(i + 1) % 4]));
+		for (int i = 0; i < 4; ++i)
+			draw_target(i, corners[i], true);
+
+		auto *move = target_move_feature == no_feature ? nullptr : FeatureAt(target_move_feature);
+		if (!move) return;
 		Vector2D bottom = (FromScriptCoords(corners[2]) + FromScriptCoords(corners[3])) / 2;
 		wxColour outline = to_wx(line_color_secondary_opt->GetColor());
 		wxColour fill = to_wx(highlight_color_primary_opt->GetColor());
-		gl.SetLineColour(outline, 1.f, 1);
-		gl.DrawLine(bottom, features.front().pos);
-		gl.SetFillColour(fill, .3f);
-		features.front().Draw(gl);
+		bool under_mouse = move == active_feature;
+		gl.SetLineColour(outline, under_mouse ? .75f : .33f, under_mouse ? 2 : 1);
+		gl.DrawLine(bottom, move->pos);
+		gl.SetFillColour(fill, under_mouse ? .55f : .18f);
+		move->Draw(gl);
 		return;
 	}
 
@@ -2898,8 +2961,8 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 			gl.DrawDashedLine(pointer, FromScriptCoords(auto_perspective_points.front()), 5.f);
 	}
 
-	for (auto const& point : auto_perspective_points)
-		DrawCorner(FromScriptCoords(point), false);
+	for (size_t i = 0; i < auto_perspective_points.size(); ++i)
+		draw_target(i, auto_perspective_points[i], false);
 }
 
 void VisualToolTransform::DrawCorner(Vector2D at, bool current, bool selected) {
@@ -3073,6 +3136,7 @@ void VisualToolTransform::Commit(wxString) {
 bool VisualToolTransform::InitializeDrag(VisualDraggableFeature *feature) {
 	if (!Active()) return false;
 	if (auto_perspective) {
+		SetSelection(feature, true);
 		PushHistory();
 		for (int i = 0; i < 4; ++i) hold_corners[i] = corners[i];
 		hold_start = ToScriptCoords(feature->pos);
@@ -3134,12 +3198,13 @@ bool VisualToolTransform::InitializeDrag(VisualDraggableFeature *feature) {
 void VisualToolTransform::UpdateDrag(VisualDraggableFeature *feature) {
 	if (!Active()) return;
 	if (auto_perspective) {
+		size_t index = 0;
+		for (auto& other : features) {
+			if (&other == feature) break;
+			++index;
+		}
+
 		if (source_feature_first != no_feature) {
-			size_t index = 0;
-			for (auto& other : features) {
-				if (&other == feature) break;
-				++index;
-			}
 			if (index >= source_feature_first && index < source_feature_first + 4) {
 				source_corners[index - source_feature_first] = ToScriptCoords(feature->pos);
 				source_moved = true;
@@ -3148,6 +3213,31 @@ void VisualToolTransform::UpdateDrag(VisualDraggableFeature *feature) {
 				return;
 			}
 		}
+		if (target_feature_first != no_feature) {
+			size_t target_count = touched ? 4 : auto_perspective_points.size();
+			if (index >= target_feature_first && index < target_feature_first + target_count) {
+				size_t target = index - target_feature_first;
+				Vector2D next = ToScriptCoords(feature->pos);
+				if (!touched) {
+					auto_perspective_points[target] = next;
+					SyncFeatures();
+					parent->Render();
+					return;
+				}
+
+				std::vector<Vector2D> candidate(corners, corners + 4);
+				candidate[target] = next;
+				if (!DirectedQuad(candidate)) {
+					SyncFeatures();
+					return;
+				}
+				corners[target] = next;
+				SyncFeatures();
+				Rebuild();
+				return;
+			}
+		}
+		if (index != target_move_feature) return;
 
 		auto inverse = typesetting::QuadInverseMap(box, hold_corners);
 		auto plane = typesetting::QuadMap(box, hold_corners);
@@ -3435,11 +3525,10 @@ void VisualToolTransform::OnMouseEvent(wxMouseEvent& event) {
 	}
 	if (auto_perspective && event.LeftDown()) {
 		Vector2D point(event.GetPosition());
-		bool on_handle = auto_perspective_points.empty() &&
-			std::any_of(features.begin(), features.end(), [&](VisualDraggableFeature& feature) {
-				return (point - feature.pos).Len() <= 12.f;
+		bool on_handle = std::any_of(features.begin(), features.end(), [&](VisualDraggableFeature& feature) {
+				return feature.IsMouseOver(point);
 			});
-		if (on_handle) {
+		if (on_handle || touched) {
 			VisualTool<VisualDraggableFeature>::OnMouseEvent(event);
 			return;
 		}

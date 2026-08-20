@@ -90,6 +90,12 @@ public:
 		wxBitmap bitmap;
 		ControlIcon icon = ControlIcon::None;
 		bool icon_only = false;
+		/// Keep this action immediately ahead of Accept/Cancel when the common bar groups
+		/// terminal actions at the start of the page.
+		bool before_accept = false;
+		/// Optional widest representative value. Reserving its rendered width keeps the slider
+		/// track fixed when the live value gains or loses a digit.
+		wxString value_text_sample;
 	};
 
 	struct Page {
@@ -190,6 +196,8 @@ class VisualToolPreviewBar final : public wxPanel {
 	wxRect message_bounds;
 	int hovered_id = 0;
 	int dragging_id = 0;
+	VisualToolPreviewInterface::Control dragging_control;
+	wxRect dragging_track;
 	int content_height = 0;
 	bool layout_pending = false;
 	bool shutting_down = false;
@@ -209,6 +217,7 @@ class VisualToolPreviewBar final : public wxPanel {
 	void OnMouseLeave(wxMouseEvent& event);
 	void OnLeftDown(wxMouseEvent& event);
 	void OnLeftUp(wxMouseEvent& event);
+	void OnMouseWheel(wxMouseEvent& event);
 	void OnSize(wxSizeEvent& event);
 	void UpdateSlider(int id, int x, bool final = false);
 

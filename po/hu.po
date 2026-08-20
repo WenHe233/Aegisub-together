@@ -8763,8 +8763,12 @@ msgid "Draw 4 points."
 msgstr "Rajzolj 4 pontot."
 
 #: ../src/visual_tool_transform.cpp
-msgid "Redraw the 4 points."
-msgstr "Rajzold újra a 4 pontot."
+msgid "Drag the 4 points to adjust the perspective."
+msgstr "Mozgasd a 4 pontot a perspektíva finomhangolásához."
+
+#: ../src/visual_tool_transform.cpp
+msgid "Reset"
+msgstr "Visszaállítás"
 
 #: ../src/visual_tool_transform.cpp
 #, c-format
