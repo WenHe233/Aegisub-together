@@ -82,8 +82,9 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	bool auto_perspective = false;
 	/// Uniform percentage applied to the whole selection in the target's perspective plane.
 	double auto_perspective_size = 100.0;
-	/// Keep each line's authored scale while applying the target plane's perspective. This
-	/// deliberately rules out the percentage slider: the two controls answer the same question.
+	/// Keep the whole selection's authored dimensions, spacing and relative placement while
+	/// applying the target plane's perspective. This deliberately rules out the percentage
+	/// slider: the two controls answer the same question.
 	bool auto_perspective_keep_original_size = false;
 	/// The rectangle the selection is proportioned by, as four points of its own. Seeded from
 	/// the active line's shape and then left to the user, who can drag them: no rectangle fits
@@ -399,6 +400,9 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	void SeedAutoPerspectiveSource(TagLine const& found);
 	/// The map from the source quadrilateral onto the drawn one.
 	typesetting::PointMap AutoPerspectiveMap() const;
+	/// Build the quadrilateral occupied by the selection at its authored size, on the
+	/// perspective plane described by the four target points and centred inside them.
+	bool AutoPerspectiveOriginalSizeTarget(Vector2D target[4]) const;
 
 	/// What one line becomes under the gesture in progress: the numbers, before anything is
 	/// decided about which of them are worth writing. The one place that works this out, so

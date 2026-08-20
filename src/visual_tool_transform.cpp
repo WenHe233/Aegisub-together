@@ -1090,7 +1090,13 @@ void VisualToolTransform::SeedAutoPerspectiveSource(TagLine const& found) {
 }
 
 typesetting::PointMap VisualToolTransform::AutoPerspectiveMap() const {
-	auto forward = typesetting::QuadMap(box, corners);
+	Vector2D original_size_target[4];
+	Vector2D const *target = corners;
+	if (touched && auto_perspective_keep_original_size &&
+		AutoPerspectiveOriginalSizeTarget(original_size_target))
+		target = original_size_target;
+
+	auto forward = typesetting::QuadMap(box, target);
 	// Until the four points are drawn there is no target, and the source must not act on its
 	// own: it would distort the lines before anything had been asked of it.
 	if (!touched) return forward;
@@ -1104,6 +1110,42 @@ typesetting::PointMap VisualToolTransform::AutoPerspectiveMap() const {
 
 	auto inverse = typesetting::QuadInverseMap(box, source_corners);
 	return [inverse, forward](Vector2D point) { return forward(inverse(point)); };
+}
+
+bool VisualToolTransform::AutoPerspectiveOriginalSizeTarget(Vector2D target[4]) const {
+	// The target quadrilateral describes a plane, not a box the selection has to fit inside.
+	// Solve that plane against a centred reference rectangle with the selection's dimensions,
+	// then remove only its planar scale. Projecting the same-sized reference back through the
+	// solved rotations and shear gives a common target for the whole selection: line sizes,
+	// distances between rows and their relative positions all remain authored.
+	double width = std::max<double>(box.half.X() * 2.f, 1.0);
+	double height = std::max<double>(box.half.Y() * 2.f, 1.0);
+	Vector2D first(0.f, 0.f);
+	Vector2D second(static_cast<float>(width), static_cast<float>(height));
+	auto plane = typesetting::SolvePerspective(corners, 5, first, second,
+		script_res / layout_res, Vector2D());
+	if (!plane.ok || std::abs(plane.scale.Y()) <= 1e-9) return false;
+
+	// \fax is applied before the two scales. Preserve the actual in-plane shear rather than
+	// its scale-dependent ASS number while both axes are returned to one hundred percent.
+	plane.shear_x *= plane.scale.X() / plane.scale.Y();
+	plane.scale = Vector2D(100.f, 100.f);
+	typesetting::PerspectiveQuad(plane, 5, first, second,
+		script_res / layout_res, target);
+
+	// "Centred" on a perspective plane means the image of its centre: the intersection of
+	// the diagonals, not the arithmetic average (which drifts towards the wider/nearer edge).
+	typesetting::OrientedBox reference;
+	reference.centre = Vector2D();
+	reference.half = box.half;
+	Vector2D wanted_centre = typesetting::QuadMap(box, corners)(box.centre);
+	Vector2D kept_centre = typesetting::QuadMap(reference, target)(reference.centre);
+	Vector2D shift = wanted_centre - kept_centre;
+	for (int i = 0; i < 4; ++i) {
+		target[i] = target[i] + shift;
+		if (!std::isfinite(target[i].X()) || !std::isfinite(target[i].Y())) return false;
+	}
+	return true;
 }
 
 namespace {
@@ -1227,6 +1269,7 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 			// every line around its own anchor would change the glyphs but leave the distances
 			// between rows behind; doing it around the common box centre keeps the whole layout
 			// proportional, and mapping afterwards makes it follow the target perspective.
+			//
 			if (auto_perspective && !auto_perspective_keep_original_size) {
 				float factor = static_cast<float>(auto_perspective_size / 100.0);
 				corner = box.centre + (corner - box.centre) * factor;
@@ -1249,23 +1292,6 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 		if (!solved.ok)
 			solved = typesetting::SolvePerspective(corners, original.align,
 				original.box_first, original.box_second, script_res / layout_res, Vector2D());
-		if (solved.ok && auto_perspective_keep_original_size) {
-			// The four target points still supply the plane and its perspective, but the
-			// authored scales supply its size. Shifting pos and org together is an exact
-			// screen translation, so the smaller/larger result stays centred on the target.
-			solved.scale = original.scale;
-			Vector2D kept_corners[4];
-			typesetting::PerspectiveQuad(solved, original.align, original.box_first,
-				original.box_second, script_res / layout_res, kept_corners);
-			Vector2D wanted_centre, kept_centre;
-			for (int i = 0; i < 4; ++i) {
-				wanted_centre = wanted_centre + corners[i];
-				kept_centre = kept_centre + kept_corners[i];
-			}
-			Vector2D shift = (wanted_centre - kept_centre) / 4.f;
-			solved.pos = solved.pos + shift;
-			solved.org = solved.org + shift;
-		}
 		if (solved.ok) {
 			out.perspective = true;
 			out.pos = solved.pos;
@@ -2829,7 +2855,14 @@ void VisualToolTransform::Perform(VisualToolTransformAction action) {
 			break;
 		case VisualToolTransformAction::AutoPerspectiveKeepOriginalSize:
 			auto_perspective_keep_original_size = !auto_perspective_keep_original_size;
-			if (touched) Rebuild();
+			if (touched) {
+				// The lock uses a different target quadrilateral: the same perspective plane at
+				// the selection's authored size. Refresh the cached projective map before the
+				// preview is rebuilt, otherwise toggling only changes the checkbox and the old
+				// fill-the-area map remains in use.
+				SyncFeatures();
+				Rebuild();
+			}
 			else parent->Render();
 			break;
 		default: break;
@@ -2911,7 +2944,7 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 		wxColour outline = to_wx(line_color_secondary_opt->GetColor());
 		wxColour active = to_wx(highlight_color_secondary_opt->GetColor());
 		gl.SetLineColour(under_mouse ? active : outline,
-			under_mouse ? 1.f : quiet ? .46f : 1.f, under_mouse ? 2 : 1);
+			under_mouse ? 1.f : quiet ? .66f : 1.f, under_mouse ? 2 : 1);
 		gl.SetFillColour(*wxBLACK, 0.f);
 		Vector2D at = handle ? handle->pos : FromScriptCoords(point);
 		gl.DrawRectangle(at - Vector2D(5.f, 5.f), at + Vector2D(5.f, 5.f));
@@ -2921,7 +2954,7 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 		if (!touched) return;
 
 		wxColour path = to_wx(line_color_secondary_opt->GetColor());
-		gl.SetLineColour(path, .42f, 1);
+		gl.SetLineColour(path, .62f, 1);
 		for (int i = 0; i < 4; ++i)
 			gl.DrawLine(FromScriptCoords(corners[i]), FromScriptCoords(corners[(i + 1) % 4]));
 		for (int i = 0; i < 4; ++i)
@@ -2933,9 +2966,9 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 		wxColour outline = to_wx(line_color_secondary_opt->GetColor());
 		wxColour fill = to_wx(highlight_color_primary_opt->GetColor());
 		bool under_mouse = move == active_feature;
-		gl.SetLineColour(outline, under_mouse ? .75f : .33f, under_mouse ? 2 : 1);
+		gl.SetLineColour(outline, under_mouse ? .75f : .53f, under_mouse ? 2 : 1);
 		gl.DrawLine(bottom, move->pos);
-		gl.SetFillColour(fill, under_mouse ? .55f : .18f);
+		gl.SetFillColour(fill, under_mouse ? .55f : .38f);
 		move->Draw(gl);
 		return;
 	}
