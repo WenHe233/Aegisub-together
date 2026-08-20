@@ -14,6 +14,7 @@
 #include "video_controller.h"
 
 #include <libaegisub/dispatch.h>
+#include <libaegisub/fs.h>
 #include <libaegisub/option.h>
 
 #include <algorithm>
@@ -38,13 +39,23 @@
 
 namespace {
 
-wxDEFINE_EVENT(EVT_AI_REQUEST_DONE, wxThreadEvent);
-
 struct RequestOutcome {
 	bool initial = false;
 	bool cancelled = false;
 	std::string error;
 	ai::ReviewResult result;
+};
+
+class AIReviewDialog;
+
+struct ReviewRequestState {
+	std::atomic_bool cancelled{false};
+	std::atomic<AIReviewDialog *> dialog{nullptr};
+};
+
+struct SubtitleTiming {
+	int start_ms = 0;
+	int end_ms = 0;
 };
 
 wxTextCtrl *make_heading(wxWindow *parent, wxString const& value) {
@@ -117,9 +128,10 @@ wxColour verdict_colour(std::string const& verdict) {
 
 class AIReviewDialog final : public wxDialog {
 	agi::Context *context;
-	std::vector<AssDialogue *> subtitle_lines;
+	std::vector<SubtitleTiming> subtitle_timings;
 	std::vector<ai::SubtitleLine> input_lines;
 	agi::fs::path audio_file;
+	std::shared_ptr<ReviewRequestState> request_state = std::make_shared<ReviewRequestState>();
 
 	wxStaticText *status;
 	wxGauge *progress;
@@ -133,7 +145,6 @@ class AIReviewDialog final : public wxDialog {
 	wxButton *close_button;
 
 	ai::ReviewResult current_result;
-	std::atomic_bool cancelled{false};
 	bool busy = false;
 	bool close_when_idle = false;
 	int wheel_remainder = 0;
@@ -160,10 +171,12 @@ class AIReviewDialog final : public wxDialog {
 		Layout();
 	}
 
-	void PostOutcome(std::shared_ptr<RequestOutcome> outcome) {
-		auto event = new wxThreadEvent(EVT_AI_REQUEST_DONE);
-		event->SetPayload(std::move(outcome));
-		wxQueueEvent(this, event);
+	static void PostOutcome(std::shared_ptr<ReviewRequestState> state,
+		std::shared_ptr<RequestOutcome> outcome) {
+		agi::dispatch::Main().Async([state = std::move(state), outcome = std::move(outcome)] {
+			if (auto *dialog = state->dialog.load())
+				dialog->OnRequestDone(outcome);
+		});
 	}
 
 	void PlayRange(int start_ms, int end_ms) {
@@ -175,17 +188,16 @@ class AIReviewDialog final : public wxDialog {
 	void PlayScene() {
 		int start = INT_MAX;
 		int end = 0;
-		for (auto line : subtitle_lines) {
-			start = std::min(start, static_cast<int>(line->Start));
-			end = std::max(end, static_cast<int>(line->End));
+		for (auto const& timing : subtitle_timings) {
+			start = std::min(start, timing.start_ms);
+			end = std::max(end, timing.end_ms);
 		}
 		if (start != INT_MAX) PlayRange(start, end);
 	}
 
 	void PlayLine(size_t index) {
-		if (index >= subtitle_lines.size()) return;
-		PlayRange(static_cast<int>(subtitle_lines[index]->Start),
-			static_cast<int>(subtitle_lines[index]->End));
+		if (index >= subtitle_timings.size()) return;
+		PlayRange(subtitle_timings[index].start_ms, subtitle_timings[index].end_ms);
 	}
 
 	void StopAudio() {
@@ -194,7 +206,7 @@ class AIReviewDialog final : public wxDialog {
 
 	void CancelRequest() {
 		if (!busy) return;
-		cancelled.store(true);
+		request_state->cancelled.store(true);
 		status->SetLabel(_("Cancelling the request..."));
 		cancel_request_button->Disable();
 	}
@@ -284,9 +296,9 @@ class AIReviewDialog final : public wxDialog {
 
 			auto line_title = to_wx(agi::format(_("Line %d"), static_cast<int>(index + 1)));
 			line_title += "   ";
-			line_title += format_timestamp(static_cast<int>(subtitle_lines[index]->Start));
+			line_title += format_timestamp(subtitle_timings[index].start_ms);
 			line_title += L" \u2013 ";
-			line_title += format_timestamp(static_cast<int>(subtitle_lines[index]->End));
+			line_title += format_timestamp(subtitle_timings[index].end_ms);
 			auto line_parent = new wxPanel(response_parent, wxID_ANY,
 				wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
 			auto line_box = new wxBoxSizer(wxVERTICAL);
@@ -337,31 +349,32 @@ class AIReviewDialog final : public wxDialog {
 	}
 
 	void StartInitialRequest() {
-		cancelled.store(false);
+		request_state->cancelled.store(false);
 		SetBusy(true, _("Transcribing the Japanese audio and reviewing the subtitles..."));
 		auto key = ApiKey();
 		auto model = Model();
 		auto transcription_model = TranscriptionModel();
 		auto audio = audio_file;
 		auto lines = input_lines;
+		auto state = request_state;
 
-		agi::dispatch::Background().Async([this, key = std::move(key), model = std::move(model),
+		agi::dispatch::Background().Async([state = std::move(state), key = std::move(key), model = std::move(model),
 			transcription_model = std::move(transcription_model),
 			audio = std::move(audio), lines = std::move(lines)]() mutable {
 			auto outcome = std::make_shared<RequestOutcome>();
 			outcome->initial = true;
 			try {
 				ai::OpenAIClient client(std::move(key), std::move(model),
-					std::move(transcription_model), {}, &cancelled);
+					std::move(transcription_model), {}, &state->cancelled);
 				auto transcript = client.Transcribe(audio);
-				if (cancelled.load()) throw ai::Error("A kérés megszakítva.");
+				if (state->cancelled.load()) throw ai::Error("A kérés megszakítva.");
 				outcome->result = client.Review(lines, transcript);
 			}
 			catch (std::exception const& error) {
-				outcome->cancelled = cancelled.load();
+				outcome->cancelled = state->cancelled.load();
 				outcome->error = error.what();
 			}
-			PostOutcome(std::move(outcome));
+			PostOutcome(std::move(state), std::move(outcome));
 		});
 	}
 
@@ -371,35 +384,35 @@ class AIReviewDialog final : public wxDialog {
 		chat_input->Clear();
 		AddMessage(_("You"), to_wx(message));
 		SetBusy(true, _("The AI is reviewing your follow-up question..."));
-		cancelled.store(false);
+		request_state->cancelled.store(false);
 
 		auto key = ApiKey();
 		auto model = Model();
 		auto transcription_model = TranscriptionModel();
 		auto previous = current_result;
+		auto state = request_state;
 
-		agi::dispatch::Background().Async([this, key = std::move(key), model = std::move(model),
+		agi::dispatch::Background().Async([state = std::move(state), key = std::move(key), model = std::move(model),
 			transcription_model = std::move(transcription_model),
 			previous = std::move(previous), message = std::move(message)]() mutable {
 			auto outcome = std::make_shared<RequestOutcome>();
 			try {
 				ai::OpenAIClient client(std::move(key), std::move(model),
-					std::move(transcription_model), {}, &cancelled);
+					std::move(transcription_model), {}, &state->cancelled);
 				outcome->result = client.Continue(previous, message);
 			}
 			catch (std::exception const& error) {
-				outcome->cancelled = cancelled.load();
+				outcome->cancelled = state->cancelled.load();
 				outcome->error = error.what();
 			}
-			PostOutcome(std::move(outcome));
+			PostOutcome(std::move(state), std::move(outcome));
 		});
 	}
 
-	void OnRequestDone(wxThreadEvent& event) {
-		auto outcome = event.GetPayload<std::shared_ptr<RequestOutcome>>();
+	void OnRequestDone(std::shared_ptr<RequestOutcome> const& outcome) {
 		if (close_when_idle) {
 			SetBusy(false, {});
-			EndModal(wxID_CANCEL);
+			Destroy();
 			return;
 		}
 
@@ -425,7 +438,7 @@ class AIReviewDialog final : public wxDialog {
 
 	void RequestClose() {
 		if (!busy) {
-			EndModal(wxID_CANCEL);
+			Destroy();
 			return;
 		}
 		close_when_idle = true;
@@ -438,7 +451,7 @@ class AIReviewDialog final : public wxDialog {
 			event.Veto();
 		}
 		else {
-			EndModal(wxID_CANCEL);
+			Destroy();
 		}
 	}
 
@@ -450,9 +463,13 @@ public:
 	: wxDialog(context->parent, wxID_ANY, _("AI subtitle review"),
 		wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, context(context)
-	, subtitle_lines(std::move(subtitle_lines))
 	, input_lines(std::move(input_lines))
 	, audio_file(std::move(audio_file)) {
+		request_state->dialog.store(this);
+		this->subtitle_timings.reserve(subtitle_lines.size());
+		for (auto line : subtitle_lines)
+			this->subtitle_timings.push_back({static_cast<int>(line->Start),
+				static_cast<int>(line->End)});
 		auto main = new wxBoxSizer(wxVERTICAL);
 
 		auto header = new wxBoxSizer(wxHORIZONTAL);
@@ -514,7 +531,6 @@ public:
 		SetMinSize(FromDIP(wxSize(760, 640)));
 		CenterOnParent();
 
-		Bind(EVT_AI_REQUEST_DONE, &AIReviewDialog::OnRequestDone, this);
 		Bind(wxEVT_CLOSE_WINDOW, &AIReviewDialog::OnCloseWindow, this);
 		close_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { RequestClose(); });
 		play_scene_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { PlayScene(); });
@@ -529,7 +545,13 @@ public:
 	}
 
 	~AIReviewDialog() override {
+		request_state->dialog.store(nullptr);
+		request_state->cancelled.store(true);
 		if (context->audioController) context->audioController->Stop();
+		if (!audio_file.empty()) {
+			try { agi::fs::Remove(audio_file); }
+			catch (...) { }
+		}
 	}
 };
 
@@ -539,7 +561,7 @@ void ShowAIReviewDialog(agi::Context *context,
 	std::vector<AssDialogue *> lines,
 	std::vector<ai::SubtitleLine> input,
 	agi::fs::path audio_file) {
-	AIReviewDialog dialog(context, std::move(lines), std::move(input),
+	auto dialog = new AIReviewDialog(context, std::move(lines), std::move(input),
 		std::move(audio_file));
-	dialog.ShowModal();
+	dialog->Show();
 }

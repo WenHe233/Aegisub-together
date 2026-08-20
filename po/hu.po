@@ -7476,6 +7476,10 @@ msgstr "Vissza"
 msgid "Skip"
 msgstr "Kihagyás"
 
+#: src/dialog_ai_proofread.cpp
+msgid "Skip all"
+msgstr "Összes kihagyása"
+
 msgid "Cancel review"
 msgstr "Ellenőrzés megszakítása"
 
@@ -8484,8 +8488,8 @@ msgid "Which language are the subtitles you are checking written in?\n\nYou can 
 msgstr "Milyen nyelven készültek az ellenőrizni kívánt feliratok?\n\nEzt később a Beállítások Általános lapján módosíthatod."
 
 #: src/command/ai.cpp
-msgid "Check up to 100 lines and two minutes of subtitles against Japanese audio and the source lines"
-msgstr "Legfeljebb 100 sor és két perc felirat ellenőrzése a japán hang és a forrássorok alapján"
+msgid "Check up to 100 lines and two minutes of subtitles against Japanese audio and any available source lines"
+msgstr "Legfeljebb 100 sor és két perc felirat ellenőrzése a japán hang és az elérhető forrássorok alapján"
 
 #: src/command/ai.cpp
 msgid "Check spelling, wording and consistency, then approve corrections one by one"

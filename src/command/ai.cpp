@@ -91,7 +91,7 @@ struct ai_review final : public cmd::Command {
 	CMD_NAME("ai/review")
 	STR_MENU("Review selected lines with AI...")
 	STR_DISP("Review selected lines with AI")
-	STR_HELP("Check up to 100 lines and two minutes of subtitles against Japanese audio and the source lines")
+	STR_HELP("Check up to 100 lines and two minutes of subtitles against Japanese audio and any available source lines")
 	CMD_TYPE(cmd::COMMAND_VALIDATE)
 
 	bool Validate(agi::Context const *c) override {
@@ -118,11 +118,6 @@ struct ai_review final : public cmd::Command {
 		for (auto line : lines) {
 			start = std::min(start, static_cast<int>(line->Start));
 			end = std::max(end, static_cast<int>(line->End));
-			if (agi::util::clean_ass_text(line->SourceLineText.get()).empty()) {
-				wxMessageBox(fmt_tl("Selected line %d has no English source text.", line->Row + 1),
-					_("AI subtitle review"), wxOK | wxICON_WARNING, c->parent);
-				return;
-			}
 		}
 
 		if (end - start > max_scene_duration_ms) {
@@ -175,11 +170,11 @@ struct ai_review final : public cmd::Command {
 			});
 		}
 
-		// ShowModal inside this function locks the rest of Aegisub for the whole
-		// conversation. Therefore the captured line pointers and selection cannot
-		// drift before the user explicitly applies the final suggestions.
+		// The modeless review snapshots its displayed lines and takes ownership of
+		// the temporary audio file after this call returns.
 		ShowAIReviewDialog(c, std::move(lines), std::move(input),
 			agi::fs::path(from_wx(temporary.path)));
+		temporary.path.clear();
 	}
 };
 

@@ -48,7 +48,7 @@
 #endif
 
 const char *GetAegisubLongVersionString() {
-	return "-- nyaa's edition v4.7";
+	return "-- nyaa's edition v4.8";
 }
 
 const char *GetAegisubShortVersionString() {
@@ -79,7 +79,7 @@ const char *GetVersionNumber() {
 }
 
 const char *GetMutekiVersionString() {
-	return "4.7";
+	return "4.8";
 }
 
 int GetSVNRevision() {
