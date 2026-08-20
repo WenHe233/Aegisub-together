@@ -4,12 +4,14 @@
 #include "dialog_manager.h"
 #include "format.h"
 #include "include/aegisub/context.h"
+#include "options.h"
 #include "string_codec.h"
 #include "subs_controller.h"
 #include "theme.h"
 #include "utils.h"
 
 #include <libaegisub/ass/uuencode.h>
+#include <libaegisub/fs.h>
 #include <libaegisub/util.h>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/regex/icu.hpp>
@@ -518,13 +520,14 @@ class DialogFolderSearch final : public wxDialog {
 	}
 	void start_search() {
 		if (running) return;
-		auto root = std::filesystem::path(from_wx(folder->GetPath())); auto value = from_wx(query->GetValue());
+		auto root = agi::fs::path(from_wx(folder->GetPath())); auto value = from_wx(query->GetValue());
 		if (root.empty() || !std::filesystem::is_directory(root)) { wxMessageBox(_("Please select an existing folder."), _("Find in Folder"), wxOK | wxICON_WARNING, this); return; }
 		if (value.empty()) { wxMessageBox(_("Please enter the text to find."), _("Find in Folder"), wxOK | wxICON_WARNING, this); return; }
 		Matcher matcher;
 		try { matcher = make_matcher(value, match_case->GetValue(), whole_word->GetValue(), regex->GetValue()); }
 		catch (std::exception const& e) { wxMessageBox(fmt_tl("Invalid regular expression:\n%s", e.what()), _("Find in Folder"), wxOK | wxICON_ERROR, this); return; }
 		StyleFilter style_filter{parse_style_list(from_wx(include_styles->GetValue())), parse_style_list(from_wx(exclude_styles->GetValue()))};
+		OPT_SET("Path/Last/Folder Search")->SetString(root.string());
 		stop_worker(); cancelled = false; clear_results(); files = hits = 0;
 		set_status(_("Searching...")); set_running(true);
 		worker = std::thread([this, root = std::move(root), matcher = std::move(matcher), style_filter = std::move(style_filter)] {
@@ -565,7 +568,9 @@ class DialogFolderSearch final : public wxDialog {
 public:
 	explicit DialogFolderSearch(agi::Context *c)
 	: wxDialog(c->parent, -1, _("Find in Folder"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER), pulse(this) {
-		folder = new wxDirPickerCtrl(this, -1, to_wx(c->subsController->Filename().parent_path().string()), _("Select a folder to search"),
+		auto initial_folder = OPT_GET("Path/Last/Folder Search")->GetString();
+		if (initial_folder.empty()) initial_folder = c->subsController->Filename().parent_path().string();
+		folder = new wxDirPickerCtrl(this, -1, to_wx(initial_folder), _("Select a folder to search"),
 			wxDefaultPosition, wxDefaultSize, wxDIRP_USE_TEXTCTRL | wxDIRP_DIR_MUST_EXIST);
 		folder->GetPickerCtrl()->SetLabel(_("Browse"));
 		query = new wxTextCtrl(this, -1, {}, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
