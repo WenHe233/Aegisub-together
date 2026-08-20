@@ -2905,8 +2905,8 @@ void VisualToolTransform::DrawCorner(Vector2D at, bool current, bool selected) {
 	wxColour active = to_wx(highlight_color_secondary_opt->GetColor());
 	bool soft_hover = mode == VisualToolTransformMode::Warp;
 	gl.SetLineColour(current || selected ? active : outline, 1.f,
-		selected || (current && !soft_hover) ? 2 : 1);
-	if (selected) gl.SetFillColour(active, .72f);
+		current && !soft_hover ? 2 : 1);
+	if (selected) gl.SetFillColour(active, .46f);
 	else if (current && soft_hover) gl.SetFillColour(active, .14f);
 	else gl.SetFillColour(*wxBLACK, 0.f);
 	gl.DrawRectangle(at - Vector2D(5.f, 5.f), at + Vector2D(5.f, 5.f));
@@ -2921,6 +2921,8 @@ void VisualToolTransform::DrawShapeHandles() {
 	for (auto& feature : features) {
 		bool current = &feature == active_feature;
 		bool selected = sel_features.count(&feature) != 0;
+		if (mode == VisualToolTransformMode::Warp && index == warp_move_handle)
+			selected = false;
 		// The distort's four, and the warp's first four, are corners of the box. The warp's
 		// others steer its curves and the arch's bend its edges: those are not corners and are
 		// not drawn as any.
@@ -2934,9 +2936,9 @@ void VisualToolTransform::DrawShapeHandles() {
 			bool soft_hover = mode == VisualToolTransformMode::Arch ||
 				mode == VisualToolTransformMode::Warp;
 			gl.SetLineColour(current || selected ? active_fill : outline, 1.f,
-				selected || (current && !soft_hover) ? 2 : 1);
+				current && !soft_hover ? 2 : 1);
 			gl.SetFillColour(current || selected ? active_fill : base_fill,
-				selected ? .85f : current ? (soft_hover ? .42f : .9f) : .3f);
+				selected ? .58f : current ? (soft_hover ? .42f : .9f) : .3f);
 			feature.Draw(gl);
 		}
 		++index;
@@ -3032,7 +3034,12 @@ void VisualToolTransform::DrawFreeRotationGuide() {
 	gl.SetLineColour(colour, .9f, 1);
 	gl.DrawLine(pivot, mouse_pos);
 
-	Vector2D icon = mouse_pos - reach.Unit() * 14.f;
+	Vector2D direction = reach.Unit();
+	Vector2D above(direction.Y(), -direction.X());
+	// Keep the rotation glyph on the visually upper side of the guide. Its arc has a
+	// six-pixel radius, so nine pixels leaves a small gap instead of crossing the line.
+	if (above.Y() > 0.f || (std::abs(above.Y()) < .001f && above.X() > 0.f)) above = above * -1.f;
+	Vector2D icon = mouse_pos - direction * 14.f + above * 9.f;
 	const int steps = 12;
 	const double sweep = 285.0;
 	Vector2D previous;
@@ -3104,7 +3111,12 @@ bool VisualToolTransform::InitializeDrag(VisualDraggableFeature *feature) {
 			if (&other == feature) break;
 			++index;
 		}
+		if (index != warp_move_handle)
+			if (auto *move = FeatureAt(warp_move_handle)) sel_features.erase(move);
 		if (index == warp_move_handle) {
+			// This is an action handle, not a mesh control point. It may be dragged, but it
+			// must not join a point selection or move together with selected warp points.
+			SetSelection(feature, true);
 			hold_net = net;
 			hold_start = ToScriptCoords(feature->pos);
 		}
@@ -3357,11 +3369,17 @@ void VisualToolTransform::OnMouseEvent(wxMouseEvent& event) {
 		box_selecting = false;
 		Vector2D low = box_select_start.Min(mouse_pos);
 		Vector2D high = box_select_start.Max(mouse_pos);
+		if (mode == VisualToolTransformMode::Warp)
+			if (auto *move = FeatureAt(warp_move_handle)) sel_features.erase(move);
 		if (!box_select_add) sel_features.clear();
-		for (auto& feature : features)
+		size_t index = 0;
+		for (auto& feature : features) {
+			if (mode == VisualToolTransformMode::Warp && index++ == warp_move_handle)
+				continue;
 			if (feature.pos.X() >= low.X() && feature.pos.X() <= high.X() &&
 				feature.pos.Y() >= low.Y() && feature.pos.Y() <= high.Y())
 				SetSelection(&feature, false);
+		}
 		if (parent->HasCapture()) parent->ReleaseMouse();
 		parent->SetFocus();
 		parent->Render();
@@ -3429,6 +3447,8 @@ void VisualToolTransform::OnMouseEvent(wxMouseEvent& event) {
 		return;
 	}
 	VisualTool<VisualDraggableFeature>::OnMouseEvent(event);
+	if (mode == VisualToolTransformMode::Warp && !event.LeftIsDown())
+		if (auto *move = FeatureAt(warp_move_handle)) sel_features.erase(move);
 }
 
 bool VisualToolTransform::HandleKey(int key, bool control, bool shift) {
