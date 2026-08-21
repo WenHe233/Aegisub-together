@@ -37,6 +37,8 @@ struct Track {
 	TrackKind kind = TrackKind::Transform;
 	int source_width = 0;
 	int source_height = 0;
+	int coordinate_width = 0;
+	int coordinate_height = 0;
 	std::vector<Sample> samples;
 	std::string adapter;
 

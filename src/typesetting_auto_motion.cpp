@@ -52,17 +52,126 @@ GrayFrame MakeGray(VideoFrame const& source) {
 	return out;
 }
 
-bool InsideQuad(std::array<Vector2D, 4> const& quad, Vector2D point) {
-	bool positive = false, negative = false;
-	for (size_t index = 0; index < quad.size(); ++index) {
-		Vector2D edge = quad[(index + 1) % quad.size()] - quad[index];
-		Vector2D relative = point - quad[index];
-		double cross = edge.X() * relative.Y() - edge.Y() * relative.X();
-		positive = positive || cross > .001;
-		negative = negative || cross < -.001;
-		if (positive && negative) return false;
+std::pair<Vector2D, Vector2D> RegionBounds(std::vector<Vector2D> const& region) {
+	Vector2D low = region.front(), high = region.front();
+	for (auto point : region) {
+		low = low.Min(point);
+		high = high.Max(point);
 	}
-	return true;
+	return {low, high};
+}
+
+double PolygonArea(std::vector<Vector2D> const& region) {
+	if (region.size() < 3) return 0;
+	double area = 0;
+	for (size_t index = 0; index < region.size(); ++index)
+		area += region[index].Cross(region[(index + 1) % region.size()]);
+	return area * .5;
+}
+
+std::vector<std::pair<int, int>> PolygonSpans(
+	std::vector<Vector2D> const& region, double sample_y,
+	double sample_x_offset, int width) {
+	std::vector<double> intersections;
+	intersections.reserve(region.size());
+	for (size_t index = 0; index < region.size(); ++index) {
+		auto first = region[index];
+		auto second = region[(index + 1) % region.size()];
+		if (!((first.Y() <= sample_y && second.Y() > sample_y) ||
+			(first.Y() > sample_y && second.Y() <= sample_y))) continue;
+		double progress = (sample_y - first.Y()) / (second.Y() - first.Y());
+		intersections.push_back(first.X() + progress * (second.X() - first.X()));
+	}
+	std::sort(intersections.begin(), intersections.end());
+	std::vector<std::pair<int, int>> spans;
+	for (size_t index = 0; index + 1 < intersections.size(); index += 2) {
+		int begin = std::clamp(static_cast<int>(
+			std::ceil(intersections[index] - sample_x_offset)), 0, width);
+		int end = std::clamp(static_cast<int>(
+			std::ceil(intersections[index + 1] - sample_x_offset)), 0, width);
+		if (begin < end) spans.emplace_back(begin, end);
+	}
+	return spans;
+}
+
+std::optional<std::array<double, 9>> RegionCorrelations(
+	GrayFrame const& previous, GrayFrame const& next,
+	std::vector<Vector2D> const& region) {
+	if (previous.width != next.width || previous.height != next.height)
+		return std::nullopt;
+	auto [low, high] = RegionBounds(region);
+	// Leave a one-pixel border so every sample has all nine comparison offsets.
+	int left = std::max(1, static_cast<int>(std::floor(low.X())));
+	int top = std::max(1, static_cast<int>(std::floor(low.Y())));
+	int right = std::min(previous.width - 1, static_cast<int>(std::ceil(high.X())));
+	int bottom = std::min(previous.height - 1, static_cast<int>(std::ceil(high.Y())));
+	if (left >= right || top >= bottom) return std::nullopt;
+
+	double previous_sum = 0;
+	double previous_square_sum = 0;
+	std::array<double, 9> next_sum{};
+	std::array<double, 9> next_square_sum{};
+	std::array<double, 9> product_sum{};
+	size_t count = 0;
+	for (int y = top; y < bottom; y += 2) {
+		for (auto [span_begin, span_end] : PolygonSpans(
+			region, y + .5, .5, previous.width)) {
+			int begin = std::max(left, span_begin);
+			int end = std::min(right, span_end);
+			if ((begin - left) % 2) ++begin;
+			for (int x = begin; x < end; x += 2) {
+				double source = previous.At(x, y);
+				previous_sum += source;
+				previous_square_sum += source * source;
+				++count;
+				for (int dy = -1; dy <= 1; ++dy) {
+					for (int dx = -1; dx <= 1; ++dx) {
+						size_t index = static_cast<size_t>((dy + 1) * 3 + dx + 1);
+						double target = next.At(x + dx, y + dy);
+						next_sum[index] += target;
+						next_square_sum[index] += target * target;
+						product_sum[index] += source * target;
+					}
+				}
+			}
+		}
+	}
+	if (count < 64) return std::nullopt;
+	double sample_count = static_cast<double>(count);
+	double previous_variance = previous_square_sum -
+		previous_sum * previous_sum / sample_count;
+	if (previous_variance <= 1e-6) return std::nullopt;
+	std::array<double, 9> correlations{};
+	for (size_t index = 0; index < correlations.size(); ++index) {
+		double next_variance = next_square_sum[index] -
+			next_sum[index] * next_sum[index] / sample_count;
+		if (next_variance <= 1e-6) return std::nullopt;
+		double covariance = product_sum[index] -
+			previous_sum * next_sum[index] / sample_count;
+		correlations[index] = std::clamp(covariance /
+			std::sqrt(previous_variance * next_variance), -1.0, 1.0);
+	}
+	return correlations;
+}
+
+bool RegionHasNoGeometricMotion(GrayFrame const& previous,
+	GrayFrame const& next, std::vector<Vector2D> const& region) {
+	auto correlations = RegionCorrelations(previous, next, region);
+	if (!correlations) return false;
+	double centre = (*correlations)[4];
+	if (centre < .98) return false;
+	double best = *std::max_element(correlations->begin(), correlations->end());
+	// A non-zero integer offset must not explain the next frame better. The small
+	// allowance absorbs correlation rounding on flat areas without hiding motion.
+	if (best > centre + .00025) return false;
+	auto subpixel_peak = [centre](double before, double after) {
+		double denominator = before - 2 * centre + after;
+		if (denominator >= -1e-8) return 0.0;
+		return .5 * (before - after) / denominator;
+	};
+	double offset_x = subpixel_peak((*correlations)[3], (*correlations)[5]);
+	double offset_y = subpixel_peak((*correlations)[1], (*correlations)[7]);
+	return std::abs(offset_x) <= .15 && std::abs(offset_y) <= .15;
 }
 
 double CornerScore(GrayFrame const& frame, int x, int y) {
@@ -86,9 +195,8 @@ double CornerScore(GrayFrame const& frame, int x, int y) {
 }
 
 std::vector<Vector2D> FeaturePoints(GrayFrame const& frame,
-	std::array<Vector2D, 4> const& quad, AutoTrackSettings const& settings) {
-	Vector2D low = quad[0], high = quad[0];
-	for (auto point : quad) { low = low.Min(point); high = high.Max(point); }
+	std::vector<Vector2D> const& region, AutoTrackSettings const& settings) {
+	auto [low, high] = RegionBounds(region);
 	int margin = settings.patch_radius + 2;
 	int left = std::max(margin, static_cast<int>(std::floor(low.X())));
 	int top = std::max(margin, static_cast<int>(std::floor(low.Y())));
@@ -96,19 +204,20 @@ std::vector<Vector2D> FeaturePoints(GrayFrame const& frame,
 	int bottom = std::min(frame.height - margin - 1, static_cast<int>(std::ceil(high.Y())));
 	std::vector<std::pair<double, Vector2D>> candidates;
 	for (int y = top; y <= bottom; y += 2) {
-		for (int x = left; x <= right; x += 2) {
-			Vector2D point(x, y);
-			if (!InsideQuad(quad, point)) continue;
-			double score = CornerScore(frame, x, y);
-			if (score > 1) candidates.emplace_back(score, point);
+		for (auto [span_begin, span_end] : PolygonSpans(region, y, 0, frame.width)) {
+			int begin = std::max(left, span_begin);
+			int end = std::min(right + 1, span_end);
+			if ((begin - left) % 2) ++begin;
+			for (int x = begin; x < end; x += 2) {
+				double score = CornerScore(frame, x, y);
+				if (score > 1) candidates.emplace_back(score, Vector2D(x, y));
+			}
 		}
 	}
 	std::stable_sort(candidates.begin(), candidates.end(),
 		[](auto const& left, auto const& right) { return left.first > right.first; });
-	double horizontal = ((quad[1] - quad[0]).Len() + (quad[2] - quad[3]).Len()) * .5 /
-		std::max(1, settings.grid_columns);
-	double vertical = ((quad[3] - quad[0]).Len() + (quad[2] - quad[1]).Len()) * .5 /
-		std::max(1, settings.grid_rows);
+	double horizontal = (high.X() - low.X()) / std::max(1, settings.grid_columns);
+	double vertical = (high.Y() - low.Y()) / std::max(1, settings.grid_rows);
 	double spacing = std::clamp(std::min(horizontal, vertical) * .45, 4.0, 12.0);
 	double spacing_squared = spacing * spacing;
 	std::vector<Vector2D> out;
@@ -311,10 +420,9 @@ double MaximumCornerDistance(std::array<Vector2D, 4> const& first,
 }
 
 bool RegionIsUnchanged(GrayFrame const& previous, GrayFrame const& next,
-	std::array<Vector2D, 4> const& quad) {
+	std::vector<Vector2D> const& region) {
 	if (previous.width != next.width || previous.height != next.height) return false;
-	Vector2D low = quad[0], high = quad[0];
-	for (auto point : quad) { low = low.Min(point); high = high.Max(point); }
+	auto [low, high] = RegionBounds(region);
 	int left = std::clamp(static_cast<int>(std::floor(low.X())), 0, previous.width - 1);
 	int top = std::clamp(static_cast<int>(std::floor(low.Y())), 0, previous.height - 1);
 	int right = std::clamp(static_cast<int>(std::ceil(high.X())), left + 1, previous.width);
@@ -323,33 +431,58 @@ bool RegionIsUnchanged(GrayFrame const& previous, GrayFrame const& next,
 	uint64_t absolute_difference = 0;
 	size_t materially_changed = 0;
 	for (int y = top; y < bottom; ++y) {
-		for (int x = left; x < right; ++x) {
-			if (!InsideQuad(quad, Vector2D(x + .5f, y + .5f))) continue;
-			++compared;
-			int difference = std::abs(static_cast<int>(previous.At(x, y)) -
-				static_cast<int>(next.At(x, y)));
-			absolute_difference += static_cast<uint64_t>(difference);
-			// Inter-frame codecs commonly move a small fraction of otherwise held
-			// pixels by three or four luma values. That is decoder texture noise, not
-			// geometric motion; actual sub-pixel movement changes many edge pixels by
-			// more than this.
-			if (difference > 4) ++materially_changed;
+		for (auto [span_begin, span_end] : PolygonSpans(
+			region, y + .5, .5, previous.width)) {
+			for (int x = std::max(left, span_begin);
+				x < std::min(right, span_end); ++x) {
+				++compared;
+				int difference = std::abs(static_cast<int>(previous.At(x, y)) -
+					static_cast<int>(next.At(x, y)));
+				absolute_difference += static_cast<uint64_t>(difference);
+				// Inter-frame codecs commonly move a small fraction of otherwise held
+				// pixels by three or four luma values. That is decoder texture noise, not
+				// geometric motion; actual sub-pixel movement changes many edge pixels by
+				// more than this.
+				if (difference > 4) ++materially_changed;
+			}
 		}
 	}
-	return detail::IsUnchangedRegion(compared, absolute_difference,
-		materially_changed);
+	if (detail::IsUnchangedRegion(compared, absolute_difference,
+		materially_changed)) return true;
+	// Pixel identity alone is too strict for animated sources with codec texture
+	// changes. Confirm a held frame structurally: zero displacement must be the
+	// correlation peak inside the user's actual polygon.
+	return RegionHasNoGeometricMotion(previous, next, region);
+}
+
+std::vector<Vector2D> TransformRegion(
+	std::vector<Vector2D> const& reference_region,
+	std::array<Vector2D, 4> const& reference_quad,
+	std::array<Vector2D, 4> const& current_quad) {
+	std::vector<PointMatch> matches;
+	matches.reserve(reference_quad.size());
+	for (size_t index = 0; index < reference_quad.size(); ++index)
+		matches.push_back({reference_quad[index], current_quad[index]});
+	auto transform = detail::FitPlanar(matches, {0, 1, 2, 3});
+	if (!transform) return reference_region;
+	std::vector<Vector2D> current;
+	current.reserve(reference_region.size());
+	for (auto point : reference_region) current.push_back(transform->Map(point));
+	return current;
 }
 
 bool Advance(GrayFrame const& previous, GrayFrame const& next,
 	GrayFrame const& reference, std::array<Vector2D, 4> const& reference_quad,
+	std::vector<Vector2D> const& reference_region,
 	std::vector<Vector2D> const& reference_points, std::array<Vector2D, 4>& quad,
-	AutoTrackSettings const& settings, bool& held) {
+	std::vector<Vector2D>& current_region, AutoTrackSettings const& settings,
+	bool& held) {
 	// Held/duplicated source frames must reuse the exact previous transform.
 	// Running sub-pixel correlation on identical pixels can otherwise introduce
 	// tiny scale or position noise and prevents equal subtitle events from merging.
-	held = RegionIsUnchanged(previous, next, quad);
+	held = RegionIsUnchanged(previous, next, current_region);
 	if (held) return true;
-	auto points = FeaturePoints(previous, quad, settings);
+	auto points = FeaturePoints(previous, current_region, settings);
 	std::vector<PointMatch> matches;
 	for (auto point : points)
 		if (auto matched = MatchPatch(previous, next, point, point,
@@ -357,9 +490,10 @@ bool Advance(GrayFrame const& previous, GrayFrame const& next,
 	auto incremental = EstimateQuad(std::move(matches), quad, settings, true);
 	if (!incremental) {
 		auto recovered = RelockToReference(reference, next, reference_quad,
-			reference_points, quad, settings, settings.search_radius);
+			reference_points, quad, settings, settings.search_radius * 2);
 		if (!recovered) return false;
 		quad = *recovered;
+		current_region = TransformRegion(reference_region, reference_quad, quad);
 		return true;
 	}
 	auto relocked = RelockToReference(reference, next, reference_quad,
@@ -369,6 +503,7 @@ bool Advance(GrayFrame const& previous, GrayFrame const& next,
 		quad = *relocked;
 	else
 		quad = *incremental;
+	current_region = TransformRegion(reference_region, reference_quad, quad);
 	return true;
 }
 
@@ -517,7 +652,7 @@ std::vector<PlanarObservation> StabilisedPlanar(
 	if (*angle_bounds.second - *angle_bounds.first < angle_noise_floor &&
 		std::max(std::abs(*angle_bounds.first), std::abs(*angle_bounds.second)) < angle_noise_floor)
 		std::fill(angle.begin(), angle.end(), 0.0);
-	if (!linear && held_from_previous.size() == observations.size()) {
+	if (held_from_previous.size() == observations.size()) {
 		for (size_t begin = 0; begin < observations.size();) {
 			size_t end = begin;
 			while (end + 1 < observations.size() && held_from_previous[end + 1]) ++end;
@@ -550,10 +685,10 @@ std::vector<PlanarObservation> StabilisedPlanar(
 
 } // namespace
 
-std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
-	Vector2D bottom_right, int first_frame, int last_frame, int reference_frame,
-	AutoTrackSettings const& settings, std::function<bool(int, int)> progress,
-	std::string& error) {
+std::optional<Track> TrackRegion(agi::Context *context,
+	std::vector<Vector2D> const& region, int first_frame, int last_frame,
+	int reference_frame, AutoTrackSettings const& settings,
+	std::function<bool(int, int)> progress, std::string& error) {
 	error.clear();
 	if (!context || !context->videoController || first_frame > last_frame ||
 		reference_frame < first_frame || reference_frame > last_frame) {
@@ -574,14 +709,32 @@ std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 	}
 	double x_scale = static_cast<double>(reference_video->width) / script_width;
 	double y_scale = static_cast<double>(reference_video->height) / script_height;
+	std::vector<Vector2D> reference_region;
+	reference_region.reserve(region.size());
+	for (auto point : region) {
+		Vector2D scaled(static_cast<float>(point.X() * x_scale),
+			static_cast<float>(point.Y() * y_scale));
+		if (reference_region.empty() ||
+			(reference_region.back() - scaled).SquareLen() >= .0625f)
+			reference_region.push_back(scaled);
+	}
+	if (reference_region.size() > 3 &&
+		(reference_region.front() - reference_region.back()).SquareLen() < .0625f)
+		reference_region.pop_back();
+	if (reference_region.size() < 3) {
+		error = "The tracking region must contain at least three distinct points.";
+		return std::nullopt;
+	}
+	auto [region_low, region_high] = RegionBounds(reference_region);
 	std::array<Vector2D, 4> reference_quad = {
-		Vector2D(top_left.X() * x_scale, top_left.Y() * y_scale),
-		Vector2D(bottom_right.X() * x_scale, top_left.Y() * y_scale),
-		Vector2D(bottom_right.X() * x_scale, bottom_right.Y() * y_scale),
-		Vector2D(top_left.X() * x_scale, bottom_right.Y() * y_scale)
+		region_low,
+		Vector2D(region_high.X(), region_low.Y()),
+		region_high,
+		Vector2D(region_low.X(), region_high.Y())
 	};
 	if ((reference_quad[1] - reference_quad[0]).Len() < 14.f ||
-		(reference_quad[3] - reference_quad[0]).Len() < 14.f) {
+		(reference_quad[3] - reference_quad[0]).Len() < 14.f ||
+		std::abs(PolygonArea(reference_region)) < 64.0) {
 		error = "The tracking region is too small; select at least 14 x 14 video pixels.";
 		return std::nullopt;
 	}
@@ -589,11 +742,25 @@ std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 	int frame_count = last_frame - first_frame + 1;
 	std::vector<std::array<Vector2D, 4>> quads(static_cast<size_t>(frame_count), reference_quad);
 	std::vector<bool> held_from_previous(static_cast<size_t>(frame_count), false);
+	size_t reference_index = static_cast<size_t>(reference_frame - first_frame);
+	if (settings.direction == AutoTrackDirection::Forward)
+		for (size_t index = 1; index <= reference_index; ++index)
+			held_from_previous[index] = true;
+	if (settings.direction == AutoTrackDirection::Backward)
+		for (size_t index = reference_index + 1; index < held_from_previous.size(); ++index)
+			held_from_previous[index] = true;
+	int tracking_steps = 0;
+	if (settings.direction != AutoTrackDirection::Forward)
+		tracking_steps += reference_frame - first_frame;
+	if (settings.direction != AutoTrackDirection::Backward)
+		tracking_steps += last_frame - reference_frame;
 	int completed = 0;
-	auto report = [&]() { return !progress || progress(completed, std::max(1, frame_count - 1)); };
+	auto report = [&]() {
+		return !progress || progress(completed, std::max(1, tracking_steps));
+	};
 
 	GrayFrame reference = MakeGray(*reference_video);
-	auto reference_points = FeaturePoints(reference, reference_quad, settings);
+	auto reference_points = FeaturePoints(reference, reference_region, settings);
 	int minimum_features = 4;
 	if (static_cast<int>(reference_points.size()) < minimum_features) {
 		error = "The selected region does not contain enough distinct, stable corners to track.";
@@ -601,13 +768,16 @@ std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 	}
 	GrayFrame previous = reference;
 	auto quad = reference_quad;
-	for (int frame = reference_frame + 1; frame <= last_frame; ++frame) {
+	auto current_region = reference_region;
+	for (int frame = reference_frame + 1;
+		settings.direction != AutoTrackDirection::Backward && frame <= last_frame;
+		++frame) {
 		auto video = context->videoController->GetFrame(frame, true);
 		if (!video) { error = "A video frame could not be read."; return std::nullopt; }
 		GrayFrame next = MakeGray(*video);
 		bool held = false;
-		if (!Advance(previous, next, reference, reference_quad, reference_points,
-			quad, settings, held)) {
+		if (!Advance(previous, next, reference, reference_quad, reference_region,
+			reference_points, quad, current_region, settings, held)) {
 			error = "Auto Motion lost the selected region at video frame " +
 				std::to_string(frame + 1) +
 				". Select a larger region with stable corners.";
@@ -621,13 +791,16 @@ std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 	}
 	previous = reference;
 	quad = reference_quad;
-	for (int frame = reference_frame - 1; frame >= first_frame; --frame) {
+	current_region = reference_region;
+	for (int frame = reference_frame - 1;
+		settings.direction != AutoTrackDirection::Forward && frame >= first_frame;
+		--frame) {
 		auto video = context->videoController->GetFrame(frame, true);
 		if (!video) { error = "A video frame could not be read."; return std::nullopt; }
 		GrayFrame next = MakeGray(*video);
 		bool held = false;
-		if (!Advance(previous, next, reference, reference_quad, reference_points,
-			quad, settings, held)) {
+		if (!Advance(previous, next, reference, reference_quad, reference_region,
+			reference_points, quad, current_region, settings, held)) {
 			error = "Auto Motion lost the selected region at video frame " +
 				std::to_string(frame + 1) +
 				". Select a larger region with stable corners.";
@@ -644,10 +817,14 @@ std::optional<Track> TrackRegion(agi::Context *context, Vector2D top_left,
 	Track track;
 	track.source_width = reference_video->width;
 	track.source_height = reference_video->height;
-	track.adapter = settings.linear ?
-		"native-auto-planar-linear" : "native-auto-planar-stabilized";
+	track.coordinate_width = script_width;
+	track.coordinate_height = script_height;
+	std::string direction_name = settings.direction == AutoTrackDirection::Forward ?
+		"forward" : settings.direction == AutoTrackDirection::Backward ?
+		"backward" : "both";
+	track.adapter = std::string(settings.linear ?
+		"native-auto-planar-linear-" : "native-auto-planar-stabilized-") + direction_name;
 	track.samples.reserve(quads.size());
-	size_t reference_index = static_cast<size_t>(reference_frame - first_frame);
 	track.kind = TrackKind::Transform;
 	auto observations = StabilisedPlanar(quads, held_from_previous, reference_quad,
 		reference_index, settings.linear);

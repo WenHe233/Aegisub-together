@@ -5,10 +5,12 @@
 
 #pragma once
 
+#include "typesetting_auto_motion.h"
 #include "visual_tool.h"
 
 #include <memory>
 #include <string>
+#include <vector>
 
 class OpenGLText;
 
@@ -25,9 +27,11 @@ enum class AutoMotionAction {
 
 class VisualToolAutoMotion final : public VisualToolBase {
 	std::unique_ptr<OpenGLText> gl_text;
-	Vector2D region_start;
-	Vector2D region_end;
-	bool selecting = false;
+	std::vector<Vector2D> region;
+	int region_reference_frame = -1;
+	int hovered_point = -1;
+	int dragged_point = -1;
+	int featureSize = 0;
 	bool has_region = false;
 	bool busy = false;
 	bool leaving = false;
@@ -42,8 +46,13 @@ class VisualToolAutoMotion final : public VisualToolBase {
 	std::string return_tool;
 
 	void ExitTool();
+	void ResetRegion();
+	void UpdateRegionValidity();
+	int PointAt(Vector2D point) const;
 	void RunTracking();
-	Vector2D ClampToScript(Vector2D point) const;
+	typesetting::motion::AutoTrackDirection TrackingDirection(
+		int first_frame, int last_frame) const;
+	int TrackingSteps(int first_frame, int last_frame) const;
 	wxString LabelFor(AutoMotionAction action) const;
 	std::pair<Vector2D, Vector2D> ActionBounds(AutoMotionAction action) const;
 	AutoMotionAction ActionAt(Vector2D point) const;

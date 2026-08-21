@@ -119,6 +119,8 @@ std::optional<Track> ParseMocha(std::string const& text, int script_width,
 	Track track;
 	track.source_width = source_width;
 	track.source_height = source_height;
+	track.coordinate_width = script_width;
+	track.coordinate_height = script_height;
 	bool corner_pin = std::all_of(corners.begin(), corners.end(),
 		[](auto const& values) { return !values.empty(); });
 	if (expected_kind == TrackKind::CornerPin && corner_pin) {

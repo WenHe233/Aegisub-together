@@ -123,8 +123,8 @@ bool IsUnchangedRegion(size_t compared_pixels, uint64_t absolute_difference,
 	if (!compared_pixels) return false;
 	if (!absolute_difference) return true;
 	// Static blocks in inter-frame codecs can contain sparse 1-4 level luma noise.
-	// Keep those frames held, but reject broad brightness changes and the denser
-	// edge differences produced by even a small geometric movement.
+	// Keep this fast path deliberately strict; larger visual differences are
+	// accepted only after the geometric correlation check in the tracker.
 	return absolute_difference * 4 <= static_cast<uint64_t>(compared_pixels) * 3 &&
 		materially_changed_pixels * 200 <= compared_pixels;
 }

@@ -67,7 +67,7 @@ wxString TrackLabel(typesetting::motion::Track const& track, size_t required_fra
 		_("Mocha Corner Pin - %zu frames") : _("Mocha Transform Data - %zu frames"),
 		track.samples.size());
 	if (track.samples.size() != required_frames)
-		label += wxString::Format(_(" — selected lines require %zu frames"), required_frames);
+		label += wxString::Format(_(" - selected lines require %zu frames"), required_frames);
 	return label;
 }
 
@@ -126,6 +126,13 @@ class MotionApplyDialog final : public wxDialog {
 			TrackReady(clip_corner);
 	}
 
+	std::optional<Track> ParseTrackText(std::string const& text,
+		typesetting::motion::TrackKind expected_kind, std::string& error) const {
+		int width = 0, height = 0;
+		context->ass->GetResolution(width, height);
+		return typesetting::motion::ParseMocha(text, width, height, expected_kind, error);
+	}
+
 	void UpdateApplyState() {
 		if (auto apply = FindWindow(wxID_OK)) apply->Enable(AllTracksReady());
 	}
@@ -133,12 +140,9 @@ class MotionApplyDialog final : public wxDialog {
 	bool ParseEditor(wxTextCtrl *editor, std::optional<Track>& destination,
 		wxStaticText *label, wxSpinCtrl *reference_control,
 		typesetting::motion::TrackKind expected_kind, bool report_error) {
-		int width = 0, height = 0;
-		context->ass->GetResolution(width, height);
 		std::string error;
 		auto text = from_wx(editor->GetValue());
-		auto parsed = typesetting::motion::ParseMocha(text, width, height,
-			expected_kind, error);
+		auto parsed = ParseTrackText(text, expected_kind, error);
 		if (!parsed) {
 			destination.reset();
 			label->SetLabel(text.empty() ? _("No track data") : _("No valid track data"));
@@ -171,11 +175,14 @@ class MotionApplyDialog final : public wxDialog {
 				wxOK | wxICON_WARNING, this);
 			return;
 		}
-		editor->ChangeValue(to_wx(*data));
-		ParseEditor(editor, destination, label, reference_control, expected_kind, false);
-		if (!destination)
+		std::string error;
+		if (!ParseTrackText(*data, expected_kind, error)) {
 			wxMessageBox(_("There is no valid motion track on the clipboard."), _("Motion"),
 				wxOK | wxICON_WARNING, this);
+			return;
+		}
+		editor->ChangeValue(to_wx(*data));
+		ParseEditor(editor, destination, label, reference_control, expected_kind, false);
 	}
 
 	void UpdateDataControls(bool show_perspective = false) {
@@ -206,6 +213,8 @@ class MotionApplyDialog final : public wxDialog {
 	}
 
 	void TogglePerspective(wxCommandEvent&) {
+		if (main_perspective->GetValue()) main_rotate->SetValue(true);
+		if (clip_perspective->GetValue()) clip_rotate->SetValue(true);
 		UpdateDataControls(true);
 	}
 
@@ -441,10 +450,13 @@ public:
 		SetSizerAndFit(main);
 		SetMinSize(GetSize());
 		if (!clipboard.empty()) {
-			primary_text->ChangeValue(to_wx(clipboard));
-			if (!ParseEditor(primary_text, primary, primary_label, reference,
-				typesetting::motion::TrackKind::Transform, false))
-				primary_label->SetLabel(_("No valid track data on the clipboard"));
+			std::string error;
+			if (ParseTrackText(clipboard, typesetting::motion::TrackKind::Transform, error)) {
+				primary_text->ChangeValue(to_wx(clipboard));
+				ParseEditor(primary_text, primary, primary_label, reference,
+					typesetting::motion::TrackKind::Transform, false);
+			}
+			else primary_label->SetLabel(_("No valid track data on the clipboard"));
 		}
 		else primary_label->SetLabel(_("No valid track data on the clipboard"));
 		primary_import->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {

@@ -186,6 +186,22 @@ Homography Compose(Homography const& after, Homography const& before) {
 	return out;
 }
 
+Homography AbsoluteTransformMap(Sample const& sample, Vector2D anchor) {
+	double radians = sample.rotation * 3.14159265358979 / 180.0;
+	double cosine = std::cos(radians), sine = std::sin(radians);
+	double scale_x = sample.scale.X() / 100.0;
+	double scale_y = sample.scale.Y() / 100.0;
+	double a = cosine * scale_x, b = -sine * scale_y;
+	double c = sine * scale_x, d = cosine * scale_y;
+	Homography out;
+	out.value = {a, b,
+		sample.position.X() - a * anchor.X() - b * anchor.Y(),
+		c, d,
+		sample.position.Y() - c * anchor.X() - d * anchor.Y(),
+		0, 0, 1};
+	return out;
+}
+
 Homography AppliedMap(Track const& transform_track,
 	std::optional<Track> const& perspective_track, size_t sample, size_t reference,
 	ApplyOptions::Components const& components, bool linear) {
@@ -201,15 +217,41 @@ Homography AppliedMap(Track const& transform_track,
 		transform_components, linear);
 	if (!perspective_track) return transform;
 
-	ApplyOptions::Components perspective_components;
-	perspective_components.track_x = false;
-	perspective_components.track_y = false;
-	perspective_components.scale = false;
-	perspective_components.rotate = false;
-	perspective_components.perspective = true;
-	Homography perspective = FilteredMap(*perspective_track, sample, reference,
-		perspective_components, linear);
-	return Compose(transform, perspective);
+	Sample current = linear ? LinearSample(transform_track, sample) :
+		transform_track.samples[std::min(sample, transform_track.samples.size() - 1)];
+	Sample origin = linear ? LinearSample(transform_track, reference) :
+		transform_track.samples[std::min(reference, transform_track.samples.size() - 1)];
+	if (!components.track_x)
+		current.position = Vector2D(origin.position.X(), current.position.Y());
+	if (!components.track_y)
+		current.position = Vector2D(current.position.X(), origin.position.Y());
+	if (!components.scale) current.scale = origin.scale;
+	if (!components.rotate) current.rotation = origin.rotation;
+
+	// AE applies Corner Pin in layer coordinates and Position/Scale/Rotation
+	// afterwards. A subtitle is already in the reference frame's screen
+	// coordinates, so first undo that frame's layer transform, apply the Corner
+	// Pin delta, and finally apply the current layer transform. Multiplying the
+	// two relative screen-space maps directly mixes their coordinate systems and
+	// causes large position and angle drift away from the tracked surface.
+	double coordinate_width = transform_track.coordinate_width > 0 ?
+		transform_track.coordinate_width : perspective_track->coordinate_width;
+	double coordinate_height = transform_track.coordinate_height > 0 ?
+		transform_track.coordinate_height : perspective_track->coordinate_height;
+	Vector2D anchor(static_cast<float>(coordinate_width / 2.0),
+		static_cast<float>(coordinate_height / 2.0));
+	Homography reference_layer = AbsoluteTransformMap(origin, anchor);
+	auto inverse_reference_layer = reference_layer.Inverse();
+	if (!inverse_reference_layer) return transform;
+	Homography current_layer = AbsoluteTransformMap(current, anchor);
+
+	Sample perspective_current = linear ? LinearSample(*perspective_track, sample) :
+		perspective_track->samples[std::min(sample, perspective_track->samples.size() - 1)];
+	Sample perspective_origin = linear ? LinearSample(*perspective_track, reference) :
+		perspective_track->samples[std::min(reference, perspective_track->samples.size() - 1)];
+	Homography corner_delta = FromQuads(perspective_origin.corners,
+		perspective_current.corners);
+	return Compose(current_layer, Compose(corner_delta, *inverse_reference_layer));
 }
 
 using param_vec = const std::vector<AssOverrideParameter> *;

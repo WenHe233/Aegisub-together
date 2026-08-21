@@ -60,6 +60,18 @@ struct Settings {
 	wxString basic_alpha;
 };
 
+struct InsertSessionState {
+	bool initialized = false;
+	imagemask::ImportOptions image;
+	wxString image_path;
+	wxString alpha_path;
+};
+
+InsertSessionState& InsertSession() {
+	static InsertSessionState state;
+	return state;
+}
+
 Settings LoadSettings() {
 	Settings settings;
 	settings.image.compression = static_cast<int>(
@@ -157,7 +169,8 @@ class InsertDialog final : public wxDialog {
 	OptionsControls options;
 
 public:
-	InsertDialog(wxWindow *parent, Settings const& settings)
+	InsertDialog(wxWindow *parent, Settings const& settings,
+		wxString const& image_path, wxString const& alpha_path)
 	: wxDialog(parent, wxID_ANY, _("Image insert"), wxDefaultPosition,
 		wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, options(this, settings) {
@@ -167,7 +180,7 @@ public:
 		sources->AddGrowableCol(1, 1);
 		sources->Add(new wxStaticText(this, wxID_ANY, _("Image:")),
 			0, wxALIGN_CENTER_VERTICAL);
-		image = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString,
+		image = new wxFilePickerCtrl(this, wxID_ANY, image_path,
 			_("Select image"), ImageWildcard(), wxDefaultPosition, wxDefaultSize,
 			wxFLP_OPEN | wxFLP_FILE_MUST_EXIST | wxFLP_USE_TEXTCTRL);
 		sources->Add(image, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
@@ -175,7 +188,7 @@ public:
 		sources->Add(PngAlphaInfo(this), 0, wxALIGN_RIGHT | wxBOTTOM, 4);
 		sources->Add(new wxStaticText(this, wxID_ANY, _("Alpha image:")),
 			0, wxALIGN_CENTER_VERTICAL);
-		alpha = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString,
+		alpha = new wxFilePickerCtrl(this, wxID_ANY, alpha_path,
 			_("Select alpha image"), ImageWildcard(), wxDefaultPosition, wxDefaultSize,
 			wxFLP_OPEN | wxFLP_FILE_MUST_EXIST | wxFLP_USE_TEXTCTRL);
 		sources->Add(alpha, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
@@ -188,6 +201,7 @@ public:
 		SetSizerAndFit(main);
 		SetMinSize(FromDIP(wxSize(880, -1)));
 		SetSize(wxSize(FromDIP(880), GetSize().GetHeight()));
+		CenterOnParent();
 	}
 
 	wxString ImagePath() const { return image->GetPath(); }
@@ -267,6 +281,7 @@ public:
 		SetSizerAndFit(main);
 		SetMinSize(FromDIP(wxSize(880, 430)));
 		SetSize(FromDIP(wxSize(880, 430)));
+		CenterOnParent();
 	}
 
 	Settings Result(Settings settings) const {
@@ -411,9 +426,16 @@ void Insert(agi::Context *context) {
 	auto lines = Selected(context);
 	if (lines.empty()) return;
 	Settings settings = LoadSettings();
-	InsertDialog dialog(context->parent, settings);
+	auto& session = InsertSession();
+	if (session.initialized) settings.image = session.image;
+	InsertDialog dialog(context->parent, settings,
+		session.image_path, session.alpha_path);
 	if (dialog.ShowModal() != wxID_OK || dialog.ImagePath().empty()) return;
 	dialog.Store(settings);
+	session.initialized = true;
+	session.image = settings.image;
+	session.image_path = dialog.ImagePath();
+	session.alpha_path = dialog.AlphaPath();
 	std::vector<Input> inputs;
 	for (auto line : lines) inputs.push_back({line, dialog.ImagePath(), dialog.AlphaPath()});
 	std::string error;
