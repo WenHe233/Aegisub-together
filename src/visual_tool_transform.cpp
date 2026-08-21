@@ -369,8 +369,8 @@ VisualToolTransform::VisualToolTransform(VideoDisplay *parent, agi::Context *con
 		Perform(static_cast<VisualToolTransformAction>(id));
 	}, [this](int id, double value, bool) {
 		if (static_cast<VisualToolTransformAction>(id) ==
-			VisualToolTransformAction::AutoPerspectiveSize)
-			UpdateAutoPerspectiveSize(value);
+			VisualToolTransformAction::UniformSize)
+			UpdateUniformSize(value);
 	});
 	Collect();
 }
@@ -602,6 +602,7 @@ bool VisualToolTransform::CollectTags() {
 	gesture_shear = Vector2D(0.f, 0.f);
 	frame_linear = TransformMatrix2();
 	frame_offset = Vector2D(0.f, 0.f);
+	uniform_size = 100.0;
 
 	auto lines = TextBoxMode() ? textbox_lines : c->selectionController->GetSortedSelection();
 	for (auto line : lines) {
@@ -1256,12 +1257,10 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 	TagLine const& original) const {
 	Applied out;
 
-	// A line turned out of the plane is a quadrilateral on screen, and only its corners can
-	// be followed: a map applied after the projection is not one that can be applied before
-	// it. So the corners are moved and the tags are solved again from where they land. The
-	// distort takes the same road whatever the line says, because a projective map turns even
-	// a plain rectangle into a quadrilateral.
-	if (mode == VisualToolTransformMode::Distort || Perspective(original)) {
+	// A distortion maps the four visible corners and solves a new perspective plane. Free
+	// transform deliberately stays on the ordinary 2D tag path even for a line which already
+	// has \frx or \fry, preserving those authored perspective tags and its implicit origin.
+	if (mode == VisualToolTransformMode::Distort) {
 		Vector2D corners[4];
 		LineQuad(original, corners);
 		for (auto& corner : corners) {
@@ -1271,22 +1270,18 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 			// proportional, and mapping afterwards makes it follow the target perspective.
 			//
 			if (auto_perspective && !auto_perspective_keep_original_size) {
-				float factor = static_cast<float>(auto_perspective_size / 100.0);
+				float factor = static_cast<float>(uniform_size / 100.0);
 				corner = box.centre + (corner - box.centre) * factor;
 			}
 			corner = MapPoint(corner);
 		}
 
-		Vector2D pivot = original.org ? original.org : original.pos;
 		// A distortion is most stable when expressed around the quad itself. Keeping a remote
 		// authored origin is mathematically equivalent, but produces extreme pos/scale values
-		// and loses precision. Free transform keeps its origin because there the compact affine
-		// form is normally retained.
-		Vector2D preferred_org = mode == VisualToolTransformMode::Distort ?
-			Vector2D() : MapPoint(pivot);
+		// and loses precision.
 		auto solved = typesetting::SolvePerspective(corners, original.align,
 			original.box_first, original.box_second, script_res / layout_res,
-			preferred_org);
+			Vector2D());
 		// A preferred origin can still leave the arithmetic with nothing to solve. The middle
 		// of the quadrilateral is the stable fallback.
 		if (!solved.ok)
@@ -2406,6 +2401,7 @@ VisualToolTransform::HistoryState VisualToolTransform::Capture() const {
 	state.move = gesture_move;
 	state.anchor = gesture_anchor;
 	state.shear = gesture_shear;
+	state.uniform_size = uniform_size;
 	state.frame_linear = frame_linear;
 	state.frame_offset = frame_offset;
 	state.split = shear_split;
@@ -2424,6 +2420,7 @@ void VisualToolTransform::RestoreState(HistoryState const& state) {
 	gesture_move = state.move;
 	gesture_anchor = state.anchor;
 	gesture_shear = state.shear;
+	uniform_size = state.uniform_size;
 	if (mode == VisualToolTransformMode::Free) {
 		frame_linear = state.frame_linear;
 		frame_offset = state.frame_offset;
@@ -2664,7 +2661,7 @@ wxString VisualToolTransform::LabelFor(VisualToolTransformAction action) const {
 		case VisualToolTransformAction::RecalcShad: return _("recalculate shad");
 		case VisualToolTransformAction::MaintainDecor: return _("maintain bord & shad");
 		case VisualToolTransformAction::RecalcClip: return _("recalculate clip");
-		case VisualToolTransformAction::AutoPerspectiveSize: return _("Size");
+		case VisualToolTransformAction::UniformSize: return _("Size");
 		case VisualToolTransformAction::AutoPerspectiveKeepOriginalSize:
 			return _("keep original size");
 		default: return wxString();
@@ -2701,14 +2698,14 @@ void VisualToolTransform::UpdatePreviewInterface() const {
 			Interface::ControlStyle::Accept);
 		add(VisualToolTransformAction::Cancel, Interface::ControlKind::Button,
 			Interface::ControlStyle::Cancel);
-		auto& size = add(VisualToolTransformAction::AutoPerspectiveSize,
+		auto& size = add(VisualToolTransformAction::UniformSize,
 			Interface::ControlKind::Slider);
 		size.enabled = touched && !auto_perspective_keep_original_size;
-		size.value = auto_perspective_size;
+		size.value = uniform_size;
 		size.minimum = 25;
 		size.maximum = 200;
 		size.step = 1;
-		size.value_text = to_wx(agi::format("%.0f%%", auto_perspective_size));
+		size.value_text = to_wx(agi::format("%.0f%%", uniform_size));
 		size.value_text_sample = "200%";
 		size.width = 170;
 		add(VisualToolTransformAction::AutoPerspectiveKeepOriginalSize,
@@ -2736,6 +2733,17 @@ void VisualToolTransform::UpdatePreviewInterface() const {
 		Interface::ControlStyle::Accept);
 	add(VisualToolTransformAction::Cancel, Interface::ControlKind::Button,
 		Interface::ControlStyle::Cancel);
+	if (mode == VisualToolTransformMode::Free) {
+		auto& size = add(VisualToolTransformAction::UniformSize,
+			Interface::ControlKind::Slider);
+		size.value = uniform_size;
+		size.minimum = 25;
+		size.maximum = 400;
+		size.step = 1;
+		size.value_text = to_wx(agi::format("%.0f%%", uniform_size));
+		size.value_text_sample = "400%";
+		size.width = 170;
+	}
 	page.controls.push_back({0, Interface::ControlKind::Spacer});
 
 	if (TagsMode()) {
@@ -2774,7 +2782,7 @@ bool VisualToolTransform::ActionEnabled(VisualToolTransformAction action) const 
 			action == VisualToolTransformAction::AutoPerspectiveReset ? touched :
 			action == VisualToolTransformAction::Apply ? touched :
 			action == VisualToolTransformAction::Cancel ? true :
-			action == VisualToolTransformAction::AutoPerspectiveSize ?
+			action == VisualToolTransformAction::UniformSize ?
 				touched && !auto_perspective_keep_original_size :
 			action == VisualToolTransformAction::AutoPerspectiveKeepOriginalSize ? true : false;
 
@@ -2785,6 +2793,8 @@ bool VisualToolTransform::ActionEnabled(VisualToolTransformAction action) const 
 		// undone back to where it started: the text may still have to become a drawing.
 		case VisualToolTransformAction::Apply: return touched;
 		case VisualToolTransformAction::Cancel: return true;
+		case VisualToolTransformAction::UniformSize:
+			return mode == VisualToolTransformMode::Free;
 		case VisualToolTransformAction::RecalcBord:
 		case VisualToolTransformAction::RecalcShad:
 		// Only where there is something to choose between. The arch and the warp always keep the
@@ -2869,11 +2879,29 @@ void VisualToolTransform::Perform(VisualToolTransformAction action) {
 	}
 }
 
-void VisualToolTransform::UpdateAutoPerspectiveSize(double value) {
-	if (!auto_perspective) return;
-	auto_perspective_size = std::clamp(value, 25.0, 200.0);
-	if (touched) Rebuild();
-	else parent->Render();
+void VisualToolTransform::UpdateUniformSize(double value) {
+	if (!auto_perspective && mode != VisualToolTransformMode::Free) return;
+	double next = std::clamp(value, 25.0, auto_perspective ? 200.0 : 400.0);
+	if (std::abs(next - uniform_size) < 1e-9) return;
+	if (mode == VisualToolTransformMode::Free) {
+		// Fold any handle gesture in first, then scale the accumulated linear map. Its
+		// translation stays put, so the complete selection grows about its displayed centre.
+		RebaseGesture();
+		double ratio = next / uniform_size;
+		frame_linear.a *= ratio;
+		frame_linear.b *= ratio;
+		frame_linear.c *= ratio;
+		frame_linear.d *= ratio;
+		uniform_size = next;
+		SyncFeatures();
+		touched = true;
+		Rebuild();
+	}
+	else {
+		uniform_size = next;
+		if (touched) Rebuild();
+		else parent->Render();
+	}
 	UpdatePreviewInterface();
 }
 
@@ -3573,6 +3601,23 @@ void VisualToolTransform::OnMouseEvent(wxMouseEvent& event) {
 	VisualTool<VisualDraggableFeature>::OnMouseEvent(event);
 	if (mode == VisualToolTransformMode::Warp && !event.LeftIsDown())
 		if (auto *move = FeatureAt(warp_move_handle)) sel_features.erase(move);
+}
+
+bool VisualToolTransform::OnMouseWheel(wxMouseEvent& event) {
+	// The native preview bar handles its own hover wheel events. This is the equivalent
+	// path for the in-video fallback bar, and consumes the wheel so it cannot also seek.
+	if (event.GetWheelAxis() == wxMOUSE_WHEEL_VERTICAL &&
+		ActionAt(Vector2D(event.GetPosition())) == VisualToolTransformAction::UniformSize) {
+		int rotation = event.GetWheelRotation();
+		int delta = event.GetWheelDelta();
+		if (rotation && delta) {
+			int notches = rotation / delta;
+			if (!notches) notches = rotation > 0 ? 1 : -1;
+			UpdateUniformSize(uniform_size + notches);
+		}
+		return false;
+	}
+	return VisualTool<VisualDraggableFeature>::OnMouseWheel(event);
 }
 
 bool VisualToolTransform::HandleKey(int key, bool control, bool shift) {
