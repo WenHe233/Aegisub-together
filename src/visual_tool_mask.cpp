@@ -3078,7 +3078,7 @@ void VisualToolMask::CreateMask() {
 	}
 
 	std::string tags = "{" + drawing_style_tags(style);
-	tags += "\\blur1\\pos(0,0)\\1c" + colour.GetAssOverrideFormatted() + "\\p1}";
+	tags += "\\blur1\\pos(0,0)\\c" + colour.GetAssOverrideFormatted() + "\\p1}";
 	mask->Text = tags + EncodeDrawing();
 
 	c->ass->Events.insert(c->ass->iterator_to(*source), *mask);

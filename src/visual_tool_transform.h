@@ -62,7 +62,7 @@ enum class VisualToolTransformAction {
 	MaintainDecor,
 	RecalcBlur,
 	RecalcClip,
-	AutoPerspectiveSize,
+	UniformSize,
 	AutoPerspectiveKeepOriginalSize
 };
 
@@ -80,8 +80,8 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	VisualToolTransformMode mode;
 	/// A guided distort in which the target quadrilateral is drawn as four directed points.
 	bool auto_perspective = false;
-	/// Uniform percentage applied to the whole selection in the target's perspective plane.
-	double auto_perspective_size = 100.0;
+	/// Uniform percentage applied to the whole selection by the Size slider.
+	double uniform_size = 100.0;
 	/// Keep the whole selection's authored dimensions, spacing and relative placement while
 	/// applying the target plane's perspective. This deliberately rules out the percentage
 	/// slider: the two controls answer the same question.
@@ -283,6 +283,7 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 		Vector2D move{0.f, 0.f};
 		Vector2D anchor{0.f, 0.f};
 		Vector2D shear{0.f, 0.f};
+		double uniform_size = 100.0;
 		/// What had been done to the box before this step.
 		TransformMatrix2 frame_linear;
 		Vector2D frame_offset{0.f, 0.f};
@@ -508,7 +509,7 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	VisualToolTransformAction ActionAt(Vector2D point) const;
 	bool ActionEnabled(VisualToolTransformAction action) const;
 	void Perform(VisualToolTransformAction action);
-	void UpdateAutoPerspectiveSize(double value);
+	void UpdateUniformSize(double value);
 	void DrawTopBar();
 	/// The rectangle the fit is measured from, in yellow dashes.
 	void DrawAutoPerspectiveSource();
@@ -558,6 +559,7 @@ public:
 	~VisualToolTransform();
 
 	void OnMouseEvent(wxMouseEvent &event) override;
+	bool OnMouseWheel(wxMouseEvent &event) override;
 	bool OnKeyEvent(wxKeyEvent &event) override;
 
 private:
