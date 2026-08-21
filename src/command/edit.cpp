@@ -194,7 +194,7 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 	AssDialogue *first = nullptr;
 	Selection newsel;
 
-	AssDialogue *pendingFoldStart = nullptr;
+	std::vector<AssDialogue *> pendingFoldStarts;
 	std::vector<std::pair<AssDialogue*, AssDialogue*>> foldsToAdd;
 	bool restored_gradient_metadata = false;
 	bool restored_textbox_metadata = false;
@@ -211,17 +211,15 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 
 		if (startPos != std::string::npos) {
 			text.replace(startPos, foldStartMarker.length(), "");
-
-			if (!pendingFoldStart)
-				pendingFoldStart = inserted;
+			pendingFoldStarts.push_back(inserted);
 		}
 
 		if (endPos != std::string::npos) {
 			text.replace(endPos, foldEndMarker.length(), "");
 
-			if (pendingFoldStart) {
-				foldsToAdd.emplace_back(pendingFoldStart, inserted);
-				pendingFoldStart = nullptr;
+			if (!pendingFoldStarts.empty()) {
+				foldsToAdd.emplace_back(pendingFoldStarts.back(), inserted);
+				pendingFoldStarts.pop_back();
 			}
 		}
 
@@ -237,14 +235,18 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 	}
 
 	if (first) {
-		int commitId = -1;
-		for (auto const& fold : foldsToAdd)
-			commitId = c->foldController->AddFold(*fold.first, *fold.second, true, commitId);
-
 		int commit_type = paste_over ? AssFile::COMMIT_DIAG_FULL : AssFile::COMMIT_DIAG_ADDREM;
 		if (restored_gradient_metadata || restored_textbox_metadata)
 			commit_type |= AssFile::COMMIT_EXTRADATA;
-		c->ass->Commit(_("paste"), commit_type, commitId);
+		int commitId = c->ass->Commit(_("paste"), commit_type);
+
+		// Inserting lines assigns their row numbers during the commit above. FoldController
+		// needs those row numbers to validate and recreate the copied folds.
+		for (auto const& fold : foldsToAdd) {
+			int foldCommitId = c->foldController->AddFold(*fold.first, *fold.second, true, commitId);
+			if (foldCommitId >= 0)
+				commitId = foldCommitId;
+		}
 
 		if (!paste_over)
 			c->selectionController->SetSelectionAndActive(std::move(newsel), first);
@@ -1161,40 +1163,22 @@ static bool try_paste_lines(agi::Context *c) {
 	boost::trim_left(data);
 	if (!data.starts_with("Dialogue:")) return false;
 
-	EntryList<AssDialogue> parsed;
 	boost::char_separator<char> sep("\r\n");
 	for (auto curdata : boost::tokenizer<boost::char_separator<char>>(data, sep)) {
 		boost::trim(curdata);
 		try {
-			parsed.push_back(*new AssDialogue(curdata));
+			AssDialogue parsed(curdata);
 		}
 		catch (...) {
-			parsed.clear_and_dispose([](AssDialogue *e) { delete e; });
 			return false;
 		}
 	}
-	bool restored_gradient_metadata = false;
-	bool restored_textbox_metadata = false;
-	for (auto& line : parsed)
-	{
-		restored_gradient_metadata |=
-			typesetting::gradient::RestoreClipboardMetadata(*c->ass, line);
-		restored_textbox_metadata |=
-			typesetting::textbox::RestoreClipboardMetadata(*c->ass, line);
-	}
-
-	AssDialogue *new_active = &*parsed.begin();
-	Selection new_selection;
-	for (auto& line : parsed)
-		new_selection.insert(&line);
 
 	auto pos = c->ass->iterator_to(*c->selectionController->GetActiveLine());
-	c->ass->Events.splice(pos, parsed, parsed.begin(), parsed.end());
-	int commit_type = AssFile::COMMIT_DIAG_ADDREM;
-	if (restored_gradient_metadata || restored_textbox_metadata)
-		commit_type |= AssFile::COMMIT_EXTRADATA;
-	c->ass->Commit(_("paste"), commit_type);
-	c->selectionController->SetSelectionAndActive(std::move(new_selection), new_active);
+	paste_lines(c, false, [=](std::unique_ptr<AssDialogue> new_line) -> AssDialogue * {
+		c->ass->Events.insert(pos, *new_line);
+		return new_line.release();
+	});
 
 	return true;
 }
