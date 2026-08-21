@@ -1,0 +1,80 @@
+// Copyright (c) 2026, Muteki Aegisub
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted.
+
+#pragma once
+
+#include "typesetting_auto_motion.h"
+#include "visual_tool.h"
+
+#include <memory>
+#include <string>
+#include <vector>
+
+class OpenGLText;
+
+enum class AutoMotionAction {
+	None,
+	Accept,
+	Cancel,
+	TrackX,
+	TrackY,
+	Scale,
+	Rotate,
+	Linear
+};
+
+class VisualToolAutoMotion final : public VisualToolBase {
+	std::unique_ptr<OpenGLText> gl_text;
+	std::vector<Vector2D> region;
+	int region_reference_frame = -1;
+	int hovered_point = -1;
+	int dragged_point = -1;
+	int featureSize = 0;
+	bool has_region = false;
+	bool busy = false;
+	bool leaving = false;
+	bool subtitles_suppressed = false;
+	bool track_x = true;
+	bool track_y = true;
+	bool track_scale = true;
+	bool track_rotate = false;
+	bool linear = false;
+	AutoMotionAction hovered_action = AutoMotionAction::None;
+	agi::signal::Connection selection_connection;
+	std::string return_tool;
+
+	void ExitTool();
+	void ResetRegion();
+	void UpdateRegionValidity();
+	int PointAt(Vector2D point) const;
+	void RunTracking();
+	typesetting::motion::AutoTrackDirection TrackingDirection(
+		int first_frame, int last_frame) const;
+	int TrackingSteps(int first_frame, int last_frame) const;
+	wxString LabelFor(AutoMotionAction action) const;
+	std::pair<Vector2D, Vector2D> ActionBounds(AutoMotionAction action) const;
+	AutoMotionAction ActionAt(Vector2D point) const;
+	bool HasOutputComponent() const;
+	bool ActionEnabled(AutoMotionAction action) const;
+	bool ActionChecked(AutoMotionAction action) const;
+	void Perform(AutoMotionAction action);
+	void UpdatePreviewInterface() const;
+	float TopBarHeight() const;
+	void DrawTopBar();
+	bool HandleKey(int key);
+	void OnCharHook(wxKeyEvent& event);
+
+	void OnLineChanged() override;
+	void Draw() override;
+
+public:
+	VisualToolAutoMotion(VideoDisplay *parent, agi::Context *context,
+		std::string return_tool);
+	~VisualToolAutoMotion();
+
+	void OnMouseEvent(wxMouseEvent& event) override;
+	bool OnMouseWheel(wxMouseEvent& event) override;
+	bool OnKeyEvent(wxKeyEvent& event) override;
+};

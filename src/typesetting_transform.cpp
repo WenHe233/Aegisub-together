@@ -1192,6 +1192,11 @@ std::vector<Segment> SegmentsOf(std::vector<std::vector<Vector2D>> const& rings)
 
 } // namespace
 
+std::string TransformClips(std::string const& text, PointMap const& map,
+	OrientedBox const& bounds, double subdivision_span) {
+	return MapClips(text, map, bounds, subdivision_span);
+}
+
 Vector2D OrientedBox::ToScript(Vector2D local) const {
 	double radians = angle * 3.14159265358979 / 180.0;
 	double sine = std::sin(radians), cosine = std::cos(radians);

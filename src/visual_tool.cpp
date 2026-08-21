@@ -97,6 +97,9 @@ void VisualToolBase::OnCommit(int type) {
 		active_line = GetActiveDialogueLine();
 		OnFileChanged();
 	}
+	else if (type & AssFile::COMMIT_DIAG_TEXT) {
+		OnDialogueChanged();
+	}
 }
 
 void VisualToolBase::OnSeek(int new_frame) {

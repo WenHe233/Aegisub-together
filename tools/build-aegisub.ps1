@@ -2,12 +2,42 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $buildDir = Join-Path $projectRoot 'build-codex'
+$utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
 
+$wrapMappings = @(
+    @{ File = 'boost.wrap'; Original = 'boost_1_83_0'; Local = 'boost_1_83_0-aegisub' },
+    @{ File = 'zlib.wrap'; Original = 'zlib-1.3.1'; Local = 'zlib-1.3.1-aegisub' },
+    @{ File = 'curl.wrap'; Original = 'curl-8.12.1'; Local = 'curl-8.12.1-aegisub' },
+    @{ File = 'hunspell.wrap'; Original = 'hunspell-1.7.2'; Local = 'hunspell-1.7.2-aegisub' },
+    @{ File = 'icu.wrap'; Original = 'icu'; Local = 'icu-aegisub' },
+    @{ File = 'uchardet.wrap'; Original = 'uchardet-0.0.8'; Local = 'uchardet-0.0.8-aegisub' },
+    @{ File = 'luajit.wrap'; Original = 'LuaJIT-04dca7911ea255f37be799c18d74c305b921c1a6'; Local = 'luajit-2.1.1720049189-aegisub' }
+)
+
+$originalWraps = @{}
 $buildSucceeded = $false
 $locationPushed = $false
 
 try {
-	$utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
+    foreach ($mapping in $wrapMappings) {
+        $wrapPath = Join-Path $projectRoot (Join-Path 'subprojects' $mapping.File)
+        $localDependency = Join-Path $projectRoot (Join-Path 'subprojects' $mapping.Local)
+        if (-not (Test-Path -LiteralPath (Join-Path $localDependency 'meson.build'))) {
+            # migration03 repairs the original extracted dependency directories. Keep
+            # the motion branch's local fallback when it exists, but do not require it.
+            continue
+        }
+
+        $content = [System.IO.File]::ReadAllText($wrapPath)
+        $originalWraps[$wrapPath] = $content
+        $pattern = '(?m)^directory\s*=\s*' + [regex]::Escape($mapping.Original) + '\s*$'
+        $replacement = 'directory = ' + $mapping.Local
+        $updated = [regex]::Replace($content, $pattern, $replacement, 1)
+        if ($updated -eq $content -and $content -notmatch ('(?m)^directory\s*=\s*' + [regex]::Escape($mapping.Local) + '\s*$')) {
+            throw "Could not update dependency directory in $wrapPath"
+        }
+        [System.IO.File]::WriteAllText($wrapPath, $updated, $utf8WithoutBom)
+    }
 
 	Push-Location $projectRoot
 	$locationPushed = $true
@@ -59,6 +89,9 @@ try {
 }
 finally {
 	if ($locationPushed) { Pop-Location }
+    foreach ($entry in $originalWraps.GetEnumerator()) {
+        [System.IO.File]::WriteAllText($entry.Key, $entry.Value, $utf8WithoutBom)
+    }
 }
 
 $freshExe = Join-Path $buildDir 'aegisub.exe'

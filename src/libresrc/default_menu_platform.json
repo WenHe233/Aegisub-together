@@ -65,10 +65,25 @@
 	],
     "main/typesetting" : [
         { "submenu" : "main/typesetting/transform", "text" : "&Transform" },
+		{ "submenu" : "main/typesetting/motion", "text" : "&Motion" },
+		{ "submenu" : "main/typesetting/image_insert", "text" : "&Image insert" },
 		{ "command" : "typesetting/gradient" },
 		{ "command" : "typesetting/textbox" }
     ],
-    "main/typesetting/transform" : [
+	"main/typesetting/motion" : [
+		{ "command" : "typesetting/motion/auto" },
+		{ "command" : "typesetting/motion/apply" },
+		{ "command" : "typesetting/motion/revert" },
+		{},
+		{ "command" : "typesetting/motion/trim" },
+		{ "command" : "typesetting/motion/trim/settings" }
+	],
+	"main/typesetting/image_insert" : [
+		{ "command" : "typesetting/image_insert/quick" },
+		{ "command" : "typesetting/image_insert/insert" },
+		{ "command" : "typesetting/image_insert/settings" }
+	],
+	"main/typesetting/transform" : [
         { "command" : "typesetting/transform/free" },
         { "command" : "typesetting/transform/distort" },
 		{ "command" : "typesetting/transform/auto_perspective" },

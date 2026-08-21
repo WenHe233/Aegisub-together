@@ -15,6 +15,7 @@
 #include "dialog_progress.h"
 #include "format.h"
 #include "gl_text.h"
+#include "imagemask_codec.h"
 #include "include/aegisub/context.h"
 #include "libresrc/libresrc.h"
 #include "options.h"
@@ -53,8 +54,6 @@
 
 namespace {
 	constexpr int button_id_base = 1600;
-	constexpr double image_colour_tolerance = 25.0;
-
 	namespace bg = boost::geometry;
 	using MaskPoint = bg::model::d2::point_xy<double>;
 	using MaskPolygon = bg::model::polygon<MaskPoint>;
@@ -272,13 +271,6 @@ namespace {
 		if (!style || style->scalex != 100.0) tags += "\\fscx100";
 		if (!style || style->scaley != 100.0) tags += "\\fscy100";
 		return tags;
-	}
-
-	double colour_distance(double r1, double g1, double b1, double r2, double g2, double b2) {
-		double dr = r1 - r2;
-		double dg = g1 - g2;
-		double db = b1 - b2;
-		return std::sqrt(dr * dr + dg * dg + db * db);
 	}
 
 }
@@ -3116,9 +3108,8 @@ std::vector<AssDialogue *> VisualToolMask::ConvertImageToAss(wxImage image, AssD
 	if (image_width <= 0 || image_height <= 0)
 		return {};
 
-	// Image2ASS-compatible output: one bitmap row per ASS line, p1 only, and
-	// integer coordinates throughout. Scaling the bitmap before conversion
-	// avoids subpixel rectangles, which can render with visible seams.
+	// Work on the integer script-pixel grid before encoding. The shared codec is
+	// also used by motion, so a tracked image returns through exactly the same path.
 	float image_x_scale = static_cast<float>(image_width) / crop_width;
 	float image_y_scale = static_cast<float>(image_height) / crop_height;
 	std::vector<Vector2D> image_points;
@@ -3127,7 +3118,6 @@ std::vector<AssDialogue *> VisualToolMask::ConvertImageToAss(wxImage image, AssD
 		image_points.emplace_back((point.X() - crop_x) * image_x_scale,
 			(point.Y() - crop_y) * image_y_scale);
 
-	AssStyle *style = c->ass->GetStyle(source->Style.get());
 	int frame_time = c->videoController->TimeAtFrame(frame_number, agi::vfr::EXACT);
 	agi::Time start = source->Start;
 	agi::Time end = source->End;
@@ -3136,143 +3126,38 @@ std::vector<AssDialogue *> VisualToolMask::ConvertImageToAss(wxImage image, AssD
 		end = c->videoController->TimeAtFrame(frame_number, agi::vfr::END);
 	}
 
+	imagemask::Raster raster;
+	raster.x = crop_x;
+	raster.y = crop_y;
+	raster.width = image_width;
+	raster.height = image_height;
+	raster.rgba.resize(static_cast<size_t>(image_width) * image_height * 4);
 	auto pixels = image.GetData();
-	std::vector<AssDialogue *> lines;
-	for (int y = 0; y < image_height; ++y) {
-		struct ImageRun {
-			int start;
-			int end;
-			bool transparent;
-			int red;
-			int green;
-			int blue;
-		};
-
-		std::vector<bool> opaque(static_cast<size_t>(image_width), false);
-		if (image.HasAlpha()) {
-			auto alpha = image.GetAlpha() + static_cast<size_t>(y) * image_width;
-			for (int x = 0; x < image_width; ++x)
-				opaque[x] = alpha[x] != 0;
-		}
-		else {
+	auto source_alpha = image.HasAlpha() ? image.GetAlpha() : nullptr;
+	std::vector<unsigned char> polygon_alpha;
+	if (!source_alpha) {
+		polygon_alpha.assign(static_cast<size_t>(image_width) * image_height, 0);
+		for (int y = 0; y < image_height; ++y)
 			for (auto [span_start, span_end] : polygon_spans(image_points, y + .5f, 1.f, image_width))
-				std::fill(opaque.begin() + span_start, opaque.begin() + span_end, true);
-		}
-
-		std::vector<ImageRun> runs;
-		double average_r = 0.0, average_g = 0.0, average_b = 0.0;
-		double variance_r = 0.0, variance_g = 0.0, variance_b = 0.0;
-		unsigned char last_r = 0, last_g = 0, last_b = 0;
-		int run_width = 0;
-		bool run_transparent = true;
-		int run_start = 0;
-
-		auto begin_run = [&](int x) {
-			size_t offset = (static_cast<size_t>(y) * image_width + x) * 3;
-			average_r = last_r = pixels[offset];
-			average_g = last_g = pixels[offset + 1];
-			average_b = last_b = pixels[offset + 2];
-			variance_r = variance_g = variance_b = 0.0;
-			run_width = 1;
-			run_start = x;
-			run_transparent = !opaque[x];
-		};
-		auto finish_run = [&] {
-			ImageRun run{run_start, run_start + run_width, run_transparent,
-				static_cast<int>(std::lround(average_r)),
-				static_cast<int>(std::lround(average_g)),
-				static_cast<int>(std::lround(average_b))};
-			if (!runs.empty() && runs.back().transparent == run.transparent &&
-				(run.transparent || (runs.back().red == run.red && runs.back().green == run.green &&
-					runs.back().blue == run.blue)))
-				runs.back().end = run.end;
-			else
-				runs.push_back(run);
-		};
-
-		begin_run(0);
-		for (int x = 1; x < image_width; ++x) {
-			size_t offset = (static_cast<size_t>(y) * image_width + x) * 3;
-			unsigned char red = pixels[offset];
-			unsigned char green = pixels[offset + 1];
-			unsigned char blue = pixels[offset + 2];
-			bool transparent = !opaque[x];
-			double next_average_r = average_r + (red - average_r) / (run_width + 1);
-			double next_average_g = average_g + (green - average_g) / (run_width + 1);
-			double next_average_b = average_b + (blue - average_b) / (run_width + 1);
-			double next_variance_r = variance_r + (red - average_r) * (red - next_average_r);
-			double next_variance_g = variance_g + (green - average_g) * (green - next_average_g);
-			double next_variance_b = variance_b + (blue - average_b) * (blue - next_average_b);
-			bool merge = (run_transparent && transparent) ||
-				(run_transparent == transparent &&
-					colour_distance(last_r, last_g, last_b, red, green, blue) < image_colour_tolerance &&
-					colour_distance(next_variance_r, next_variance_g, next_variance_b,
-						0.0, 0.0, 0.0) < image_colour_tolerance);
-			if (merge) {
-				++run_width;
-				average_r = next_average_r;
-				average_g = next_average_g;
-				average_b = next_average_b;
-				variance_r = next_variance_r;
-				variance_g = next_variance_g;
-				variance_b = next_variance_b;
-				last_r = red;
-				last_g = green;
-				last_b = blue;
-			}
-			else {
-				finish_run();
-				begin_run(x);
-			}
-		}
-		finish_run();
-
-		while (!runs.empty() && runs.front().transparent)
-			runs.erase(runs.begin());
-		while (!runs.empty() && runs.back().transparent)
-			runs.pop_back();
-		if (runs.empty()) continue;
-
-		// Image2ASS places each bitmap row independently. Leading transparent
-		// pixels are represented by shifting the line's whole-number position;
-		// each subsequent run is a fresh m 0 0 rectangle and libass lays those
-		// drawing blocks out consecutively. Using absolute coordinates inside
-		// each colour block makes libass add the offsets repeatedly and produces
-		// the characteristic patch growing to the right.
-		int row_x = crop_x + runs.front().start;
-		int row_y = crop_y + y;
-		std::string drawing_text;
-		bool current_transparent = false;
-		std::string current_colour;
-		for (auto const& run : runs) {
-			int shape_width = run.end - run.start;
-			if (shape_width <= 0) continue;
-			std::string tags;
-			if (run.transparent != current_transparent) {
-				tags += run.transparent ? "\\1a&HFF&" : "\\1a&H00&";
-				current_transparent = run.transparent;
-			}
-			if (!run.transparent) {
-				auto colour = agi::Color(run.red, run.green, run.blue).GetAssOverrideFormatted();
-				if (colour != current_colour) {
-					tags += "\\c" + colour;
-					current_colour = std::move(colour);
-				}
-			}
-			drawing_text += "{" + tags + "}";
-			drawing_text += agi::format("m 0 0 l 0 1 %d 1 %d 0", shape_width, shape_width);
-		}
-		if (drawing_text.empty()) continue;
-
-		auto line = new AssDialogue;
-		line->Style = source->Style;
-		line->Layer = source->Layer;
-		line->Start = start;
-		line->End = end;
-		line->Text = "{" + drawing_style_tags(style) + agi::format("\\pos(%d,%d)", row_x, row_y) +
-			"\\1a&H00&\\p1}" + drawing_text;
-		lines.push_back(line);
+				std::fill(polygon_alpha.begin() + static_cast<size_t>(y) * image_width + span_start,
+					polygon_alpha.begin() + static_cast<size_t>(y) * image_width + span_end, 255);
 	}
+	for (int y = 0; y < image_height; ++y) {
+		for (int x = 0; x < image_width; ++x) {
+			size_t pixel = static_cast<size_t>(y) * image_width + x;
+			raster.rgba[pixel * 4] = pixels[pixel * 3];
+			raster.rgba[pixel * 4 + 1] = pixels[pixel * 3 + 1];
+			raster.rgba[pixel * 4 + 2] = pixels[pixel * 3 + 2];
+			raster.rgba[pixel * 4 + 3] = source_alpha ? source_alpha[pixel] : polygon_alpha[pixel];
+		}
+	}
+
+	auto style = c->ass->GetStyle(source->Style.get());
+	auto encoded = imagemask::Encode(raster, *source, static_cast<int>(start),
+		static_cast<int>(end), style);
+	std::vector<AssDialogue *> lines;
+	lines.reserve(encoded.size());
+	for (auto& line : encoded) lines.push_back(new AssDialogue(std::move(line)));
 	return lines;
 }
 

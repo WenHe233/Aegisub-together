@@ -26,13 +26,17 @@
 #include "../ass_file.h"
 #include "../compat.h"
 #include "../dialog_gradient.h"
+#include "../dialog_motion.h"
 #include "../subtitle_line_combiner.h"
 #include "../include/aegisub/context.h"
 #include "../selection_controller.h"
 #include "../project.h"
 #include "../typesetting_transform.h"
+#include "../typesetting_image_insert.h"
+#include "../typesetting_motion.h"
 #include "../video_controller.h"
 #include "../video_display.h"
+#include "../visual_tool_auto_motion.h"
 #include "../visual_tool_transform.h"
 #include "../visual_tool_textbox.h"
 
@@ -53,7 +57,8 @@ namespace {
 	std::string remembered_tool = "video/tool/cross";
 
 	std::string const& previous_tool(const agi::Context *c) {
-		if (c->videoDisplay->ToolIsType(typeid(VisualToolTransform)))
+		if (c->videoDisplay->ToolIsType(typeid(VisualToolTransform)) ||
+			c->videoDisplay->ToolIsType(typeid(VisualToolAutoMotion)))
 			return remembered_tool;
 
 		static const char *tools[] = {
@@ -283,6 +288,105 @@ struct typesetting_textbox final : public Command {
 	}
 };
 
+struct typesetting_image_insert_quick final : public Command {
+	CMD_NAME("typesetting/image_insert/quick")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("&Quick insert")
+	STR_DISP("Quick image insert")
+	STR_HELP("Insert images using the saved basic or dynamic settings")
+	bool Validate(const agi::Context *c) override {
+		return !c->selectionController->GetSelectedSet().empty();
+	}
+	void operator()(agi::Context *c) override { typesetting::image_insert::QuickInsert(c); }
+};
+
+struct typesetting_image_insert_insert final : public Command {
+	CMD_NAME("typesetting/image_insert/insert")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("&Insert")
+	STR_DISP("Image insert")
+	STR_HELP("Convert an image to optimized ImageMask subtitle drawings")
+	bool Validate(const agi::Context *c) override {
+		return !c->selectionController->GetSelectedSet().empty();
+	}
+	void operator()(agi::Context *c) override { typesetting::image_insert::Insert(c); }
+};
+
+struct typesetting_image_insert_settings final : public Command {
+	CMD_NAME("typesetting/image_insert/settings")
+	STR_MENU("&Settings")
+	STR_DISP("Image insert settings")
+	STR_HELP("Configure Quick insert and dynamic image filenames")
+	void operator()(agi::Context *c) override { typesetting::image_insert::ShowSettings(c); }
+};
+
+struct typesetting_motion_apply final : public Command {
+	CMD_NAME("typesetting/motion/apply")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("&Apply")
+	STR_DISP("Apply motion")
+	STR_HELP("Apply Mocha Corner Pin or Transform Data to the selected lines")
+	bool Validate(const agi::Context *c) override {
+		return !!c->project->VideoProvider() &&
+			!c->selectionController->GetSelectedSet().empty();
+	}
+	void operator()(agi::Context *c) override { ShowMotionApplyDialog(c); }
+};
+
+struct typesetting_motion_auto final : public Command {
+	CMD_NAME("typesetting/motion/auto")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("&Auto motion")
+	STR_DISP("Auto motion")
+	STR_HELP("Select a video region and track its position, size and rotation")
+	bool Validate(const agi::Context *c) override {
+		return !!c->project->VideoProvider() &&
+			!c->selectionController->GetSelectedSet().empty();
+	}
+	void operator()(agi::Context *c) override {
+		std::string back = previous_tool(c);
+		c->videoDisplay->SetTool(std::make_unique<VisualToolAutoMotion>(
+			c->videoDisplay, c, std::move(back)));
+	}
+};
+
+struct typesetting_motion_revert final : public Command {
+	CMD_NAME("typesetting/motion/revert")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("&Revert")
+	STR_DISP("Revert motion")
+	STR_HELP("Restore the source lines saved by Apply or Auto motion")
+	bool Validate(const agi::Context *c) override {
+		return !c->selectionController->GetSelectedSet().empty();
+	}
+	void operator()(agi::Context *c) override {
+		std::string error;
+		if (!typesetting::motion::Revert(c, error))
+			wxMessageBox(to_wx(error), _("Motion"), wxOK | wxICON_WARNING, c->parent);
+	}
+};
+
+struct typesetting_motion_trim final : public Command {
+	CMD_NAME("typesetting/motion/trim")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("&Trim")
+	STR_DISP("Motion trim")
+	STR_HELP("Write the selected time range as JPEG frames or an H.264 MP4")
+	bool Validate(const agi::Context *c) override {
+		return !!c->project->VideoProvider() &&
+			!c->selectionController->GetSelectedSet().empty();
+	}
+	void operator()(agi::Context *c) override { CreateMotionTrim(c); }
+};
+
+struct typesetting_motion_trim_settings final : public Command {
+	CMD_NAME("typesetting/motion/trim/settings")
+	STR_MENU("Trim &settings...")
+	STR_DISP("Motion trim settings")
+	STR_HELP("Choose the motion trim format and output directory")
+	void operator()(agi::Context *c) override { ShowMotionTrimSettings(c); }
+};
+
 }
 
 namespace cmd {
@@ -298,5 +402,13 @@ namespace cmd {
 		reg(std::make_unique<typesetting_gradient_edit>());
 		reg(std::make_unique<typesetting_gradient_copy>());
 		reg(std::make_unique<typesetting_textbox>());
+		reg(std::make_unique<typesetting_image_insert_quick>());
+		reg(std::make_unique<typesetting_image_insert_insert>());
+		reg(std::make_unique<typesetting_image_insert_settings>());
+		reg(std::make_unique<typesetting_motion_auto>());
+		reg(std::make_unique<typesetting_motion_apply>());
+		reg(std::make_unique<typesetting_motion_revert>());
+		reg(std::make_unique<typesetting_motion_trim>());
+		reg(std::make_unique<typesetting_motion_trim_settings>());
 	}
 }

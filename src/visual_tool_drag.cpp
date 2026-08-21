@@ -27,6 +27,7 @@
 #include "libresrc/libresrc.h"
 #include "options.h"
 #include "selection_controller.h"
+#include "subtitle_line_combiner.h"
 #include "video_controller.h"
 #include "video_display.h"
 
@@ -34,6 +35,8 @@
 
 #include <algorithm>
 #include <boost/range/algorithm/binary_search.hpp>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <wx/dcmemory.h>
 #include <wx/menu.h>
@@ -352,7 +355,8 @@ void VisualToolDrag::ApplyBoxSelection() {
 		std::set<Feature *>{};
 	Feature *first_hit = nullptr;
 	for (auto& feature : features) {
-		if (!feature.pos || feature.pos.X() < minimum.X() || feature.pos.X() > maximum.X() ||
+		if (feature.type == DRAG_NONE || !feature.pos ||
+			feature.pos.X() < minimum.X() || feature.pos.X() > maximum.X() ||
 			feature.pos.Y() < minimum.Y() || feature.pos.Y() > maximum.Y()) continue;
 		next.insert(&feature);
 		if (!first_hit) first_hit = &feature;
@@ -425,6 +429,7 @@ void VisualToolDrag::OnFileChanged() {
 		if (IsDisplayed(&diag, false))
 			MakeFeatures(&diag);
 	}
+	ConfigureImageMaskFeatures();
 
 	UpdateToggleButtons();
 }
@@ -455,6 +460,7 @@ void VisualToolDrag::OnFrameChanged() {
 			}
 		}
 	}
+	ConfigureImageMaskFeatures();
 }
 
 template<class C, class T> static bool line_not_present(C const& set, T const& it) {
@@ -487,6 +493,90 @@ void VisualToolDrag::OnSelectedSetChanged() {
 	if (any_changed)
 		parent->Render();
 	selection = std::move(new_sel);
+	SyncImageMaskSelection();
+}
+
+void VisualToolDrag::SyncImageMaskSelection() {
+	std::unordered_set<AssDialogue *> selected_groups;
+	auto const& selected_lines = c->selectionController->GetSelectedSet();
+	for (auto& feature : features) {
+		if (feature.image_mask_group && selected_lines.count(feature.line))
+			selected_groups.insert(feature.image_mask_group);
+	}
+	for (auto& feature : features) {
+		if (!feature.image_mask_group || !feature.image_mask_mover) continue;
+		if (selected_groups.count(feature.image_mask_group))
+			sel_features.insert(&feature);
+		else
+			sel_features.erase(&feature);
+	}
+}
+
+void VisualToolDrag::ConfigureImageMaskFeatures() {
+	std::unordered_map<AssDialogue *, std::vector<Feature *>> by_line;
+	for (auto& feature : features) {
+		if (feature.image_mask_group && feature.base_type == DRAG_START)
+			feature.pos = FromScriptCoords(GetLinePosition(feature.line));
+		feature.type = feature.base_type;
+		feature.image_mask_group = nullptr;
+		feature.image_mask_mover = false;
+		feature.image_mask_offset = Vector2D();
+		if (IsImageMaskLine(feature.line)) by_line[feature.line].push_back(&feature);
+	}
+
+	std::unordered_set<AssDialogue *> configured;
+	for (auto& feature : features) {
+		if (feature.base_type != DRAG_START || !IsImageMaskLine(feature.line) ||
+			configured.count(feature.line)) continue;
+
+		std::vector<AssDialogue *> group;
+		if (c->imageMask) {
+			auto const& known = c->imageMask->GetGroupLines(feature.line);
+			group.assign(known.begin(), known.end());
+		}
+		if (group.empty()) {
+			// Undo/redo can notify the visual tool before the grid's group cache has
+			// rebuilt. Recover the same contiguous, equal-timing ImageMask group
+			// directly from the file so it still gets one handle on that event.
+			auto first = c->ass->Events.iterator_to(*feature.line);
+			while (first != c->ass->Events.begin()) {
+				auto previous = first;
+				--previous;
+				if (previous->Start != feature.line->Start ||
+					previous->End != feature.line->End || !IsImageMaskLine(&*previous)) break;
+				first = previous;
+			}
+			for (auto at = first; at != c->ass->Events.end() &&
+				at->Start == feature.line->Start && at->End == feature.line->End &&
+				IsImageMaskLine(&*at); ++at)
+				group.push_back(&*at);
+		}
+
+		std::vector<AssDialogue *> visible_group;
+		for (auto line : group) {
+			if (!by_line.count(line)) continue;
+			visible_group.push_back(line);
+			configured.insert(line);
+		}
+		if (visible_group.empty()) continue;
+
+		AssDialogue *group_id = visible_group.front();
+		Vector2D anchor = GetLinePosition(group_id);
+		Feature *handle = nullptr;
+		for (auto line : visible_group) {
+			for (auto member : by_line[line]) {
+				member->image_mask_group = group_id;
+				member->type = DRAG_NONE;
+				if (member->base_type != DRAG_START) continue;
+				member->image_mask_mover = true;
+				member->image_mask_offset = GetLinePosition(line) - anchor;
+				member->pos = FromScriptCoords(anchor);
+				if (!handle) handle = member;
+			}
+		}
+		if (handle) handle->type = DRAG_START;
+	}
+	SyncImageMaskSelection();
 }
 
 void VisualToolDrag::Draw() {
@@ -497,7 +587,7 @@ void VisualToolDrag::Draw() {
 
 	// Draw connecting lines
 	for (auto& feature : features) {
-		if (feature.type == DRAG_START) continue;
+		if (feature.type == DRAG_START || feature.type == DRAG_NONE) continue;
 
 		Feature *p2 = &feature;
 		Feature *p1 = feature.parent;
@@ -578,6 +668,7 @@ void VisualToolDrag::MakeFeatures(AssDialogue *diag, feature_list::iterator pos)
 	auto parent = feat.get();
 	feat->pos = p1;
 	feat->type = DRAG_START;
+	feat->base_type = DRAG_START;
 	feat->line = diag;
 
 	if (boost::binary_search(selection, diag))
@@ -593,6 +684,7 @@ void VisualToolDrag::MakeFeatures(AssDialogue *diag, feature_list::iterator pos)
 		feat->pos = FromScriptCoords(p2);
 		feat->layer = 1;
 		feat->type = DRAG_END;
+		feat->base_type = DRAG_END;
 		feat->time = t2;
 		feat->line = diag;
 		feat->parent = parent;
@@ -610,6 +702,7 @@ void VisualToolDrag::MakeFeatures(AssDialogue *diag, feature_list::iterator pos)
 		feat->pos = FromScriptCoords(org);
 		feat->layer = -1;
 		feat->type = DRAG_ORIGIN;
+		feat->base_type = DRAG_ORIGIN;
 		feat->time = 0;
 		feat->line = diag;
 		feat->parent = parent;
@@ -634,6 +727,19 @@ bool VisualToolDrag::InitializeDrag(Feature *feature) {
 
 void VisualToolDrag::UpdateDrag(Feature *feature) {
 	int mode = OPT_GET("Tool/Drag Type")->GetInt();
+	if (feature->image_mask_mover) {
+		Vector2D centre = ToScriptCoords(feature->pos);
+		Vector2D current_centre = GetLinePosition(feature->line) -
+			feature->image_mask_offset;
+		if (mode == 1)
+			centre = Vector2D(centre, current_centre);
+		else if (mode == 2)
+			centre = Vector2D(current_centre, centre);
+		Vector2D target = (centre + feature->image_mask_offset).Round(1.f);
+		feature->pos = FromScriptCoords(target - feature->image_mask_offset);
+		SetOverride(feature->line, "\\pos", target.PStr());
+		return;
+	}
 	if (mode == 1)
 		feature->pos = Vector2D(feature->pos, FromScriptCoords(GetLinePosition(feature->line)));
 	else if (mode == 2)
@@ -672,20 +778,41 @@ void VisualToolDrag::UpdateDrag(Feature *feature) {
 void VisualToolDrag::OnDoubleClick() {
 	Vector2D d = ToScriptCoords(mouse_pos) - (primary ? ToScriptCoords(primary->pos) : GetLinePosition(active_line));
 
-	for (auto line : c->selectionController->GetSelectedSet()) {
+	Selection lines = c->selectionController->GetSelectedSet();
+	std::vector<AssDialogue *> selected(lines.begin(), lines.end());
+	for (auto line : selected) {
+		if (!IsImageMaskLine(line) || !c->imageMask) continue;
+		auto const& group = c->imageMask->GetGroupLines(line);
+		lines.insert(group.begin(), group.end());
+	}
+	for (auto line : lines) {
+		bool image_mask = IsImageMaskLine(line);
+		Vector2D line_delta = image_mask ? d.Round(1.f) : d;
 		Vector2D p1, p2;
 		int t1, t2;
 		if (GetLineMove(line, p1, p2, t1, t2)) {
+			Vector2D moved_start = p1 + line_delta;
+			Vector2D moved_end = p2 + line_delta;
+			if (image_mask) {
+				moved_start = moved_start.Round(1.f);
+				moved_end = moved_end.Round(1.f);
+			}
 			if (t1 > 0 || t2 > 0)
-				SetOverride(line, "\\move", agi::format("(%s,%s,%d,%d)", (p1 + d).Str(), (p2 + d).Str(), t1, t2));
+				SetOverride(line, "\\move", agi::format("(%s,%s,%d,%d)",
+					moved_start.Str(), moved_end.Str(), t1, t2));
 			else
-				SetOverride(line, "\\move", agi::format("(%s,%s)", (p1 + d).Str(), (p2 + d).Str()));
+				SetOverride(line, "\\move", agi::format("(%s,%s)",
+					moved_start.Str(), moved_end.Str()));
 		}
-		else
-			SetOverride(line, "\\pos", (GetLinePosition(line) + d).PStr());
+		else {
+			Vector2D target = GetLinePosition(line) + line_delta;
+			SetOverride(line, "\\pos", (image_mask ? target.Round(1.f) : target).PStr());
+		}
 
-		if (Vector2D org = GetLineOrigin(line))
-			SetOverride(line, "\\org", (org + d).PStr());
+		if (Vector2D org = GetLineOrigin(line)) {
+			Vector2D target = org + line_delta;
+			SetOverride(line, "\\org", (image_mask ? target.Round(1.f) : target).PStr());
+		}
 	}
 
 	Commit(_("positioning"));

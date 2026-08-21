@@ -104,6 +104,9 @@ public:
 	/// every session starts back at 100 rather than inheriting a faded one.
 	static void SetDisplaySubtitlesOpacity(int opacity);
 	static int GetDisplaySubtitlesOpacity();
+	/// Temporarily hide subtitles only in the interactive video display without
+	/// changing the user's opacity setting.
+	static void SetDisplaySubtitlesSuppressed(bool suppressed);
 
 	/// @brief Load the passed subtitle file
 	/// @param subs File to load
