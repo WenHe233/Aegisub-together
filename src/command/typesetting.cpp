@@ -383,7 +383,7 @@ struct typesetting_motion_trim_settings final : public Command {
 	CMD_NAME("typesetting/motion/trim/settings")
 	STR_MENU("Trim &settings...")
 	STR_DISP("Motion trim settings")
-	STR_HELP("Choose the motion trim format, output directory and FFmpeg")
+	STR_HELP("Choose the motion trim format and output directory")
 	void operator()(agi::Context *c) override { ShowMotionTrimSettings(c); }
 };
 

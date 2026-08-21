@@ -5863,7 +5863,7 @@ msgstr ""
 
 #: ../src/preferences.cpp:393
 msgid "Linear"
-msgstr ""
+msgstr "Lineáris"
 
 #: ../src/preferences.cpp:393
 msgid "Logarithmic"
@@ -8608,7 +8608,7 @@ msgstr "Szín beolvasása a követési útvonal mentén..."
 
 #: ../src/video_color_pick.cpp
 msgid "There is no valid motion track on the clipboard."
-msgstr "Nincs a vágólapon érvényes motion track."
+msgstr "A vágólapon nincs érvényes lekövetési adat."
 
 #: ../src/video_color_pick.cpp
 msgid "import colors from motion"
@@ -9121,7 +9121,7 @@ msgstr "Utánról előre"
 
 #: ../src/dialog_gradient.cpp
 msgid "Motion"
-msgstr "Mozgás"
+msgstr "Lekövetés"
 
 #: ../src/dialog_gradient.cpp
 msgid "Copy from..."
@@ -9213,3 +9213,451 @@ msgstr ""
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr "Színátmenet (%d sor, %s, szöveg: %s)"
+
+#: ../src/libresrc/default_menu_platform.json
+msgid "&Motion"
+msgstr "&Lekövetés"
+
+#: ../src/libresrc/default_menu_platform.json
+msgid "&Image insert"
+msgstr "&Képbeillesztés"
+
+#: ../src/dialog_motion.cpp
+#, c-format
+msgid "Mocha Corner Pin - %zu frames"
+msgstr "Mocha Corner Pin – %zu képkocka"
+
+#: ../src/dialog_motion.cpp
+#, c-format
+msgid "Mocha Transform Data - %zu frames"
+msgstr "Mocha Transform Data – %zu képkocka"
+
+#: ../src/dialog_motion.cpp
+#, c-format
+msgid " - selected lines require %zu frames"
+msgstr " – a kijelölt sorokhoz %zu képkocka szükséges"
+
+#: ../src/dialog_motion.cpp
+msgid "No track data"
+msgstr "Nincs lekövetési adat"
+
+#: ../src/dialog_motion.cpp
+msgid "No valid track data"
+msgstr "Nincs érvényes lekövetési adat"
+
+#: ../src/dialog_motion.cpp ../src/command/typesetting.cpp
+msgid "Apply motion"
+msgstr "Lekövetés alkalmazása"
+
+#: ../src/dialog_motion.cpp ../src/visual_tool_auto_motion.cpp
+msgid "Preparing motion..."
+msgstr "Lekövetés előkészítése..."
+
+#: ../src/dialog_motion.cpp ../src/visual_tool_auto_motion.cpp
+#, c-format
+msgid "Applying frame %zu of %zu"
+msgstr "%zu/%zu. képkocka alkalmazása"
+
+#: ../src/dialog_motion.cpp ../src/visual_tool_auto_motion.cpp
+#, c-format
+msgid "Writing subtitle row %zu of %zu"
+msgstr "%zu/%zu. feliratsor írása"
+
+#: ../src/dialog_motion.cpp
+msgid "No Transformation Data"
+msgstr "Nincs transzformációs adat"
+
+#: ../src/dialog_motion.cpp
+msgid "Import Transformation Data"
+msgstr "Transzformációs adatok importálása"
+
+#: ../src/dialog_motion.cpp
+msgid "Track clips with separate data"
+msgstr "Clipek lekövetése külön adatokkal"
+
+#: ../src/dialog_motion.cpp
+msgid "No separate clip Transformation Data"
+msgstr "Nincs külön transzformációs adat a cliphez"
+
+#: ../src/dialog_motion.cpp
+msgid "Import clip Transformation Data"
+msgstr "Clip transzformációs adatainak importálása"
+
+#: ../src/dialog_motion.cpp
+msgid "Transformation Data"
+msgstr "Transzformációs adatok"
+
+#: ../src/dialog_motion.cpp
+msgid "Enable Perspective below, then paste the matching Mocha Corner Pin data."
+msgstr "Kapcsolja be lent a Perspektívát, majd illessze be a hozzá tartozó Mocha Corner Pin adatokat."
+
+#: ../src/dialog_motion.cpp
+msgid "No main Corner Pin data"
+msgstr "Nincs fő Corner Pin adat"
+
+#: ../src/dialog_motion.cpp
+msgid "Import main Corner Pin"
+msgstr "Fő Corner Pin importálása"
+
+#: ../src/dialog_motion.cpp
+msgid "No clip Corner Pin data"
+msgstr "Nincs Corner Pin adat a cliphez"
+
+#: ../src/dialog_motion.cpp
+msgid "Import clip Corner Pin"
+msgstr "Clip Corner Pin adatainak importálása"
+
+#: ../src/dialog_motion.cpp
+msgid "Perspective - Corner pin"
+msgstr "Perspektíva – Corner Pin"
+
+#: ../src/dialog_motion.cpp
+msgid "Motion components"
+msgstr "Lekövetési összetevők"
+
+#: ../src/dialog_motion.cpp ../src/visual_tool_auto_motion.cpp
+msgid "X"
+msgstr "X"
+
+#: ../src/dialog_motion.cpp ../src/visual_tool_auto_motion.cpp
+msgid "Y"
+msgstr "Y"
+
+#: ../src/dialog_motion.cpp
+msgid "Rotation"
+msgstr "Forgatás"
+
+#: ../src/dialog_motion.cpp
+msgid "Perspective"
+msgstr "Perspektíva"
+
+#: ../src/dialog_motion.cpp
+msgid "Clip motion components"
+msgstr "Clip lekövetési összetevői"
+
+#: ../src/dialog_motion.cpp
+msgid "Reference"
+msgstr "Referencia"
+
+#: ../src/dialog_motion.cpp
+msgid "Main:"
+msgstr "Fő:"
+
+#: ../src/dialog_motion.cpp
+msgid "Clip:"
+msgstr "Clip:"
+
+#: ../src/dialog_motion.cpp
+msgid "Interpolate animations"
+msgstr "Animációk interpolálása"
+
+#: ../src/dialog_motion.cpp
+msgid "Linear motion"
+msgstr "Lineáris lekövetés"
+
+#: ../src/dialog_motion.cpp
+msgid "Clip only"
+msgstr "Csak clip"
+
+#: ../src/dialog_motion.cpp
+msgid "Scale border"
+msgstr "Bord méretezése"
+
+#: ../src/dialog_motion.cpp
+msgid "Scale shadow"
+msgstr "Shad méretezése"
+
+#: ../src/dialog_motion.cpp
+msgid "Scale blur"
+msgstr "Blur méretezése"
+
+#: ../src/dialog_motion.cpp
+msgid "Apply options"
+msgstr "Alkalmazási beállítások"
+
+#: ../src/dialog_motion.cpp
+msgid "No valid track data on the clipboard"
+msgstr "Nincs érvényes lekövetési adat a vágólapon"
+
+#: ../src/dialog_motion.cpp
+msgid "Trim settings"
+msgstr "Trim beállításai"
+
+#: ../src/dialog_motion.cpp
+msgid "Output format:"
+msgstr "Kimeneti formátum:"
+
+#: ../src/dialog_motion.cpp
+msgid "JPEG image sequence"
+msgstr "JPEG-képsorozat"
+
+#: ../src/dialog_motion.cpp
+msgid "H.264 MP4 video"
+msgstr "H.264 MP4-videó"
+
+#: ../src/dialog_motion.cpp
+msgid "Output directory:"
+msgstr "Kimeneti mappa:"
+
+#: ../src/dialog_motion.cpp
+msgid "Choose trim output directory"
+msgstr "Trim kimeneti mappájának kiválasztása"
+
+#: ../src/dialog_motion.cpp
+msgid "Organize output:"
+msgstr "Kimenet rendszerezése:"
+
+#: ../src/dialog_motion.cpp
+msgid "Put each trim in its own folder"
+msgstr "Minden trim külön mappába kerüljön"
+
+#: ../src/dialog_motion.cpp
+msgid "The trim output directory could not be created."
+msgstr "Nem sikerült létrehozni a trim kimeneti mappáját."
+
+#: ../src/dialog_motion.cpp ../src/command/typesetting.cpp
+msgid "Motion trim"
+msgstr "Lekövetési trim"
+
+#: ../src/dialog_motion.cpp
+msgid "The JPEG trim already exists. Overwrite its image sequence?"
+msgstr "A JPEG-trim már létezik. Felülírja a képsorozatát?"
+
+#: ../src/dialog_motion.cpp
+msgid "Writing JPEG frames..."
+msgstr "JPEG-képkockák írása..."
+
+#: ../src/dialog_motion.cpp
+#, c-format
+msgid "Writing frame %d of %d"
+msgstr "%d/%d. képkocka írása"
+
+#: ../src/dialog_motion.cpp
+msgid "A JPEG frame could not be written."
+msgstr "Nem sikerült kiírni egy JPEG-képkockát."
+
+#: ../src/dialog_motion.cpp
+msgid "The H.264 trim already exists. Overwrite it?"
+msgstr "A H.264 trim már létezik. Felülírja?"
+
+#: ../src/dialog_motion.cpp
+msgid "Encoding H.264 video..."
+msgstr "H.264-videó kódolása..."
+
+#: ../src/visual_tool_auto_motion.cpp
+msgid "The frame on which the tracking area was drawn must be inside the selected lines."
+msgstr "A kijelölt soroknak tartalmazniuk kell azt a képkockát, amelyen a követési területet megrajzolta."
+
+#: ../src/visual_tool_auto_motion.cpp ../src/command/typesetting.cpp
+msgid "Auto motion"
+msgstr "Automatikus lekövetés"
+
+#: ../src/visual_tool_auto_motion.cpp
+msgid "Preparing tracker..."
+msgstr "Lekövető előkészítése..."
+
+#: ../src/visual_tool_auto_motion.cpp
+#, c-format
+msgid "Tracking frame %d of %d"
+msgstr "%d/%d. képkocka lekövetése"
+
+#: ../src/visual_tool_auto_motion.cpp
+msgid "Rotate"
+msgstr "Forgatás"
+
+#: ../src/visual_tool_auto_motion.cpp
+msgid "Tracking the selected region..."
+msgstr "A kijelölt terület lekövetése..."
+
+#: ../src/visual_tool_auto_motion.cpp
+msgid "Select at least one motion component."
+msgstr "Válasszon ki legalább egy lekövetési összetevőt."
+
+#: ../src/visual_tool_auto_motion.cpp
+#, c-format
+msgid "Tracking area ready on frame %d. The direction is automatic; press Esc to redraw."
+msgstr "A követési terület kész a(z) %d. képkockán. Az irány automatikus; az újrarajzoláshoz nyomja meg az Esc billentyűt."
+
+#: ../src/visual_tool_auto_motion.cpp
+msgid "Add points around stable details on the reference frame."
+msgstr "Adjon pontokat a referenciaképkocka stabil részletei köré."
+
+#: ../src/visual_tool_auto_motion.cpp
+msgid "Add at least three points to define the tracking area."
+msgstr "A követési terület meghatározásához adjon hozzá legalább három pontot."
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Image files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|All files (*.*)|*.*"
+msgstr "Képfájlok (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|Minden fájl (*.*)|*.*"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "(Optional; black is opaque, white is transparent)"
+msgstr "(Nem kötelező; a fekete átlátszatlan, a fehér átlátszó)"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "(PNG transparency is handled automatically; no alpha image is needed.)"
+msgstr "(A PNG átlátszóságát automatikusan kezeli; nincs szükség alpha képre.)"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Compression:"
+msgstr "Tömörítés:"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "1 keeps every source colour exact; larger values merge nearby colours."
+msgstr "Az 1 minden forrásszínt pontosan megőriz; a nagyobb értékek összevonják a közeli színeket."
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Resize image (%):"
+msgstr "Kép átméretezése (%):"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Pixel size:"
+msgstr "Pixelméret:"
+
+#: ../src/typesetting_image_insert.cpp ../src/command/typesetting.cpp
+msgid "Image insert"
+msgstr "Kép beillesztése"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Image:"
+msgstr "Kép:"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Select image"
+msgstr "Kép kiválasztása"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Alpha image:"
+msgstr "Alpha kép:"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Select alpha image"
+msgstr "Alpha kép kiválasztása"
+
+#: ../src/typesetting_image_insert.cpp ../src/command/typesetting.cpp
+msgid "Image insert settings"
+msgstr "Képbeillesztési beállítások"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Basic"
+msgstr "Alap"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Use a separate alpha image"
+msgstr "Külön alpha kép használata"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Image folder:"
+msgstr "Képmappa:"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Select image folder"
+msgstr "Képmappa kiválasztása"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Name files *.[ext] and *-alpha.[ext], where * is the subtitle line text. Quick insert finds each selected line's image in this folder."
+msgstr "A fájlnevek *.[ext] és *-alpha.[ext] alakúak legyenek, ahol a * a feliratsor szövege. A Gyors beillesztés ebben a mappában keresi az egyes kijelölt sorok képeit."
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Dynamic"
+msgstr "Dinamikus"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Loading image..."
+msgstr "Kép betöltése..."
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Loading image"
+msgstr "Kép betöltése"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Preparing image"
+msgstr "Kép előkészítése"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Encoding image"
+msgstr "Kép kódolása"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "Image ready"
+msgstr "A kép elkészült"
+
+#: ../src/typesetting_image_insert.cpp
+msgid "insert image"
+msgstr "kép beillesztése"
+
+#: ../src/command/typesetting.cpp
+msgid "&Quick insert"
+msgstr "&Gyors beillesztés"
+
+#: ../src/command/typesetting.cpp
+msgid "Quick image insert"
+msgstr "Gyors képbeillesztés"
+
+#: ../src/command/typesetting.cpp
+msgid "Insert images using the saved basic or dynamic settings"
+msgstr "Képek beillesztése a mentett alap- vagy dinamikus beállításokkal"
+
+#: ../src/command/typesetting.cpp
+msgid "&Insert"
+msgstr "&Beillesztés"
+
+#: ../src/command/typesetting.cpp
+msgid "Convert an image to optimized ImageMask subtitle drawings"
+msgstr "Kép átalakítása optimalizált ImageMask feliratrajzokká"
+
+#: ../src/command/typesetting.cpp
+msgid "&Settings"
+msgstr "&Beállítások"
+
+#: ../src/command/typesetting.cpp
+msgid "Configure Quick insert and dynamic image filenames"
+msgstr "A Gyors beillesztés és a dinamikus képfájlnevek beállítása"
+
+#: ../src/command/typesetting.cpp
+msgid "&Apply"
+msgstr "&Alkalmazás"
+
+#: ../src/command/typesetting.cpp
+msgid "Apply Mocha Corner Pin or Transform Data to the selected lines"
+msgstr "Mocha Corner Pin vagy Transform Data alkalmazása a kijelölt sorokra"
+
+#: ../src/command/typesetting.cpp
+msgid "&Auto motion"
+msgstr "&Automatikus lekövetés"
+
+#: ../src/command/typesetting.cpp
+msgid "Select a video region and track its position, size and rotation"
+msgstr "Videóterület kijelölése, majd pozíciójának, méretének és forgatásának lekövetése"
+
+#: ../src/command/typesetting.cpp
+msgid "&Revert"
+msgstr "&Visszaállítás"
+
+#: ../src/command/typesetting.cpp
+msgid "Revert motion"
+msgstr "Lekövetés visszaállítása"
+
+#: ../src/command/typesetting.cpp
+msgid "Restore the source lines saved by Apply or Auto motion"
+msgstr "Az Alkalmazás vagy az Automatikus lekövetés által mentett forrássorok visszaállítása"
+
+#: ../src/command/typesetting.cpp
+msgid "&Trim"
+msgstr "&Trim"
+
+#: ../src/command/typesetting.cpp
+msgid "Write the selected time range as JPEG frames or an H.264 MP4"
+msgstr "A kijelölt időtartomány kiírása JPEG-képkockákként vagy H.264 MP4-videóként"
+
+#: ../src/command/typesetting.cpp
+msgid "Trim &settings..."
+msgstr "Trim &beállításai..."
+
+#: ../src/command/typesetting.cpp
+msgid "Motion trim settings"
+msgstr "Lekövetési trim beállításai"
+
+#: ../src/command/typesetting.cpp
+msgid "Choose the motion trim format and output directory"
+msgstr "A lekövetési trim formátumának és kimeneti mappájának kiválasztása"

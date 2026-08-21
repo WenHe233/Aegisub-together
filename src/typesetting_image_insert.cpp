@@ -267,20 +267,30 @@ public:
 			wxDIRP_USE_TEXTCTRL | wxDIRP_DIR_MUST_EXIST);
 		folder_row->Add(directory, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
 		dynamic_sizer->Add(folder_row, 0, wxEXPAND | wxALL, 12);
-		auto help = new wxStaticText(dynamic, wxID_ANY,
+		wxString help_text =
 			_("Name files *.[ext] and *-alpha.[ext], where * is the subtitle line text. "
-			  "Quick insert finds each selected line's image in this folder."));
-		help->Wrap(FromDIP(520));
-		dynamic_sizer->Add(help, 0, wxLEFT | wxRIGHT | wxBOTTOM, 12);
+			  "Quick insert finds each selected line's image in this folder.");
+		auto help = new wxStaticText(dynamic, wxID_ANY, help_text);
+		help->Wrap(FromDIP(820));
+		dynamic_sizer->Add(help, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 12);
 		dynamic->SetSizer(dynamic_sizer);
+		dynamic->Bind(wxEVT_SIZE, [this, dynamic, help, help_text](wxSizeEvent& event) {
+			int width = event.GetSize().GetWidth() - FromDIP(24);
+			if (width > 0) {
+				help->SetLabel(help_text);
+				help->Wrap(width);
+				dynamic->Layout();
+			}
+			event.Skip();
+		});
 		tabs->AddPage(dynamic, _("Dynamic"));
 		tabs->SetSelection(std::clamp(settings.mode, 0, 1));
 		content->Add(tabs, 1, wxEXPAND | wxBOTTOM, 12);
 		content->Add(CreateSeparatedButtonSizer(wxOK | wxCANCEL), 0, wxEXPAND);
 		main->Add(content, 1, wxEXPAND | wxALL, 12);
 		SetSizerAndFit(main);
-		SetMinSize(FromDIP(wxSize(880, 430)));
-		SetSize(FromDIP(wxSize(880, 430)));
+		SetMinSize(FromDIP(wxSize(880, 330)));
+		SetSize(FromDIP(wxSize(880, 330)));
 		CenterOnParent();
 	}
 

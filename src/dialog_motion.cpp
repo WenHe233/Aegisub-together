@@ -112,6 +112,7 @@ class MotionApplyDialog final : public wxDialog {
 	wxCheckBox *clip_rotate;
 	wxCheckBox *clip_perspective;
 	wxCheckBox *interpolate_animations;
+	wxStaticBoxSizer *apply_options;
 	size_t required_frames = 0;
 
 	bool TrackReady(std::optional<Track> const& track) const {
@@ -135,6 +136,27 @@ class MotionApplyDialog final : public wxDialog {
 
 	void UpdateApplyState() {
 		if (auto apply = FindWindow(wxID_OK)) apply->Enable(AllTracksReady());
+	}
+
+	void UpdateScaleOptions() {
+		bool enabled = !clip_only->GetValue() && main_scale->GetValue();
+		for (auto control : {border, shadow, blur}) {
+			control->Enable(enabled);
+			if (!enabled) control->SetValue(false);
+		}
+	}
+
+	void UpdateClipOnlyControls() {
+		bool enabled = !clip_only->GetValue();
+		if (!enabled && separate_clip->GetValue()) {
+			separate_clip->SetValue(false);
+			UpdateDataControls();
+		}
+		separate_clip->Enable(enabled);
+		for (auto control : {interpolate_animations, linear, map_clips})
+			control->Enable(enabled);
+		apply_options->GetStaticBox()->Enable(enabled);
+		UpdateScaleOptions();
 	}
 
 	bool ParseEditor(wxTextCtrl *editor, std::optional<Track>& destination,
@@ -212,10 +234,18 @@ class MotionApplyDialog final : public wxDialog {
 		UpdateDataControls();
 	}
 
+	void ToggleClipOnly(wxCommandEvent&) {
+		UpdateClipOnlyControls();
+	}
+
 	void TogglePerspective(wxCommandEvent&) {
 		if (main_perspective->GetValue()) main_rotate->SetValue(true);
 		if (clip_perspective->GetValue()) clip_rotate->SetValue(true);
 		UpdateDataControls(true);
+	}
+
+	void ToggleScale(wxCommandEvent&) {
+		UpdateScaleOptions();
 	}
 
 	void ApplyNow(wxCommandEvent&) {
@@ -239,16 +269,17 @@ class MotionApplyDialog final : public wxDialog {
 		}
 		if (!AllTracksReady()) return;
 		typesetting::motion::ApplyOptions options;
+		bool use_apply_options = !clip_only->GetValue();
 		options.reference_sample = static_cast<size_t>(reference->GetValue() - 1);
 		if (separate_clip->GetValue())
 			options.clip_reference_sample = static_cast<size_t>(clip_reference->GetValue() - 1);
-		options.linear = linear->GetValue();
-		options.interpolate_animations = interpolate_animations->GetValue();
+		options.linear = use_apply_options && linear->GetValue();
+		options.interpolate_animations = use_apply_options && interpolate_animations->GetValue();
 		options.clip_only = clip_only->GetValue();
-		options.map_clips = map_clips->GetValue();
-		options.scale_border = border->GetValue();
-		options.scale_shadow = shadow->GetValue();
-		options.scale_blur = blur->GetValue();
+		options.map_clips = use_apply_options && map_clips->GetValue();
+		options.scale_border = use_apply_options && border->GetValue();
+		options.scale_shadow = use_apply_options && shadow->GetValue();
+		options.scale_blur = use_apply_options && blur->GetValue();
 		options.main = {main_x->GetValue(), main_y->GetValue(), main_scale->GetValue(),
 			main_rotate->GetValue(), main_perspective->GetValue()};
 		options.clip = {clip_x->GetValue(), clip_y->GetValue(), clip_scale->GetValue(),
@@ -329,9 +360,13 @@ public:
 			wxTE_MULTILINE | wxTE_DONTWRAP | wxHSCROLL);
 		transformation->Add(primary_text, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
+		auto clip_mode_row = new wxBoxSizer(wxHORIZONTAL);
+		clip_only = new wxCheckBox(transformation_page, wxID_ANY, _("Clip only"));
 		separate_clip = new wxCheckBox(transformation_page, wxID_ANY,
 			_("Track clips with separate data"));
-		transformation->Add(separate_clip, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+		clip_mode_row->Add(clip_only, 0, wxRIGHT, 18);
+		clip_mode_row->Add(separate_clip, 0);
+		transformation->Add(clip_mode_row, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
 		auto clip_row = new wxBoxSizer(wxHORIZONTAL);
 		clip_label = new wxStaticText(transformation_page, wxID_ANY,
 			_("No separate clip Transformation Data"));
@@ -428,18 +463,16 @@ public:
 		main->Add(reference_group, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
 		interpolate_animations = new wxCheckBox(this, wxID_ANY,
-			_("Interpolate animations (\\t, \\move, \\fad)"));
+			_("Interpolate animations"));
 		interpolate_animations->SetValue(true);
-		linear = new wxCheckBox(this, wxID_ANY, _("Linear motion (first to last frame)"));
-		clip_only = new wxCheckBox(this, wxID_ANY, _("Clip only"));
-		map_clips = new wxCheckBox(this, wxID_ANY, _("Apply motion to clips"));
+		linear = new wxCheckBox(this, wxID_ANY, _("Linear motion"));
+		map_clips = new wxCheckBox(this, wxID_ANY, "Clip");
 		border = new wxCheckBox(this, wxID_ANY, _("Scale border"));
 		shadow = new wxCheckBox(this, wxID_ANY, _("Scale shadow"));
 		blur = new wxCheckBox(this, wxID_ANY, _("Scale blur"));
-		auto apply_options = new wxStaticBoxSizer(wxVERTICAL, this, _("Apply options"));
+		apply_options = new wxStaticBoxSizer(wxVERTICAL, this, _("Apply options"));
 		auto option_grid = new wxFlexGridSizer(3, 8, 12);
-		for (auto control : {interpolate_animations, linear, clip_only, map_clips,
-			border, shadow, blur})
+		for (auto control : {interpolate_animations, linear, map_clips, border, shadow, blur})
 			option_grid->Add(control, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
 		for (int column = 0; column < 3; ++column) option_grid->AddGrowableCol(column, 1);
 		apply_options->Add(option_grid, 1, wxEXPAND | wxALL, 6);
@@ -449,6 +482,7 @@ public:
 		main->Add(buttons, 0, wxEXPAND | wxALL, 10);
 		SetSizerAndFit(main);
 		SetMinSize(GetSize());
+		CenterOnParent();
 		if (!clipboard.empty()) {
 			std::string error;
 			if (ParseTrackText(clipboard, typesetting::motion::TrackKind::Transform, error)) {
@@ -475,11 +509,13 @@ public:
 			ImportClipboard(clip_corner_text, clip_corner, clip_corner_label,
 				clip_reference, typesetting::motion::TrackKind::CornerPin);
 		});
+		clip_only->Bind(wxEVT_CHECKBOX, &MotionApplyDialog::ToggleClipOnly, this);
 		separate_clip->Bind(wxEVT_CHECKBOX, &MotionApplyDialog::ToggleClip, this);
 		main_perspective->Bind(wxEVT_CHECKBOX,
 			&MotionApplyDialog::TogglePerspective, this);
 		clip_perspective->Bind(wxEVT_CHECKBOX,
 			&MotionApplyDialog::TogglePerspective, this);
+		main_scale->Bind(wxEVT_CHECKBOX, &MotionApplyDialog::ToggleScale, this);
 		primary_text->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
 			ParseEditor(primary_text, primary, primary_label, reference,
 				typesetting::motion::TrackKind::Transform, false);
@@ -498,6 +534,7 @@ public:
 		});
 		Bind(wxEVT_BUTTON, &MotionApplyDialog::ApplyNow, this, wxID_OK);
 		UpdateDataControls();
+		UpdateClipOnlyControls();
 	}
 };
 
