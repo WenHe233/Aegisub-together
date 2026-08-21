@@ -3086,7 +3086,7 @@ void VisualToolMask::CreateMask() {
 	}
 
 	std::string tags = "{" + drawing_style_tags(style);
-	tags += "\\blur1\\pos(0,0)\\1c" + colour.GetAssOverrideFormatted() + "\\p1}";
+	tags += "\\blur1\\pos(0,0)\\c" + colour.GetAssOverrideFormatted() + "\\p1}";
 	mask->Text = tags + EncodeDrawing();
 
 	c->ass->Events.insert(c->ass->iterator_to(*source), *mask);
@@ -3255,7 +3255,7 @@ std::vector<AssDialogue *> VisualToolMask::ConvertImageToAss(wxImage image, AssD
 			if (!run.transparent) {
 				auto colour = agi::Color(run.red, run.green, run.blue).GetAssOverrideFormatted();
 				if (colour != current_colour) {
-					tags += "\\1c" + colour;
+					tags += "\\c" + colour;
 					current_colour = std::move(colour);
 				}
 			}

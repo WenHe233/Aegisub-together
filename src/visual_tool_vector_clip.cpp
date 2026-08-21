@@ -3269,21 +3269,56 @@ bool VisualToolVectorClip::HasEditableDrawing() const {
 void VisualToolVectorClip::Save(int precision_override) {
 	if (drawing_mode) {
 		if (!active_line) return;
-		auto blocks = active_line->ParseTags();
-		AssDialogueBlockDrawing *first_drawing = nullptr;
-		for (auto& block : blocks) {
-			if (block->GetType() != AssBlockType::DRAWING) continue;
-			auto drawing = static_cast<AssDialogueBlockDrawing *>(block.get());
-			if (!first_drawing) {
-				first_drawing = drawing;
-				first_drawing->text = EncodeDrawing();
+		struct DrawingValue {
+			bool found = false;
+			int scale = 1;
+			std::string text;
+		};
+		auto drawing_value = [](AssDialogue *line) {
+			DrawingValue value;
+			for (auto& block : line->ParseTags()) {
+				if (block->GetType() != AssBlockType::DRAWING) continue;
+				auto drawing = static_cast<AssDialogueBlockDrawing *>(block.get());
+				if (!value.found) {
+					value.found = true;
+					value.scale = std::max(1, drawing->Scale);
+				}
+				value.text += drawing->text;
 			}
-			else {
-				drawing->text.clear();
+			return value;
+		};
+
+		auto active_drawing = drawing_value(active_line);
+		std::vector<AssDialogue *> targets(c->selectionController->GetSelectedSet().begin(),
+			c->selectionController->GetSelectedSet().end());
+		if (std::find(targets.begin(), targets.end(), active_line) == targets.end())
+			targets.push_back(active_line);
+		bool same_drawing = std::all_of(targets.begin(), targets.end(), [&](AssDialogue *line) {
+			auto value = drawing_value(line);
+			return value.found == active_drawing.found && value.scale == active_drawing.scale &&
+				value.text == active_drawing.text;
+		});
+		if (!same_drawing)
+			targets.assign(1, active_line);
+
+		std::string encoded = EncodeDrawing();
+		for (auto line : targets) {
+			auto blocks = line->ParseTags();
+			AssDialogueBlockDrawing *first_drawing = nullptr;
+			for (auto& block : blocks) {
+				if (block->GetType() != AssBlockType::DRAWING) continue;
+				auto drawing = static_cast<AssDialogueBlockDrawing *>(block.get());
+				if (!first_drawing) {
+					first_drawing = drawing;
+					first_drawing->text = encoded;
+				}
+				else {
+					drawing->text.clear();
+				}
 			}
+			if (first_drawing)
+				line->UpdateText(blocks);
 		}
-		if (first_drawing)
-			active_line->UpdateText(blocks);
 		return;
 	}
 
