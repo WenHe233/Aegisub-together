@@ -10211,3 +10211,60 @@ msgstr "Copia les línies i els paràmetres del degradat seleccionat"
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "Insereix un degradat"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "Editor d'imatges"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "S'estan mostrant els subtítols seleccionats..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "Forma %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "Subtítol"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "Obriu un vídeo abans d'iniciar ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "No s'ha pogut carregar el fotograma de vídeo actual."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "Els subtítols seleccionats no s'han pogut renderitzar."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "La imatge editada estava incompleta."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "No s'ha pogut carregar el PNG editat."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "ImageEditor no s'ha pogut carregar."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "Desar torna totes les capes de llenç visibles al subtítol excepte la capa Escena."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "Carregant..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor requereix suport de visualització web incrustat, que no està disponible."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "Escena"

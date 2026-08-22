@@ -6,6 +6,9 @@ subprojects/csri/meson.build    -linguist-vendored
 subprojects/iconv/meson.build   -linguist-vendored
 subprojects/luabins/meson.build -linguist-vendored
 
+*.sh text eol=lf
+*.py text eol=lf
+
 src/MatroskaParser.*    linguist-vendored
 
 libaegisub/lua/modules/lpeg.*       linguist-vendored

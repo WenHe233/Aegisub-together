@@ -5,11 +5,14 @@
 
 #pragma once
 
+class wxImage;
 namespace agi { struct Context; }
 
 namespace typesetting::image_insert {
 
 void Insert(agi::Context *context);
+void EditWithImageEditor(agi::Context *context);
+void InsertEditedImage(agi::Context *context, wxImage const& image);
 void QuickInsert(agi::Context *context);
 void ShowSettings(agi::Context *context);
 

@@ -165,7 +165,7 @@ deps += dependency('zlib')
 
 wx_dep = dependency('wxWidgets', version: '>=' + get_option('wx_version'),
                     required: false,
-                    modules: ['std', 'stc', 'gl'])
+                    modules: ['std', 'stc', 'gl', 'webview'])
 
 if wx_dep.found()
     deps += wx_dep
@@ -188,7 +188,11 @@ else
         'wxBUILD_PRECOMP': 'OFF',       # otherwise breaks project generation w/ meson
         'wxBUILD_SHARED': build_shared,
 
-        'wxUSE_WEBVIEW': false,         # breaks build on linux
+        # Keep the embedded ImageEditor available on every supported desktop
+        # platform. Linux uses wxWebView's WebKitGTK backend.
+        'wxUSE_WEBVIEW': true,
+        'wxUSE_WEBVIEW_EDGE': host_machine.system() == 'windows',
+        'wxUSE_WEBVIEW_EDGE_STATIC': host_machine.system() == 'windows',
         'CMAKE_BUILD_TYPE': build_type,
         'wxUSE_IMAGE': true,
         'wxBUILD_MONOLITHIC': true      # otherwise breaks project generation w/ meson
@@ -224,6 +228,22 @@ else
             wx.dependency('wxzlib'),
             wx.dependency('wxexpat'),
         ]
+
+        # wxWidgets exports the static WebView2 loader by name, but Meson's
+        # CMake bridge currently drops its transitive link directory.
+        webview2_arch = 'x64'
+        if host_machine.cpu_family() == 'x86'
+            webview2_arch = 'x86'
+        elif host_machine.cpu_family() == 'aarch64'
+            webview2_arch = 'arm64'
+        endif
+        webview2_loader_dir = join_paths(
+            meson.current_build_dir(), 'subprojects', 'wxWidgets',
+            '__CMake_build', 'libs', 'webview', 'packages',
+            'Microsoft.Web.WebView2.1.0.3485.44', 'build', 'native',
+            webview2_arch)
+        deps += cc.find_library('WebView2LoaderStatic',
+                                dirs: [webview2_loader_dir], required: true)
 
         if cc.has_header('rpc.h')
             deps += cc.find_library('rpcrt4', required: true)

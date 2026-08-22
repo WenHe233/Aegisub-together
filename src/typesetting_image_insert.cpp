@@ -21,6 +21,7 @@
 #include <memory>
 #include <optional>
 #include <regex>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -28,6 +29,7 @@
 #include <wx/dialog.h>
 #include <wx/checkbox.h>
 #include <wx/filepicker.h>
+#include <wx/filefn.h>
 #include <wx/filename.h>
 #include <wx/image.h>
 #include <wx/msgdlg.h>
@@ -333,12 +335,16 @@ struct Input {
 	AssDialogue *line = nullptr;
 	wxString image;
 	wxString alpha;
+	std::vector<AssDialogue *> sources;
+	int start = -1;
+	int end = -1;
+	bool full_frame = false;
 };
 
 bool Apply(agi::Context *context, std::vector<Input> const& inputs,
 	Settings const& settings, std::string& error) {
 	struct Work {
-		AssDialogue *source = nullptr;
+		std::vector<AssDialogue *> sources;
 		std::vector<AssDialogue> output;
 	};
 	std::vector<Work> work;
@@ -356,7 +362,8 @@ bool Apply(agi::Context *context, std::vector<Input> const& inputs,
 				static_cast<int>(input_index) + 1, static_cast<int>(inputs.size()));
 		};
 		progress.Update(base, message(_("Loading image")));
-		if (!input.line || IsImageMaskLine(input.line)) {
+		bool replacing_lines = !input.sources.empty();
+		if (!input.line || (IsImageMaskLine(input.line) && !replacing_lines)) {
 			error = "Select ordinary subtitle lines to insert images.";
 			return false;
 		}
@@ -364,7 +371,7 @@ bool Apply(agi::Context *context, std::vector<Input> const& inputs,
 		if (!image) return false;
 		auto alpha = LoadImage(input.alpha, error);
 		if (!input.alpha.empty() && !alpha) return false;
-		auto [x, y] = Position(*input.line);
+		auto [x, y] = input.full_frame ? std::pair{0, 0} : Position(*input.line);
 		auto raster = imagemask::Prepare(*image, alpha ? &*alpha : nullptr,
 			settings.image, x, y, error,
 			[&](size_t complete, size_t total) {
@@ -374,8 +381,9 @@ bool Apply(agi::Context *context, std::vector<Input> const& inputs,
 			});
 		if (!raster) return false;
 		auto style = context->ass->GetStyle(input.line->Style.get());
-		auto output = imagemask::Encode(*raster, *input.line,
-			static_cast<int>(input.line->Start), static_cast<int>(input.line->End),
+		int start = input.start >= 0 ? input.start : static_cast<int>(input.line->Start);
+		int end = input.end >= 0 ? input.end : static_cast<int>(input.line->End);
+		auto output = imagemask::Encode(*raster, *input.line, start, end,
 			style,
 			[&](size_t complete, size_t total) {
 				int value = base + 475 + static_cast<int>(
@@ -386,7 +394,9 @@ bool Apply(agi::Context *context, std::vector<Input> const& inputs,
 			error = "The image is fully transparent; no subtitle rows were generated.";
 			return false;
 		}
-		work.push_back({input.line, std::move(output)});
+		std::vector<AssDialogue *> sources = replacing_lines
+			? input.sources : std::vector<AssDialogue *>{input.line};
+		work.push_back({std::move(sources), std::move(output)});
 		progress.Update(base + progress_per_image, message(_("Image ready")));
 	}
 
@@ -394,15 +404,18 @@ bool Apply(agi::Context *context, std::vector<Input> const& inputs,
 	AssDialogue *active = nullptr;
 	std::vector<std::unique_ptr<AssDialogue>> removed;
 	for (auto& item : work) {
-		auto insert_at = context->ass->Events.iterator_to(*item.source);
+		auto insert_at = context->ass->Events.iterator_to(*item.sources.front());
 		for (auto& row : item.output) {
 			auto generated = new AssDialogue(std::move(row));
 			context->ass->Events.insert(insert_at, *generated);
 			selection.insert(generated);
 			if (!active) active = generated;
 		}
-		context->ass->Events.erase(insert_at);
-		removed.emplace_back(item.source);
+		for (auto source : item.sources) {
+			auto source_at = context->ass->Events.iterator_to(*source);
+			context->ass->Events.erase(source_at);
+			removed.emplace_back(source);
+		}
 	}
 	context->selectionController->SetSelectionAndActive(std::move(selection), active);
 	context->ass->Commit(_("insert image"), AssFile::COMMIT_DIAG_ADDREM |
@@ -450,6 +463,68 @@ void Insert(agi::Context *context) {
 	for (auto line : lines) inputs.push_back({line, dialog.ImagePath(), dialog.AlphaPath()});
 	std::string error;
 	if (!Apply(context, inputs, settings, error)) ShowError(context, error);
+}
+
+void InsertEditedImage(agi::Context *context, wxImage const& image) {
+	if (!image.IsOk()) return;
+	wxImage prepared = image.Copy();
+	int script_width = 0;
+	int script_height = 0;
+	context->ass->GetEffectiveLayoutResolution(context, script_width, script_height);
+	if (script_width > 0 && script_height > 0 &&
+		(prepared.GetWidth() != script_width || prepared.GetHeight() != script_height)) {
+		prepared = prepared.Scale(script_width, script_height, wxIMAGE_QUALITY_HIGH);
+	}
+	if (!prepared.IsOk()) {
+		ShowError(context, "The edited image could not be resized for the subtitle canvas.");
+		return;
+	}
+	wxString temporary = wxFileName::CreateTempFileName("aegisub-image-editor-");
+	if (temporary.empty() || !prepared.SaveFile(temporary, wxBITMAP_TYPE_PNG)) {
+		if (!temporary.empty() && wxFileExists(temporary)) wxRemoveFile(temporary);
+		ShowError(context, "The edited image could not be prepared for insertion.");
+		return;
+	}
+	Settings settings = LoadSettings();
+	settings.image.resize = 100.0;
+	settings.image.pixel_size = 1;
+	auto selected = Selected(context);
+	if (selected.empty()) {
+		wxRemoveFile(temporary);
+		return;
+	}
+	std::set<AssDialogue *> wanted;
+	for (auto line : selected) {
+		if (IsImageMaskLine(line) && context->imageMask) {
+			auto const& group = context->imageMask->GetGroupLines(line);
+			if (!group.empty()) {
+				wanted.insert(group.begin(), group.end());
+				continue;
+			}
+		}
+		wanted.insert(line);
+	}
+	std::vector<AssDialogue *> sources;
+	for (auto& line : context->ass->Events) {
+		if (wanted.count(&line)) sources.push_back(&line);
+	}
+	if (sources.empty()) {
+		wxRemoveFile(temporary);
+		return;
+	}
+	int start = static_cast<int>(sources.front()->Start);
+	int end = static_cast<int>(sources.front()->End);
+	for (auto line : sources) {
+		start = std::min(start, static_cast<int>(line->Start));
+		end = std::max(end, static_cast<int>(line->End));
+	}
+	std::vector<Input> inputs;
+	inputs.push_back({sources.front(), temporary, wxString(),
+		std::move(sources), start, end, true});
+	std::string error;
+	bool success = Apply(context, inputs, settings, error);
+	wxRemoveFile(temporary);
+	if (!success) ShowError(context, error);
 }
 
 void QuickInsert(agi::Context *context) {

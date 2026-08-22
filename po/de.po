@@ -10167,3 +10167,60 @@ msgstr "Zeilen und Einstellungen des ausgewählten erstellten Farbverlaufs kopie
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "Farbverlauf einfügen"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "Bildeditor"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "Rendern der ausgewählten Untertitel..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "Form %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "Untertitel"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "Öffnen Sie ein Video, bevor Sie ImageEditor starten."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "Das aktuelle Videobild konnte nicht geladen werden."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "Die ausgewählten Untertitel konnten nicht gerendert werden."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "Das bearbeitete Bild war unvollständig."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "Das bearbeitete PNG konnte nicht geladen werden."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "ImageEditor konnte nicht geladen werden."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "Durch das Speichern werden alle sichtbaren Leinwandebenen mit Ausnahme der Szenenebene wieder in den Untertitel übernommen."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "Laden..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor erfordert Unterstützung für eingebettete Webansichten, die nicht verfügbar ist."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "Szene"

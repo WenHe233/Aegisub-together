@@ -10002,3 +10002,60 @@ msgstr "Kopiowanie wierszy i ustawień zaznaczonego gradientu"
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "Wstawianie gradientu"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "Edytor obrazów"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "Renderowanie wybranych napisów..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "Kształt %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "Podtytuł"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "Otwórz wideo przed uruchomieniem ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "Nie można załadować bieżącej klatki wideo."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "Nie można wyrenderować wybranych napisów."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "Edytowany obraz był niekompletny."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "Nie można załadować edytowanego pliku PNG."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "Nie można załadować programu ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "Zapisanie przywraca do napisów każdą widoczną warstwę płótna z wyjątkiem warstwy Scena."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "Ładowanie..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor wymaga wbudowanej obsługi widoku internetowego, która jest niedostępna."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "Scena"

@@ -10206,3 +10206,60 @@ msgstr "Copiar las líneas y la configuración del degradado creado seleccionado
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "Pegar degradado"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "Editor de imágenes"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "Representando los subtítulos seleccionados..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "Forma %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "Subtítulo"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "Abra un vídeo antes de iniciar ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "No se pudo cargar el cuadro de video actual."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "Los subtítulos seleccionados no se pudieron reproducir."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "La imagen editada estaba incompleta."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "No se pudo cargar el PNG editado."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "No se pudo cargar ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "Al guardar se devuelven todas las capas visibles del lienzo al subtítulo, excepto la capa Escena."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "Cargando..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor requiere compatibilidad con vista web integrada, que no está disponible."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "Escena"

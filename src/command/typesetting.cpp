@@ -312,6 +312,21 @@ struct typesetting_image_insert_insert final : public Command {
 	void operator()(agi::Context *c) override { typesetting::image_insert::Insert(c); }
 };
 
+struct typesetting_image_insert_edit final : public Command {
+	CMD_NAME("typesetting/image_insert/edit")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("With &editing...")
+	STR_DISP("ImageEditor insert")
+	STR_HELP("Edit the current video frame in ImageEditor before inserting the result")
+	bool Validate(const agi::Context *c) override {
+		return !!c->project->VideoProvider() &&
+			!c->selectionController->GetSelectedSet().empty();
+	}
+	void operator()(agi::Context *c) override {
+		typesetting::image_insert::EditWithImageEditor(c);
+	}
+};
+
 struct typesetting_image_insert_settings final : public Command {
 	CMD_NAME("typesetting/image_insert/settings")
 	STR_MENU("&Settings")
@@ -404,6 +419,7 @@ namespace cmd {
 		reg(std::make_unique<typesetting_textbox>());
 		reg(std::make_unique<typesetting_image_insert_quick>());
 		reg(std::make_unique<typesetting_image_insert_insert>());
+		reg(std::make_unique<typesetting_image_insert_edit>());
 		reg(std::make_unique<typesetting_image_insert_settings>());
 		reg(std::make_unique<typesetting_motion_auto>());
 		reg(std::make_unique<typesetting_motion_apply>());

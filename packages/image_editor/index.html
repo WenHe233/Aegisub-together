@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="theme-color" content="#1b1b1b">
+	<title>Image Editor</title>
+	<style>
+		html, body { background: #1b1b1b; height: 100%; margin: 0; overflow: hidden; }
+		body, button, input, textarea, select {
+			font-family: "Open Sans", "Segoe UI", sans-serif;
+			font-size: 13px;
+		}
+	</style>
+</head>
+<body class="theme0">
+	<div id="cap" style="display:none" aria-hidden="true"></div>
+	<script>
+		(function () {
+			"use strict";
+			if (navigator.keyboard) {
+				try {
+					Object.defineProperty(navigator.keyboard, "lock", {
+						configurable: true,
+						value: function () { return Promise.resolve(); }
+					});
+					Object.defineProperty(navigator.keyboard, "unlock", {
+						configurable: true,
+						value: function () {}
+					});
+				}
+				catch (_) {}
+			}
+			var files = [
+				"style/all09.css",
+				"code/ext/ext1753387088.js",
+				"code/dbs/DBS1751979998.js",
+				"code/pp/pp1753360222.js",
+				"code/custom/image-editor-ui.js?v=5"
+			];
+			for (var i = 0; i < files.length; i++) {
+				var cleanPath = files[i].split("?", 1)[0];
+				var isScript = cleanPath.slice(-3) === ".js";
+				var element = document.createElement(isScript ? "script" : "link");
+				element.setAttribute(isScript ? "src" : "href", files[i]);
+				if (isScript) element.async = false;
+				else element.rel = "stylesheet";
+				(isScript ? document.body : document.head).appendChild(element);
+			}
+		})();
+	</script>
+</body>
+</html>

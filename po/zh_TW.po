@@ -10043,3 +10043,60 @@ msgstr "複製所選已建立漸層的行與設定"
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "貼上漸層"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "影像編輯器"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "渲染選取的字幕..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "形狀 %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "副標題"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "在啟動 ImageEditor 之前打開影片。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "無法載入目前視訊幀。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "無法呈現所選字幕。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "編輯後的圖像不完整。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "無法載入編輯後的 PNG。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "無法載入圖像編輯器。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "儲存時會將除場景圖層之外的所有可見畫布圖層返回字幕。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "正在加載..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor 需要嵌入式 Web 視圖支持，但該支援不可用。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "場景"

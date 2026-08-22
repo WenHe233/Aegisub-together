@@ -10163,3 +10163,60 @@ msgstr "Sao chép các dòng và cài đặt của dải chuyển màu đã ch�
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "Chèn chuyển màu biên tập"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "Trình chỉnh sửa hình ảnh"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "Đang hiển thị phụ đề đã chọn..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "Hình dạng %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "phụ đề"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "Mở video trước khi bắt đầu ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "Không thể tải khung hình video hiện tại."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "Không thể hiển thị phụ đề đã chọn."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "Hình ảnh đã chỉnh sửa chưa đầy đủ."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "Không thể tải PNG đã chỉnh sửa."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "Không thể tải ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "Việc lưu sẽ trả lại mọi lớp canvas hiển thị cho phụ đề ngoại trừ lớp Cảnh."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "Đang tải..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor yêu cầu hỗ trợ xem web được nhúng nhưng không có sẵn."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "Bối cảnh"

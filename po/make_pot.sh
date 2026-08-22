@@ -16,6 +16,7 @@ maybe_append() {
 
 find ../src ../src/command -name '*.cpp' -o -name '*.h' \
   | xgettext --files-from=- -o - --c++ --sort-by-file \
+             --from-code=UTF-8 \
              -k_ -kwxTRANSLATE -kwxGETTEXT_IN_CONTEXT:1c,2 -kSTR_MENU -kSTR_DISP -kSTR_HELP -kCOMMAND_GROUP:5 \
              -kfmt_tl -kfmt_plural:2,3 \
   | sed 's/SOME DESCRIPTIVE TITLE./Aegisub 3.2/' \
@@ -46,10 +47,10 @@ find ../automation -name '*.lua' -o -name '*.moon' \
   | maybe_append
 
 xgettext ../packages/desktop/aegisub.desktop.in.in \
-  --language=Desktop --join-existing --omit-header -o aegisub.pot
+  --from-code=UTF-8 --language=Desktop --join-existing --omit-header -o aegisub.pot
 
 xgettext ../packages/desktop/aegisub.metainfo.xml.in.in \
-  --language=AppData --join-existing --omit-header -o aegisub.pot
+  --from-code=UTF-8 --language=AppData --join-existing --omit-header -o aegisub.pot
 
 grep '^_[A-Za-z0-9]*=.*' ../packages/win_installer/fragment_strings.iss.in | while read line
 do

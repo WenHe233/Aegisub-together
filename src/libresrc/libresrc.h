@@ -23,6 +23,7 @@ struct LibresrcBlob {
 
 #include "bitmap.h"
 #include "default_config.h"
+#include "image_editor.h"
 
 #include <wx/version.h>
 

@@ -10009,3 +10009,60 @@ msgstr "選択した作成済みグラデーションの行と設定をコピー
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "グラデーションを挿入"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "画像エディター"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "選択した字幕をレンダリングしています..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "形状 %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "サブタイトル"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "ImageEditor を起動する前にビデオを開いてください。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "現在のビデオ フレームをロードできませんでした。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "選択した字幕を表示できませんでした。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "編集された画像が不完全でした。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "編集したPNGを読み込めませんでした。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "ImageEditor をロードできませんでした。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "保存すると、シーン レイヤーを除く、表示されているすべてのキャンバス レイヤーが字幕に戻ります。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "読み込み中..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor には組み込みの Web ビュー サポートが必要ですが、これは利用できません。"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "シーン"

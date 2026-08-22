@@ -80,6 +80,7 @@ src/subtitle_format_ebu3264.cpp
 src/subtitles_provider_libass.cpp
 src/timeedit_ctrl.cpp
 src/video_box.cpp
+src/typesetting_embedded_image_editor.cpp
 src/visual_tool.cpp
 src/visual_tool_cross.cpp
 src/visual_tool_drag.cpp

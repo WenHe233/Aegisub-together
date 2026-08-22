@@ -167,6 +167,7 @@ aegisub_src = files(
     'typesetting_perspective.cpp',
 	'typesetting_gradient.cpp',
 	'typesetting_image_insert.cpp',
+	'typesetting_embedded_image_editor.cpp',
 	'typesetting_auto_motion.cpp',
 	'typesetting_auto_motion_model.cpp',
 	'typesetting_motion.cpp',

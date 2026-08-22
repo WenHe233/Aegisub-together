@@ -10749,3 +10749,60 @@ msgstr "선택한 생성된 그라데이션의 줄과 설정 복사"
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "그라데이션 붙여넣기"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "이미지 편집기"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "선택한 자막을 렌더링하는 중..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "모양 %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "자막"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "ImageEditor를 시작하기 전에 비디오를 엽니다."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "현재 비디오 프레임을 로드할 수 없습니다."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "선택한 자막을 렌더링할 수 없습니다."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "편집된 이미지가 불완전했습니다."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "편집된 PNG를 로드할 수 없습니다."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "ImageEditor를 로드할 수 없습니다."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "저장하면 장면 레이어를 제외하고 표시되는 모든 캔버스 레이어가 자막으로 반환됩니다."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "로드 중..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor에는 내장된 웹 보기 지원이 필요하지만 이는 사용할 수 없습니다."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "장면"

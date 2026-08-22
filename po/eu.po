@@ -10150,3 +10150,60 @@ msgstr "Kopiatu hautatutako gradiente sortuaren lerroak eta ezarpenak"
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "Itsatsi gradientea"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "Irudi editorea"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "Hautatutako azpitituluak errendatzen..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "%d forma"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "Azpititulua"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "Ireki bideo bat ImageEditor hasi aurretik."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "Ezin izan da kargatu uneko bideo-markoa."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "Ezin izan dira hautatutako azpitituluak errendatu."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "Editatutako irudia osatu gabe zegoen."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "Ezin izan da editatutako PNG kargatu."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "Ezin izan da ImageEditor kargatu."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "Gordetzeak ikusgai dauden mihise-geruza guztiak azpititulura itzultzen ditu, Eszena geruza izan ezik."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "Kargatzen..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor-ek txertatutako web-ikuspegiaren euskarria behar du, eta hori ez dago erabilgarri."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "Eszena"

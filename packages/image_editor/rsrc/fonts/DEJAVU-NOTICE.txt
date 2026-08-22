@@ -1,0 +1,4 @@
+DejaVu Sans is based on Bitstream Vera. The Bitstream Vera license is
+included in BITSTREAM-VERA-LICENSE.txt. Changes made by the DejaVu project
+are in the public domain. Project and license information:
+https://dejavu-fonts.github.io/License.html

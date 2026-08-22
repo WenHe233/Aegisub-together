@@ -81,6 +81,7 @@
 	"main/typesetting/image_insert" : [
 		{ "command" : "typesetting/image_insert/quick" },
 		{ "command" : "typesetting/image_insert/insert" },
+		{ "command" : "typesetting/image_insert/edit" },
 		{ "command" : "typesetting/image_insert/settings" }
 	],
 	"main/typesetting/transform" : [

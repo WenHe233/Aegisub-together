@@ -2,6 +2,39 @@ fs = import('fs')
 
 respack = find_program(meson.project_source_root() / 'tools/respack.py')
 combine_config = find_program(meson.project_source_root() / 'tools/combine-config.py')
+make_image_editor_archive = find_program(
+    meson.project_source_root() / 'tools/make-image-editor-archive.py')
+
+image_editor_source = meson.project_source_root() / 'packages/image_editor'
+image_editor_manifest = files(image_editor_source / 'manifest.txt')
+image_editor_files = []
+foreach image_editor_file : fs.read(image_editor_manifest).strip().split('\n')
+    image_editor_file_s = image_editor_file.strip()
+    if image_editor_file_s != ''
+        image_editor_files += files(image_editor_source / image_editor_file_s)
+    endif
+endforeach
+
+image_editor_archive = custom_target(
+    'image_editor_bundle.zip',
+    command: [
+        make_image_editor_archive,
+        image_editor_source,
+        image_editor_manifest,
+        '@OUTPUT@',
+    ],
+    input: image_editor_manifest,
+    depend_files: image_editor_files,
+    output: 'image_editor_bundle.zip',
+)
+
+image_editor_respack = configure_file(
+    input: 'image_editor.respack.in',
+    output: '@BASENAME@',
+    configuration: {
+        'IMAGE_EDITOR_ARCHIVE_PATH': image_editor_archive.full_path(),
+    },
+)
 
 bitmap_manifest = '../bitmaps/manifest.respack'
 bitmap_files = []
@@ -17,7 +50,11 @@ resrc = [
                   command: [respack, '@INPUT@', '@OUTPUT@', meson.current_source_dir() / '../bitmaps'],
                   input: files(bitmap_manifest),
                   depend_files: bitmap_files,
-                  output: ['bitmap.cpp', 'bitmap.h'])
+                  output: ['bitmap.cpp', 'bitmap.h']),
+    custom_target('image_editor.{cpp,h}',
+                  command: [respack, '@INPUT0@', '@OUTPUT@', meson.current_build_dir()],
+                  input: [image_editor_respack, image_editor_archive],
+                  output: ['image_editor.cpp', 'image_editor.h'])
 ]
 
 conf_platform = ''

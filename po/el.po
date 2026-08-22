@@ -10210,3 +10210,60 @@ msgstr "Αντιγραφή γραμμών και ρυθμίσεων της επ�
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "Εισαγωγή διαβάθμισης χρώματος"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "Επεξεργαστής εικόνας"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "Απόδοση των επιλεγμένων υπότιτλων..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "Σχήμα %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "Υπότιτλος"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "Ανοίξτε ένα βίντεο πριν ξεκινήσετε το ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "Δεν ήταν δυνατή η φόρτωση του τρέχοντος καρέ βίντεο."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "Δεν ήταν δυνατή η απόδοση των επιλεγμένων υπότιτλων."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "Η επεξεργασμένη εικόνα ήταν ελλιπής."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "Δεν ήταν δυνατή η φόρτωση του επεξεργασμένου PNG."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "Δεν ήταν δυνατή η φόρτωση του ImageEditor."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "Η αποθήκευση επιστρέφει κάθε ορατό επίπεδο καμβά στον υπότιτλο εκτός από το επίπεδο σκηνής."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "Φόρτωση..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "Το ImageEditor απαιτεί ενσωματωμένη υποστήριξη προβολής ιστού, η οποία δεν είναι διαθέσιμη."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "Σκηνή"

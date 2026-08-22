@@ -9985,3 +9985,60 @@ msgstr "کپی ردیف‌ها و تنظیمات گرادیان ایجادشده
 #: ../src/dialog_gradient.cpp
 msgid "Paste gradient"
 msgstr "درج گرادیان"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Image Editor"
+msgstr "ویرایشگر تصویر"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Rendering the selected subtitles..."
+msgstr "در حال ارائه زیرنویس انتخابی..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+#, c-format
+msgid "Shape %d"
+msgstr "شکل %d"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Subtitle"
+msgstr "زیرنویس"
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Open a video before starting ImageEditor."
+msgstr "قبل از شروع ImageEditor یک ویدیو را باز کنید."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The current video frame could not be loaded."
+msgstr "قاب ویدیوی فعلی بارگیری نشد."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The selected subtitles could not be rendered."
+msgstr "زیرنویس‌های انتخابی قابل ارائه نیستند."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited image was incomplete."
+msgstr "تصویر ویرایش شده ناقص بود."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "The edited PNG could not be loaded."
+msgstr "PNG ویرایش شده بارگیری نشد."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor could not be loaded."
+msgstr "ImageEditor بارگیری نشد."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
+msgstr "ذخیره هر لایه بوم قابل مشاهده را به زیرنویس به جز لایه صحنه برمی گرداند."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Loading..."
+msgstr "در حال بارگیری..."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr "ImageEditor به پشتیبانی از نمای وب تعبیه شده نیاز دارد که در دسترس نیست."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "Scene"
+msgstr "صحنه"

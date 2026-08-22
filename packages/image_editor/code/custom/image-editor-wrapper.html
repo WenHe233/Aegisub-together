@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Image Editor</title>
+	<style>
+		html, body {
+			background: #1b1b1b;
+			border: 0;
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			padding: 0;
+			width: 100%;
+		}
+		#image-editor-frame {
+			background: #1b1b1b;
+			border: 0;
+			display: block;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			width: 100%;
+		}
+		#image-editor-wait {
+			background: #1b1b1b;
+			inset: 0;
+			pointer-events: none;
+			position: fixed;
+			z-index: 2147483647;
+		}
+	</style>
+</head>
+<body>
+	<iframe id="image-editor-frame" title="Image Editor" frameborder="0"></iframe>
+	<div id="image-editor-wait" aria-hidden="true"></div>
+	<script>
+		(function () {
+			"use strict";
+			var parameters = new URLSearchParams(window.location.search);
+			var language = parameters.get("lang") || "en";
+			document.documentElement.lang = language;
+			var configuration = {
+				environment: {
+					theme: 1,
+					lang: language,
+					intro: false,
+					localsave: false,
+					panels: [0, 1, 2, 9, 10, 16, 17, 18]
+				}
+			};
+			window.__imageEditorLanguage = language;
+			document.getElementById("image-editor-frame").src =
+				"../../index.html#" + encodeURIComponent(JSON.stringify(configuration));
+			window.addEventListener("message", function (event) {
+				if (event.source !== document.getElementById("image-editor-frame").contentWindow)
+					return;
+				if (event.data === "image-editor-subtitle-ready") {
+					var wait = document.getElementById("image-editor-wait");
+					if (wait) wait.remove();
+				}
+			});
+		})();
+	</script>
+</body>
+</html>
