@@ -24,6 +24,7 @@
 #include "include/aegisub/context.h"
 #include "options.h"
 #include "selection_controller.h"
+#include "text_to_shape.h"
 #include "video_controller.h"
 #include "video_display.h"
 #include "visual_tool_clip.h"
@@ -87,6 +88,8 @@ void VisualToolBase::SetResolutions() {
 void VisualToolBase::OnCommit(int type) {
 	holding = false;
 	dragging = false;
+	// A line's text, or the style behind it, may be anything now.
+	extents_cache.clear();
 
 	if (type == AssFile::COMMIT_NEW || type & AssFile::COMMIT_SCRIPTINFO) {
 		SetResolutions();
@@ -482,6 +485,25 @@ static param_vec find_tag(std::vector<std::unique_ptr<AssDialogueBlock>>& blocks
 	return nullptr;
 }
 
+/// The same, but only from the first tag block: what is in force where the line begins.
+///
+/// Looking further in picks up a value meant for one word - a \fs on an emphasised one,
+/// say - and reads it as the size of everything. On a paragraph with one large word in the
+/// middle of it that measured the whole block at the large size, which is where the frame
+/// came out half again as big as the text it was drawn round.
+static param_vec first_block_tag(std::vector<std::unique_ptr<AssDialogueBlock>>& blocks,
+                                 std::string const& tag_name) {
+	for (auto ovr : blocks | agi::of_type<AssDialogueBlockOverride>()) {
+		for (auto const& tag : ovr->Tags) {
+			if (tag.Name == tag_name)
+				return &tag.Params;
+		}
+		// Only the first one: what comes after belongs to part of the line.
+		return nullptr;
+	}
+	return nullptr;
+}
+
 // Get a Vector2D from the given tag parameters, or Vector2D::Bad() if they are not valid
 static Vector2D vec_or_bad(param_vec tag, size_t x_idx, size_t y_idx) {
 	if (!tag ||
@@ -711,6 +733,18 @@ void CurveSpan(float p1, float p2, float p3, float p4, float& low, float& high) 
 }
 
 std::pair<Vector2D, Vector2D> VisualToolBase::GetLineBaseExtents(AssDialogue *diag) {
+	if (!diag) return std::make_pair(Vector2D(0, 0), Vector2D(0, 0));
+	// The style behind it is part of the answer, so it is part of the key. A separator no tag
+	// can contain keeps the two halves apart.
+	std::string key = diag->Style.get() + "\x1f" + diag->Text.get();
+	auto found = extents_cache.find(key);
+	if (found != extents_cache.end()) return found->second;
+	auto measured = MeasureLineBaseExtents(diag);
+	extents_cache.emplace(std::move(key), measured);
+	return measured;
+}
+
+std::pair<Vector2D, Vector2D> VisualToolBase::MeasureLineBaseExtents(AssDialogue *diag) {
 	double width = 0.;
 	double height = 0.;
 
@@ -754,15 +788,49 @@ std::pair<Vector2D, Vector2D> VisualToolBase::GetLineBaseExtents(AssDialogue *di
 
 		return std::make_pair(Vector2D(left, top), Vector2D(right, bot));
 	} else {
-		if (param_vec tag = find_tag(blocks, "\\fs"))
+		// A line is laid out stretch by stretch: a size, a face or a spacing set for one
+		// emphasised word belongs to that word, and a row with nothing on it is still a row of
+		// full height. Neither of those can be had from one measurement of the whole line, so
+		// where the text can be laid out properly that is the measurement worth having.
+		Vector2D laid_out;
+		if (text_to_shape::MeasureText(c, diag, laid_out))
+			return std::make_pair(Vector2D(0, 0), laid_out);
+
+		// Otherwise the font's own metrics, with what the line says in force where it begins.
+		if (param_vec tag = first_block_tag(blocks, "\\fs"))
 			style.fontsize = tag->front().Get(style.fontsize);
-		if (param_vec tag = find_tag(blocks, "\\fn"))
+		if (param_vec tag = first_block_tag(blocks, "\\fn"))
 			style.font = tag->front().Get(style.font);
+		// The letters are laid out with the spacing and the face the line asks for, not only with
+		// the ones its style asks for. Leaving these out measured a much shorter line than the
+		// renderer draws - on a title set with wide spacing, half as long.
+		if (param_vec tag = first_block_tag(blocks, "\\fsp"))
+			style.spacing = tag->front().Get(style.spacing);
+		if (param_vec tag = first_block_tag(blocks, "\\b"))
+			style.bold = tag->front().Get(style.bold ? 1 : 0) > 0;
+		if (param_vec tag = first_block_tag(blocks, "\\i"))
+			style.italic = tag->front().Get(style.italic ? 1 : 0) > 0;
+		// On a face with no bolder member of its own the platform invents the bold, and its
+		// invention walks the letters further apart than a renderer does - a renderer thickens
+		// the outline and leaves the advances alone. Measuring with the plain face is what the
+		// line will really be laid out as. A title already set in a Bold-named face is exactly
+		// this case, and it measured some three percent longer than it is drawn.
+		if (style.bold && text_to_shape::UsesSyntheticBold(style.font, style.italic))
+			style.bold = false;
 
 		std::string text = diag->GetStrippedText();
 		std::vector<std::string> textlines;
 		boost::replace_all(text, "\\N", "\n");
 		agi::Split(textlines, text, '\n');
+
+		// A row with nothing on it measures as nothing at all, and the renderer still leaves the
+		// height of a row behind - so one reference row is measured and used for those.
+		double blank_height = 0;
+		{
+			double blank_width = 0, blank_descent = 0, blank_extlead = 0;
+			Automation4::CalculateTextExtents(&style, " ", blank_width, blank_height,
+				blank_descent, blank_extlead);
+		}
 		for (std::string line : textlines) {
 			double linewidth = 0;
 			double lineheight = 0;
@@ -774,6 +842,7 @@ std::pair<Vector2D, Vector2D> VisualToolBase::GetLineBaseExtents(AssDialogue *di
 				linewidth = style.fontsize * line.length();
 				lineheight = style.fontsize;
 			}
+			if (lineheight <= 0) lineheight = blank_height;
 			width = std::max(width, linewidth);
 			height += lineheight;
 		}

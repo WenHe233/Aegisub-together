@@ -10437,26 +10437,41 @@ msgstr "hajlítás"
 msgid "Reset"
 msgstr "Visszaállítás"
 
-#: ../src/visual_tool_transform.cpp:2660
-msgid "recalculate bord"
-msgstr "bord újraszámolása"
-
-#: ../src/visual_tool_transform.cpp:2661
-msgid "recalculate shad"
-msgstr "shad újraszámolása"
-
 #: ../src/visual_tool_transform.cpp:2662
 msgid "maintain bord & shad"
 msgstr "bord & shad megtartása"
 
-#: ../src/visual_tool_transform.cpp:2663
-msgid "recalculate clip"
-msgstr "clip újraszámolása"
+#: ../src/visual_tool_transform.cpp:2673
+msgid "Scale axes together"
+msgstr "Tengelyek együtt méretezése"
 
-#: ../src/visual_tool_transform.cpp:2666
-#, fuzzy
+#: ../src/visual_tool_transform.cpp:2674
+msgid "Scale X"
+msgstr "Méretezés X"
+
+#: ../src/visual_tool_transform.cpp:2675
+msgid "Scale Y"
+msgstr "Méretezés Y"
+
+#: ../src/visual_tool_transform.cpp:2677
+msgid "Shear X"
+msgstr "Döntés X"
+
+#: ../src/visual_tool_transform.cpp:2678
+msgid "Shear Y"
+msgstr "Döntés Y"
+
+#: ../src/visual_tool_transform.cpp:2679
+msgid "Rotate X"
+msgstr "Forgatás X"
+
+#: ../src/visual_tool_transform.cpp:2680
+msgid "Rotate Y"
+msgstr "Forgatás Y"
+
+#: ../src/visual_tool_transform.cpp:2683
 msgid "keep original size"
-msgstr "eredetiből beillesztés"
+msgstr "eredeti méret megtartása"
 
 #: ../src/visual_tool_transform.cpp:2715
 msgid "Drag the 4 points to adjust the perspective."

@@ -386,6 +386,7 @@ VisualToolPreviewBar::VisualToolPreviewBar(wxWindow *parent)
 	Bind(wxEVT_LEAVE_WINDOW, &VisualToolPreviewBar::OnMouseLeave, this);
 	Bind(wxEVT_LEFT_DOWN, &VisualToolPreviewBar::OnLeftDown, this);
 	Bind(wxEVT_LEFT_UP, &VisualToolPreviewBar::OnLeftUp, this);
+	Bind(wxEVT_RIGHT_DOWN, &VisualToolPreviewBar::OnRightDown, this);
 	Bind(wxEVT_MOUSEWHEEL, &VisualToolPreviewBar::OnMouseWheel, this);
 	Bind(wxEVT_SIZE, &VisualToolPreviewBar::OnSize, this);
 	icon_size_connection = OPT_SUB("App/Toolbar Icon Size", [this] {
@@ -617,6 +618,23 @@ void VisualToolPreviewBar::OnLeftDown(wxMouseEvent& event) {
 	});
 }
 
+void VisualToolPreviewBar::OnRightDown(wxMouseEvent& event) {
+	// Back to what the slider read before anything was asked of it. Only sliders: a button
+	// and a checkbox already have one click that says everything they can say.
+	if (dragging_id || !source) {
+		event.Skip();
+		return;
+	}
+	int id = HitTest(event.GetPosition());
+	for (auto const& found : controls) {
+		if (found.control->id != id ||
+			found.control->kind != VisualToolPreviewInterface::ControlKind::Slider) continue;
+		source->ActivateValue(id, found.control->default_value, true);
+		return;
+	}
+	event.Skip();
+}
+
 void VisualToolPreviewBar::OnLeftUp(wxMouseEvent& event) {
 	if (!dragging_id) return;
 	int id = dragging_id;
@@ -798,6 +816,67 @@ void VisualToolPreviewBar::OnPaint(wxPaintEvent&) {
 				wxSize icon_extent = dc.GetTextExtent(label);
 				dc.DrawText(label, icon_area.x + (icon_area.width - icon_extent.GetWidth()) / 2,
 					icon_area.y + (icon_area.height - icon_extent.GetHeight()) / 2);
+			}
+			else if (control.icon == VisualToolPreviewInterface::ControlIcon::Chain ||
+				control.icon == VisualToolPreviewInterface::ControlIcon::ChainBroken) {
+				// Two links of a chain, lying along the diagonal and holding each other through
+				// the middle. The broken one is the same pair with a stroke across them, which
+				// is how a link that has been let go is drawn everywhere.
+				bool broken = control.icon ==
+					VisualToolPreviewInterface::ControlIcon::ChainBroken;
+				double centre_x = icon_area.x + icon_area.width / 2.0;
+				double centre_y = icon_area.y + icon_area.height / 2.0;
+				double span = std::max<double>(Dip(10),
+					std::min(icon_area.width, icon_area.height) - Dip(7));
+				double thickness = std::max(2.0, span / 5.0);
+				double link_h = span * .54, link_w = span * .66;
+				double overlap = link_w * .34;
+				// White whichever state it is in: it is the one control on the bar that says
+				// what it does with a picture rather than a word, and a grey chain reads as a
+				// chain that cannot be clicked.
+				wxColour chain(255, 255, 255);
+				if (graphics) {
+					graphics->SetBrush(*wxTRANSPARENT_BRUSH);
+					graphics->PushState();
+					graphics->Translate(centre_x, centre_y);
+					// Anticlockwise on screen, so the chain runs from the bottom left to the
+					// top right the way a link is usually drawn.
+					graphics->Rotate(-3.14159265358979 / 4);
+					graphics->SetPen(wxPen(chain, thickness));
+					graphics->DrawRoundedRectangle(-link_w + overlap / 2, -link_h / 2,
+						link_w, link_h, link_h / 2);
+					graphics->DrawRoundedRectangle(-overlap / 2, -link_h / 2,
+						link_w, link_h, link_h / 2);
+					graphics->PopState();
+					if (broken) {
+						double reach = span * .58;
+						// Cut out of the links first, in the colour behind them, so what crosses
+						// them reads as one stroke rather than as a third link.
+						graphics->SetPen(wxPen(colour, thickness * 2.4));
+						graphics->StrokeLine(centre_x - reach, centre_y - reach,
+							centre_x + reach, centre_y + reach);
+						graphics->SetPen(wxPen(chain, thickness));
+						graphics->StrokeLine(centre_x - reach, centre_y - reach,
+							centre_x + reach, centre_y + reach);
+					}
+				}
+				else {
+					// No accelerated context to rotate in: two upright links and a stroke, which
+					// says the same thing with square corners.
+					int half_w = (int)(link_w / 2), half_h = (int)(link_h / 2);
+					int at_x = (int)centre_x, at_y = (int)centre_y;
+					dc.SetPen(wxPen(chain, std::max(1, (int)thickness)));
+					dc.SetBrush(*wxTRANSPARENT_BRUSH);
+					dc.DrawRoundedRectangle(at_x - half_w * 2 + half_w / 2, at_y - half_h,
+						half_w * 2, half_h * 2, half_h);
+					dc.DrawRoundedRectangle(at_x - half_w / 2, at_y - half_h,
+						half_w * 2, half_h * 2, half_h);
+					if (broken) {
+						int reach = (int)(span * .58);
+						dc.SetPen(wxPen(chain, std::max(1, (int)thickness)));
+						dc.DrawLine(at_x - reach, at_y - reach, at_x + reach, at_y + reach);
+					}
+				}
 			}
 			else if (control.icon != VisualToolPreviewInterface::ControlIcon::None) {
 				int centre_x = icon_area.x + icon_area.width / 2;

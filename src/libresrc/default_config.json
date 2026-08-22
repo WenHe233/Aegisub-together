@@ -749,7 +749,8 @@
 				"Outer": false,
 				"Outer Locked": false,
 				"Grid": false,
-				"Org Mode": 0
+				"Org Mode": 0,
+				"Keep Original Size": false
 			},
 			"Vector Clip Brush Add": true,
 			"Shape Handle Size": 3,

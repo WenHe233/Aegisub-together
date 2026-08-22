@@ -69,7 +69,11 @@ public:
 		AlignLeft,
 		AlignCentre,
 		AlignRight,
-		AlignJustified
+		AlignJustified,
+		/// Two links holding together, and the same two pulled apart: the pair a control uses
+		/// to say whether the values either side of it move as one.
+		Chain,
+		ChainBroken
 	};
 
 	struct Control {
@@ -84,6 +88,10 @@ public:
 		double minimum = 0.0;
 		double maximum = 1.0;
 		double step = 0.0;
+		/// Where a right click on a slider puts it back to: what it read before anything was
+		/// asked of it. A slider is a live control rather than a stored setting, so the way
+		/// back has to be part of what it says.
+		double default_value = 0.0;
 		wxString value_text;
 		int width = 0;
 		wxColour swatch;
@@ -217,6 +225,7 @@ class VisualToolPreviewBar final : public wxPanel {
 	void OnMouseLeave(wxMouseEvent& event);
 	void OnLeftDown(wxMouseEvent& event);
 	void OnLeftUp(wxMouseEvent& event);
+	void OnRightDown(wxMouseEvent& event);
 	void OnMouseWheel(wxMouseEvent& event);
 	void OnSize(wxSizeEvent& event);
 	void UpdateSlider(int id, int x, bool final = false);

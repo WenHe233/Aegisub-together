@@ -63,6 +63,19 @@ enum class VisualToolTransformAction {
 	RecalcBlur,
 	RecalcClip,
 	UniformSize,
+	/// The chain beside the free transform's scale: held, one slider drives both axes; broken,
+	/// each axis has a slider of its own.
+	ScaleLink,
+	ScaleX,
+	ScaleY,
+	/// The free transform's turn and the two leans, as numbers rather than as handles.
+	Rotation,
+	ShearX,
+	ShearY,
+	/// The two axes a distortion turns out of the plane, so a solved perspective can be
+	/// nudged. The third is what dragging the four corners already says.
+	DistortAngleX,
+	DistortAngleY,
 	AutoPerspectiveKeepOriginalSize
 };
 
@@ -80,8 +93,21 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	VisualToolTransformMode mode;
 	/// A guided distort in which the target quadrilateral is drawn as four directed points.
 	bool auto_perspective = false;
-	/// Uniform percentage applied to the whole selection by the Size slider.
+	/// Uniform percentage applied to the whole selection by the Scale slider.
 	double uniform_size = 100.0;
+	/// The same per axis, for when the chain beside it has been broken. Kept in step with
+	/// `uniform_size` while it is held, so breaking the chain changes nothing on its own.
+	double size_x = 100.0;
+	double size_y = 100.0;
+	/// Whether the two axes of the scale move together.
+	bool scale_linked = true;
+	/// What the two axis sliders have added to the perspective a distortion solves, x then y.
+	/// Held as an offset so dragging a corner afterwards keeps the nudge.
+	double distort_angle_offset[2] = {0, 0};
+	/// How much bigger the selection has been made, along each of the box's own axes, counting
+	/// only what was asked of the scale. A turn and a lean leave it alone, which is what lets
+	/// the border, the shadow and the blur follow the size without following anything else.
+	Vector2D scale_growth{1.f, 1.f};
 	/// Keep the whole selection's authored dimensions, spacing and relative placement while
 	/// applying the target plane's perspective. This deliberately rules out the percentage
 	/// slider: the two controls answer the same question.
@@ -193,6 +219,14 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 		/// from - and worked back to.
 		Vector2D box_first;
 		Vector2D box_second;
+		/// The box the letters really fill, in that same frame. Not the same box: a font's cell
+		/// keeps room above the capitals for accents and below the baseline for descenders, and
+		/// a word with neither reaches into neither. Only the frame is measured from this -
+		/// everything written back is worked out from the cell, which is what the renderer
+		/// places. False when the letters could not be measured that way.
+		Vector2D ink_first;
+		Vector2D ink_second;
+		bool has_ink = false;
 		Vector2D size;       ///< how big it is on screen, with its scale applied
 		Vector2D ink;        ///< the top left of its ink, relative to where it is anchored
 		int align = 2;
@@ -284,6 +318,10 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 		Vector2D anchor{0.f, 0.f};
 		Vector2D shear{0.f, 0.f};
 		double uniform_size = 100.0;
+		double size_x = 100.0;
+		double size_y = 100.0;
+		double distort_angle_offset[2] = {0, 0};
+		Vector2D scale_growth{1.f, 1.f};
 		/// What had been done to the box before this step.
 		TransformMatrix2 frame_linear;
 		Vector2D frame_offset{0.f, 0.f};
@@ -315,10 +353,6 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Whether any line has a border or a shadow worth drawing as a shape, which is what decides
 	/// whether accepting adds lines to the file or only rewrites them.
 	bool HasDecor() const;
-
-	/// Whether any selected line has a border or a shadow that the switches can only come close to,
-	/// so that the bar can say as much. Nothing to say once they are being kept as shapes.
-	bool DecorHint() const;
 
 	/// Work out the shapes that stand for every line's border and shadow, for the lines that have
 	/// not had theirs worked out yet. Measuring a line costs a font and a walk along every letter
@@ -428,10 +462,27 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// a line that does not move. A run is a straight mixture of its ends and the gesture is affine,
 	/// so taking the ends through it is exact on every frame of the run.
 	std::pair<Vector2D, Vector2D> MovedEnds(TagLine const& original, Applied const& applied) const;
-	/// Whether this line is turned out of the plane, and so has to be carried by its corners.
+	/// Whether this line is turned out of the plane. Only that: a plane is what a distortion
+	/// solves, and a lean has none.
 	static bool Perspective(TagLine const& original);
+	/// Whether this line stands on screen as anything other than a rectangle, and so has to be
+	/// carried by its four corners rather than by a size and a turn.
+	///
+	/// A turn out of the plane does that. So does a lean: \fax slides the top of the box away
+	/// from the bottom and leaves a parallelogram, and a rectangle the width of the box is then
+	/// short by the whole of the slide - on a title leaning by one and two thirds, a third of
+	/// its own length.
+	static bool Skewed(TagLine const& original);
 	/// The four corners of a line's box on screen, as it was read.
 	void LineQuad(TagLine const& original, Vector2D corners[4]) const;
+	/// The same for any box of the line's own extents, which is what lets the letters be gone
+	/// round instead of the cell they sit in.
+	void LineQuad(TagLine const& original, Vector2D first, Vector2D second,
+		Vector2D corners[4]) const;
+	/// The four corners of the letters themselves, wherever they stand - turned, leaning or
+	/// out of the plane. False for a line whose letters could not be measured, and then the
+	/// cell is all there is to go round.
+	bool InkCorners(TagLine const& original, Vector2D corners[4]) const;
 	/// Where a line stands on screen: its quadrilateral if it is turned out of the plane,
 	/// and its turned box if it is not.
 	void LineCorners(TagLine const& original, Vector2D corners[4]) const;
@@ -480,6 +531,13 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// already moved - and because it is a multiplication, nothing is re-measured and nothing
 	/// jumps.
 	void RebaseGesture();
+	/// The same, but leaving the lean live.
+	///
+	/// The lean is the one part of a gesture with a number of its own on the bar, and a slider
+	/// reading nought while the box went on leaning would be lying about it. Kept outside the
+	/// frame it also goes on meaning the same lean however the box is scaled afterwards, where
+	/// folding it in would leave the same shape reading as a different number.
+	void RebaseKeepingShear();
 	/// Feature index -> which corner or side of the box it drags, which point stays, and
 	/// what it does: 0 sizes, 1 turns, 2 leans.
 	void HandleRole(int index, Vector2D& grabbed, Vector2D& anchor, int& role) const;
@@ -510,6 +568,23 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	bool ActionEnabled(VisualToolTransformAction action) const;
 	void Perform(VisualToolTransformAction action);
 	void UpdateUniformSize(double value);
+	/// Grow the selection along the box's own axes, about where it is displayed. One place for
+	/// the linked slider and the two separate ones, so they cannot drift apart.
+	void ApplyScaleRatio(double ratio_x, double ratio_y);
+	void UpdateScaleAxis(VisualToolTransformAction action, double value);
+	/// Turn the whole selection to the angle asked for, measured as the active line's \frz.
+	void UpdateRotation(double value);
+	/// Lean the box, which is the same thing the two leaning handles do - so the number and
+	/// the handle say and set exactly the same quantity.
+	void UpdateShear(bool vertical, double value);
+	/// Nudge one of the two axes a distortion turns out of the plane.
+	void UpdateDistortAngle(int axis, double value);
+	/// How much bigger the selection has been made by the scale alone, gesture included. This is
+	/// what the border, the shadow and the blur follow: a turn or a lean changes neither of them.
+	Vector2D DecorGrowth() const;
+	/// What the sliders have to show: the line the numbers are read from, and the numbers
+	/// themselves as they now stand.
+	Applied ActiveApplied() const;
 	void DrawTopBar();
 	/// The rectangle the fit is measured from, in yellow dashes.
 	void DrawAutoPerspectiveSource();

@@ -125,6 +125,29 @@ struct Decoration {
 /// a shape cannot stand in for: it moves, or it animates. Nothing is written either way.
 std::vector<Decoration> BakeDecorations(const agi::Context *c, AssDialogue *line);
 
+/// The box a line's text lays out into, in the units the line's own \fscx and \fscy still
+/// act on - so the caller applies those itself, the way it does with the font's own metrics.
+///
+/// Every stretch is measured with the font, the size, the weight and the spacing that stretch
+/// really has, and the rows are the rows the renderer lays out. One measurement of the whole
+/// line cannot be either of those: a size set for one emphasised word would be read as the
+/// size of everything, and a row with nothing on it would be read as no row at all.
+///
+/// False for a line with no text to measure, for a drawing, and where this build has no
+/// backend for text at all - and then the caller has to fall back on the font's own metrics.
+bool MeasureText(const agi::Context *c, AssDialogue *line, Vector2D& size);
+
+/// The box the letters of a line really fill, in the same frame MeasureText hands its size
+/// back in: the outline of every glyph rather than the cell the font reserves for it.
+///
+/// A font's cell keeps room above the capitals for accents and below the baseline for
+/// descenders, and a word that has neither reaches into neither - so a frame drawn round the
+/// cell is visibly not a frame round the word. Unlike the cell this box does not begin at the
+/// origin, which is why both corners come back.
+///
+/// False for the same cases MeasureText refuses, and for a line whose letters leave no ink.
+bool MeasureInk(const agi::Context *c, AssDialogue *line, Vector2D& low, Vector2D& high);
+
 /// Where a line is on the frame the video is showing, and how it gets there.
 ///
 /// \move is a straight run between two points over two times, so where a line is depends on the

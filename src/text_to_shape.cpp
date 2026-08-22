@@ -327,6 +327,9 @@ std::string FormatNumber(double value) {
 /// Which outlines a measuring run reads out, and in which frame.
 enum class Outlines {
 	None,   ///< none at all: the measurements and the layout, which is the cheap half
+	/// The box each piece's letters fill and nothing else - the outline is walked but never
+	/// written out, and no border is put round it.
+	Ink,
 	Baked,  ///< in script coordinates, with everything the line does to them already in the numbers
 	Loose   ///< in the units the line's own \fscx and \fscy still act on, from the piece's own
 	        ///< corner - so the piece's own tags put it back - and widened by its border as well
@@ -364,6 +367,13 @@ struct Piece {
 	/// border the line asked for. Both empty unless they were asked for.
 	std::string loose;
 	std::string wide;
+
+	/// The box the piece's letters fill, in the same frame `loose` is written in - from the
+	/// piece's own corner, in the units the line's own scale still acts on. Only filled when
+	/// the outlines were asked for, and only where the letters left any ink at all.
+	Vector2D ink_low;
+	Vector2D ink_high;
+	bool has_ink = false;
 };
 
 /// Whether the conversion swallows this tag, so that writing it out again would apply it
@@ -1161,7 +1171,7 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 
 		double sense = turned >= 0 ? 1. : -1.;
 
-		if (want == Outlines::Loose) {
+		if (want == Outlines::Loose || want == Outlines::Ink) {
 			// The piece's own corner is the origin here, and the units are the ones the line's
 			// \fscx and \fscy still act on: what is written is what the renderer would have been
 			// given, so the piece's own tags put it back exactly - lean, turn and all. A drawing
@@ -1199,6 +1209,24 @@ bool BuildPieces(std::vector<Piece>& pieces, int alignment,
 					}
 					walked += ready.advances[i];
 				}
+			}
+
+			// The box those rings fill, which is the box the letters fill: the one thing a
+			// font's own metrics cannot say, because the cell is the same whatever is set in it.
+			for (auto const& ring : rings)
+				for (auto const& point : ring) {
+					if (!piece.has_ink) {
+						piece.ink_low = piece.ink_high = point;
+						piece.has_ink = true;
+					}
+					else {
+						piece.ink_low = piece.ink_low.Min(point);
+						piece.ink_high = piece.ink_high.Max(point);
+					}
+				}
+			if (want == Outlines::Ink) {
+				if (piece.has_ink) drew_anything = true;
+				continue;
 			}
 
 			piece.loose = DrawContours(rings);
@@ -1595,6 +1623,127 @@ std::vector<Converted> ConvertLines(const agi::Context *c,
 std::vector<Converted> ConvertSelection(const agi::Context *c,
 		std::vector<std::string>& refusals) {
 	return ConvertLines(c, c->selectionController->GetSortedSelection(), refusals);
+}
+
+namespace {
+	/// The scale in force where a line begins.
+	///
+	/// Deliberately not GatherStyle's: that reads the whole line, so a stretch set wider in
+	/// the middle of one is taken for the line's own scale. For a measurement that is exactly
+	/// wrong - the caller applies the scale the line starts with, so that is the one that has
+	/// to come back out of the box. On a paragraph with one word set to \fscx150 the box came
+	/// out half again too narrow, which is the width of the right-hand end of every row.
+	Vector2D StartingScale(const agi::Context *c, AssDialogue *line,
+	                       std::vector<std::unique_ptr<AssDialogueBlock>> const& blocks) {
+		AssStyle const default_style;
+		AssStyle const *style = c->ass->GetStyle(line->Style);
+		if (!style) style = &default_style;
+		double scale_x = style->scalex, scale_y = style->scaley;
+		for (auto ovr : blocks | agi::of_type<AssDialogueBlockOverride>()) {
+			for (auto const& tag : ovr->Tags) {
+				if (tag.Params.empty() || tag.Params[0].omitted) continue;
+				if (tag.Name == "\\fscx") scale_x = tag.Params[0].Get<double>(scale_x);
+				else if (tag.Name == "\\fscy") scale_y = tag.Params[0].Get<double>(scale_y);
+			}
+			// Only the first block: what comes after belongs to part of the line.
+			break;
+		}
+		return Vector2D((float)scale_x, (float)scale_y);
+	}
+}
+
+bool MeasureText(const agi::Context *c, AssDialogue *line, Vector2D& size) {
+	auto blocks = line->ParseTags();
+	// A drawing carries its own coordinates, and they are a better measurement of it than
+	// anything a font could say.
+	for (auto& block : blocks)
+		if (block->GetType() == AssBlockType::DRAWING) return false;
+
+	bool has_text = false;
+	for (auto& block : blocks)
+		if (block->GetType() == AssBlockType::PLAIN &&
+			block->GetText().find_first_not_of(" \t") != std::string::npos)
+			has_text = true;
+	if (!has_text) return false;
+
+	auto style = GatherStyle(c, line);
+	auto placed = WherePlaced(c, line);
+	if (!placed.told)
+		placed.at = placed.first = placed.second = LayoutPosition(c, line, style.alignment);
+	style.position = placed.at;
+
+	auto pieces = SplitPieces(c, line, style.alignment);
+	for (auto& piece : pieces) piece.style.position = placed.at;
+
+	double box_width = 0, box_height = 0;
+	if (!BuildPieces(pieces, style.alignment, box_width, box_height, Outlines::None))
+		return false;
+	if (!(box_width > 0) || !(box_height > 0)) return false;
+
+	// The pieces are measured with their own scales already in them, which is what makes a
+	// stretch set wider than its neighbours come out wider. What is handed back is that box in
+	// the frame the line's own scale still acts on, so the caller can go on applying it - and a
+	// stretch that differs from the line keeps its difference.
+	Vector2D starting = StartingScale(c, line, blocks);
+	double scale_x = std::abs(starting.X()) > 1e-6 ? starting.X() / 100.0 : 1.0;
+	double scale_y = std::abs(starting.Y()) > 1e-6 ? starting.Y() / 100.0 : 1.0;
+	size = Vector2D((float)(box_width / scale_x), (float)(box_height / scale_y));
+	return std::isfinite(size.X()) && std::isfinite(size.Y());
+}
+
+bool MeasureInk(const agi::Context *c, AssDialogue *line, Vector2D& low, Vector2D& high) {
+	auto blocks = line->ParseTags();
+	for (auto& block : blocks)
+		if (block->GetType() == AssBlockType::DRAWING) return false;
+
+	bool has_text = false;
+	for (auto& block : blocks)
+		if (block->GetType() == AssBlockType::PLAIN &&
+			block->GetText().find_first_not_of(" \t") != std::string::npos)
+			has_text = true;
+	if (!has_text) return false;
+
+	auto style = GatherStyle(c, line);
+	auto placed = WherePlaced(c, line);
+	if (!placed.told)
+		placed.at = placed.first = placed.second = LayoutPosition(c, line, style.alignment);
+	style.position = placed.at;
+
+	auto pieces = SplitPieces(c, line, style.alignment);
+	for (auto& piece : pieces) piece.style.position = placed.at;
+
+	double box_width = 0, box_height = 0;
+	if (!BuildPieces(pieces, style.alignment, box_width, box_height, Outlines::Ink))
+		return false;
+
+	// What every stretch's letters fill, put together in the block's own frame. A piece's
+	// corner is measured there with its own scale already in it, while its outline is in the
+	// units that scale still acts on - so the outline is scaled to meet the corner.
+	bool any = false;
+	Vector2D ink_low, ink_high;
+	for (auto const& piece : pieces) {
+		if (!piece.has_ink) continue;
+		double scale_x = piece.style.scale_x / 100.0, scale_y = piece.style.scale_y / 100.0;
+		Vector2D first((float)(piece.x + piece.ink_low.X() * scale_x),
+		               (float)(piece.top + piece.ink_low.Y() * scale_y));
+		Vector2D second((float)(piece.x + piece.ink_high.X() * scale_x),
+		                (float)(piece.top + piece.ink_high.Y() * scale_y));
+		Vector2D at = first.Min(second), to = first.Max(second);
+		if (!any) { ink_low = at; ink_high = to; any = true; }
+		else { ink_low = ink_low.Min(at); ink_high = ink_high.Max(to); }
+	}
+	if (!any) return false;
+
+	// And back out of the scale the line begins with, which is the one the caller goes on
+	// applying - the same frame MeasureText hands its box back in.
+	Vector2D starting = StartingScale(c, line, blocks);
+	double scale_x = std::abs(starting.X()) > 1e-6 ? starting.X() / 100.0 : 1.0;
+	double scale_y = std::abs(starting.Y()) > 1e-6 ? starting.Y() / 100.0 : 1.0;
+	low = Vector2D((float)(ink_low.X() / scale_x), (float)(ink_low.Y() / scale_y));
+	high = Vector2D((float)(ink_high.X() / scale_x), (float)(ink_high.Y() / scale_y));
+	return std::isfinite(low.X()) && std::isfinite(low.Y()) &&
+		std::isfinite(high.X()) && std::isfinite(high.Y()) &&
+		high.X() - low.X() > 1e-3f && high.Y() - low.Y() > 1e-3f;
 }
 
 std::vector<Decoration> BakeDecorations(const agi::Context *c, AssDialogue *line) {

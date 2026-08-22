@@ -24,7 +24,10 @@
 #include <libaegisub/owning_intrusive_list.h>
 #include <libaegisub/signal.h>
 
+#include <map>
 #include <set>
+#include <string>
+#include <utility>
 
 class AssDialogue;
 class VideoDisplay;
@@ -151,6 +154,15 @@ protected:
 	///	containing both text and drawings.
 	/// Returns a rough estimate when getting the precise extents fails
 	std::pair<Vector2D, Vector2D> GetLineBaseExtents(AssDialogue *diag);
+private:
+	/// The measurement itself, without the cache in front of it.
+	std::pair<Vector2D, Vector2D> MeasureLineBaseExtents(AssDialogue *diag);
+	/// What a line measured, against what the line said when it was measured. Laying a line
+	/// out properly costs a font and a walk along every letter of it, and the perspective tool
+	/// asks for the answer on every mouse move of a drag - so it is asked once per line and
+	/// kept. A commit throws the lot away, which is the one thing that can change an answer.
+	std::map<std::string, std::pair<Vector2D, Vector2D>> extents_cache;
+protected:
 	/// The outline of a line's drawing, in the coordinates its extents are measured in.
 	/// Curves are sampled. Empty when the line is not a drawing.
 	std::vector<Vector2D> GetLineDrawingPoints(AssDialogue *diag);
