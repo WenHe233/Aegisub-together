@@ -245,10 +245,24 @@ void VisualToolTextBox::UpdatePreview() {
 	layout.clear();
 	if (!waiting_for_box) {
 		auto generated = typesetting::textbox::Generate(c, *prototype, document, &layout);
+
+		// Above every layer the file uses, so that the box being worked on is not painted over by
+		// some other line that happens to sit higher up. Only here: what Accept writes keeps the
+		// layer the lines asked for, since by then the box is one line among the rest again.
+		int above_everything = prototype->Layer;
+		for (auto const& line : c->ass->Events)
+			above_everything = std::max(above_everything, line.Layer);
+		if (above_everything < std::numeric_limits<int>::max()) ++above_everything;
+		for (auto& row : generated) row.Layer = above_everything;
+
 		Vector2D corners[4];
 		typesetting::textbox::Corners(document, corners);
 		AssDialogue background(*prototype);
 		background.Comment = false;
+		// The same layer as the rows it stands behind, which puts it behind them: within one
+		// layer, what comes later in the file is drawn over what came before, and this goes in
+		// ahead of them.
+		background.Layer = above_everything;
 		background.ExtradataIds = std::vector<uint32_t>();
 		background.Text = "{\\an7\\pos(0,0)\\fscx100\\fscy100\\frz0\\frx0\\fry0"
 			"\\fax0\\fay0\\bord0\\shad0\\1c&H000000&\\1a&H80&\\p1}"

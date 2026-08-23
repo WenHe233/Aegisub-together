@@ -38,6 +38,7 @@
 #include <libaegisub/format.h>
 
 #include <algorithm>
+#include <limits>
 #include <cmath>
 #include <functional>
 #include <memory>
@@ -554,6 +555,13 @@ void VisualToolTransform::SendPreview() {
 		if (TextBoxMode()) {
 			auto transformed = TransformedTextBox();
 			auto generated = typesetting::textbox::Generate(c, *textbox_lines.front(), transformed);
+			// Above every layer the file uses, for the same reason the box editor does it: while
+			// it is being worked on it has to be seen, whatever else is stacked over it.
+			int above_everything = textbox_lines.front()->Layer;
+			for (auto const& line : c->ass->Events)
+				above_everything = std::max(above_everything, line.Layer);
+			if (above_everything < std::numeric_limits<int>::max()) ++above_everything;
+			for (auto& row : generated) row.Layer = above_everything;
 			std::vector<AssDialogue> hidden;
 			hidden.reserve(textbox_lines.size());
 			for (auto line : textbox_lines) {

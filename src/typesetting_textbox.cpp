@@ -742,8 +742,18 @@ bool IsSource(AssFile const& file, AssDialogue const *line) {
 std::string Label(AssFile const& file, AssDialogue const& line) {
 	auto document = Load(file, line);
 	if (!document) return {};
-	wxString label = document->text;
-	label.Replace("\n", " / ");
+	// One mark for a break, however many breaks there are in a row: an empty line in the box
+	// is somewhere the writer left blank, not a second break worth reporting. And nothing
+	// before the first line of text or after the last.
+	wxString label;
+	label.reserve(document->text.length());
+	bool broken = false;
+	for (wxUniChar ch : document->text) {
+		if (ch == '\n' || ch == '\r') { broken = true; continue; }
+		if (broken && !label.empty()) label += " | ";
+		broken = false;
+		label += ch;
+	}
 	if (label.length() > 80) label = label.Left(77) + "...";
 	return from_wx(label);
 }
