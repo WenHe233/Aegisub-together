@@ -141,8 +141,24 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	Vector2D textbox_original_corners[4];
 
 	/// The box the drawings lie in, at whatever angle they lie at.
+	///
+	/// For the free transform this is the rectangle the selection would fill if it neither
+	/// leaned nor stood out of the plane: the space every gesture is measured in, where a
+	/// scale along x is \fscx and a lean is one number. What is drawn, and what the handles
+	/// sit on, is this rectangle put back into the shape the selection really has.
 	typesetting::OrientedBox box;
+	/// That shape: the map from the box onto the quadrilateral the selection really fills.
+	/// Empty for a selection that is a rectangle already, which is most of them.
+	typesetting::PointMap frame_shape;
+	/// The way back: that quadrilateral onto the box. What the distort, the arch and the warp
+	/// are expressed from, so that what their handles say is the change from the shape the
+	/// selection rests in rather than from a rectangle it never filled.
+	typesetting::PointMap rest_to_box;
+	/// And the box's own four corners through it, which is the frame that is drawn.
+	Vector2D frame_quad[4];
 
+	/// The net as the selection rests in it, which is what a bend is measured against.
+	typesetting::WarpNet rest_net;
 	/// The four corners the distort drags. The arch and the warp use the control net.
 	Vector2D corners[4];
 	/// What those corners come to as a map. Kept rather than built where it is needed, since
@@ -430,7 +446,7 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Whether auto perspective has a shape to fit, rather than only measured text.
 	bool AutoPerspectiveFitsShape() const;
 	/// A line's drawing, taken to where the renderer puts it on screen.
-	std::vector<Vector2D> ShapeOutline(TagLine const& found);
+	std::vector<Vector2D> ShapeOutline(TagLine const& found, bool unskewed = false);
 	/// The four source points, from the active line's own shape.
 	void SeedAutoPerspectiveSource(TagLine const& found);
 	/// The map from the source quadrilateral onto the drawn one.
@@ -473,6 +489,36 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// short by the whole of the slide - on a title leaning by one and two thirds, a third of
 	/// its own length.
 	static bool Skewed(TagLine const& original);
+	/// The extents the frame is measured from: the letters where they can be measured, moved
+	/// so that hanging them by the line's own alignment still lands on the letters.
+	void FrameExtents(TagLine const& original, Vector2D& first, Vector2D& second) const;
+	/// The rectangle a line would fill if it neither leaned nor had been turned out of the
+	/// plane - its scale and its \frz kept, nothing else. This is what the box is measured
+	/// from, so that the box stays the one space a scale and a lean mean something in.
+	bool UnskewedCorners(TagLine const& original, Vector2D corners[4]) const;
+	/// Work out `frame_shape` and `frame_quad` from the line the tool works from. One shape for
+	/// the whole selection: lines of a group are leaned and turned together, so it is exact for
+	/// them, and where they disagree there is no one shape to take and the frame stays flat.
+	/// Given a set of lines, the shape is worked out from those instead of from the selection's
+	/// own - which is what lets the modes that convert text to drawings read the placement out
+	/// of the tags they still have.
+	void BuildFrameShape(std::vector<TagLine> const *given = nullptr);
+	/// The same, for the modes that work on converted drawings and have no tags to read: the
+	/// tightest parallelogram round the letters themselves.
+	void BuildEditorFrameShape();
+	/// Take four points as the frame, put in the order the box's own corners are in. False for
+	/// anything that would not make a frame: the wrong number of points, or a quadrilateral
+	/// folded over itself.
+	bool SetFrameQuad(std::vector<Vector2D> const& quad);
+	/// The same, for four points that are already in that order.
+	bool SetFrameQuadInOrder(Vector2D const quad[4]);
+	/// A point of the box, in the shape the selection really has. The identity where there is
+	/// no shape to apply, so every caller can use it without asking.
+	Vector2D ShapePoint(Vector2D box_local) const;
+	/// The middle of that shape, which is what a turn turns about and what the frame's own
+	/// translation is measured from.
+	Vector2D FrameOrigin() const;
+
 	/// The four corners of a line's box on screen, as it was read.
 	void LineQuad(TagLine const& original, Vector2D corners[4]) const;
 	/// The same for any box of the line's own extents, which is what lets the letters be gone

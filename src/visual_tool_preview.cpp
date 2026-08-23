@@ -472,6 +472,9 @@ void VisualToolPreviewBar::RebuildLayout(wxDC& dc, int width) {
 	int bar_gap = std::max(Dip(6), static_cast<int>(std::round(5 * ratio)));
 	int bar_row_gap = Dip(3);
 	int bar_control_height = ToolbarIconSize() + Dip(10);
+	/// The least a slider's track may come to. The room a slider keeps for its reading is sized
+	/// so that this much is always left for the track.
+	int slider_track_least = Dip(35);
 	int right_limit = std::max(bar_margin + bar_control_height, width - bar_margin);
 	int left = bar_margin;
 	int row_top = bar_margin;
@@ -504,12 +507,20 @@ void VisualToolPreviewBar::RebuildLayout(wxDC& dc, int width) {
 		int slider_value_width = 0;
 		if (control.kind == VisualToolPreviewInterface::ControlKind::Slider) {
 			dc.SetFont(regular);
+			// The room kept for the reading is the widest it could ever be, not the width of what
+			// it says now. Sizing the box to the reading as it stands was tried and taken back
+			// out: the box then changed width as the numbers did, and every control after it on
+			// the bar slid sideways through a drag.
 			slider_value_width = dc.GetTextExtent(control.value_text).GetWidth();
 			if (!control.value_text_sample.empty())
 				slider_value_width = std::max(slider_value_width,
 					dc.GetTextExtent(control.value_text_sample).GetWidth());
+			// Room for the label, the reading, the two gaps either side of the track - and a
+			// track worth dragging. Allowing one lump sum for all of it left the track with
+			// whatever the label and the reading did not want, which on "Rotation" beside
+			// "-180.0" came to twenty-eight pixels.
 			int content_width = dc.GetTextExtent(control.label).GetWidth() +
-				slider_value_width + Dip(55);
+				slider_value_width + Dip(27) + slider_track_least;
 			item_width = std::max(item_width, content_width);
 		}
 		item_width = std::min(item_width, std::max(bar_control_height,
@@ -788,9 +799,20 @@ void VisualToolPreviewBar::OnPaint(wxPaintEvent&) {
 			dc.SetBrush(wxBrush(control.enabled ? wxColour(80, 220, 255) :
 				wxColour(145, 148, 152)));
 			dc.DrawCircle(wxPoint(knob_x, y), Dip(4));
+			// Set down in the middle of the room kept for it.
+			//
+			// That room is the widest the reading could ever be, so on a slider whose usual
+			// reading is far shorter than its widest - the turn, which reads "6.6" but must have
+			// room for "-180.0" - there is always some left over. Against the far edge it all
+			// fell between the track and the number; hard against the track it all fell behind
+			// the number, and the control looked empty at one end. Halved, neither end is wrong,
+			// and nothing on the bar moves as the numbers change.
 			wxSize value_extent = dc.GetTextExtent(control.value_text);
+			int room_from = found.track.GetRight() + Dip(14);
+			int room_to = found.bounds.GetRight() - Dip(6);
 			dc.SetTextForeground(content);
-			dc.DrawText(control.value_text, found.bounds.GetRight() - value_extent.GetWidth() - Dip(6),
+			dc.DrawText(control.value_text,
+				room_from + std::max(0, (room_to - room_from - value_extent.GetWidth()) / 2),
 				found.bounds.y + (found.bounds.height - value_extent.GetHeight()) / 2);
 			continue;
 		}

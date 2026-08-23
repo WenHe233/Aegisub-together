@@ -31,7 +31,9 @@
 #include <libaegisub/of_type_adaptor.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <map>
 #include <iterator>
 #include <regex>
 #include <string>
@@ -233,12 +235,40 @@ std::string EmitDrawing(std::vector<Segment> const& segments, int scale, Vector2
 	return out;
 }
 
+/// What a style would apply to a drawing a second time, and so has to be said away in the line.
+///
+/// Only these. A drawing written in absolute coordinates already holds its scale, its turn and
+/// the widening of its border, so a style that says none of those needs nothing said back to it -
+/// and writing \fscx100\fscy100\bord0\shad0 regardless only makes every line longer and less
+/// readable for a reader who then has to work out that they mean nothing.
+struct StyleForces {
+	bool scale_x = false;
+	bool scale_y = false;
+	bool angle = false;
+	bool border = false;
+	bool shadow = false;
+};
+
+StyleForces WhatStyleForces(const agi::Context *c, AssDialogue const *line) {
+	StyleForces out;
+	if (!c || !line) return out;
+	AssStyle const *style = c->ass->GetStyle(line->Style);
+	if (!style) return out;
+	out.scale_x = std::abs(style->scalex - 100.0) > 1e-6;
+	out.scale_y = std::abs(style->scaley - 100.0) > 1e-6;
+	out.angle = std::abs(style->angle) > 1e-6;
+	out.border = style->outline_w > 1e-6;
+	out.shadow = style->shadow_w > 1e-6;
+	return out;
+}
+
 /// Move a line's \pos to a point and align it from the middle, so that a drawing written
 /// around its own centre lands exactly where it was.
 ///
 /// Done on the text rather than through the tag objects because that is what has to come
 /// out at the end anyway, and because a line that never had a \pos needs one inserting.
-std::string HangFromCentre(std::string const& text, Vector2D centre, bool baked = false) {
+std::string HangFromCentre(std::string const& text, Vector2D centre, bool baked = false,
+                           StyleForces forced = {}) {
 	// Anchored from the top left, because for a drawing that means its own origin lands on
 	// the position - so coordinates written around the centre put the centre exactly there.
 	// Centring the box instead (an5) shifts it by half its size, since the renderer has
@@ -246,8 +276,15 @@ std::string HangFromCentre(std::string const& text, Vector2D centre, bool baked 
 	std::string anchor = agi::format("\\an7\\pos(%s,%s)",
 		FormatNumber(centre.X()), FormatNumber(centre.Y()));
 	// Once the scale and the turn are in the coordinates, saying them again would apply them
-	// twice. Taking the tags out is not enough for the two a style can also say.
-	if (baked) anchor = "\\fscx100\\fscy100\\frz0" + anchor;
+	// twice. Taking the tags out is not enough for the three a style can also say - but only for
+	// those it actually does say.
+	if (baked) {
+		std::string undone;
+		if (forced.scale_x) undone += "\\fscx100";
+		if (forced.scale_y) undone += "\\fscy100";
+		if (forced.angle) undone += "\\frz0";
+		anchor = undone + anchor;
+	}
 
 	// Wherever in the line they were written, since a drawing only ever has the one block
 	// worth reading and a line that animates any of this was left alone before it got here.
@@ -301,7 +338,8 @@ void StripDecorationTags(AssDialogueBlockOverride& block) {
 /// renderer would have painted. Native border and shadow tags would paint those pixels again,
 /// and their colours and alpha no longer affect anything, so remove all of them and neutralise
 /// the style before choosing the layer's colour.
-std::string PaintDecorationShape(std::string text, std::string const& paint) {
+std::string PaintDecorationShape(std::string text, std::string const& paint,
+                                 StyleForces forced = {}) {
 	AssDialogue line;
 	line.Text = std::move(text);
 	auto blocks = line.ParseTags();
@@ -312,7 +350,13 @@ std::string PaintDecorationShape(std::string text, std::string const& paint) {
 	text = line.Text.get();
 
 	size_t close = text.find('}');
-	std::string tags = "\\bord0\\shad0" + paint;
+	// The line's own border and shadow have just been taken out above; these turn off what the
+	// style would put back, and are worth saying only where the style says something.
+	std::string tags;
+	if (forced.border) tags += "\\bord0";
+	if (forced.shadow) tags += "\\shad0";
+	tags += paint;
+	if (tags.empty()) return text;
 	if (close == std::string::npos) return "{" + tags + "}" + text;
 	text.insert(close, tags);
 	return text;
@@ -656,6 +700,31 @@ bool Meet(Vector2D from, Vector2D to, Vector2D other_from, Vector2D other_to,
 ///
 /// What comes back is one polyline per branch of the fold, in script coordinates, closed on itself
 /// where a branch is a loop. Nothing at all when the mapping does not fold: that is the gate.
+/// How finely the fold is looked for across the box. The grid resolves the fold to about one
+/// cell, which is what makes it too coarse to cut a shape only a few cells wide.
+const int fold_cells = 48;
+
+/// Whether the mapping turns the plane over anywhere over the box.
+///
+/// Only that. Where it does, a sheet has a back as well as a front and has to be written out as a
+/// mesh; where it does not, nothing can be hollowed out and every contour goes through exactly as
+/// it stands, curves and all. Where the turn changes over does not matter here - only that it
+/// changes somewhere - so the answer comes off a coarse grid, and off the first two readings that
+/// disagree.
+bool TurnsOver(PointMap const& map, OrientedBox const& box, double step, int cells) {
+	bool one_way = false, the_other = false;
+	for (int j = 0; j <= cells; ++j)
+		for (int i = 0; i <= cells; ++i) {
+			Vector2D at = box.ToScript(Vector2D(
+				(float)(-box.half.X() + 2.0 * box.half.X() * i / cells),
+				(float)(-box.half.Y() + 2.0 * box.half.Y() * j / cells)));
+			if (FoldTurn(map, box, at, step) > 0) one_way = true;
+			else the_other = true;
+			if (one_way && the_other) return true;
+		}
+	return false;
+}
+
 std::vector<std::vector<Vector2D>> FoldLines(PointMap const& map, OrientedBox const& box,
                                              double step, int cells) {
 	int nodes = cells + 1;
@@ -794,187 +863,287 @@ std::vector<Segment> ReverseContour(std::vector<Segment> const& contour) {
 /// A contour the fold misses needs none of that: it is only turned round if it lies on the far
 /// side. And if the crossings cannot be paired up, the contour goes through whole - the plain hole
 /// again, which is better than a wrong cut.
-std::vector<Segment> MapShape(std::vector<Segment> const& original, PointMap const& map,
-                              OrientedBox const& box,
-                              std::vector<std::vector<Vector2D>> const& fold,
-                              bool subdivide, double span, double step) {
-	std::vector<Segment> pieces = subdivide ? Subdivide(original, span) : original;
+/// Where a closed ring of points crosses itself, and the simple loops it falls into there.
+///
+/// A mapping that folds the plane over sends a shape's outline across itself. Under the fill rule
+/// the renderer uses - non-zero winding, which is what libass accumulates and clamps - the part
+/// that came back the other way round counts as minus one where the rest counts as plus one, and
+/// the two cancel: that is the hole. Cut at the crossings the ring falls into loops that each keep
+/// to one side of themselves, and wound the same way they add up instead of cancelling.
+///
+/// Deliberately read off the ring itself and nowhere else. The fold can also be found in the plane
+/// the shape came from and the shape cut along it, which is what used to happen here - but that
+/// line is only ever known as a polyline sampled over a grid, so points that belong to the grid
+/// rather than to the shape ended up in the outline, and moved about in it as the grid shifted.
+std::vector<std::vector<Vector2D>> SimpleLoops(std::vector<Vector2D> const& ring) {
+	size_t count = ring.size();
+	if (count < 4) return {ring};
 
-	if (fold.empty()) {
-		for (auto& segment : pieces)
-			for (auto& point : segment.points) point = map(point);
-		return pieces;
+	// The crossings, found on the pairs of edges that could possibly meet: bucketed by where they
+	// lie, so a long outline does not cost every edge against every other.
+	struct Split {
+		double along = 0;   ///< how far along the edge it sits
+		Vector2D point;
+		int name = 0;       ///< the crossing it is, shared with the other edge
+	};
+	std::vector<std::vector<Split>> splits(count);
+
+	Vector2D low = ring.front(), high = ring.front();
+	for (auto point : ring) { low = low.Min(point); high = high.Max(point); }
+	Vector2D reach = high - low;
+	double side = std::max({(double)reach.X(), (double)reach.Y(), 1.0}) /
+		std::max<size_t>(1, (size_t)std::sqrt((double)count / 4.0) + 1);
+	auto cell_of = [&](Vector2D point) {
+		return std::pair<int, int>((int)std::floor((point.X() - low.X()) / side),
+		                           (int)std::floor((point.Y() - low.Y()) / side));
+	};
+
+	std::map<std::pair<int, int>, std::vector<size_t>> buckets;
+	for (size_t k = 0; k < count; ++k) {
+		auto one = cell_of(ring[k]), other = cell_of(ring[(k + 1) % count]);
+		for (int j = std::min(one.second, other.second); j <= std::max(one.second, other.second); ++j)
+			for (int i = std::min(one.first, other.first); i <= std::max(one.first, other.first); ++i)
+				buckets[{i, j}].push_back(k);
 	}
 
+	int named = 0;
+	auto cross = [&](size_t a, size_t b) {
+		Vector2D p = ring[a], q = ring[(a + 1) % count];
+		Vector2D r = ring[b], t = ring[(b + 1) % count];
+		double denominator = (double)(q.X() - p.X()) * (t.Y() - r.Y()) -
+			(double)(q.Y() - p.Y()) * (t.X() - r.X());
+		if (std::abs(denominator) < 1e-12) return;
+		double one = ((double)(r.X() - p.X()) * (t.Y() - r.Y()) -
+			(double)(r.Y() - p.Y()) * (t.X() - r.X())) / denominator;
+		double other = ((double)(r.X() - p.X()) * (q.Y() - p.Y()) -
+			(double)(r.Y() - p.Y()) * (q.X() - p.X())) / denominator;
+		// Strictly inside both, so that two edges merely meeting end to end are not a crossing.
+		if (!(one > 1e-9 && one < 1 - 1e-9 && other > 1e-9 && other < 1 - 1e-9)) return;
+		Vector2D point = p + (q - p) * (float)one;
+		int name = named++;
+		splits[a].push_back({one, point, name});
+		splits[b].push_back({other, point, name});
+	};
+
+	for (auto const& bucket : buckets) {
+		auto const& here = bucket.second;
+		for (size_t x = 0; x < here.size(); ++x)
+			for (size_t y = x + 1; y < here.size(); ++y) {
+				size_t a = here[x], b = here[y];
+				if (a > b) std::swap(a, b);
+				// Neighbours share an end, and the ring's two ends share one as well.
+				if (b == a + 1 || (a == 0 && b == count - 1)) continue;
+				cross(a, b);
+			}
+	}
+	if (!named) return {ring};
+
+	// A crossing found from both of its edges is one place, so the two namings are made one.
+	std::vector<int> same(named);
+	for (int k = 0; k < named; ++k) same[k] = k;
+	{
+		std::vector<std::pair<int, Vector2D>> seen;
+		for (auto& edge : splits)
+			for (auto& split : edge) {
+				bool matched = false;
+				for (auto const& before : seen)
+					if ((before.second - split.point).Len() < 1e-6) {
+						same[split.name] = before.first;
+						matched = true;
+						break;
+					}
+				if (!matched) seen.push_back({same[split.name], split.point});
+			}
+	}
+
+	// The ring again, with every crossing standing in it as a point of its own, in order.
+	std::vector<Vector2D> path;
+	std::vector<int> name_at;
+	for (size_t k = 0; k < count; ++k) {
+		path.push_back(ring[k]);
+		name_at.push_back(-1);
+		auto& edge = splits[k];
+		std::sort(edge.begin(), edge.end(),
+			[](Split const& one, Split const& other) { return one.along < other.along; });
+		for (auto const& split : edge) {
+			path.push_back(split.point);
+			name_at.push_back(same[split.name]);
+		}
+	}
+
+	// Walked once through, holding what has been seen. Coming back to a crossing closes off
+	// everything since it was last passed, and that piece is a loop that does not cross itself.
+	std::vector<std::vector<Vector2D>> loops;
+	std::vector<Vector2D> held;
+	std::vector<int> held_name;
+	std::vector<int> last_at(named, -1);
+	for (size_t k = 0; k < path.size(); ++k) {
+		int name = name_at[k];
+		if (name >= 0 && last_at[name] >= 0) {
+			size_t from = (size_t)last_at[name];
+			std::vector<Vector2D> loop(held.begin() + from, held.end());
+			if (loop.size() >= 3) loops.push_back(std::move(loop));
+			for (size_t i = from; i < held.size(); ++i)
+				if (held_name[i] >= 0) last_at[held_name[i]] = -1;
+			held.resize(from);
+			held_name.resize(from);
+			last_at[name] = (int)held.size();
+			held.push_back(path[k]);
+			held_name.push_back(name);
+			continue;
+		}
+		if (name >= 0) last_at[name] = (int)held.size();
+		held.push_back(path[k]);
+		held_name.push_back(name);
+	}
+	if (held.size() >= 3) loops.push_back(std::move(held));
+	if (loops.empty()) return {ring};
+	return loops;
+}
+
+std::vector<Segment> MapShape(std::vector<Segment> const& original, PointMap const& map,
+                              OrientedBox const& box, bool turns_over,
+                              bool subdivide, double span, double step) {
+	(void)step;
+	std::vector<Segment> pieces = subdivide ? Subdivide(original, span) : original;
+
 	std::vector<Segment> out;
-	auto put = [&](std::vector<Segment> contour, bool turn_round) {
-		for (auto& segment : contour)
-			for (auto& point : segment.points) point = map(point);
-		if (turn_round) contour = ReverseContour(contour);
-		for (auto& segment : contour) out.push_back(std::move(segment));
+
+	// Twice the area a ring of points encloses, signed - which way round it is wound.
+	auto twice_area = [](std::vector<Vector2D> const& ring) {
+		double sum = 0;
+		for (size_t k = 0; k < ring.size(); ++k) {
+			Vector2D const& one = ring[k];
+			Vector2D const& other = ring[(k + 1) % ring.size()];
+			sum += (double)one.X() * other.Y() - (double)other.X() * one.Y();
+		}
+		return sum;
+	};
+
+	// A sheet laid out as a mesh: every small piece of it written as a closed shape of its own,
+	// wound the way the sheet was wound.
+	//
+	// This is what gives a bent sheet a back as well as a front. Where the mapping turns the plane
+	// over, the far half of the sheet comes home wound the other way round, and the fill rule the
+	// renderer uses - non-zero winding, which libass accumulates and clamps - has it take away
+	// what the near half puts down. The sheet goes hollow exactly there. Written as a mesh there
+	// is no far half to speak of: each piece is small enough to lie flat, each is turned to face
+	// the same way, and where two of them come to rest on top of one another that counts twice
+	// over rather than not at all. Front and back both paint.
+	//
+	// Text never showed this because a line of text is hundreds of separate letter outlines, each
+	// far too small to fold within itself. A backdrop is one four-cornered sheet, and half of it
+	// turns over at once.
+	auto as_mesh = [&](std::vector<Vector2D> const& walk, double wanted, char opening) {
+		Vector2D middle(0.f, 0.f);
+		for (auto point : walk) middle = middle + point;
+		middle = middle / (float)walk.size();
+
+		Vector2D low = walk.front(), high = walk.front();
+		for (auto point : walk) { low = low.Min(point); high = high.Max(point); }
+		Vector2D reach = high - low;
+		// Small enough that the mapping does not turn over within one piece of it.
+		double least = std::max(std::max((double)reach.X(), (double)reach.Y()) / 24.0, 1.0);
+
+		std::vector<std::array<Vector2D, 3>> mesh;
+		mesh.reserve(walk.size() * 4);
+		for (size_t k = 0; k < walk.size(); ++k)
+			mesh.push_back({middle, walk[k], walk[(k + 1) % walk.size()]});
+
+		// Split four ways at a time, which keeps the pieces meeting edge to edge - splitting only
+		// the big ones would leave a corner of one against the middle of another, and the seam
+		// between them would open as the mapping pulled them apart.
+		for (int pass = 0; pass < 5 && mesh.size() < 3000; ++pass) {
+			bool too_big = false;
+			for (auto const& piece : mesh) {
+				double side = std::max(std::max((piece[1] - piece[0]).Len(),
+					(piece[2] - piece[1]).Len()), (piece[0] - piece[2]).Len());
+				if (side > least) { too_big = true; break; }
+			}
+			if (!too_big) break;
+
+			std::vector<std::array<Vector2D, 3>> finer;
+			finer.reserve(mesh.size() * 4);
+			for (auto const& piece : mesh) {
+				Vector2D one = (piece[0] + piece[1]) / 2;
+				Vector2D other = (piece[1] + piece[2]) / 2;
+				Vector2D third = (piece[2] + piece[0]) / 2;
+				finer.push_back({piece[0], one, third});
+				finer.push_back({one, piece[1], other});
+				finer.push_back({third, other, piece[2]});
+				finer.push_back({one, other, third});
+			}
+			mesh = std::move(finer);
+		}
+
+		for (auto const& piece : mesh) {
+			Vector2D moved[3] = {map(piece[0]), map(piece[1]), map(piece[2])};
+			double sum = 0;
+			for (int k = 0; k < 3; ++k) {
+				Vector2D const& one = moved[k];
+				Vector2D const& other = moved[(k + 1) % 3];
+				sum += (double)one.X() * other.Y() - (double)other.X() * one.Y();
+			}
+			// Nothing to paint, and nothing to get the facing of either.
+			if (!(std::abs(sum) > 1e-9)) continue;
+			bool backwards = sum * wanted < 0;
+			for (int k = 0; k < 3; ++k)
+				out.push_back({k ? 'l' : opening, {moved[backwards ? 2 - k : k]}});
+		}
 	};
 
 	size_t at = 0;
 	while (at < pieces.size()) {
-		// One contour: its opening move, and everything up to the next one.
 		size_t past = at + 1;
 		while (past < pieces.size() && pieces[past].command != 'm' &&
 			pieces[past].command != 'n') ++past;
-		auto whole = [&]() {
-			return std::vector<Segment>(pieces.begin() + at, pieces.begin() + past);
-		};
-		if (pieces[at].points.empty()) { put(whole(), false); at = past; continue; }
+		char opening = pieces[at].command;
 
-		// The points it visits.
-		std::vector<size_t> steps;
+		auto straight_through = [&]() {
+			for (size_t i = at; i < past; ++i) {
+				Segment segment = pieces[i];
+				for (auto& point : segment.points) point = map(point);
+				out.push_back(std::move(segment));
+			}
+		};
+
+		// Nowhere over the box does the mapping turn over, so nothing can be hollowed out and the
+		// contour goes through as it stands - curves and all.
+		if (!turns_over) { straight_through(); at = past; continue; }
+
 		std::vector<Vector2D> walk;
-		bool spoilt = false;
-		for (size_t i = at + 1; i < past; ++i) {
-			if (pieces[i].points.empty()) { spoilt = true; break; }
-			steps.push_back(i);
-			walk.push_back(pieces[i].points.back());
-		}
-		bool closed = !spoilt && pieces[at].command == 'm' && walk.size() >= 3 &&
-			(walk.back() - pieces[at].points.back()).Len() < 1e-3;
-		if (!closed) {
-			// Nothing to cut it into: turned round if it lies behind the fold, and nothing else.
-			bool behind = false;
-			if (!spoilt && !walk.empty())
-				behind = FoldTurn(map, box, walk.front(), step) < 0;
-			put(whole(), behind);
-			at = past;
-			continue;
-		}
-
-		size_t count = walk.size();
-		Vector2D low = walk.front(), high = walk.front();
-		for (auto point : walk) { low = low.Min(point); high = high.Max(point); }
-
-		// Where the fold crosses it. A meeting is placed both along the fold - so the fold can be
-		// cut into the pieces that lie inside - and along the contour, which is the order the arcs
-		// run in.
-		struct Meeting {
-			size_t line = 0;
-			double along = 0;      ///< how far along that fold line
-			double round = 0;      ///< how far round the contour
-			Vector2D point;
-			size_t partner = 0;
-			bool paired = false;
-		};
-		std::vector<Meeting> meetings;
-
-		for (size_t line = 0; line < fold.size(); ++line) {
-			auto const& run = fold[line];
-			if (run.size() < 2) continue;
-			// Nowhere near it: nothing to work out.
-			Vector2D line_low = run.front(), line_high = run.front();
-			for (auto point : run) { line_low = line_low.Min(point); line_high = line_high.Max(point); }
-			if (line_high.X() < low.X() || line_low.X() > high.X() ||
-				line_high.Y() < low.Y() || line_low.Y() > high.Y()) continue;
-
-			for (size_t i = 0; i + 1 < run.size(); ++i)
-				for (size_t k = 0; k < count; ++k) {
-					double along = 0, across = 0;
-					Vector2D point;
-					if (!Meet(run[i], run[i + 1], walk[k], walk[(k + 1) % count],
-						along, across, point)) continue;
-					Meeting found;
-					found.line = line;
-					found.along = i + along;
-					found.round = k + across;
-					found.point = point;
-					meetings.push_back(found);
-				}
-		}
-
-		if (meetings.size() < 2 || (meetings.size() % 2)) {
-			bool behind = FoldTurn(map, box, walk.front(), step) < 0;
-			put(whole(), meetings.empty() && behind);
-			at = past;
-			continue;
-		}
-
-		std::sort(meetings.begin(), meetings.end(),
-			[](Meeting const& one, Meeting const& other) { return one.round < other.round; });
-
-		// Each fold line cut at its own meetings: the pieces of it that lie inside the contour are
-		// the cuts, and each one says which two crossings belong together.
-		std::vector<std::vector<Vector2D>> paths(meetings.size());
-		for (size_t line = 0; line < fold.size(); ++line) {
-			std::vector<size_t> mine;
-			for (size_t k = 0; k < meetings.size(); ++k)
-				if (meetings[k].line == line) mine.push_back(k);
-			std::sort(mine.begin(), mine.end(), [&](size_t one, size_t other) {
-				return meetings[one].along < meetings[other].along;
-			});
-
-			for (size_t k = 0; k + 1 < mine.size(); ++k) {
-				Meeting const& one = meetings[mine[k]];
-				Meeting const& other = meetings[mine[k + 1]];
-				// The points of the fold between the two, and whether that piece is inside.
-				std::vector<Vector2D> between;
-				size_t begin = (size_t)std::floor(one.along) + 1;
-				size_t stop = (size_t)std::floor(other.along);
-				for (size_t i = begin; i <= stop && i < fold[line].size(); ++i)
-					between.push_back(fold[line][i]);
-				Vector2D probe = between.empty() ? (one.point + other.point) / 2 :
-					between[between.size() / 2];
-				if (!InsideWalk(walk, probe)) continue;
-
-				meetings[mine[k]].partner = mine[k + 1];
-				meetings[mine[k]].paired = true;
-				meetings[mine[k + 1]].partner = mine[k];
-				meetings[mine[k + 1]].paired = true;
-				paths[mine[k]] = between;
-				std::reverse(between.begin(), between.end());
-				paths[mine[k + 1]] = std::move(between);
+		bool readable = opening == 'm' && !pieces[at].points.empty();
+		if (readable) {
+			walk.push_back(pieces[at].points.back());
+			for (size_t i = at + 1; i < past; ++i) {
+				if (pieces[i].points.empty()) { readable = false; break; }
+				walk.push_back(pieces[i].points.back());
 			}
 		}
+		// A closure written out is a closure implied from here on.
+		if (readable && walk.size() > 1 && (walk.back() - walk.front()).Len() < 1e-9) walk.pop_back();
 
-		bool paired = true;
-		for (auto const& meeting : meetings)
-			if (!meeting.paired) paired = false;
-		if (!paired) { put(whole(), false); at = past; continue; }
-
-		// The arcs of the contour between one crossing and the next, and the faces they make with
-		// the pieces of the fold: walk an arc, take the fold from the crossing it ends at, and
-		// carry on with the arc that leaves wherever that comes out. Every arc belongs to exactly
-		// one face, so between them they cover the shape once.
-		size_t arcs = meetings.size();
-		std::vector<size_t> changes(arcs);
-		for (size_t j = 0; j < arcs; ++j)
-			changes[j] = ((size_t)std::floor(meetings[j].round) + 1) % count;
-
-		std::vector<bool> used(arcs, false);
-		for (size_t start = 0; start < arcs; ++start) {
-			if (used[start]) continue;
-
-			std::vector<Segment> face;
-			int vote = 0;
-			size_t j = start;
-			bool first_arc = true;
-			while (!used[j]) {
-				used[j] = true;
-				face.push_back({first_arc ? pieces[at].command : 'l', {meetings[j].point}});
-				first_arc = false;
-				for (size_t k = changes[j]; k != changes[(j + 1) % arcs]; k = (k + 1) % count) {
-					face.push_back(pieces[steps[k]]);
-					// Which side of the fold this face is on, asked of the outline itself rather
-					// than of the crease, where the turn says nothing either way.
-					vote += FoldTurn(map, box, walk[k], step) > 0 ? 1 : -1;
-				}
-				size_t end = (j + 1) % arcs;
-				face.push_back({'l', {meetings[end].point}});
-				for (auto point : paths[end]) face.push_back({'l', {point}});
-				j = meetings[end].partner;
-			}
-
-			put(std::move(face), vote < 0);
+		// Only something big enough to fold within itself is worth laying out as a mesh - which
+		// is measured against the box rather than counted in points, because how many points a
+		// contour has says nothing at all once it has been subdivided.
+		//
+		// A backdrop covers most of what is being bent, so the fold runs right through it and the
+		// far half turns over. A letter is a fraction of it, and lands wholly on one side.
+		bool worth_it = false;
+		double wanted = 0;
+		if (readable && walk.size() >= 3 && walk.size() <= 4096) {
+			Vector2D low = walk.front(), high = walk.front();
+			for (auto point : walk) { low = low.Min(point); high = high.Max(point); }
+			double across = (high - low).Len();
+			double box_across = Vector2D(box.half.X() * 2, box.half.Y() * 2).Len();
+			wanted = twice_area(walk);
+			worth_it = across > box_across * .25 && std::abs(wanted) > 1e-6;
 		}
+		if (!worth_it) { straight_through(); at = past; continue; }
 
+		as_mesh(walk, wanted, opening);
 		at = past;
 	}
-
 	return out;
 }
 
@@ -1437,8 +1606,17 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 	// Where the mapping folds the plane over itself, if it does at all: read off a grid over the
 	// box once, and shared by every shape below - it depends on the mapping, not on them.
 	double step = std::max(span * 1e-3, 1e-2);
-	auto fold = subdivide ? FoldLines(map, impl->box, step, 48) :
-		std::vector<std::vector<Vector2D>>();
+	// How finely the fold has to be looked for: fine enough to resolve the thinnest thing being
+	// bent. Its place is only known to about one cell, so a ribbon no thicker than a cell or two
+	// gains and loses its crossings whole as the grid shifts under it - and its fill flickers,
+	// which no amount of filtering afterwards can undo. Thickness is taken as twice the area over
+	// the perimeter, which for anything long and thin is its width.
+	// Only ever asked one thing: whether the mapping turns the plane over anywhere over the box.
+	// Where it does, MapShape looks for the crossings on each contour itself; the line traced out
+	// here is never used for that, because a traced line is sampled and a sampled line flickers.
+	// The one thing that has to be known before anything is mapped: whether the mapping turns the
+	// plane over at all. It nearly never does, and then there is nothing to put right.
+	bool turns_over = subdivide && TurnsOver(map, impl->box, step, 24);
 
 	// One line's mapped drawings, waiting for the centre they will be written around.
 	struct Mapped {
@@ -1492,7 +1670,7 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 			if (subdivide && shape.subdivided.empty())
 				shape.subdivided = Subdivide(shape.original, span);
 			auto const& source = subdivide ? shape.subdivided : shape.original;
-			auto pieces = MapShape(source, map, impl->box, fold, false, span, step);
+			auto pieces = MapShape(source, map, impl->box, turns_over, false, span, step);
 
 			// And the same shape widened by its own pen, through the same mapping - which is what
 			// makes the border bend with the letters instead of being stroked around them.
@@ -1518,7 +1696,8 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 				if (subdivide && shape.widened_subdivided.empty())
 					shape.widened_subdivided = Subdivide(shape.widened, span);
 				auto const& wide_source = subdivide ? shape.widened_subdivided : shape.widened;
-				wide_pieces = MapShape(wide_source, map, impl->box, fold, false, span, step);
+				wide_pieces = MapShape(wide_source, map, impl->box, turns_over, false, span,
+					step);
 			}
 			if (collect_geometry) {
 				auto rings = RingsOf(pieces);
@@ -1576,10 +1755,12 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 				EmitDrawing(piece.segments, piece.scale, centre);
 		mapped.clear();
 
+		StyleForces forced = WhatStyleForces(impl->c, work.line);
+
 		writing.UpdateText(blocks);
-		work.result = HangFromCentre(writing.Text.get(), centre, work.baked);
+		work.result = HangFromCentre(writing.Text.get(), centre, work.baked, forced);
 		if (decorations)
-			work.result = PaintDecorationShape(std::move(work.result), {});
+			work.result = PaintDecorationShape(std::move(work.result), {}, forced);
 
 		// The pair of them, from the widened shape and the same centre. Both are written from the
 		// same body: a shadow is what stands behind the bordered shape, so it is that shape again,
@@ -1597,8 +1778,8 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 
 			if (want_border)
 				work.border_result = PaintDecorationShape(
-					HangFromCentre(body, centre, work.baked),
-					paint.border);
+					HangFromCentre(body, centre, work.baked, forced),
+					paint.border, forced);
 			if (want_shadow) {
 				// Where the renderer would have put it. The offset is turned by the line's own
 				// \frz and by nothing else - it rides in the translation column of the transform -
@@ -1614,8 +1795,8 @@ void ShapeEditor::Build(PointMap const& map, bool subdivide, bool map_clips, boo
 						(float)(paint.offset.X() * sine + paint.offset.Y() * cosine));
 				}
 				work.shadow_result = PaintDecorationShape(
-					HangFromCentre(body, centre + drift, work.baked),
-					paint.shadow);
+					HangFromCentre(body, centre + drift, work.baked, forced),
+					paint.shadow, forced);
 				shadow_centre = centre + drift;
 				shadow_contours = wide_contours;
 				for (auto& contour : shadow_contours)
@@ -2031,6 +2212,38 @@ PointMap WarpMap(OrientedBox const& box, WarpNet const& net) {
 		// Apply the patch's displacement to the original point. The nearest boundary
 		// displacement continues outside the box, so glyph overhang, borders and shadows
 		// do not collapse onto its edge.
+		return point + WarpPoint(delta.data(), u, v);
+	};
+}
+
+PointMap WarpMapFrom(OrientedBox const& box, WarpNet const& rest, WarpNet const& net,
+                     PointMap const& into_box) {
+	double span_x = box.half.X() * 2;
+	double span_y = box.half.Y() * 2;
+	if (span_x <= 0 || span_y <= 0)
+		return [](Vector2D point) { return point; };
+
+	Vector2D control[16], original[16];
+	WarpControls(net, control);
+	WarpControls(rest, original);
+	std::vector<Vector2D> delta(16);
+	for (int i = 0; i < 16; ++i) delta[i] = control[i] - original[i];
+
+	return [=](Vector2D point) {
+		// Where the point is along the shape the selection rests in, which is what the patch is
+		// laid out over. Reading it straight off the box would be reading it off a rectangle the
+		// text does not fill, and the bend would run across the words rather than along them.
+		Vector2D at = point;
+		if (into_box) {
+			Vector2D taken = into_box(point);
+			// A projective map has a line it sends to infinity, and a clip or a border can
+			// reach across it. Past there the point says nothing, so the box is read straight
+			// rather than letting a NaN through into the geometry.
+			if (std::isfinite(taken.X()) && std::isfinite(taken.Y())) at = taken;
+		}
+		Vector2D local = box.ToLocal(at);
+		double u = std::clamp((local.X() + box.half.X()) / span_x, 0.0, 1.0);
+		double v = std::clamp((local.Y() + box.half.Y()) / span_y, 0.0, 1.0);
 		return point + WarpPoint(delta.data(), u, v);
 	};
 }

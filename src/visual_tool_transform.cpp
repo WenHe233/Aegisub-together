@@ -969,20 +969,27 @@ void VisualToolTransform::BuildBox() {
 	outline.reserve(tag_lines.size() * 4);
 	Vector2D low, high;
 	bool first = true;
+	// The free transform measures its box flat - no lean, nothing out of the plane - because
+	// that is the one space where a scale is \fscx and a lean is one number. The shape the
+	// selection really has is put back afterwards, as the frame the handles sit on. A
+	// distortion has no such split: its four corners *are* the shape, so it measures them.
+	bool measure_flat = mode == VisualToolTransformMode::Free;
 	for (auto& found : tag_lines) {
 		// A shape is measured as the shape it is, not as the rectangle around it. A sign mask
 		// leaning a few degrees has a triangle of air at every corner of its upright box, and a
 		// box drawn round that air is not the box the mask is in - which is what made the frame
 		// on a rotated logo cover most of the frame instead of the logo.
 		std::vector<Vector2D> points;
-		if (found.drawing) points = ShapeOutline(found);
+		if (found.drawing) points = ShapeOutline(found, measure_flat);
 		if (points.empty()) {
 			// The letters where they can be measured, and the cell they sit in where they
 			// cannot. A cell is the same height whatever is set in it, so a frame round one is
 			// a frame with a band of nothing along the top - and under a scale of two hundred
 			// percent that band is twice as deep as it reads on the page.
 			Vector2D corners[4];
-			if (!InkCorners(found, corners)) LineCorners(found, corners);
+			bool got = measure_flat ? UnskewedCorners(found, corners) :
+				InkCorners(found, corners);
+			if (!got) LineCorners(found, corners);
 			points.assign(corners, corners + 4);
 		}
 		for (auto const& corner : points) {
@@ -1023,9 +1030,16 @@ void VisualToolTransform::BuildBox() {
 	// this box is only the rectangle that is mapped onto it. Trimming it there would trim the
 	// source of the map instead of a control, which squeezes and shifts the result - and a mask
 	// large enough to reach the edge of the frame is exactly the case where it happened.
+	//
+	// And not for the free transform at all any more: its frame is the shape the selection
+	// really has, so moving the frame moves it off the shape. On a mask that begins at a
+	// negative x this shoved it a hundred and fifty-eight pixels to the right of the thing it
+	// was drawn round. The handles of a frame that reaches past the edge of the script can
+	// still be reached in the letterbox, or by zooming out, which is the smaller trouble.
 	int script_w = 0, script_h = 0;
 	c->ass->GetResolution(script_w, script_h);
-	if (!auto_perspective && script_w > 0 && script_h > 0) {
+	if (!auto_perspective && mode != VisualToolTransformMode::Free &&
+		script_w > 0 && script_h > 0) {
 		// A little inside the edge, so the handles on the far side are never flush against it.
 		const float inset = 20.f;
 		box.half = box.half.Min(Vector2D(script_w * .5f - inset, script_h * .5f - inset));
@@ -1035,6 +1049,206 @@ void VisualToolTransform::BuildBox() {
 	}
 
 	BuildAutoPerspectiveBox();
+	BuildFrameShape();
+}
+
+void VisualToolTransform::BuildFrameShape(std::vector<TagLine> const *given) {
+	if (!given) {
+		frame_shape = typesetting::PointMap();
+		rest_to_box = typesetting::PointMap();
+		box.Corners(frame_quad);
+		// The distort works from this too, so that what its four corners say is the change from
+		// the shape the selection rests in. Auto perspective is left alone: it solves a plane of
+		// its own from points picked out of the picture, and has no rest shape to be relative to.
+		if (!(mode == VisualToolTransformMode::Free ||
+			mode == VisualToolTransformMode::Distort) ||
+			auto_perspective || TextBoxMode()) return;
+	}
+	std::vector<TagLine> const& lines = given ? *given : tag_lines;
+	if (lines.empty()) return;
+
+	// Nothing out of the ordinary anywhere: the box was measured flat and flat is what it is.
+	// Asked before anything is gathered, because gathering means placing every drawing of the
+	// selection - tens of thousands of points on a logo - to answer a question already settled.
+	bool skewed = false;
+	for (auto const& line : lines) if (Skewed(line)) { skewed = true; break; }
+	if (!skewed) return;
+
+	// Everything that is drawn, where it is really drawn.
+	std::vector<Vector2D> drawn;
+	for (auto const& line : lines) {
+		std::vector<Vector2D> points;
+		if (line.drawing) points = ShapeOutline(line);
+		if (points.empty()) {
+			Vector2D quad[4];
+			if (!InkCorners(line, quad)) LineCorners(line, quad);
+			points.assign(quad, quad + 4);
+		}
+		drawn.insert(drawn.end(), points.begin(), points.end());
+	}
+	if (drawn.size() < 3) return;
+
+	std::vector<Vector2D> hull = SimplifyHull(ConvexHull(drawn), 2.0);
+	if (hull.size() < 3) return;
+
+	// The exact answer where there is one: the tightest quadrilateral round the lot. A shape's
+	// own four corners, a line's own four corners, and the four corners of rows that lean and
+	// turn together - all of those come out as four points.
+	if (hull.size() == 4 && SetFrameQuad(hull)) return;
+
+	// Otherwise the smallest rectangle that holds it - but fitted where the selection does not
+	// lean, and leaned back afterwards, which makes it a parallelogram.
+	//
+	// A block of leaning rows *is* a parallelogram, and the smallest rectangle round one carries
+	// a great deal of air at two of its corners: on a paragraph of sixteen rows leaning by one
+	// the rectangle came to a hundred and forty-seven per cent of what is drawn where the
+	// parallelogram comes to a hundred and twenty-nine - three hundred script pixels of overhang
+	// at either end.
+	TagLine const *found = given ? nullptr : ActiveTagLine();
+	if (!found) found = &lines.front();
+	Vector2D flat[4], real[4];
+	if (UnskewedCorners(*found, flat)) {
+		if (!InkCorners(*found, real)) LineCorners(*found, real);
+		// The lean the line stands at, and the way back out of it. Both are read off the same
+		// line, so whichever way the rest of the selection leans this is one consistent pair.
+		auto out_of_lean = typesetting::QuadMap(box, flat);
+		auto into_lean = typesetting::QuadMap(box, real);
+		auto from_real = typesetting::QuadInverseMap(box, real);
+		auto from_flat = typesetting::QuadInverseMap(box, flat);
+		if (out_of_lean && into_lean && from_real && from_flat) {
+			std::vector<Vector2D> straightened;
+			straightened.reserve(hull.size());
+			bool ok = true;
+			for (auto const& point : hull) {
+				Vector2D at = out_of_lean(from_real(point));
+				if (!std::isfinite(at.X()) || !std::isfinite(at.Y())) { ok = false; break; }
+				straightened.push_back(at);
+			}
+			typesetting::OrientedBox upright;
+			if (ok && MinimumAreaBox(straightened, upright)) {
+				FaceBox(upright, box.angle);
+				upright.half = upright.half.Max(Vector2D(4.f, 4.f));
+				Vector2D flat_corners[4], leaned[4];
+				upright.Corners(flat_corners);
+				bool finite = true;
+				for (int i = 0; i < 4; ++i) {
+					leaned[i] = into_lean(from_flat(flat_corners[i]));
+					finite = finite && std::isfinite(leaned[i].X()) &&
+						std::isfinite(leaned[i].Y());
+				}
+				if (finite && SetFrameQuadInOrder(leaned)) return;
+			}
+		}
+	}
+
+	// And if even that cannot be had, the smallest rectangle round the lot. Looser, but it
+	// still sits on what is drawn - which the box, measured flat, would not.
+	typesetting::OrientedBox tight;
+	if (!MinimumAreaBox(hull, tight)) return;
+	FaceBox(tight, box.angle);
+	tight.half = tight.half.Max(Vector2D(4.f, 4.f));
+	Vector2D corners[4];
+	tight.Corners(corners);
+	SetFrameQuadInOrder(corners);
+}
+
+bool VisualToolTransform::SetFrameQuad(std::vector<Vector2D> const& quad) {
+	if (quad.size() != 4) return false;
+
+	// In the order the box uses, so that a corner of the frame and a corner of the box mean
+	// the same corner of the picture - and the handles keep meaning what they say.
+	//
+	// The ring is kept whole and only turned round and read the other way: eight readings, and
+	// the one that sits closest to the box wins. Pairing each corner off with whichever box
+	// corner happens to be nearest it was tried and is a trap - it can pair two of them
+	// crosswise, and then the frame is a bow tie. Which is what it drew as under a distort,
+	// where the box is measured from the real geometry and on strongly leaning text its long
+	// side can lie along the lean rather than along the words.
+	Vector2D corners[4], ordered[4];
+	box.Corners(corners);
+	double best = 0;
+	bool found = false;
+	for (int backwards = 0; backwards < 2; ++backwards) {
+		for (int turn = 0; turn < 4; ++turn) {
+			Vector2D reading[4];
+			double away = 0;
+			for (int i = 0; i < 4; ++i) {
+				reading[i] = quad[backwards ? (turn - i + 4) % 4 : (turn + i) % 4];
+				Vector2D from = reading[i] - corners[i];
+				away += (double)from.X() * from.X() + (double)from.Y() * from.Y();
+			}
+			if (found && !(away < best)) continue;
+			found = true;
+			best = away;
+			std::copy(reading, reading + 4, ordered);
+		}
+	}
+	return found && SetFrameQuadInOrder(ordered);
+}
+
+bool VisualToolTransform::SetFrameQuadInOrder(Vector2D const quad[4]) {
+	// A quadrilateral that has folded over itself is no frame at all, and neither is one whose
+	// corners have ended up paired crosswise: that one has area and would pass a bare area test,
+	// but it draws as a bow tie and every handle on it means the wrong corner. So: convex, and
+	// the same way round as the box.
+	Vector2D reference[4];
+	box.Corners(reference);
+	double twice_area = 0, box_area = 0;
+	for (int i = 0; i < 4; ++i) {
+		twice_area += quad[i].X() * quad[(i + 1) % 4].Y() -
+			quad[(i + 1) % 4].X() * quad[i].Y();
+		box_area += reference[i].X() * reference[(i + 1) % 4].Y() -
+			reference[(i + 1) % 4].X() * reference[i].Y();
+	}
+	if (!(std::abs(twice_area) > 1.0)) return false;
+	if (twice_area * box_area < 0) return false;
+	for (int i = 0; i < 4; ++i) {
+		Vector2D edge = quad[(i + 1) % 4] - quad[i];
+		Vector2D onwards = quad[(i + 2) % 4] - quad[(i + 1) % 4];
+		double turn = (double)edge.X() * onwards.Y() - (double)edge.Y() * onwards.X();
+		if (turn * twice_area <= 0) return false;
+	}
+
+	auto shape = typesetting::QuadMap(box, quad);
+	auto back = typesetting::QuadInverseMap(box, quad);
+	if (!shape || !back) return false;
+	Vector2D corners[4];
+	box.Corners(corners);
+	for (int i = 0; i < 4; ++i) {
+		Vector2D at = shape(corners[i]);
+		if (!std::isfinite(at.X()) || !std::isfinite(at.Y())) return false;
+		Vector2D there_and_back = back(at);
+		if (!std::isfinite(there_and_back.X()) || !std::isfinite(there_and_back.Y()))
+			return false;
+	}
+	frame_shape = shape;
+	rest_to_box = back;
+	std::copy(quad, quad + 4, frame_quad);
+	return true;
+}
+
+void VisualToolTransform::BuildEditorFrameShape() {
+	frame_shape = typesetting::PointMap();
+	rest_to_box = typesetting::PointMap();
+	box.Corners(frame_quad);
+	if (!editor) return;
+
+	// The lines still say what they said - the editor works from copies of them - so where the
+	// text really sits is read out of their tags, exactly, projection and all.
+	//
+	// And only out of the tags. Fitting a shape to the letters instead was tried and taken back
+	// out: a shear costs no area, so the tightest parallelogram round any irregular set of points
+	// is always somewhat oblique, and on a logo built of drawings - which say nothing about how
+	// they were placed, having their shape in their own coordinates - it would lean far enough to
+	// reach an outlying piece and come out nearly singular. A hairline thirty pixels long then
+	// spanned the whole patch on its own and blew up to twelve hundred. A selection that says
+	// nothing about leaning is left in its box, which is what it was in before any of this.
+	std::vector<TagLine> read;
+	for (auto line : editor->lines()) {
+		if (!IsDisplayed(line)) continue;
+		read.push_back(ReadLine(line));
+	}
+	if (!read.empty()) BuildFrameShape(&read);
 }
 
 VisualToolTransform::TagLine const *VisualToolTransform::ActiveTagLine() const {
@@ -1125,7 +1339,7 @@ VisualDraggableFeature *VisualToolTransform::FeatureAt(size_t index) {
 	return nullptr;
 }
 
-std::vector<Vector2D> VisualToolTransform::ShapeOutline(TagLine const& found) {
+std::vector<Vector2D> VisualToolTransform::ShapeOutline(TagLine const& found, bool unskewed) {
 	std::vector<Vector2D> outline = GetLineDrawingPoints(found.line);
 	if (outline.empty()) return outline;
 
@@ -1140,7 +1354,7 @@ std::vector<Vector2D> VisualToolTransform::ShapeOutline(TagLine const& found) {
 	// Guided perspective is the one caller that does not want this: it neutralises the line's
 	// own perspective on purpose and solves it again from four points, so what it has to measure
 	// is the shape lying flat.
-	auto placed = auto_perspective ? text_to_shape::DrawingPlace() :
+	auto placed = auto_perspective || unskewed ? text_to_shape::DrawingPlace() :
 		text_to_shape::PlaceDrawing(c, found.line, found.box_first, found.box_second);
 	if (placed.ok) {
 		for (auto& point : outline) point = placed.map(point);
@@ -1275,11 +1489,22 @@ namespace {
 	}
 }
 
+Vector2D VisualToolTransform::ShapePoint(Vector2D box_local) const {
+	Vector2D at = box.ToScript(box_local);
+	if (!frame_shape) return at;
+	Vector2D shaped = frame_shape(at);
+	return std::isfinite(shaped.X()) && std::isfinite(shaped.Y()) ? shaped : at;
+}
+
+Vector2D VisualToolTransform::FrameOrigin() const {
+	return ShapePoint(Vector2D(0.f, 0.f));
+}
+
 Vector2D VisualToolTransform::GesturePivot() const {
-	// The middle of the box as it was when this gesture began. Deliberately not the middle
-	// of the *scaled* box: that would depend on the scale, the scale is measured against a
+	// The middle of the frame as it was when this gesture began. Deliberately not the middle
+	// of the *scaled* frame: that would depend on the scale, the scale is measured against a
 	// point this pivot places, and the two would chase each other.
-	return box.centre + gesture_move;
+	return FrameOrigin() + gesture_move;
 }
 
 namespace {
@@ -1330,39 +1555,56 @@ void VisualToolTransform::LineQuad(TagLine const& original, Vector2D first, Vect
 		script_res / layout_res, corners);
 }
 
-bool VisualToolTransform::InkCorners(TagLine const& original, Vector2D corners[4]) const {
-	if (!original.has_ink) return false;
+void VisualToolTransform::FrameExtents(TagLine const& original, Vector2D& first,
+                                      Vector2D& second) const {
+	first = original.box_first;
+	second = original.box_second;
+	if (!original.has_ink) return;
 	Vector2D cell = original.box_second - original.box_first;
 	Vector2D size = original.ink_second - original.ink_first;
-	if (!(size.X() > 1e-3f) || !(size.Y() > 1e-3f)) return false;
+	if (!(size.X() > 1e-3f) || !(size.Y() > 1e-3f)) return;
 
 	// The renderer hangs the cell by the alignment and the letters sit somewhere inside it.
 	// Taking that difference off here lets everything downstream go on hanging the box it is
 	// given by the same alignment, and still land on the letters.
 	Vector2D fractions = AnchorFractions(original.align);
-	Vector2D first = original.ink_first -
+	first = original.ink_first -
 		Vector2D((cell.X() - size.X()) * fractions.X(),
 		         (cell.Y() - size.Y()) * fractions.Y());
-	Vector2D second = first + size;
+	second = first + size;
+}
 
-	if (Skewed(original)) {
-		LineQuad(original, first, second, corners);
-		return true;
-	}
+bool VisualToolTransform::InkCorners(TagLine const& original, Vector2D corners[4]) const {
+	if (!original.has_ink) return false;
+	Vector2D first, second;
+	FrameExtents(original, first, second);
+	Vector2D size = second - first;
+	if (!(size.X() > 1e-3f) || !(size.Y() > 1e-3f)) return false;
+	LineQuad(original, first, second, corners);
+	return true;
+}
 
-	Vector2D on_screen(size.X() * original.scale.X() / 100.f,
-	                   size.Y() * original.scale.Y() / 100.f);
-	Vector2D ink(first.X() * original.scale.X() / 100.f,
-	             first.Y() * original.scale.Y() / 100.f);
-	Vector2D top_left = original.pos + ink -
-		Vector2D(on_screen.X() * fractions.X(), on_screen.Y() * fractions.Y());
-	Vector2D pivot = original.org ? original.org : original.pos;
-	for (int corner = 0; corner < 4; ++corner) {
-		Vector2D at = top_left +
-			Vector2D(corner == 1 || corner == 2 ? on_screen.X() : 0.f,
-			         corner >= 2 ? on_screen.Y() : 0.f);
-		corners[corner] = RotateAbout(at, pivot, original.angle);
-	}
+bool VisualToolTransform::UnskewedCorners(TagLine const& original, Vector2D corners[4]) const {
+	Vector2D first, second;
+	FrameExtents(original, first, second);
+	if (!(second.X() - first.X() > 1e-3f) || !(second.Y() - first.Y() > 1e-3f)) return false;
+
+	// The same placement the renderer would give it with neither lean nor turn out of the
+	// plane. Written through the same projection as everything else so that the two shapes -
+	// this one and the real one - differ by exactly one map, which is the frame's shape.
+	typesetting::PerspectiveTags tags;
+	tags.pos = original.pos;
+	tags.org = original.org ? original.org : original.pos;
+	tags.scale = original.scale;
+	tags.shear_x = 0;
+	tags.shear_y = 0;
+	tags.angle_z = original.angle;
+	tags.angle_x = 0;
+	tags.angle_y = 0;
+	typesetting::PerspectiveQuad(tags, original.align, first, second,
+		script_res / layout_res, corners);
+	for (int i = 0; i < 4; ++i)
+		if (!std::isfinite(corners[i].X()) || !std::isfinite(corners[i].Y())) return false;
 	return true;
 }
 
@@ -1371,7 +1613,13 @@ bool VisualToolTransform::PerspectiveMovePlane(Vector2D const held_corners[4],
 	// The distortion is applied after the renderer's authored perspective. Compose the current
 	// distortion onto a representative line plane, so moving through it works both before and
 	// after a corner of the distortion frame has been changed.
-	auto held_distortion = typesetting::QuadMap(box, held_corners);
+	auto held_quad = typesetting::QuadMap(box, held_corners);
+	if (!held_quad) return false;
+	typesetting::PointMap held_distortion = held_quad;
+	if (rest_to_box) {
+		auto into = rest_to_box;
+		held_distortion = [held_quad, into](Vector2D point) { return held_quad(into(point)); };
+	}
 	double best_area = 0;
 	for (auto const& found : tag_lines) {
 		if (!Perspective(found)) continue;
@@ -1491,8 +1739,9 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 }
 
 Vector2D VisualToolTransform::FramePoint(Vector2D point) const {
-	Vector2D from = point - box.centre;
-	return box.centre + frame_offset +
+	Vector2D origin = FrameOrigin();
+	Vector2D from = point - origin;
+	return origin + frame_offset +
 		Vector2D((float)(frame_linear.a * from.X() + frame_linear.b * from.Y()),
 		         (float)(frame_linear.c * from.X() + frame_linear.d * from.Y()));
 }
@@ -1500,8 +1749,9 @@ Vector2D VisualToolTransform::FramePoint(Vector2D point) const {
 Vector2D VisualToolTransform::FrameInverse(Vector2D point) const {
 	double determinant = frame_linear.a * frame_linear.d - frame_linear.b * frame_linear.c;
 	if (std::abs(determinant) < 1e-12) return point;
-	Vector2D from = point - box.centre - frame_offset;
-	return box.centre + Vector2D(
+	Vector2D origin = FrameOrigin();
+	Vector2D from = point - origin - frame_offset;
+	return origin + Vector2D(
 		(float)((frame_linear.d * from.X() - frame_linear.b * from.Y()) / determinant),
 		(float)((frame_linear.a * from.Y() - frame_linear.c * from.X()) / determinant));
 }
@@ -1511,14 +1761,18 @@ Vector2D VisualToolTransform::FrameGrowth() const {
 		// A projective map has no one scale: it stretches the far end more than the near one.
 		// The average of each pair of opposite sides against the box it started as is what a
 		// border can actually follow.
-		Vector2D outline[4];
-		box.Corners(outline);
+		// Against the shape the selection rests in, which is what the border is on now - not
+		// against the box, which a leaning selection never filled. The same numbers for anything
+		// flat, where the two are one and the same.
+		Vector2D const *outline = frame_quad;
 		Vector2D moved[4];
 		for (int i = 0; i < 4; ++i) moved[i] = MapPoint(outline[i]);
 		double across = ((moved[1] - moved[0]).Len() + (moved[2] - moved[3]).Len()) / 2;
 		double down = ((moved[3] - moved[0]).Len() + (moved[2] - moved[1]).Len()) / 2;
-		double was_across = std::max(box.half.X() * 2.f, 1e-6f);
-		double was_down = std::max(box.half.Y() * 2.f, 1e-6f);
+		double was_across = std::max((double)((outline[1] - outline[0]).Len() +
+			(outline[2] - outline[3]).Len()) / 2, 1e-6);
+		double was_down = std::max((double)((outline[3] - outline[0]).Len() +
+			(outline[2] - outline[1]).Len()) / 2, 1e-6);
 		return Vector2D((float)(across / was_across), (float)(down / was_down));
 	}
 
@@ -1546,16 +1800,20 @@ Vector2D VisualToolTransform::MapPoint(Vector2D point) const {
 }
 
 Vector2D VisualToolTransform::GesturePoint(Vector2D point) const {
+	// Measured in the box's own axes, which is the space a scale is \fscx and \fscy in - the
+	// point handed in is already in the shape the selection has, so scaling it there scales
+	// the shape with it, exactly as the renderer scales a leaning line.
+	Vector2D origin = FrameOrigin();
 	Vector2D local = box.ToLocal(point);
 	local = gesture_anchor + (local - gesture_anchor) * gesture_scale;
-	Vector2D turned = RotateAbout(box.ToScript(local), box.centre, gesture_angle);
+	Vector2D turned = RotateAbout(box.ToScript(local), origin, gesture_angle);
 
-	// The lean comes last, about the middle of the box, so both edges give a little rather
+	// The lean comes last, about the middle of the frame, so both edges give a little rather
 	// than one edge doing all the moving.
 	if (std::abs(gesture_shear.X()) > 1e-9 || std::abs(gesture_shear.Y()) > 1e-9) {
 		typesetting::OrientedBox frame;
 		frame.angle = shear_frame_angle;
-		frame.centre = box.centre;
+		frame.centre = origin;
 		Vector2D in_frame = frame.ToLocal(turned);
 		turned = frame.ToScript(Vector2D(
 			in_frame.X() + (float)gesture_shear.X() * in_frame.Y(),
@@ -1572,7 +1830,8 @@ void VisualToolTransform::RebaseGesture() {
 	// shape it has taken instead of springing back to a rectangle.
 	Matrix2 gesture = GestureMatrix(box.angle, gesture_scale, gesture_angle,
 		shear_frame_angle, gesture_shear);
-	Vector2D shift = GesturePoint(box.centre) - box.centre;
+	Vector2D origin = FrameOrigin();
+	Vector2D shift = GesturePoint(origin) - origin;
 
 	frame_offset = frame_offset +
 		Vector2D((float)(frame_linear.a * shift.X() + frame_linear.b * shift.Y()),
@@ -1827,7 +2086,22 @@ std::string VisualToolTransform::MapClip(TagLine::Clip const& clip) const {
 		// away first and every coordinate stays where it belongs. The margin leaves room for
 		// what spreads beyond the text itself - a border, a glow.
 		if (mode == VisualToolTransformMode::Distort) {
-			shape = CutToBox(std::move(shape), box, box.half * .25f + Vector2D(24.f, 24.f));
+			// The clip is given where the text really is and the map is expressed from the box,
+			// so everything below is asked about the box's own copy of the point.
+			auto into = rest_to_box;
+			auto to_box = [&into](Vector2D at) { return into ? into(at) : at; };
+
+			// Grown to cover the shape the selection rests in, which on a leaning selection
+			// reaches outside the box - and a band cut away there is a band lost.
+			typesetting::OrientedBox reach = box;
+			if (into)
+				for (auto const& corner : frame_quad) {
+					Vector2D local = box.ToLocal(corner);
+					reach.half = reach.half.Max(
+						Vector2D(std::abs(local.X()), std::abs(local.Y())));
+				}
+			shape = CutToBox(std::move(shape), reach,
+				reach.half * .25f + Vector2D(24.f, 24.f));
 			// And to the side of the plane the map still says anything about. When the shape is
 			// nearly folded over, the line it sends to infinity comes close enough to the box
 			// that a band can still straddle it - and a band that does comes back inside out,
@@ -1844,7 +2118,7 @@ std::string VisualToolTransform::MapClip(TagLine::Clip const& clip) const {
 				least = std::min(least, typesetting::QuadDepth(box, corners, corner));
 			double floor_depth = std::max(least * .5, 1e-3);
 			shape = CutToHalfPlane(std::move(shape), [&](Vector2D at) {
-				return typesetting::QuadDepth(box, corners, at) - floor_depth;
+				return typesetting::QuadDepth(box, corners, to_box(at)) - floor_depth;
 			});
 		}
 		if (shape.size() < 3) return {};
@@ -2101,13 +2375,20 @@ void VisualToolTransform::Collect() {
 				(textbox_original_corners[3] - textbox_original_corners[0]).Len() * .25f +
 					(textbox_original_corners[2] - textbox_original_corners[1]).Len() * .25f);
 			box.half = box.half.Max(Vector2D(4.f, 4.f));
+			// Its own rectangle, and no shape on top of it: the document boundary already is
+			// the shape, and the rows are only a rendering of it.
+			frame_shape = typesetting::PointMap();
+			rest_to_box = typesetting::PointMap();
+			std::copy(textbox_original_corners, textbox_original_corners + 4, frame_quad);
 		}
 
 		// The corners start on the untouched box, so nothing moves until one is dragged -
 		// unless the same box came back, which means the same lines did, and then they go back
 		// where the user left them. This is what keeps a distort alive through a zoom or a pan.
 		if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, corners);
-		else box.Corners(corners);
+		// On the shape the selection rests in, which for anything that is a rectangle already is
+		// the box itself - so a flat selection starts exactly where it always did.
+		else std::copy(frame_quad, frame_quad + 4, corners);
 		if (mode == VisualToolTransformMode::Distort && had_lines && was_touched &&
 			(old_box.centre - box.centre).Len() < .01 &&
 			(old_box.half - box.half).Len() < .01 &&
@@ -2159,9 +2440,19 @@ void VisualToolTransform::Collect() {
 	box = found.Box();
 	editor.emplace(std::move(found));
 
-	// The handles start on the untouched box, so nothing moves until something is dragged.
-	box.Corners(corners);
+	BuildEditorFrameShape();
+
+	// The handles start on the shape the selection rests in, so nothing moves until something is
+	// dragged. The net's middle is a displacement rather than a place, so it is left alone.
+	std::copy(frame_quad, frame_quad + 4, corners);
 	typesetting::WarpReset(box, net);
+	if (frame_shape) {
+		for (auto& point : net.corner) point = frame_shape(point);
+		for (auto& point : net.tangent) point = frame_shape(point);
+	}
+	// Kept as it rests, before anything is dragged: a bend is the difference from this, so from
+	// here the tool opening moves nothing at all whatever shape the selection is in.
+	rest_net = net;
 
 	// Unless the same box came back, which means the same drawings did: then the handles go
 	// back where the user left them. This is what keeps a reshaping alive through a zoom, a
@@ -2266,7 +2557,7 @@ Vector2D VisualToolTransform::HandlePosition(int index) const {
 			Vector2D grabbed, anchor;
 			int role = 0;
 			HandleRole(index, grabbed, anchor, role);
-			return MapPoint(box.ToScript(grabbed));
+			return MapPoint(ShapePoint(grabbed));
 		}
 		case VisualToolTransformMode::Arch: return net.tangent[index];
 		case VisualToolTransformMode::Distort: return corners[index];
@@ -2296,10 +2587,10 @@ void VisualToolTransform::MoveHandle(int index, Vector2D to) {
 				// sits from the middle, is the lean itself.
 				typesetting::OrientedBox frame;
 				frame.angle = shear_frame_angle;
-				frame.centre = box.centre;
-				Vector2D wanted = frame.ToLocal(to - gesture_move);
+				frame.centre = FrameOrigin();
+				Vector2D wanted = frame.ToLocal(to - gesture_start - gesture_move);
 				Vector2D from = frame.ToLocal(
-					RotateAbout(box.ToScript(grabbed), box.centre, gesture_angle));
+					RotateAbout(ShapePoint(grabbed), frame.centre, gesture_angle));
 				// `from` is where the side would be without any lean, so the difference
 				// against the mouse is the whole lean rather than a step of one - adding the
 				// lean so far would count it twice.
@@ -2328,11 +2619,16 @@ void VisualToolTransform::MoveHandle(int index, Vector2D to) {
 			// about that point - and the scale is what \fscx and \fscy will say. It is
 			// measured along the box's own axes as they now lie, so a scale after a turn
 			// still scales the box rather than the screen.
-			gesture_anchor = anchor;
+			// Both points in the shape the frame really has, because that is where the handle
+			// is drawn - measuring the mouse against the flat rectangle instead made the box
+			// spring the moment a leaning handle was grabbed.
+			Vector2D held = box.ToLocal(ShapePoint(grabbed));
+			Vector2D still = box.ToLocal(ShapePoint(anchor));
+			gesture_anchor = still;
 			// In the space the gesture works in, not on screen: the mouse has already been
 			// brought back through the frame, and measuring the two against each other in
 			// different spaces collapsed the box the moment a turned frame was scaled.
-			Vector2D fixed_point = GesturePoint(box.ToScript(anchor));
+			Vector2D fixed_point = GesturePoint(ShapePoint(anchor));
 			double radians = (box.angle - gesture_angle) * pi / 180.0;
 			Vector2D along((float)std::cos(radians), (float)std::sin(radians));
 			Vector2D across(-along.Y(), along.X());
@@ -2345,13 +2641,16 @@ void VisualToolTransform::MoveHandle(int index, Vector2D to) {
 				if (std::abs(value) < .02) value = value < 0 ? -.02 : .02;
 				return (float)value;
 			};
+			// Which axis this handle is for is its own business, taken from the flat unit: a
+			// leaning frame gives a side handle a sideways reach as well, and letting that
+			// drive a scale would turn every side handle into a corner one.
 			bool drives_x = std::abs(grabbed.X() - anchor.X()) > 1e-6;
 			bool drives_y = std::abs(grabbed.Y() - anchor.Y()) > 1e-6;
 			Vector2D wanted(
-				ratio(reach.X() * along.X() + reach.Y() * along.Y(),
-					grabbed.X() - anchor.X(), gesture_scale.X()),
-				ratio(reach.X() * across.X() + reach.Y() * across.Y(),
-					grabbed.Y() - anchor.Y(), gesture_scale.Y()));
+				drives_x ? ratio(reach.X() * along.X() + reach.Y() * along.Y(),
+					held.X() - still.X(), gesture_scale.X()) : gesture_scale.X(),
+				drives_y ? ratio(reach.X() * across.X() + reach.Y() * across.Y(),
+					held.Y() - still.Y(), gesture_scale.Y()) : gesture_scale.Y());
 
 			// Holding alt keeps the proportions: the axis that moved the most decides, and
 			// the other follows it - so a side handle scales both ways.
@@ -2507,7 +2806,7 @@ void VisualToolTransform::SyncFeatures() {
 		// measured on screen so they stay the same distance out however far the video is
 		// zoomed. The leaning ones sit further out, to keep them off the sizing handles.
 		if (mode == VisualToolTransformMode::Free && index >= 8) {
-			Vector2D centre = FromScriptCoords(MapPoint(box.centre));
+			Vector2D centre = FromScriptCoords(MapPoint(FrameOrigin()));
 			Vector2D away = at - centre;
 			if (away.Len() > 1e-3) at = at + away.Unit() * 28.f;
 			if (index >= 12 && away.Len() > 1e-3) {
@@ -2533,8 +2832,16 @@ void VisualToolTransform::SyncFeatures() {
 
 	// Everything that moves a corner comes through here, so this is the one place the map has
 	// to be worked out again.
-	if (mode == VisualToolTransformMode::Distort)
-		distort_map = typesetting::QuadMap(box, corners);
+	if (mode == VisualToolTransformMode::Distort) {
+		auto quad = typesetting::QuadMap(box, corners);
+		// Taken back to the box first, so what the corners say is the change from the shape the
+		// selection rests in onto themselves - which is nothing at all until one is dragged.
+		if (quad && rest_to_box) {
+			auto into = rest_to_box;
+			distort_map = [quad, into](Vector2D point) { return quad(into(point)); };
+		}
+		else distort_map = quad;
+	}
 }
 
 void VisualToolTransform::Rebuild() {
@@ -2548,7 +2855,12 @@ void VisualToolTransform::Rebuild() {
 	// The border and the shadow always become shapes of their own here: a pen stays upright whatever
 	// happens to the shape, so under a bend there is nothing else they could be - and nothing to
 	// decide either, which is why there is no switch for it in these modes.
-	auto map = typesetting::WarpMap(box, net);
+	// Measured from the net as the selection rests in it rather than from the box's own, and
+	// read along that same shape - so at rest the difference is nothing and nothing moves, and
+	// under a drag the bend runs along the words however the text is leaning or turned.
+	auto map = rest_to_box ?
+		typesetting::WarpMapFrom(box, rest_net, net, rest_to_box) :
+		typesetting::WarpMap(box, net);
 	// The visual transform only consumes the generated preview rows. Contour and layer
 	// extraction is for gradient geometry and used to duplicate the entire glyph walk here.
 	editor->Build(map, true, recalc_clip, true, false);
@@ -2890,11 +3202,23 @@ void VisualToolTransform::UpdatePreviewInterface() const {
 		return control;
 	};
 	wxString degree(wxUniChar(0x00B0));
-	auto percent = [](double value) { return to_wx(agi::format("%.0f%%", value)); };
-	auto degrees = [&](double value) {
-		return to_wx(agi::format("%.1f", value)) + degree;
+	// A value too small to show is nothing, and nothing has no sign: a slider reading "-0.00"
+	// says the shape leans the other way by an amount it cannot name. Done on the text rather
+	// than on the number so it holds for however many places each of these is written to.
+	auto without_minus_zero = [](std::string text) {
+		if (text.empty() || text.front() != '-') return text;
+		if (text.find_first_of("123456789") != std::string::npos) return text;
+		return text.substr(1);
 	};
-	auto lean = [](double value) { return to_wx(agi::format("%.2f", value)); };
+	auto percent = [&](double value) {
+		return to_wx(without_minus_zero(agi::format("%.0f%%", value)));
+	};
+	auto degrees = [&](double value) {
+		return to_wx(without_minus_zero(agi::format("%.1f", value))) + degree;
+	};
+	auto lean = [&](double value) {
+		return to_wx(without_minus_zero(agi::format("%.2f", value)));
+	};
 	wxString widest_angle = "-180.0" + degree;
 
 	if (auto_perspective) {
@@ -3443,16 +3767,15 @@ void VisualToolTransform::DrawFreeHandles() {
 			DrawCorner(feature.pos, current);
 		}
 		else if (index < 12) {
-			// Leaning: a parallelogram, dropped the way the lean it holds goes, so it looks
-			// like what it does.
+			// Leaning: a parallelogram, always the same one. It says which way the handle
+			// leans the selection - along the box or across it - and nothing more.
+			//
+			// It deliberately does not follow the lean in force. Read from the gesture it drew
+			// upright on a line that already leaned; read from \fax it fell the wrong way and
+			// by the wrong amount, because the renderer applies that inside the line, behind
+			// the turn and the two scales, which conjugate it.
 			bool horizontal = index == 8 || index == 10;
-			float lean = horizontal ? gesture_shear.X() : gesture_shear.Y();
-			// A lean of nothing would draw a square, which says nothing at all.
-			float tilt = std::clamp(lean, -1.f, 1.f);
-			if (std::abs(tilt) < .25f) tilt = tilt < 0 ? -.25f : .25f;
-			// Negative, because a positive ax pushes what is *below* the pivot to the
-			// right: the icon has to fall the way the box falls, not the other way.
-			float slide = -tilt * 5.f;
+			float slide = horizontal ? 1.75f : -1.75f;
 
 			Vector2D at = feature.pos;
 			if (horizontal) {
@@ -3492,7 +3815,7 @@ void VisualToolTransform::DrawFreeHandles() {
 bool VisualToolTransform::FreePointInside(Vector2D point) const {
 	Vector2D original[4], quad[4];
 	if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, original);
-	else box.Corners(original);
+	else std::copy(frame_quad, frame_quad + 4, original);
 	for (int i = 0; i < 4; ++i) quad[i] = MapPoint(original[i]);
 
 	int positive = 0, negative = 0;
@@ -3510,7 +3833,7 @@ void VisualToolTransform::DrawFreeRotationGuide() {
 	if (!mouse_pos || mouse_pos.Y() < TopBarHeight() || active_feature) return;
 	if (free_hold_mode != FreeHoldMode::Rotate && FreePointInside(ToScriptCoords(mouse_pos))) return;
 
-	Vector2D pivot = FromScriptCoords(MapPoint(box.centre));
+	Vector2D pivot = FromScriptCoords(MapPoint(FrameOrigin()));
 	Vector2D reach = mouse_pos - pivot;
 	if (reach.Len() < 18.f) return;
 
@@ -3587,6 +3910,16 @@ bool VisualToolTransform::InitializeDrag(VisualDraggableFeature *feature) {
 		RebaseGesture();
 		if (index >= 12)
 			gesture_start = ToScriptCoords(feature->pos);
+		else if (index >= 8) {
+			// A leaning handle is drawn a little way beyond the side it leans, so the mouse
+			// does not start on the point the lean is measured from. The difference is kept
+			// here and taken off every reading, or the first movement of the drag would jump
+			// by the whole of it - which on a frame that already leans is a good deal.
+			Vector2D grabbed, anchor;
+			int role = 0;
+			HandleRole(index, grabbed, anchor, role);
+			gesture_start = FrameInverse(ToScriptCoords(feature->pos)) - ShapePoint(grabbed);
+		}
 	}
 	// The warp's move handle stands for the whole mesh rather than for a point of it, so what
 	// the mesh was and where the handle started are what every mouse move is measured against.
@@ -3733,7 +4066,10 @@ bool VisualToolTransform::InitializeHold() {
 			gesture_start = FrameInverse(at);
 		}
 		else {
-			Vector2D from = FrameInverse(at) - GesturePivot();
+			// Measured where it is seen, about the middle of the frame as displayed. Measuring
+			// it inside the frame instead made a drag over the same arc turn by different
+			// amounts once the selection had been stretched unevenly.
+			Vector2D from = at - MapPoint(FrameOrigin());
 			if (from.Len() < 1e-3) return false;
 			free_hold_mode = FreeHoldMode::Rotate;
 			gesture_start_angle = (float)(std::atan2(from.Y(), from.X()) * 180.0 / pi);
@@ -3800,10 +4136,21 @@ void VisualToolTransform::UpdateHold() {
 		if (free_hold_mode == FreeHoldMode::Move)
 			gesture_move = FrameInverse(ToScriptCoords(mouse_pos)) - gesture_start;
 		else if (free_hold_mode == FreeHoldMode::Rotate) {
-			Vector2D from = FrameInverse(ToScriptCoords(mouse_pos)) - GesturePivot();
+			// A turn goes on the outside of everything already done, the same way the slider
+			// puts it there. Inside, as one more gesture, it would be conjugated by whatever
+			// stretch had been folded into the frame - and a rotation inside an uneven stretch
+			// is not a rotation at all: it leans and squashes the shape as it goes round.
+			Vector2D from = ToScriptCoords(mouse_pos) - MapPoint(FrameOrigin());
 			if (from.Len() < 1e-3) return;
 			double now = std::atan2(from.Y(), from.X()) * 180.0 / pi;
-			gesture_angle = (float)(gesture_start_angle - now);
+			double step = gesture_start_angle - now;
+			while (step > 180.0) step -= 360.0;
+			while (step < -180.0) step += 360.0;
+			if (std::abs(step) > 1e-9) {
+				RebaseKeepingShear();
+				frame_linear = Multiply(Turn(step), frame_linear);
+				gesture_start_angle = (float)now;
+			}
 		}
 		SyncFeatures();
 		touched = true;
@@ -4090,19 +4437,18 @@ void VisualToolTransform::Draw() {
 		// lying about on screen with nothing to say.
 		Vector2D original[4], now[4];
 		if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, original);
-		else box.Corners(original);
+		else std::copy(frame_quad, frame_quad + 4, original);
 		for (int i = 0; i < 4; ++i) now[i] = MapPoint(original[i]);
 
 		gl.SetLineColour(mesh_colour, 1.f, 1);
 		for (int i = 0; i < 4; ++i)
 			gl.DrawDashedLine(screen(now[i]), screen(now[(i + 1) % 4]), 5.f);
-
 	}
 	else if (mode == VisualToolTransformMode::Distort) {
-		// The box the drawings started in, and the quadrilateral the corners now describe.
+		// The shape the drawings started in, and the quadrilateral the corners now describe.
 		Vector2D outline[4];
 		if (TextBoxMode()) std::copy(textbox_original_corners, textbox_original_corners + 4, outline);
-		else box.Corners(outline);
+		else std::copy(frame_quad, frame_quad + 4, outline);
 		gl.SetLineColour(line_colour, .6f, 1);
 		for (int i = 0; i < 4; ++i)
 			gl.DrawDashedLine(screen(outline[i]), screen(outline[(i + 1) % 4]), 6.f);

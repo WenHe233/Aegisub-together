@@ -214,6 +214,18 @@ void WarpControls(WarpNet const& net, Vector2D out[16]);
 /// A point of the patch. (0,0) is the box's top left corner, (1,1) its bottom right.
 Vector2D WarpPoint(Vector2D const control[16], double u, double v);
 
+/// The same bend, measured from a net the selection already rests on.
+///
+/// WarpMap measures its displacement against the box's own untouched net, so it is the identity
+/// while the net is untouched - which is true only for a selection that rests in the box. Text
+/// that leans or stands out of the plane rests in a quadrilateral instead and its net starts
+/// there, and measuring from the box would drag the whole selection onto the box the moment the
+/// tool opened. `into_box` takes a point of that quadrilateral back to the box, which is what
+/// gives the patch its u and v - and being a plain map it can be projective, where the patch
+/// itself cannot: a Bezier patch reproduces an affine shape exactly and a keystone only nearly.
+PointMap WarpMapFrom(OrientedBox const& box, WarpNet const& rest, WarpNet const& net,
+                     PointMap const& into_box);
+
 /// Which two direction handles belong to a corner.
 void WarpCornerTangents(int corner, int& first, int& second);
 
