@@ -892,7 +892,16 @@ void BaseGrid::OnMouseEvent(wxMouseEvent &event) {
 				} else if (d->Fold.hasFold() && !d->Fold.isEnd()) {
 					AssDialogue* last = d->Fold.getFoldCloser();
 
-					if (last) {
+					// A fold's first row stands for the whole fold - but only where the selection
+					// began outside it. Started from a row within the fold, reaching its first row
+					// means the selection is being drawn inside the fold, and taking the whole of
+					// it would swallow everything below the row the user started from.
+					//
+					// Beginning on the first row itself still takes the fold: that row is what a
+					// closed fold shows, and a selection started there is a selection of the fold.
+					bool from_within = last && old_extend > d->Row && old_extend <= last->Row;
+
+					if (last && !from_within) {
 						for (int j = d->Row; j <= last->Row; ++j) {
 							if (AssDialogue* fd = GetDialogue(j))
 								newsel.insert(fd);
