@@ -124,6 +124,9 @@ class MotionApplyDialog final : public wxDialog {
 	/// holds the whole of a projective track already, and its box holds a note about where it came
 	/// from - so there is nothing there to read back, and no Corner Pin to ask for separately.
 	bool primary_from_project = false;
+	/// The same for the Corner Pin box. It is filled in with a note when the project carries
+	/// perspective, but left open: pasting an export over it takes it back to being ordinary data.
+	bool primary_corner_from_project = false;
 	/// The frames the selection covers, which is what names the shot's trim - and so its project.
 	int shot_first = 0;
 	int shot_last = 0;
@@ -145,7 +148,11 @@ class MotionApplyDialog final : public wxDialog {
 	bool AllTracksReady() const {
 		if (!TrackReady(primary)) return false;
 		if (separate_clip->GetValue() && !TrackReady(clip)) return false;
-		if (main_perspective->GetValue() && !TrackReady(primary_corner)) return false;
+		// A track read from a project is a Corner Pin already: its perspective is in it, so there
+		// is no second one to ask for. Asking anyway left Apply greyed out with nothing the user
+		// could do about it.
+		if (!primary_from_project && main_perspective->GetValue() &&
+			!TrackReady(primary_corner)) return false;
 		return !separate_clip->GetValue() || !clip_perspective->GetValue() ||
 			TrackReady(clip_corner);
 	}
@@ -213,9 +220,9 @@ class MotionApplyDialog final : public wxDialog {
 		}
 
 		primary = std::move(project->track);
-		primary_text->ChangeValue(wxString::Format(
-			_("Read from the Mocha project: %s, layer %s"),
-			wxFileName(to_wx(*found)).GetFullName(), to_wx(project->layer)));
+		wxString note = wxString::Format(_("Read from the Mocha project: %s, layer %s"),
+			wxFileName(to_wx(*found)).GetFullName(), to_wx(project->layer));
+		primary_text->ChangeValue(note);
 		primary_text->SetEditable(false);
 
 		// What the shot actually contains, which is not the same as what the tracker was allowed
@@ -224,6 +231,22 @@ class MotionApplyDialog final : public wxDialog {
 		main_rotate->SetValue(project->has_rotation);
 		main_perspective->SetValue(project->has_perspective);
 		primary_from_project = true;
+
+		// The perspective is part of what was read, so its box says so too rather than sitting
+		// there empty. It stays usable: an export pasted over this takes the place of what the
+		// project said, which is the way back to doing it by hand.
+		if (project->has_perspective) {
+			primary_corner_from_project = true;
+			primary_corner_text->ChangeValue(note);
+			primary_corner_text->SetEditable(false);
+			primary_corner_label->SetLabel(TrackLabel(*primary, required_frames));
+			primary_corner_label->SetForegroundColour(
+				wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+		}
+		// Its own tab, so what was just read is what the box shows - and not the Corner Pin tab,
+		// which a project track has nothing to put in.
+		data_tabs->SetSelection(0);
+		UpdateDataControls();
 
 		bool length_matches = primary->samples.size() == required_frames;
 		primary_label->SetLabel(TrackLabel(*primary, required_frames));
@@ -284,6 +307,7 @@ class MotionApplyDialog final : public wxDialog {
 		// Pasting takes over from whatever was read out of the project, so the box goes back to
 		// being one the user can work in.
 		if (editor == primary_text) primary_from_project = false;
+		if (editor == primary_corner_text) primary_corner_from_project = false;
 		editor->SetEditable(true);
 		editor->ChangeValue(to_wx(*data));
 		ParseEditor(editor, destination, label, reference_control, expected_kind, false);
@@ -344,8 +368,9 @@ class MotionApplyDialog final : public wxDialog {
 		if (separate_clip->GetValue() &&
 			!ParseEditor(clip_text, clip, clip_label, clip_reference,
 				TrackKind::Transform, true)) return;
-		// A project track is a Corner Pin already, so there is no separate one to paste.
-		if (!primary_from_project && main_perspective->GetValue() &&
+		// Only where the box holds data of its own. Holding the project's note there is nothing to
+		// read back, and the perspective is in the main track anyway.
+		if (!primary_corner_from_project && main_perspective->GetValue() &&
 			!ParseEditor(primary_corner_text, primary_corner, primary_corner_label,
 				reference, TrackKind::CornerPin, true)) {
 			data_tabs->SetSelection(1);
@@ -700,26 +725,40 @@ TrimSettings GetTrimSettings() {
 std::optional<std::string> FindMochaProject(agi::Context *context, wxString const& root,
 	bool own_folder, wxString const& base) {
 	if (root.empty()) return std::nullopt;
-	if (own_folder) {
+
+	// Both places are looked in whichever way the trim is set, and the setting only decides which
+	// to look in first. The setting says where the trim writes from now on; the shot in hand may
+	// have been trimmed before it was changed.
+	auto in_own_folder = [&]() -> std::optional<std::string> {
 		wxFileName folder;
 		folder.AssignDir(root);
 		folder.AppendDir(base);
 		folder.AppendDir("results");
 		wxDir results(folder.GetPath());
 		if (!results.IsOpened()) return std::nullopt;
-		// Whatever it is called: inside its own folder Mocha names the project after the image
+		// Whatever it is called: in its own folder Mocha names the project after the image
 		// sequence, and the user is free to rename it.
 		wxString found;
 		if (!results.GetFirst(&found, "*.mocha", wxDIR_FILES)) return std::nullopt;
 		return from_wx(wxFileName(folder.GetPath(), found).GetFullPath());
+	};
+	auto beside_the_trim = [&]() -> std::optional<std::string> {
+		wxFileName results;
+		results.AssignDir(root);
+		results.AppendDir("results");
+		wxFileName named(results.GetPath(), base + ".mocha");
+		if (named.FileExists()) return from_wx(named.GetFullPath());
+		wxFileName plain(root, base + ".mocha");
+		if (plain.FileExists()) return from_wx(plain.GetFullPath());
+		return std::nullopt;
+	};
+
+	if (own_folder) {
+		if (auto found = in_own_folder()) return found;
+		return beside_the_trim();
 	}
-	wxFileName beside(root, base + ".mocha");
-	beside.AppendDir("results");
-	wxFileName inside(beside.GetPath(), base + ".mocha");
-	if (inside.FileExists()) return from_wx(inside.GetFullPath());
-	wxFileName plain(root, base + ".mocha");
-	if (plain.FileExists()) return from_wx(plain.GetFullPath());
-	return std::nullopt;
+	if (auto found = beside_the_trim()) return found;
+	return in_own_folder();
 }
 
 wxString ResolveDirectory(agi::Context *context, wxString directory) {

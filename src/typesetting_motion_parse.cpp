@@ -133,15 +133,24 @@ std::optional<ProjectTrack> ParseMochaProject(std::string const& text, int scrip
 	std::map<std::string, std::map<std::string, Channel>> layers;
 	std::istringstream input(text);
 	std::string line;
-	static std::regex key(R"(^(Layer_\d+)\.Track\.(\w+)\.keyframes\.append)");
+	// The frame and the value are taken from inside the Key itself. Read off the whole line
+	// instead, the first number found is the one in "Layer_1" - and then every key of every
+	// channel lands on frame one, carrying a frame number for a value. Which comes out as a
+	// constant, and a constant is no motion at all: that is exactly what it did.
+	static std::regex key(R"(^(Layer_\d+)\.Track\.(\w+)\.keyframes\.append\(\s*Key\(\s*)"
+		R"(([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+))");
 	while (std::getline(input, line)) {
 		std::smatch found;
 		if (!std::regex_search(line, found, key)) continue;
-		auto values = Numbers(line);
-		if (values.size() < 2) continue;
+		double frame = 0, value = 0;
+		try {
+			frame = std::stod(found[3]);
+			value = std::stod(found[4]);
+		}
+		catch (...) { continue; }
 		std::string const& which = found[1];
 		if (!layers.count(which)) layer_order.push_back(which);
-		layers[which][found[2]].keys[static_cast<int>(std::lround(values[0]))] = values[1];
+		layers[which][found[2]].keys[static_cast<int>(std::lround(frame))] = value;
 	}
 
 	// The layer the motion belongs to: the last one written that has anything tracked on it. A

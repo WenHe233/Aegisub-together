@@ -205,10 +205,16 @@ Homography AbsoluteTransformMap(Sample const& sample, Vector2D anchor) {
 Homography AppliedMap(Track const& transform_track,
 	std::optional<Track> const& perspective_track, size_t sample, size_t reference,
 	ApplyOptions::Components const& components, bool linear) {
-	// A tracker adapter may provide one complete Corner Pin track. Manual Apply
-	// keeps transform and perspective data separate so Mocha's full Corner Pin
-	// motion cannot accidentally replace or duplicate Position/Scale/Rotation.
-	if (transform_track.kind == TrackKind::CornerPin || !components.perspective)
+	// A tracker adapter may provide one complete Corner Pin track, and then its own perspective is
+	// the one to use: nothing else has been given, and taking the transform out of it only to put
+	// it back would be the long way round to the same map.
+	//
+	// Unless a perspective track has been handed over as well. That is a deliberate act - somebody
+	// pasted an export into the Corner Pin box - and then theirs is the one that counts: the
+	// adapter's track keeps its position, scale and turn, and the perspective comes from the
+	// pasted data instead.
+	if (!components.perspective ||
+		(transform_track.kind == TrackKind::CornerPin && !perspective_track))
 		return FilteredMap(transform_track, sample, reference, components, linear);
 
 	auto transform_components = components;
