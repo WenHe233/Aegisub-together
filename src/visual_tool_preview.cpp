@@ -737,6 +737,21 @@ void VisualToolPreviewBar::OnSize(wxSizeEvent& event) {
 
 void VisualToolPreviewBar::OnPaint(wxPaintEvent&) {
 	wxAutoBufferedPaintDC dc(this);
+	auto const *page = DisplayPage();
+
+	// Standing empty - kept in place on purpose, with nothing to put in it - it is not showing
+	// anything of its own, so it takes the colour of what is above it rather than the dark ground
+	// the controls are drawn on. And no separator lines either: they would draw a band across the
+	// window to mark off a strip that holds nothing.
+	if (!page) {
+		wxWindow *above = GetParent();
+		wxColour plain = above ? above->GetBackgroundColour() : wxColour();
+		if (!plain.IsOk()) plain = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
+		dc.SetBackground(wxBrush(plain));
+		dc.Clear();
+		return;
+	}
+
 	// Keep the established in-video preview palette even though the common host now lives
 	// above the video. The dimensions are deliberately more compact than the old overlay.
 	wxColour background(30, 32, 35);
@@ -747,9 +762,6 @@ void VisualToolPreviewBar::OnPaint(wxPaintEvent&) {
 	dc.SetPen(wxPen(wxColour(8, 9, 10), 1));
 	dc.DrawLine(0, GetClientSize().GetHeight() - 1,
 		GetClientSize().GetWidth(), GetClientSize().GetHeight() - 1);
-
-	auto const *page = DisplayPage();
-	if (!page) return;
 
 	double ratio = std::max(1.0, ToolbarIconSize() / 16.0);
 	wxFont regular = GetFont();
