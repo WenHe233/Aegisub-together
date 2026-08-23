@@ -324,12 +324,23 @@ std::optional<PatchResult> FindPatch(GrayFrame const& source, GrayFrame const& t
 	std::vector<double> correlations(static_cast<size_t>(diameter) * diameter, -2);
 	double best = -2;
 	int best_dx = 0, best_dy = 0;
+	bool chosen = false;
 	for (int dy = -search_radius; dy <= search_radius; ++dy) {
 		for (int dx = -search_radius; dx <= search_radius; ++dx) {
 			double score = PatchCorrelation(*patch, target, guess_x + dx, guess_y + dy);
 			correlations[static_cast<size_t>(dy + search_radius) * diameter +
 				dx + search_radius] = score;
-			if (score > best) { best = score; best_dx = dx; best_dy = dy; }
+			// A tie goes to the smaller move. Keeping the first one scanned instead handed every
+			// tie to the corner the search starts at, so a patch with nothing much to lock on to
+			// crept that way a pixel at a time from one frame to the next.
+			bool better = !chosen || score > best + 1e-12;
+			bool level_and_nearer = chosen && score > best - 1e-12 &&
+				dx * dx + dy * dy < best_dx * best_dx + best_dy * best_dy;
+			if (!better && !level_and_nearer) continue;
+			if (score > best) best = score;
+			best_dx = dx;
+			best_dy = dy;
+			chosen = true;
 		}
 	}
 	if (best < settings.minimum_correlation) return std::nullopt;
@@ -343,6 +354,18 @@ std::optional<PatchResult> FindPatch(GrayFrame const& source, GrayFrame const& t
 		if (second > -1.5 && best - second < settings.minimum_correlation_separation)
 			return std::nullopt;
 	}
+	// A patch that matches exactly where it lies has not moved by a fraction of anything. This
+	// correlation reaches one only where the two are the same picture at the same place, and there
+	// the whole of the answer is already known.
+	//
+	// Fitting a parabola through the two neighbours anyway invents an offset, because those two
+	// are not equal to one another unless the picture happens to be symmetric about the point. On
+	// a shot where nothing moves, that invented fraction is the same sign every frame, and it adds
+	// up into a creep.
+	if (best > 1 - 1e-9)
+		return PatchResult{Vector2D(static_cast<float>(guess_x + best_dx),
+			static_cast<float>(guess_y + best_dy)), best};
+
 	auto score_at = [&](int dx, int dy) {
 		if (dx < -search_radius || dx > search_radius ||
 			dy < -search_radius || dy > search_radius) return -2.0;

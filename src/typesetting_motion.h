@@ -46,6 +46,28 @@ struct Track {
 	Homography MapAt(size_t sample, size_t reference) const;
 };
 
+/// What a Mocha project file says about a shot, without anything having been exported from it.
+struct ProjectTrack {
+	/// The motion, as one Corner Pin sample per frame - which carries the whole of a projective
+	/// track rather than a similarity approximation of it.
+	Track track;
+	/// Which of the tracker's own channels actually moved. These say what the shot contains, as
+	/// against what the tracker was allowed to look for.
+	bool has_scale = false;
+	bool has_rotation = false;
+	bool has_perspective = false;
+	bool has_shear = false;
+	/// The layer the track was taken from, for saying so out loud.
+	std::string layer;
+};
+
+/// Read a Mocha project file.
+///
+/// Returns no track and no error for a project with nothing tracked in it: a shot that was opened
+/// and never worked on is not a failure, and the caller has to leave everything as it was.
+std::optional<ProjectTrack> ParseMochaProject(std::string const& text, int script_width,
+	int script_height, std::string& error);
+
 /// Parse the requested Mocha After Effects Transform Data or Corner Pin track.
 /// File contents and clipboard contents use the same adapter; future trackers plug
 /// in beside this one.

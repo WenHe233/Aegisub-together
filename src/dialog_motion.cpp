@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <iterator>
 #include <optional>
 
 #include <wx/button.h>
@@ -36,6 +37,7 @@
 #include <wx/choice.h>
 #include <wx/clipbrd.h>
 #include <wx/dialog.h>
+#include <wx/dir.h>
 #include <wx/filename.h>
 #include <wx/filepicker.h>
 #include <wx/msgdlg.h>
@@ -70,6 +72,10 @@ wxString TrackLabel(typesetting::motion::Track const& track, size_t required_fra
 		label += wxString::Format(_(" - selected lines require %zu frames"), required_frames);
 	return label;
 }
+
+wxString ResolveDirectory(agi::Context *context, wxString directory);
+std::optional<std::string> FindMochaProject(agi::Context *context, wxString const& root,
+	bool own_folder, wxString const& base);
 
 class MotionApplyDialog final : public wxDialog {
 	using Track = typesetting::motion::Track;
@@ -114,6 +120,23 @@ class MotionApplyDialog final : public wxDialog {
 	wxCheckBox *interpolate_animations;
 	wxStaticBoxSizer *apply_options;
 	size_t required_frames = 0;
+	/// Whether the main track came out of a Mocha project rather than out of its box. It then
+	/// holds the whole of a projective track already, and its box holds a note about where it came
+	/// from - so there is nothing there to read back, and no Corner Pin to ask for separately.
+	bool primary_from_project = false;
+	/// The frames the selection covers, which is what names the shot's trim - and so its project.
+	int shot_first = 0;
+	int shot_last = 0;
+
+	/// Where the trim writes, and what it calls this shot. Both read exactly as the trim reads
+	/// them, so the two always agree about which shot is which.
+	static wxString MochaRoot() {
+		return to_wx(OPT_GET("Tool/Motion/Trim/Directory")->GetString());
+	}
+	wxString ShotName() const {
+		wxFileName video(context->project->VideoName().wstring());
+		return video.GetName() + wxString::Format("[%d-%d]", shot_first, shot_last);
+	}
 
 	bool TrackReady(std::optional<Track> const& track) const {
 		return track && track->samples.size() == required_frames;
@@ -157,6 +180,61 @@ class MotionApplyDialog final : public wxDialog {
 			control->Enable(enabled);
 		apply_options->GetStaticBox()->Enable(enabled);
 		UpdateScaleOptions();
+	}
+
+	/// Find and read the Mocha project for the selected lines.
+	///
+	/// True when it produced a track. A project with nothing tracked in it is not a failure and
+	/// not a track: it says so and leaves every setting alone, which is what a shot that was
+	/// opened and never worked on has to do.
+	bool LoadMochaProject() {
+		auto found = FindMochaProject(context, ResolveDirectory(context, MochaRoot()),
+			OPT_GET("Tool/Motion/Trim/Own Folder")->GetBool(), ShotName());
+		if (!found) return false;
+
+		std::string text;
+		try {
+			auto input = agi::io::Open(agi::fs::path(*found));
+			text.assign(std::istreambuf_iterator<char>(*input),
+				std::istreambuf_iterator<char>());
+		}
+		catch (...) { return false; }
+
+		int width = 0, height = 0;
+		context->ass->GetResolution(width, height);
+		std::string error;
+		auto project = typesetting::motion::ParseMochaProject(text, width, height, error);
+		if (!project) {
+			primary_label->SetLabel(error.empty() ?
+				_("The Mocha project has nothing tracked in it") : to_wx(error));
+			primary_label->SetForegroundColour(
+				wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+			return false;
+		}
+
+		primary = std::move(project->track);
+		primary_text->ChangeValue(wxString::Format(
+			_("Read from the Mocha project: %s, layer %s"),
+			wxFileName(to_wx(*found)).GetFullName(), to_wx(project->layer)));
+		primary_text->SetEditable(false);
+
+		// What the shot actually contains, which is not the same as what the tracker was allowed
+		// to look for: a channel that never moved has nothing to apply.
+		main_scale->SetValue(project->has_scale);
+		main_rotate->SetValue(project->has_rotation);
+		main_perspective->SetValue(project->has_perspective);
+		primary_from_project = true;
+
+		bool length_matches = primary->samples.size() == required_frames;
+		primary_label->SetLabel(TrackLabel(*primary, required_frames));
+		primary_label->SetForegroundColour(length_matches ?
+			wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT) : wxColour(190, 45, 45));
+		reference->SetRange(1, static_cast<int>(primary->samples.size()));
+		reference->SetValue(1);
+		UpdateScaleOptions();
+		UpdateApplyState();
+		Layout();
+		return true;
 	}
 
 	bool ParseEditor(wxTextCtrl *editor, std::optional<Track>& destination,
@@ -203,6 +281,10 @@ class MotionApplyDialog final : public wxDialog {
 				wxOK | wxICON_WARNING, this);
 			return;
 		}
+		// Pasting takes over from whatever was read out of the project, so the box goes back to
+		// being one the user can work in.
+		if (editor == primary_text) primary_from_project = false;
+		editor->SetEditable(true);
 		editor->ChangeValue(to_wx(*data));
 		ParseEditor(editor, destination, label, reference_control, expected_kind, false);
 	}
@@ -250,12 +332,20 @@ class MotionApplyDialog final : public wxDialog {
 
 	void ApplyNow(wxCommandEvent&) {
 		using typesetting::motion::TrackKind;
-		if (!ParseEditor(primary_text, primary, primary_label, reference,
+		if (primary_from_project) {
+			if (!TrackReady(primary)) {
+				wxMessageBox(_("The Mocha project does not cover the frames "
+					"the selected lines need."), _("Motion"), wxOK | wxICON_ERROR, this);
+				return;
+			}
+		}
+		else if (!ParseEditor(primary_text, primary, primary_label, reference,
 			TrackKind::Transform, true)) return;
 		if (separate_clip->GetValue() &&
 			!ParseEditor(clip_text, clip, clip_label, clip_reference,
 				TrackKind::Transform, true)) return;
-		if (main_perspective->GetValue() &&
+		// A project track is a Corner Pin already, so there is no separate one to paste.
+		if (!primary_from_project && main_perspective->GetValue() &&
 			!ParseEditor(primary_corner_text, primary_corner, primary_corner_label,
 				reference, TrackKind::CornerPin, true)) {
 			data_tabs->SetSelection(1);
@@ -343,6 +433,8 @@ public:
 				context->videoController->FrameAtTime(line->End, agi::vfr::END));
 		}
 		required_frames = static_cast<size_t>(selection_end - selection_start + 1);
+		shot_first = selection_start;
+		shot_last = selection_end;
 		data_tabs = new wxNotebook(this, wxID_ANY);
 
 		auto transformation_page = new wxPanel(data_tabs);
@@ -470,6 +562,9 @@ public:
 		border = new wxCheckBox(this, wxID_ANY, _("Scale border"));
 		shadow = new wxCheckBox(this, wxID_ANY, _("Scale shadow"));
 		blur = new wxCheckBox(this, wxID_ANY, _("Scale blur"));
+		// On to begin with: a line that is being scaled wants its border, its shadow and its blur
+		// scaled with it, and having to ask for all three every time was the common case.
+		for (auto control : {border, shadow, blur}) control->SetValue(true);
 		apply_options = new wxStaticBoxSizer(wxVERTICAL, this, _("Apply options"));
 		auto option_grid = new wxFlexGridSizer(3, 8, 12);
 		for (auto control : {interpolate_animations, linear, map_clips, border, shadow, blur})
@@ -483,7 +578,10 @@ public:
 		SetSizerAndFit(main);
 		SetMinSize(GetSize());
 		CenterOnParent();
-		if (!clipboard.empty()) {
+		// The project Mocha saved for this shot, if it is where the trim would have put it. It
+		// carries the whole of a projective track, so nothing has to be exported by hand.
+		if (LoadMochaProject()) { }
+		else if (!clipboard.empty()) {
 			std::string error;
 			if (ParseTrackText(clipboard, typesetting::motion::TrackKind::Transform, error)) {
 				primary_text->ChangeValue(to_wx(clipboard));
@@ -592,6 +690,36 @@ TrimSettings GetTrimSettings() {
 		to_wx(OPT_GET("Tool/Motion/Trim/Directory")->GetString()),
 		OPT_GET("Tool/Motion/Trim/Own Folder")->GetBool()
 	};
+}
+
+/// The Mocha project belonging to the selected lines, in either of the two places Mocha writes
+/// its autosave to - beside the trim, or inside the trim's own folder.
+///
+/// The name is built exactly as the trim builds it, from the video's name and the frames the
+/// selection covers, so the two always agree about which shot this is.
+std::optional<std::string> FindMochaProject(agi::Context *context, wxString const& root,
+	bool own_folder, wxString const& base) {
+	if (root.empty()) return std::nullopt;
+	if (own_folder) {
+		wxFileName folder;
+		folder.AssignDir(root);
+		folder.AppendDir(base);
+		folder.AppendDir("results");
+		wxDir results(folder.GetPath());
+		if (!results.IsOpened()) return std::nullopt;
+		// Whatever it is called: inside its own folder Mocha names the project after the image
+		// sequence, and the user is free to rename it.
+		wxString found;
+		if (!results.GetFirst(&found, "*.mocha", wxDIR_FILES)) return std::nullopt;
+		return from_wx(wxFileName(folder.GetPath(), found).GetFullPath());
+	}
+	wxFileName beside(root, base + ".mocha");
+	beside.AppendDir("results");
+	wxFileName inside(beside.GetPath(), base + ".mocha");
+	if (inside.FileExists()) return from_wx(inside.GetFullPath());
+	wxFileName plain(root, base + ".mocha");
+	if (plain.FileExists()) return from_wx(plain.GetFullPath());
+	return std::nullopt;
 }
 
 wxString ResolveDirectory(agi::Context *context, wxString directory) {

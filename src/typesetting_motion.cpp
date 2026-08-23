@@ -1113,8 +1113,13 @@ bool Apply(agi::Context *context, Track const& main_track,
 		if (progress) progress(stage, complete, std::max<size_t>(1, total));
 	};
 	auto originals_for = [&](AssDialogue *line) -> std::vector<AssDialogue *> {
-		if (IsImageMaskLine(line) && context->imageMask &&
-			context->imageMask->IsInGroup(line))
+		// A gradient, a textbox and an image mask are each one object made of several rows. All
+		// of them have to go through together: tracked a row at a time the object comes apart,
+		// and taking its rows away while putting only the first one back loses the rest.
+		//
+		// Image masks were already handled here. The other two were not, and every group kind the
+		// grid knows about is asked for the same way.
+		if (context->imageMask && context->imageMask->IsInGroup(line))
 			return context->imageMask->GetGroupLines(line);
 		return std::vector<AssDialogue *>{line};
 	};
@@ -1159,7 +1164,10 @@ bool Apply(agi::Context *context, Track const& main_track,
 		if (mask && !raster) { error = "Az ImageMask képe nem olvasható vissza."; return false; }
 		int script_width = 0, script_height = 0;
 		context->ass->GetResolution(script_width, script_height);
-		bool linear_line = options.linear && !mask &&
+		// One line in, one line out - so it is only for a line that stands alone. An object made
+		// of several rows has to be written frame by frame like a mask, or the rest of its rows
+		// would be taken away with nothing put back.
+		bool linear_line = options.linear && !mask && item.originals.size() == 1 &&
 			(!options.map_clips || !HasClip(*item.originals.front()));
 		if (linear_line) {
 			size_t first_sample = sample_for_frame(start_frame);
@@ -1207,38 +1215,51 @@ bool Apply(agi::Context *context, Track const& main_track,
 					style);
 			}
 			else {
-				AssDialogue generated_line(*item.originals.front());
-				generated_line.Comment = false;
-				generated_line.ExtradataIds = std::vector<uint32_t>();
 				int sample_time = (start + end) / 2;
-				if (options.interpolate_animations)
-					InterpolateAnimations(context, generated_line, sample_time, start);
-				if (!options.clip_only)
-					generated_line.Text = MapLine(context, generated_line, main_map, options,
-						options.map_clips && !clip_track, sample_time);
-				else if (options.map_clips && !clip_track) {
-					typesetting::OrientedBox bounds;
-					bounds.centre = Vector2D(script_width / 2.f, script_height / 2.f);
-					bounds.half = Vector2D(script_width / 2.f, script_height / 2.f);
-					generated_line.Text = typesetting::TransformClips(generated_line.Text.get(),
-						[&main_map](Vector2D point) { return main_map.Map(point); }, bounds);
-				}
-				generated_line.Start = start;
-				generated_line.End = end;
+				typesetting::OrientedBox bounds;
+				bounds.centre = Vector2D(script_width / 2.f, script_height / 2.f);
+				bounds.half = Vector2D(script_width / 2.f, script_height / 2.f);
+
+				// Worked out once for the frame rather than once per row of the object.
+				std::optional<Homography> clip_map;
 				if (options.map_clips && clip_track) {
 					size_t clip_sample = sample_for_frame(frame);
 					size_t clip_reference = options.clip_reference_sample.value_or(
 						options.reference_sample);
-					Homography clip_map = AppliedMap(*clip_track, clip_perspective_track, clip_sample,
+					clip_map = AppliedMap(*clip_track, clip_perspective_track, clip_sample,
 						std::min(clip_reference, clip_track->samples.size() - 1),
 						options.clip, options.linear);
-					typesetting::OrientedBox bounds;
-					bounds.centre = Vector2D(script_width / 2.f, script_height / 2.f);
-					bounds.half = Vector2D(script_width / 2.f, script_height / 2.f);
-					generated_line.Text = typesetting::TransformClips(generated_line.Text.get(),
-						[&clip_map](Vector2D point) { return clip_map.Map(point); }, bounds);
 				}
-				generated.push_back(std::move(generated_line));
+
+				bool alone = item.originals.size() == 1;
+				for (auto original : item.originals) {
+					AssDialogue generated_line(*original);
+					// A single line is written out plainly, as it always was. The rows of an
+					// object keep what says they belong together - the extradata a gradient and a
+					// textbox are known by - and keep being comments where they were meant to be
+					// one, since a gradient holds its source that way. Cleared, the object would
+					// not be recognised as an object on the other side.
+					if (alone) {
+						generated_line.Comment = false;
+						generated_line.ExtradataIds = std::vector<uint32_t>();
+					}
+					if (options.interpolate_animations)
+						InterpolateAnimations(context, generated_line, sample_time, start);
+					if (!options.clip_only)
+						generated_line.Text = MapLine(context, generated_line, main_map, options,
+							options.map_clips && !clip_track, sample_time);
+					else if (options.map_clips && !clip_track)
+						generated_line.Text = typesetting::TransformClips(generated_line.Text.get(),
+							[&main_map](Vector2D point) { return main_map.Map(point); }, bounds);
+					generated_line.Start = start;
+					generated_line.End = end;
+					if (clip_map) {
+						Homography const& map = *clip_map;
+						generated_line.Text = typesetting::TransformClips(generated_line.Text.get(),
+							[&map](Vector2D point) { return map.Map(point); }, bounds);
+					}
+					generated.push_back(std::move(generated_line));
+				}
 			}
 			std::string signature = imagemask::Signature(generated);
 			if (!generated.empty() && signature == previous_signature) {
