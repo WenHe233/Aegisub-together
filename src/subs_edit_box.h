@@ -111,6 +111,9 @@ class SubsEditBox final : public wxPanel {
 	/// @brief Commits the current edit box contents
 	/// @param desc Undo description to use
 	void CommitText(wxString const& desc);
+	/// Throw away a whole image mask whose text has just been cleared, leaving the one empty line
+	/// that was typed. False where the rows selected are not a mask, and then nothing is done.
+	bool DiscardImageMask(wxString const& desc);
 	void Commit(wxString const& desc, int type, bool amend, AssDialogue *line);
 
 	/// Last commit ID for undo coalescing

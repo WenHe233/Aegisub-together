@@ -20,7 +20,18 @@
 namespace imagemask {
 namespace {
 
+/// The row a mask begins at and the row it ends at.
 constexpr char effect_name[] = "imagemask-fx";
+/// Everything between those two.
+///
+/// Naming the middle is what lets a run of mask rows be cut into the masks it is made of: two
+/// masks laid side by side otherwise have nothing to tell them apart, and read as one. The name
+/// goes in the effect rather than in extradata because a plain field is what survives being
+/// copied and pasted.
+///
+/// And it is the middle that is named rather than the ends, so that deleting rows needs no
+/// repair: whichever row is left at either end is named like an end already.
+constexpr char element_effect_name[] = "imagemask-el";
 constexpr size_t maximum_drawing_bytes = 48000;
 
 struct Colour {
@@ -262,9 +273,41 @@ void ScanLine(AssDialogue const& line, Consumer&& consume) {
 
 } // namespace
 
+bool IsNative(AssDialogue const *line) {
+	if (!line) return false;
+	return line->Effect.get() == effect_name || line->Effect.get() == element_effect_name;
+}
+
+bool IsElement(AssDialogue const *line) {
+	return line && line->Effect.get() == element_effect_name;
+}
+
+bool NameRows(std::vector<AssDialogue *> const& rows) {
+	if (rows.empty()) return false;
+
+	// Only where every row says nothing about itself, or says only what this codec says. Anything
+	// else in the effect is somebody else's, and not ours to write over.
+	for (auto row : rows) {
+		if (!row) return false;
+		std::string const& effect = row->Effect.get();
+		if (!effect.empty() && effect != effect_name && effect != element_effect_name)
+			return false;
+	}
+
+	bool changed = false;
+	for (size_t k = 0; k < rows.size(); ++k) {
+		char const *wanted = (k == 0 || k + 1 == rows.size()) ?
+			effect_name : element_effect_name;
+		if (rows[k]->Effect.get() == wanted) continue;
+		rows[k]->Effect = wanted;
+		changed = true;
+	}
+	return changed;
+}
+
 bool IsLine(AssDialogue const *line) {
 	if (!line) return false;
-	if (line->Effect.get() == effect_name) return true;
+	if (IsNative(line)) return true;
 	std::string const& text = line->Text.get();
 	if (text.find("\\p1") == std::string::npos ||
 		text.find("m 0 0 l 0 ") == std::string::npos) return false;
@@ -318,8 +361,13 @@ std::vector<AssDialogue> Encode(Raster const& source, AssDialogue const& prototy
 	if (!image.IsOk()) return {};
 	size_t progress_total = static_cast<size_t>(image.height) * 2;
 	auto rows = MakeRuns(image, progress, progress_total);
-	return EncodeRows(image, rows, prototype, start_ms, end_ms, style, progress,
+	auto lines = EncodeRows(image, rows, prototype, start_ms, end_ms, style, progress,
 		static_cast<size_t>(image.height), progress_total);
+	// The two ends keep the plain name and everything between them is named as a middle row, so
+	// that a mask laid immediately after another with the same timing is still its own mask.
+	for (size_t i = 1; i + 1 < lines.size(); ++i)
+		lines[i].Effect = element_effect_name;
+	return lines;
 }
 
 std::string Signature(std::vector<AssDialogue> const& lines) {

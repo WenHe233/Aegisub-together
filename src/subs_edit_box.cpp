@@ -64,6 +64,8 @@
 #include <unordered_set>
 #include <utility>
 
+#include <memory>
+
 #include <wx/bmpbuttn.h>
 #include <wx/button.h>
 #include <wx/checkbox.h>
@@ -609,7 +611,45 @@ void SubsEditBox::SetSelectedRows(T AssDialogueBase::*field, wxString const& val
 
 void SubsEditBox::CommitText(wxString const& desc) {
 	auto data = edit_ctrl->GetTextRaw();
+	// A mask written over with nothing is a mask thrown away. Setting the text of every row of it
+	// would leave the whole mask behind as that many empty lines; one is what was asked for.
+	if (data.length() == 0 && DiscardImageMask(desc)) return;
 	SetSelectedRows(&AssDialogue::Text, boost::flyweight<std::string>(data.data(), data.length()), desc, AssFile::COMMIT_DIAG_TEXT, true);
+}
+
+bool SubsEditBox::DiscardImageMask(wxString const& desc) {
+	auto const& selected = c->selectionController->GetSelectedSet();
+	if (selected.size() < 2) return false;
+	for (auto line : selected)
+		if (!IsImageMaskLine(line)) return false;
+
+	// In the order the file has them, so the row that stays is the one the mask began at.
+	std::vector<AssDialogue *> rows(selected.begin(), selected.end());
+	std::sort(rows.begin(), rows.end(), [](AssDialogue const *one, AssDialogue const *other) {
+		return one->Row < other->Row;
+	});
+
+	AssDialogue *kept = rows.front();
+	kept->Text = "";
+	kept->Effect = "";
+	kept->ExtradataIds = std::vector<uint32_t>();
+
+	// Narrowed before anything is taken out of the file, so that nothing is left pointing at a
+	// row that has gone.
+	Selection staying{kept};
+	c->selectionController->SetSelectionAndActive(std::move(staying), kept);
+
+	std::vector<std::unique_ptr<AssDialogue>> taken;
+	taken.reserve(rows.size() - 1);
+	for (size_t i = 1; i < rows.size(); ++i) {
+		c->ass->Events.erase(c->ass->Events.iterator_to(*rows[i]));
+		taken.emplace_back(rows[i]);
+	}
+
+	// Its own step in the history rather than an amendment of the keystrokes that emptied the box,
+	// so that one undo brings the mask back whole.
+	Commit(desc, AssFile::COMMIT_DIAG_ADDREM | AssFile::COMMIT_DIAG_FULL, false, kept);
+	return true;
 }
 
 void SubsEditBox::CommitTimes(TimeField field) {

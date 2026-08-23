@@ -120,7 +120,7 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
     while (i < n) {
         bool gradient = IsGradientStart(file, lines[i]);
 		bool textbox = typesetting::textbox::IsSource(file, lines[i]);
-		bool native_imagemask = lines[i]->Effect.get() == "imagemask-fx";
+		bool native_imagemask = imagemask::IsNative(lines[i]);
         if (!gradient && !textbox && !IsImageMaskLine(lines[i])) {
             i++;
             continue;
@@ -145,8 +145,44 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
 				++j;
 		}
         else {
-            while (j < n && HasSameTiming(base, lines[j]) && IsImageMaskLine(lines[j]))
-                j++;
+			// The whole run of mask rows this one is part of.
+			int run_end = i;
+			while (run_end < n && HasSameTiming(base, lines[run_end]) &&
+				IsImageMaskLine(lines[run_end]))
+				++run_end;
+
+			// A mask written by the current codec names its middle rows, so the run can be cut
+			// into the masks it is made of. One that names none of them was written before there
+			// were names, and the whole run is the one mask it has always been.
+			bool named = false;
+			for (int k = i; k < run_end; ++k)
+				if (imagemask::IsElement(lines[k])) { named = true; break; }
+
+			if (!named) {
+				// Given the names now, so that from here on it is a mask like any other. Nothing
+				// is committed for it: the names are worked out from the rows every time, so a
+				// file that is never saved loses nothing, and one that is saved gains them.
+				//
+				// It says nothing about where one mask ends and the next begins, so a run that
+				// was two masks all along is named as the one mask it has always been read as.
+				// There is nothing in the rows to say otherwise.
+				std::vector<AssDialogue*> run(lines.begin() + i, lines.begin() + run_end);
+				imagemask::NameRows(run);
+			}
+
+			if (!named)
+				j = run_end;
+			else {
+				// Its middle rows, and then the row it ends at - which carries the same name as
+				// the row it begins at, so it belongs to this mask rather than starting the next.
+				//
+				// Written this way round, no amount of deleting needs putting right. Take the
+				// first row away and what is left begins with middle rows, which this consumes
+				// just the same; take the last away and the run simply ends.
+				j = i + 1;
+				while (j < run_end && imagemask::IsElement(lines[j])) ++j;
+				if (j < run_end) ++j;
+			}
         }
 
         int count = j - start;

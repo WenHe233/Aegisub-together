@@ -55,6 +55,27 @@ std::optional<Raster> Prepare(wxImage const& image, wxImage const *alpha_image,
 /// Recognise both the native codec and old Image2ASS-compatible row drawings.
 bool IsLine(AssDialogue const *line);
 
+/// Whether this row was written by the native codec, either kind.
+bool IsNative(AssDialogue const *line);
+
+/// Give a run of a mask's rows the names this codec uses: the two ends one way, everything between
+/// them the other.
+///
+/// For a mask out of an older file, which names none of its rows - or names them all the same, as
+/// the first version of this codec did. Left alone where any row carries an effect that is not
+/// one of these, since that belongs to something else.
+///
+/// Returns whether anything was actually changed, so a caller need not do the rest of its work
+/// when there was nothing to do.
+bool NameRows(std::vector<AssDialogue *> const& rows);
+
+/// Whether this row is one of a mask's middle rows rather than one of its two ends.
+///
+/// Old files name none of their rows this way, so a caller has to be ready for a run of mask rows
+/// that says nothing about where one mask ends and the next begins - and treat the whole run as
+/// the one mask it has always been.
+bool IsElement(AssDialogue const *line);
+
 /// Reconstruct a raster from either codec. The returned origin is in script pixels.
 std::optional<Raster> Decode(std::vector<AssDialogue *> const& lines);
 
