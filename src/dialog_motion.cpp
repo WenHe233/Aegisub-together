@@ -252,8 +252,10 @@ class MotionApplyDialog final : public wxDialog {
 		primary_label->SetLabel(TrackLabel(*primary, required_frames));
 		primary_label->SetForegroundColour(length_matches ?
 			wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT) : wxColour(190, 45, 45));
+		int old_reference = reference->GetValue();
 		reference->SetRange(1, static_cast<int>(primary->samples.size()));
-		reference->SetValue(1);
+		reference->SetValue(std::clamp(old_reference, 1,
+			static_cast<int>(primary->samples.size())));
 		UpdateScaleOptions();
 		UpdateApplyState();
 		Layout();
