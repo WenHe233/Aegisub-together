@@ -645,6 +645,7 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 
 				if (context->imageMask->IsGroupStart(curDiag) && context->imageMask->IsCollapsed(curDiag) && j == columns.size() - 1) {
 					bool gradient = context->imageMask->IsGradientGroup(curDiag);
+					bool glitch = context->imageMask->IsGlitchGroup(curDiag);
 					bool textbox = context->imageMask->IsTextBoxGroup(curDiag);
 					wxString text;
 					if (textbox) {
@@ -662,6 +663,13 @@ void BaseGrid::OnPaint(wxPaintEvent &) {
 							"--- " + fmt_tl("Gradient (%d lines, %s, text: %s)",
 								context->imageMask->GetGroupSize(curDiag),
 								to_wx(description), to_wx(label)) + " ---";
+					}
+					else if (glitch) {
+						auto const& description =
+							context->imageMask->GetGlitchDescription(curDiag);
+						text = "--- " + fmt_tl("Glitch effect (%d lines, %s)",
+							context->imageMask->GetGroupSize(curDiag),
+							to_wx(description)) + " ---";
 					}
 					else {
 						text = "--- " + fmt_tl("Image Mask (%d lines)",

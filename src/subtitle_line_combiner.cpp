@@ -3,6 +3,7 @@
 #include "ass_file.h"
 #include "imagemask_codec.h"
 #include "typesetting_gradient.h"
+#include "typesetting_glitch.h"
 #include "typesetting_textbox.h"
 
 #include <regex>
@@ -97,6 +98,7 @@ static bool IsSameGroup(const std::vector<AssDialogue*>& old_lines, const std::v
 void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFile const& file) {
     struct OpenGroup {
         bool gradient = false;
+		bool glitch = false;
 		bool textbox = false;
         std::vector<AssDialogue*> lines;
 		int start_row = -1;
@@ -106,7 +108,7 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
 
     for (auto& g : groups) {
         if (!g.collapsed && !g.lines.empty())
-			open_groups.push_back({ g.gradient, g.textbox, g.lines,
+			open_groups.push_back({ g.gradient, g.glitch, g.textbox, g.lines,
 				g.start ? g.start->Row : -1 });
     }
 
@@ -119,9 +121,10 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
 
     while (i < n) {
         bool gradient = IsGradientStart(file, lines[i]);
+		bool glitch = typesetting::glitch::IsSource(file, lines[i]);
 		bool textbox = typesetting::textbox::IsSource(file, lines[i]);
 		bool native_imagemask = imagemask::IsNative(lines[i]);
-        if (!gradient && !textbox && !IsImageMaskLine(lines[i])) {
+        if (!gradient && !glitch && !textbox && !IsImageMaskLine(lines[i])) {
             i++;
             continue;
         }
@@ -137,6 +140,12 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
                    !IsGradientStart(file, lines[j]))
                 ++j;
         }
+		else if (glitch) {
+			++j;
+			while (j < n && typesetting::glitch::IsEffect(lines[j]) &&
+				!typesetting::glitch::IsSource(file, lines[j]))
+				++j;
+		}
         else if (textbox) {
 			++j;
 			while (j < n && HasSameTiming(base, lines[j]) &&
@@ -186,7 +195,7 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
         }
 
         int count = j - start;
-        if (count >= (gradient || textbox || native_imagemask ? 1 : MIN_SEQUENCE)) {
+        if (count >= (gradient || glitch || textbox || native_imagemask ? 1 : MIN_SEQUENCE)) {
             groups.emplace_back();
             int idx = (int)groups.size() - 1;
 
@@ -194,10 +203,15 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
             g.start = lines[start];
             g.collapsed = true;
             g.gradient = gradient;
+			g.glitch = glitch;
 			g.textbox = textbox;
 			if (gradient) {
 				g.label = GradientLabel(file, base);
 				g.gradient_description = typesetting::gradient::GroupDescription(file, *base);
+			}
+			else if (glitch) {
+				g.label = typesetting::glitch::Label(file, *base);
+				g.glitch_description = typesetting::glitch::Description(file, *base);
 			}
 			else if (textbox)
 				g.label = typesetting::textbox::Label(file, *base);
@@ -228,6 +242,7 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
 		for (size_t group_index = 0; group_index < groups.size(); ++group_index) {
 			auto const& group = groups[group_index];
 			if (restored[group_index] || old.gradient != group.gradient ||
+				old.glitch != group.glitch ||
 				old.textbox != group.textbox) continue;
 			size_t shared = 0;
 			for (auto line : group.lines)
@@ -251,6 +266,7 @@ void SubtitleLineCombiner::Rebuild(const std::vector<AssDialogue*>& lines, AssFi
 		for (size_t group_index = 0; group_index < groups.size(); ++group_index) {
 			auto const& group = groups[group_index];
 			if (restored[group_index] || old.gradient != group.gradient ||
+				old.glitch != group.glitch ||
 				old.textbox != group.textbox || !IsSameGroup(old.lines, group.lines)) continue;
 			int row = group.start ? group.start->Row : -1;
 			int distance = old.start_row > row ? old.start_row - row : row - old.start_row;
@@ -328,7 +344,7 @@ void SubtitleLineCombiner::ExpandTypesettingSelection(std::set<AssDialogue*>& se
 		auto it = lookup.find(line);
 		if (it == lookup.end()) continue;
 		auto const& group = groups[it->second];
-		if (!group.gradient && !group.textbox) continue;
+		if (!group.gradient && !group.glitch && !group.textbox) continue;
 		selection.insert(group.lines.begin(), group.lines.end());
 	}
 }
@@ -344,6 +360,11 @@ void SubtitleLineCombiner::Toggle(AssDialogue* d) {
 bool SubtitleLineCombiner::IsGradientGroup(const AssDialogue* d) const {
     auto it = lookup.find(const_cast<AssDialogue*>(d));
     return it != lookup.end() && groups[it->second].gradient;
+}
+
+bool SubtitleLineCombiner::IsGlitchGroup(const AssDialogue* d) const {
+	auto it = lookup.find(const_cast<AssDialogue*>(d));
+	return it != lookup.end() && groups[it->second].glitch;
 }
 
 bool SubtitleLineCombiner::IsTextBoxGroup(const AssDialogue* d) const {
@@ -363,4 +384,11 @@ std::string const& SubtitleLineCombiner::GetGradientDescription(const AssDialogu
 	auto it = lookup.find(const_cast<AssDialogue*>(d));
 	if (it == lookup.end()) return empty;
 	return groups[it->second].gradient_description;
+}
+
+std::string const& SubtitleLineCombiner::GetGlitchDescription(const AssDialogue* d) const {
+	static std::string empty;
+	auto it = lookup.find(const_cast<AssDialogue*>(d));
+	if (it == lookup.end()) return empty;
+	return groups[it->second].glitch_description;
 }

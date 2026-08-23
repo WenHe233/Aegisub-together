@@ -14,6 +14,7 @@
 #include <vector>
 
 namespace agi { struct Context; }
+class AssDialogue;
 
 namespace typesetting::motion {
 
@@ -103,6 +104,12 @@ enum class ApplyProgressStage {
 	Applying,
 	Writing
 };
+
+/// Freeze ASS \t(), \fad()/\fade() and \move() animation at one output frame.
+/// This is shared by effects which split a source line into frame-sized rows, so
+/// the source animation keeps its original timeline instead of restarting on each row.
+void SnapshotAnimations(agi::Context *context, AssDialogue& line,
+	int midpoint_ms, int frame_start_ms);
 
 using ApplyProgressCallback = std::function<void(ApplyProgressStage stage,
 	size_t complete, size_t total)>;

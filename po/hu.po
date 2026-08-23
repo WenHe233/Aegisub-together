@@ -11075,9 +11075,6 @@ msgstr ""
 #~ msgid "Size:"
 #~ msgstr "Méret:"
 
-#~ msgid "Opacity:"
-#~ msgstr "Áttetszőség:"
-
 #~ msgid "Fit canvas"
 #~ msgstr "Vászon kitöltése"
 
@@ -11682,3 +11679,124 @@ msgstr ""
 #: ../src/typesetting_embedded_image_editor.cpp
 msgid "Scene"
 msgstr "Jelenet"
+
+#: ../src/command/typesetting.cpp ../src/dialog_glitch.cpp
+msgid "Glitch effect"
+msgstr "Glitch effect"
+
+#: ../src/command/typesetting.cpp
+msgid "Create customizable, angled and animated glitch slices on the selected lines"
+msgstr "Testreszabható, döntött és animált glitch-szeletek létrehozása a kijelölt sorokon"
+
+#: ../src/base_grid.cpp
+#, c-format
+msgid "Glitch effect (%d lines, %s)"
+msgstr "Glitch effect (%d sor, %s)"
+
+#: ../src/typesetting_glitch.cpp
+msgid "apply glitch effect"
+msgstr "glitch effekt alkalmazása"
+
+#: ../src/typesetting_glitch.cpp
+#, c-format
+msgid "%s, animation"
+msgstr "%s, animációval"
+
+#: ../src/typesetting_glitch.cpp
+#, c-format
+msgid "%s, no animation"
+msgstr "%s, animáció nélkül"
+
+#: ../src/dialog_glitch.cpp
+msgid "(off)"
+msgstr "(kikapcsolva)"
+
+#: ../src/dialog_glitch.cpp
+#, c-format
+msgid "Animation %zu: %d-%d ms%s"
+msgstr "%zu. animáció: %d–%d ms%s"
+
+#: ../src/dialog_glitch.cpp
+msgid "An animation end time must be after its start time."
+msgstr "Az animáció befejezési időpontjának a kezdési időpont után kell lennie."
+
+#: ../src/dialog_glitch.cpp
+msgid "No glitch effect could be generated for the selected lines."
+msgstr "Nem sikerült glitch effektet létrehozni a kijelölt sorokhoz."
+
+#: ../src/dialog_glitch.cpp
+msgid "Glitch settings"
+msgstr "Glitch-beállítások"
+
+#: ../src/dialog_glitch.cpp
+msgid "Mode:"
+msgstr "Mód:"
+
+#: ../src/dialog_glitch.cpp
+msgid "Amount (%):"
+msgstr "Mérték (%):"
+
+#: ../src/dialog_glitch.cpp
+msgid "Offset:"
+msgstr "Eltolás:"
+
+#: ../src/dialog_glitch.cpp
+msgid "Opacity:"
+msgstr "Átlátszóság:"
+
+#: ../src/dialog_glitch.cpp
+msgid "Height:"
+msgstr "Magasság:"
+
+#: ../src/dialog_glitch.cpp
+msgid "Width (%):"
+msgstr "Szélesség (%):"
+
+#: ../src/dialog_glitch.cpp
+msgid "New pattern"
+msgstr "Új minta"
+
+#: ../src/dialog_glitch.cpp
+msgid "Pattern:"
+msgstr "Minta:"
+
+#: ../src/dialog_glitch.cpp
+msgid "Show base layer"
+msgstr "Alapréteg megjelenítése"
+
+#: ../src/dialog_glitch.cpp
+msgid "Playback"
+msgstr "Lejátszás"
+
+#: ../src/dialog_glitch.cpp
+msgid "Animations"
+msgstr "Animációk"
+
+#: ../src/dialog_glitch.cpp
+#, c-format
+msgid "Total line duration: %d ms"
+msgstr "A sor teljes ideje: %d ms"
+
+#: ../src/dialog_glitch.cpp
+msgid "Add animation"
+msgstr "Animáció hozzáadása"
+
+#: ../src/dialog_glitch.cpp
+msgid "Remove animation"
+msgstr "Animáció eltávolítása"
+
+#: ../src/dialog_glitch.cpp
+msgid "From"
+msgstr "Kezdet"
+
+#: ../src/dialog_glitch.cpp
+msgid "To"
+msgstr "Vég"
+
+#: ../src/dialog_glitch.cpp
+msgid "Enabled"
+msgstr "Engedélyezve"
+
+#: ../src/dialog_glitch.cpp
+msgid "Time (ms):"
+msgstr "Idő (ms):"

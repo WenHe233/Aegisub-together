@@ -68,6 +68,7 @@
 		{ "submenu" : "main/typesetting/motion", "text" : "&Motion" },
 		{ "submenu" : "main/typesetting/image_insert", "text" : "&Image insert" },
 		{ "command" : "typesetting/gradient" },
+		{ "command" : "typesetting/glitch" },
 		{ "command" : "typesetting/textbox" }
     ],
 	"main/typesetting/motion" : [

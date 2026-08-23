@@ -22,9 +22,11 @@ public:
     bool IsInGroup(const AssDialogue* d) const;
     bool IsCollapsed(const AssDialogue* d) const;
 	bool IsGradientGroup(const AssDialogue* d) const;
+	bool IsGlitchGroup(const AssDialogue* d) const;
 	bool IsTextBoxGroup(const AssDialogue* d) const;
 	std::string const& GetGroupLabel(const AssDialogue* d) const;
 	std::string const& GetGradientDescription(const AssDialogue* d) const;
+	std::string const& GetGlitchDescription(const AssDialogue* d) const;
 
     int GetGroupSize(const AssDialogue* d) const;
     AssDialogue* GetLastInGroup(const AssDialogue* d) const;
@@ -39,10 +41,12 @@ private:
     struct ImageMaskGroup {
         bool collapsed = true;
 		bool gradient = false;
+		bool glitch = false;
 		bool textbox = false;
 		AssDialogue* start = nullptr;
 		std::string label;
 		std::string gradient_description;
+		std::string glitch_description;
         std::vector<AssDialogue*> lines;
     };
 

@@ -26,6 +26,7 @@
 #include "../ass_file.h"
 #include "../compat.h"
 #include "../dialog_gradient.h"
+#include "../dialog_glitch.h"
 #include "../dialog_motion.h"
 #include "../subtitle_line_combiner.h"
 #include "../include/aegisub/context.h"
@@ -279,6 +280,22 @@ struct typesetting_gradient_copy final : public Command {
 	}
 };
 
+struct typesetting_glitch final : public Command {
+	CMD_NAME("typesetting/glitch")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Glitch effect")
+	STR_DISP("Glitch effect")
+	STR_HELP("Create customizable, angled and animated glitch slices on the selected lines")
+
+	bool Validate(const agi::Context *c) override {
+		return !c->selectionController->GetSelectedSet().empty();
+	}
+
+	void operator()(agi::Context *c) override {
+		ShowGlitchDialog(c);
+	}
+};
+
 struct typesetting_textbox final : public Command {
 	CMD_NAME("typesetting/textbox")
 	CMD_TYPE(COMMAND_VALIDATE)
@@ -427,6 +444,7 @@ namespace cmd {
 		reg(std::make_unique<typesetting_gradient>());
 		reg(std::make_unique<typesetting_gradient_edit>());
 		reg(std::make_unique<typesetting_gradient_copy>());
+		reg(std::make_unique<typesetting_glitch>());
 		reg(std::make_unique<typesetting_textbox>());
 		reg(std::make_unique<typesetting_image_insert_quick>());
 		reg(std::make_unique<typesetting_image_insert_insert>());

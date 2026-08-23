@@ -1010,6 +1010,11 @@ std::vector<std::string> SplitSources(std::string const& source) {
 
 } // namespace
 
+void SnapshotAnimations(agi::Context *context, AssDialogue& line,
+		int midpoint_ms, int frame_start_ms) {
+	InterpolateAnimations(context, line, midpoint_ms, frame_start_ms);
+}
+
 Vector2D Homography::Map(Vector2D point) const {
 	double denominator = value[6] * point.X() + value[7] * point.Y() + value[8];
 	if (std::abs(denominator) < 1e-12) return point;
