@@ -101,6 +101,13 @@ namespace {
 
 		void operator()(agi::Context *c) override {
 			if (RefusedForMask(c)) return;
+			// Already in a transform: say what it is doing now rather than putting another in its
+			// place. Replacing it takes the bar away and builds a new one, and picking one
+			// transform from inside another should not make the bar blink.
+			if (auto *running = dynamic_cast<VisualToolTransform *>(c->videoDisplay->GetTool())) {
+				running->SetMode(M, false);
+				return;
+			}
 			std::string back = previous_tool(c);
 			c->videoDisplay->SetTool(
 				std::make_unique<VisualToolTransform>(c->videoDisplay, c, M, std::move(back)));
@@ -144,6 +151,10 @@ struct typesetting_transform_auto_perspective final : public Command {
 
 	void operator()(agi::Context *c) override {
 		if (RefusedForMask(c)) return;
+		if (auto *running = dynamic_cast<VisualToolTransform *>(c->videoDisplay->GetTool())) {
+			running->SetMode(VisualToolTransformMode::Distort, true);
+			return;
+		}
 		std::string back = previous_tool(c);
 		c->videoDisplay->SetTool(std::make_unique<VisualToolTransform>(c->videoDisplay, c,
 			VisualToolTransformMode::Distort, std::move(back), true));

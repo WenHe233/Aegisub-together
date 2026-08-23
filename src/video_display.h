@@ -275,6 +275,11 @@ public:
 	Vector2D GetMousePosition() const;
 
 	void SetTool(std::unique_ptr<VisualToolBase> new_tool);
+
+	/// The tool in force. For a command that would otherwise put a tool of its own kind in place
+	/// of one already running: replacing it takes the tool's bar away and builds another, which
+	/// reads as a flicker. Nothing else has business reaching in here.
+	VisualToolBase *GetTool() const { return tool.get(); }
 	DEFINE_SIGNAL_ADDERS(AnnounceToolChanged, AddToolChangeListener)
 	VisualToolPreviewBar *GetPreviewBar() const { return previewBar; }
 	/// Prevent the second click of a textbox-dismissal double click from being

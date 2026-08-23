@@ -40,6 +40,7 @@
 
 #include <wx/frame.h>
 #include <wx/button.h>
+#include <wx/tglbtn.h>
 #include <wx/msgdlg.h>
 #include <wx/toolbar.h>
 
@@ -158,6 +159,14 @@ namespace {
 		/// Listener for changes which can show or hide contextual toolbar commands
 		agi::signal::Connection active_line_slot;
 		wxButton *dark_mode_button = nullptr;
+		wxToggleButton *top_bar_button = nullptr;
+
+		void OnToggleTopBar(wxCommandEvent&) {
+			auto *option = OPT_SET("App/Show Top Bar");
+			option->SetBool(!option->GetBool());
+			config::opt->Flush();
+			if (top_bar_button) top_bar_button->SetValue(option->GetBool());
+		}
 
 		wxString DarkModeButtonLabel() const {
 			return OPT_GET("App/Dark Mode")->GetBool()
@@ -191,21 +200,35 @@ namespace {
 			if (name != "main") return;
 
 			AddStretchableSpace();
+
+			// Six pixels either side of the words, on both buttons, rather than whatever the
+			// platform would otherwise give each of them. The width is taken from the widest
+			// label the button can ever carry, so it does not jump when the label changes.
+			auto pad_around_text = [this](wxWindow *button,
+					std::initializer_list<wxString> labels) {
+				int widest = 0;
+				for (auto const& label : labels)
+					widest = std::max(widest, button->GetTextExtent(label).GetWidth());
+				wxSize size(widest + 2 * FromDIP(6), button->GetBestSize().GetHeight());
+				button->SetSize(size);
+				button->SetMinSize(size);
+			};
+
+			// Pressed in, the bar above the video stays put even where the tool in force has
+			// nothing to put in it - which keeps everything below from shifting up and down as
+			// tools come and go.
+			top_bar_button = new wxToggleButton(this, wxID_ANY, _("Top Bar"),
+				wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+			top_bar_button->SetValue(OPT_GET("App/Show Top Bar")->GetBool());
+			top_bar_button->SetToolTip(_("Always show the bar above the video"));
+			top_bar_button->Bind(wxEVT_TOGGLEBUTTON, &Toolbar::OnToggleTopBar, this);
+			pad_around_text(top_bar_button, {_("Top Bar")});
+			AddControl(top_bar_button);
+
 			dark_mode_button = new wxButton(this, wxID_ANY, DarkModeButtonLabel(),
 				wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
-
-			// Reserve enough room for either state so the toolbar does not jump
-			// horizontally when a restart is declined and the label changes.
-			auto const current_label = dark_mode_button->GetLabel();
-			wxSize button_size = dark_mode_button->GetBestSize();
-			dark_mode_button->SetLabel(_("Disable Dark Mode"));
-			button_size.IncTo(dark_mode_button->GetBestSize());
-			dark_mode_button->SetLabel(_("Enable Dark Mode"));
-			button_size.IncTo(dark_mode_button->GetBestSize());
-			dark_mode_button->SetLabel(current_label);
-			button_size.SetWidth(button_size.GetWidth() + FromDIP(16));
-			dark_mode_button->SetSize(button_size);
-			dark_mode_button->SetMinSize(button_size);
+			pad_around_text(dark_mode_button,
+				{_("Disable Dark Mode"), _("Enable Dark Mode")});
 			dark_mode_button->SetToolTip(_("Enable or disable dark mode and restart Aegisub"));
 			dark_mode_button->Bind(wxEVT_BUTTON, &Toolbar::OnToggleDarkMode, this);
 			AddControl(dark_mode_button);

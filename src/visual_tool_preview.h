@@ -212,6 +212,7 @@ class VisualToolPreviewBar final : public wxPanel {
 	bool has_frozen_page = false;
 	VisualToolPreviewInterface::Page frozen_page;
 	agi::signal::Connection icon_size_connection;
+	agi::signal::Connection pinned_connection;
 
 	int ToolbarIconSize() const;
 	int Dip(int value) const;

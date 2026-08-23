@@ -366,30 +366,7 @@ VisualToolTransform::VisualToolTransform(VideoDisplay *parent, agi::Context *con
 , gl_text(std::make_unique<OpenGLText>())
 , return_tool(std::move(return_tool))
 {
-	// A projective distortion has no one scale behind it, so there is no honest number to give
-	// the border, the shadow or the blur: all three are left exactly as the line said them.
-	// Standing the pair in as shapes was tried too, and it turns one line into three.
-	if (mode == VisualToolTransformMode::Distort) {
-		recalc_bord = false;
-		recalc_shad = false;
-		maintain_decor = false;
-		recalc_blur = false;
-	}
-
-	// Auto perspective exposes no decoration recalculation choices. The line geometry follows
-	// the directed quadrilateral, existing decoration values stay as authored, and only an
-	// existing clip is carried through the same map automatically.
-	if (auto_perspective) {
-		recalc_bord = false;
-		recalc_shad = false;
-		maintain_decor = false;
-		recalc_blur = false;
-		recalc_clip = true;
-		// Which of the two ways of sizing the result was last used is a habit rather than a
-		// property of the lines, so it is remembered between sessions and between runs.
-		auto_perspective_keep_original_size =
-			OPT_GET("Tool/Visual/Perspective/Keep Original Size")->GetBool();
-	}
+	SettleForMode();
 	selection_connection = context->selectionController->AddSelectionListener(
 		[this] { ExitTool(); });
 	connections.push_back(context->ass->AddCommitListener(
@@ -416,6 +393,68 @@ VisualToolTransform::VisualToolTransform(VideoDisplay *parent, agi::Context *con
 		}
 	});
 	Collect();
+}
+
+void VisualToolTransform::SettleForMode() {
+	recalc_bord = true;
+	recalc_shad = true;
+	recalc_blur = true;
+	recalc_clip = true;
+	maintain_decor = false;
+
+	// A projective distortion has no one scale behind it, so there is no honest number to give
+	// the border, the shadow or the blur: all three are left exactly as the line said them.
+	// Standing the pair in as shapes was tried too, and it turns one line into three.
+	if (mode == VisualToolTransformMode::Distort) {
+		recalc_bord = false;
+		recalc_shad = false;
+		maintain_decor = false;
+		recalc_blur = false;
+	}
+
+	// Auto perspective exposes no decoration recalculation choices. The line geometry follows
+	// the directed quadrilateral, existing decoration values stay as authored, and only an
+	// existing clip is carried through the same map automatically.
+	if (auto_perspective) {
+		recalc_bord = false;
+		recalc_shad = false;
+		maintain_decor = false;
+		recalc_blur = false;
+		recalc_clip = true;
+		// Which of the two ways of sizing the result was last used is a habit rather than a
+		// property of the lines, so it is remembered between sessions and between runs.
+		auto_perspective_keep_original_size =
+			OPT_GET("Tool/Visual/Perspective/Keep Original Size")->GetBool();
+	}
+}
+
+void VisualToolTransform::SetMode(VisualToolTransformMode next, bool perspective) {
+	if (leaving || (mode == next && auto_perspective == perspective)) return;
+
+	// Whatever was being worked out belongs to the mode it was worked out in, so it goes the way
+	// it would have gone had the tool been closed and another opened: nothing is written, and the
+	// video stops showing the preview copies. The difference is only that the tool itself stays -
+	// and with it its bar, which otherwise vanished and was built again on every change of mode.
+	ClearPreview();
+	editor.reset();
+	textbox_document.reset();
+	textbox_lines.clear();
+	features.clear();
+	sel_features.clear();
+	undo_history.clear();
+	redo_history.clear();
+	touched = false;
+	free_hold_mode = FreeHoldMode::None;
+	// Balancing the lock Collect is about to take, exactly as closing the tool would have.
+	LockEditing(false);
+
+	mode = next;
+	auto_perspective = perspective;
+	SettleForMode();
+
+	Collect();
+	UpdatePreviewInterface();
+	parent->Render();
 }
 
 VisualToolTransform::~VisualToolTransform() {

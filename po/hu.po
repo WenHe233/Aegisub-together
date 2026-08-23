@@ -9528,6 +9528,14 @@ msgstr ""
 "A szöveg szélesebb, mint amit a margók engednek, tehát a megjelenítő sorokra "
 "bontaná – ezt még nem tudja kiszámolni."
 
+#: ../src/toolbar.cpp
+msgid "Top Bar"
+msgstr "Felsősáv"
+
+#: ../src/toolbar.cpp
+msgid "Always show the bar above the video"
+msgstr "A videó feletti sáv mindig látszódjon"
+
 #: ../src/toolbar.cpp:164 ../src/toolbar.cpp:201
 msgid "Disable Dark Mode"
 msgstr "Sötét mód kikapcsolása"

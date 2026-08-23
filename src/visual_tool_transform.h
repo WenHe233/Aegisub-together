@@ -401,6 +401,9 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	bool LinesAlive() const;
 	/// The file was replaced wholesale, so there is nothing left to hold on to.
 	void OnFileReplaced(int type);
+	/// The settings that follow from which transform this is, rather than from anything the user
+	/// has said. Applied when the tool opens and again whenever the mode changes.
+	void SettleForMode();
 
 	void Collect();
 	/// Hand the video the reshaped lines, or the originals again to undo that.
@@ -678,6 +681,10 @@ public:
 	                    VisualToolTransformMode mode, std::string return_tool,
 	                    bool auto_perspective = false);
 	~VisualToolTransform();
+
+	/// Change which transform this is without closing and reopening. Everything under way is
+	/// discarded, as it would have been either way; the tool - and its bar - stay put.
+	void SetMode(VisualToolTransformMode next, bool perspective);
 
 	void OnMouseEvent(wxMouseEvent &event) override;
 	bool OnMouseWheel(wxMouseEvent &event) override;

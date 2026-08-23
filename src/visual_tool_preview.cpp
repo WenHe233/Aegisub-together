@@ -392,6 +392,20 @@ VisualToolPreviewBar::VisualToolPreviewBar(wxWindow *parent)
 	icon_size_connection = OPT_SUB("App/Toolbar Icon Size", [this] {
 		RefreshFromSource();
 	});
+	// So that pressing the button shows or hides the bar there and then, rather than at whatever
+	// the next change of tool happens to be.
+	pinned_connection = OPT_SUB("App/Show Top Bar", [this] {
+		RefreshFromSource();
+	});
+
+	// And once at the start, because the bar may be wanted from the moment the window opens and
+	// nothing else would ask for it: it hears about a tool attaching and about the setting
+	// changing, neither of which has happened yet. Left out, a bar asked for in a previous
+	// session stayed hidden until the button was pressed twice.
+	//
+	// Put off until the event loop is running, so that the window this sits in has been laid out
+	// and can be laid out again around it.
+	CallAfter([this] { RefreshFromSource(); });
 }
 
 VisualToolPreviewBar::~VisualToolPreviewBar() {
@@ -462,10 +476,6 @@ void VisualToolPreviewBar::RebuildLayout(wxDC& dc, int width) {
 	controls.clear();
 	message_bounds = wxRect();
 	auto const *page = DisplayPage();
-	if (!page) {
-		UpdateHeight(0);
-		return;
-	}
 
 	double ratio = std::max(1.0, ToolbarIconSize() / 16.0);
 	int bar_margin = Dip(4);
@@ -485,6 +495,15 @@ void VisualToolPreviewBar::RebuildLayout(wxDC& dc, int width) {
 		static_cast<int>(std::round(9.0 * std::sqrt(ratio)))));
 	wxFont bold = regular;
 	bold.SetWeight(wxFONTWEIGHT_BOLD);
+
+	// Nothing to put in it. Either it goes away, or - where it is being kept in place on purpose -
+	// it stands empty at its usual height, so that what is below does not jump up and down as
+	// tools come and go.
+	if (!page) {
+		UpdateHeight(OPT_GET("App/Show Top Bar")->GetBool()
+			? row_top + bar_control_height + bar_margin : 0);
+		return;
+	}
 
 	auto next_row = [&] {
 		left = bar_margin;
@@ -556,7 +575,10 @@ void VisualToolPreviewBar::RebuildLayout(wxDC& dc, int width) {
 
 void VisualToolPreviewBar::RefreshFromSource() {
 	if (shutting_down) return;
-	bool should_show = DisplayPage() && source && source->host_visible;
+	// Kept in place whatever is going on, if that is what was asked for. Otherwise it comes and
+	// goes with whatever tool has something to put in it.
+	bool should_show = OPT_GET("App/Show Top Bar")->GetBool() ||
+		(DisplayPage() && source && source->host_visible);
 	if (!should_show) {
 		dragging_id = 0;
 		if (HasCapture()) ReleaseMouse();
