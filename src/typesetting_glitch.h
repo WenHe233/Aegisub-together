@@ -109,6 +109,9 @@ public:
 
 size_t Apply(agi::Context *c, Settings const& settings);
 
+/// Remove selected generated glitch groups and restore their saved source rows.
+bool Revert(agi::Context *c);
+
 bool IsEffect(AssDialogue const *line);
 bool IsSource(AssFile const& file, AssDialogue const *line);
 std::string Label(AssFile const& file, AssDialogue const& line);

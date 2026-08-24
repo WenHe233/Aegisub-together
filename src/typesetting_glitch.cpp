@@ -260,7 +260,7 @@ struct SourceGroup {
 	bool editing = false;
 };
 
-std::vector<SourceGroup> CollectGroups(agi::Context *c) {
+std::vector<SourceGroup> CollectGroups(agi::Context *c, bool combine = true) {
 	auto selected = c->selectionController->GetSelectedSet();
 	std::vector<AssDialogue *> rows;
 	for (auto& line : c->ass->Events) rows.push_back(&line);
@@ -284,7 +284,13 @@ std::vector<SourceGroup> CollectGroups(agi::Context *c) {
 		if (wanted) {
 			auto encoded = Extra(*c->ass, *anchor, source_key);
 			if (encoded) group.stored = DeserializeSources(*encoded);
-			for (auto const& line : group.stored) group.sources.push_back(line.get());
+			for (auto const& line : group.stored) {
+				// Entry-data serialization does not retain Row. Preview-only lines use it
+				// to preserve ASS event ordering, so place every restored source at the
+				// generated group's anchor just as Apply does for committed output.
+				line->Row = anchor->Row;
+				group.sources.push_back(line.get());
+			}
 			if (!group.sources.empty()) pieces.push_back(std::move(group));
 		}
 		i = j;
@@ -311,6 +317,7 @@ std::vector<SourceGroup> CollectGroups(agi::Context *c) {
 	std::stable_sort(pieces.begin(), pieces.end(), [](SourceGroup const& left,
 		SourceGroup const& right) { return left.anchor->Row < right.anchor->Row; });
 	if (pieces.empty()) return {};
+	if (!combine) return pieces;
 
 	// One command invocation creates one logical glitch object. This is important both for
 	// editing the settings later and for displaying every selected source as one collapsed row.
@@ -1366,9 +1373,12 @@ std::string Description(AssFile const& file, AssDialogue const& line) {
 }
 
 Settings LoadSettingsForSelection(agi::Context *c) {
-	for (auto line : c->selectionController->GetSortedSelection()) {
-		if (!IsSource(*c->ass, line)) continue;
-		auto encoded = Extra(*c->ass, *line, data_key);
+	// The grid may select any generated row in a collapsed glitch group, while only
+	// the first row carries the settings metadata. Resolve the selected group first
+	// so reopening an effect never falls back to the defaults for a child row.
+	for (auto const& group : CollectGroups(c, false)) {
+		if (!group.editing || !group.anchor) continue;
+		auto encoded = Extra(*c->ass, *group.anchor, data_key);
 		if (encoded) {
 			auto parsed = DeserializeSettings(*encoded);
 			if (parsed) return *parsed;
@@ -1462,6 +1472,44 @@ PreviewSession::~PreviewSession() = default;
 
 void PreviewSession::Update(Settings const& settings) { impl->Update(settings); }
 void PreviewSession::Clear() { impl->Clear(); }
+
+bool Revert(agi::Context *c) {
+	// Keep selected ordinary rows independent from generated groups. Reverting an
+	// effect must never consume another selected source merely because both rows
+	// happened to be selected when the context-menu command was invoked.
+	auto groups = CollectGroups(c, false);
+	Selection selection;
+	AssDialogue *active = nullptr;
+	auto old_active = c->selectionController->GetActiveLine();
+	std::vector<std::unique_ptr<AssDialogue>> removed;
+
+	for (auto& group : groups) {
+		if (!group.editing || group.stored.empty() || group.existing.empty()) continue;
+		bool was_active = std::find(group.existing.begin(), group.existing.end(), old_active) !=
+			group.existing.end();
+		auto insert_at = c->ass->Events.iterator_to(*group.anchor);
+		AssDialogue *first = nullptr;
+		for (auto const& stored : group.stored) {
+			auto original = new AssDialogue(*stored);
+			c->ass->Events.insert(insert_at, *original);
+			selection.insert(original);
+			if (!first) first = original;
+		}
+		if (!active || was_active) active = first;
+
+		for (auto line : group.existing) {
+			c->ass->Events.erase(c->ass->Events.iterator_to(*line));
+			removed.emplace_back(line);
+		}
+	}
+
+	if (selection.empty()) return false;
+	c->selectionController->SetSelectionAndActive(std::move(selection), active);
+	c->ass->CleanExtradata();
+	c->ass->Commit(_("remove glitch effect"), AssFile::COMMIT_DIAG_ADDREM |
+		AssFile::COMMIT_DIAG_FULL | AssFile::COMMIT_EXTRADATA);
+	return true;
+}
 
 size_t Apply(agi::Context *c, Settings const& settings) {
 	auto groups = CollectGroups(c);

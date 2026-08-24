@@ -32,6 +32,8 @@
 #include "../include/aegisub/context.h"
 #include "../selection_controller.h"
 #include "../project.h"
+#include "../typesetting_gradient.h"
+#include "../typesetting_glitch.h"
 #include "../typesetting_transform.h"
 #include "../typesetting_image_insert.h"
 #include "../typesetting_motion.h"
@@ -280,6 +282,21 @@ struct typesetting_gradient_copy final : public Command {
 	}
 };
 
+struct typesetting_gradient_delete final : public Command {
+	CMD_NAME("typesetting/gradient/delete")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Remove gradient effect")
+	STR_DISP("Remove gradient effect")
+	STR_HELP("Remove the selected generated gradient and restore its original source line")
+
+	bool Validate(const agi::Context *c) override {
+		auto active = c->selectionController->GetActiveLine();
+		return active && c->imageMask->IsGradientGroup(active);
+	}
+
+	void operator()(agi::Context *c) override { typesetting::gradient::Revert(c); }
+};
+
 struct typesetting_glitch final : public Command {
 	CMD_NAME("typesetting/glitch")
 	CMD_TYPE(COMMAND_VALIDATE)
@@ -324,6 +341,21 @@ struct typesetting_glitch_copy final : public Command {
 	}
 
 	void operator()(agi::Context *c) override { cmd::call("edit/line/copy", c); }
+};
+
+struct typesetting_glitch_delete final : public Command {
+	CMD_NAME("typesetting/glitch/delete")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Remove glitch effect")
+	STR_DISP("Remove glitch effect")
+	STR_HELP("Remove the selected generated glitch effect and restore its original source lines")
+
+	bool Validate(const agi::Context *c) override {
+		auto active = c->selectionController->GetActiveLine();
+		return active && c->imageMask->IsGlitchGroup(active);
+	}
+
+	void operator()(agi::Context *c) override { typesetting::glitch::Revert(c); }
 };
 
 struct typesetting_textbox final : public Command {
@@ -474,9 +506,11 @@ namespace cmd {
 		reg(std::make_unique<typesetting_gradient>());
 		reg(std::make_unique<typesetting_gradient_edit>());
 		reg(std::make_unique<typesetting_gradient_copy>());
+		reg(std::make_unique<typesetting_gradient_delete>());
 		reg(std::make_unique<typesetting_glitch>());
 		reg(std::make_unique<typesetting_glitch_edit>());
 		reg(std::make_unique<typesetting_glitch_copy>());
+		reg(std::make_unique<typesetting_glitch_delete>());
 		reg(std::make_unique<typesetting_textbox>());
 		reg(std::make_unique<typesetting_image_insert_quick>());
 		reg(std::make_unique<typesetting_image_insert_insert>());

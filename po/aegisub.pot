@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Aegisub 3.2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-24 17:09+0200\n"
+"POT-Creation-Date: 2026-08-24 18:17+0200\n"
 "PO-Revision-Date: 2005-2014-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2706,302 +2706,321 @@ msgstr ""
 msgid "Insert the untranslated text"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:85
+#: ../src/command/typesetting.cpp:87
 msgid "Transform"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:88
+#: ../src/command/typesetting.cpp:90
 msgid "Image mask not supported."
 msgstr ""
 
-#: ../src/command/typesetting.cpp:121
+#: ../src/command/typesetting.cpp:123
 msgid "&Free transform"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:122
+#: ../src/command/typesetting.cpp:124
 msgid "Free transform"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:123
+#: ../src/command/typesetting.cpp:125
 msgid "Scale, turn and move the selected lines on the video, written as tags"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:129
+#: ../src/command/typesetting.cpp:131
 msgid "&Arch"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:130
+#: ../src/command/typesetting.cpp:132
 msgid "Arch"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:131
+#: ../src/command/typesetting.cpp:133
 msgid "Bend the selected lines up or down by dragging on the video"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:137
+#: ../src/command/typesetting.cpp:139
 msgid "&Distort"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:138
+#: ../src/command/typesetting.cpp:140
 msgid "Distort"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:139
+#: ../src/command/typesetting.cpp:141
 msgid "Drag the four corners of the selected lines on the video"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:145
+#: ../src/command/typesetting.cpp:147
 msgid "Auto &perspective"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:146
+#: ../src/command/typesetting.cpp:148
 msgid "Auto perspective"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:147
+#: ../src/command/typesetting.cpp:149
 msgid ""
 "Draw four directed points and fit the selected lines into their perspective"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:168
+#: ../src/command/typesetting.cpp:170
 msgid "&Warp"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:169
+#: ../src/command/typesetting.cpp:171
 msgid "Warp"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:170
+#: ../src/command/typesetting.cpp:172
 msgid "Bend the selected lines by dragging a 3x3 mesh over the video"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:193 ../src/visual_tool_transform.cpp:2469
+#: ../src/command/typesetting.cpp:195 ../src/visual_tool_transform.cpp:2469
 msgid "The text could not be converted:"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:196 ../src/visual_tool_transform.cpp:2472
+#: ../src/command/typesetting.cpp:198 ../src/visual_tool_transform.cpp:2472
 #: ../src/visual_tool_transform.cpp:2483
 msgid "Convert text to shapes"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:210
+#: ../src/command/typesetting.cpp:212
 msgid "flip horizontally"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:210
+#: ../src/command/typesetting.cpp:212
 msgid "flip vertically"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:220
+#: ../src/command/typesetting.cpp:222
 msgid "Flip &horizontally"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:221
+#: ../src/command/typesetting.cpp:223
 msgid "Flip horizontally"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:222
+#: ../src/command/typesetting.cpp:224
 msgid "Turn the selected lines into shapes and mirror them left to right"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:227
+#: ../src/command/typesetting.cpp:229
 msgid "Flip &vertically"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:228
+#: ../src/command/typesetting.cpp:230
 msgid "Flip vertically"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:229
+#: ../src/command/typesetting.cpp:231
 msgid "Turn the selected lines into shapes and mirror them top to bottom"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:235 ../src/command/typesetting.cpp:236
-#: ../src/command/typesetting.cpp:244 ../src/dialog_gradient.cpp:817
+#: ../src/command/typesetting.cpp:237 ../src/command/typesetting.cpp:238
+#: ../src/command/typesetting.cpp:246 ../src/dialog_gradient.cpp:817
 #: ../src/dialog_gradient.cpp:824 ../src/dialog_gradient.cpp:834
 msgid "Gradient"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:237
+#: ../src/command/typesetting.cpp:239
 msgid ""
 "Create a linear, radial or per-character colour gradient on the selected "
 "lines"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:252 ../src/command/typesetting.cpp:253
+#: ../src/command/typesetting.cpp:254 ../src/command/typesetting.cpp:255
 msgid "Edit gradient"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:254
+#: ../src/command/typesetting.cpp:256
 msgid "Edit the gradient settings of the selected generated gradient"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:269 ../src/command/typesetting.cpp:270
+#: ../src/command/typesetting.cpp:271 ../src/command/typesetting.cpp:272
 msgid "Copy gradient"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:271
+#: ../src/command/typesetting.cpp:273
 msgid "Copy the selected generated gradient rows and settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:286 ../src/command/typesetting.cpp:287
+#: ../src/command/typesetting.cpp:288 ../src/command/typesetting.cpp:289
+msgid "Remove gradient effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:290
+msgid ""
+"Remove the selected generated gradient and restore its original source line"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:303 ../src/command/typesetting.cpp:304
 #: ../src/dialog_glitch.cpp:598 ../src/dialog_glitch.cpp:604
 #: ../src/dialog_glitch.cpp:623
 msgid "Glitch effect"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:288
+#: ../src/command/typesetting.cpp:305
 msgid ""
 "Create customizable, angled and animated glitch slices on the selected lines"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:302 ../src/command/typesetting.cpp:303
+#: ../src/command/typesetting.cpp:319 ../src/command/typesetting.cpp:320
 msgid "Edit glitch effect"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:304
+#: ../src/command/typesetting.cpp:321
 msgid "Edit the settings of the selected generated glitch effect"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:317 ../src/command/typesetting.cpp:318
+#: ../src/command/typesetting.cpp:334 ../src/command/typesetting.cpp:335
 msgid "Copy glitch effect"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:319
+#: ../src/command/typesetting.cpp:336
 msgid "Copy the selected generated glitch rows and settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:332 ../src/command/typesetting.cpp:333
-#: ../src/command/typesetting.cpp:342 ../src/command/vis_tool.cpp:194
+#: ../src/command/typesetting.cpp:349 ../src/command/typesetting.cpp:350
+msgid "Remove glitch effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:351
+msgid ""
+"Remove the selected generated glitch effect and restore its original source "
+"lines"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:364 ../src/command/typesetting.cpp:365
+#: ../src/command/typesetting.cpp:374 ../src/command/vis_tool.cpp:194
 #: ../src/command/vis_tool.cpp:195
 msgid "Textbox"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:334
+#: ../src/command/typesetting.cpp:366
 msgid "Put the selected lines into a wrapping textbox drawn on the video"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:352
+#: ../src/command/typesetting.cpp:384
 msgid "&Quick insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:353
+#: ../src/command/typesetting.cpp:385
 msgid "Quick image insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:354
+#: ../src/command/typesetting.cpp:386
 msgid "Insert images using the saved basic or dynamic settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:364
+#: ../src/command/typesetting.cpp:396
 msgid "&Insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:365 ../src/typesetting_image_insert.cpp:176
+#: ../src/command/typesetting.cpp:397 ../src/typesetting_image_insert.cpp:176
 #: ../src/typesetting_image_insert.cpp:354
 #: ../src/typesetting_image_insert.cpp:443
 msgid "Image insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:366
+#: ../src/command/typesetting.cpp:398
 msgid "Convert an image to optimized ImageMask subtitle drawings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:376
+#: ../src/command/typesetting.cpp:408
 msgid "With &editing..."
 msgstr ""
 
-#: ../src/command/typesetting.cpp:377
+#: ../src/command/typesetting.cpp:409
 msgid "ImageEditor insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:378
+#: ../src/command/typesetting.cpp:410
 msgid "Edit the current video frame in ImageEditor before inserting the result"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:390
+#: ../src/command/typesetting.cpp:422
 msgid "&Settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:391 ../src/typesetting_image_insert.cpp:224
+#: ../src/command/typesetting.cpp:423 ../src/typesetting_image_insert.cpp:224
 msgid "Image insert settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:392
+#: ../src/command/typesetting.cpp:424
 msgid "Configure Quick insert and dynamic image filenames"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:399
+#: ../src/command/typesetting.cpp:431
 msgid "&Apply"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:400 ../src/dialog_motion.cpp:404
+#: ../src/command/typesetting.cpp:432 ../src/dialog_motion.cpp:404
 #: ../src/dialog_motion.cpp:450
 msgid "Apply motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:401
+#: ../src/command/typesetting.cpp:433
 msgid "Apply Mocha Corner Pin or Transform Data to the selected lines"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:412
+#: ../src/command/typesetting.cpp:444
 msgid "&Auto motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:413 ../src/visual_tool_auto_motion.cpp:161
+#: ../src/command/typesetting.cpp:445 ../src/visual_tool_auto_motion.cpp:161
 #: ../src/visual_tool_auto_motion.cpp:177
 #: ../src/visual_tool_auto_motion.cpp:192
 #: ../src/visual_tool_auto_motion.cpp:234
 msgid "Auto motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:414
+#: ../src/command/typesetting.cpp:446
 msgid "Select a video region and track its position, size and rotation"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:429
+#: ../src/command/typesetting.cpp:461
 msgid "&Revert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:430
+#: ../src/command/typesetting.cpp:462
 msgid "Revert motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:431
+#: ../src/command/typesetting.cpp:463
 msgid "Restore the source lines saved by Apply or Auto motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:438 ../src/dialog_gradient.cpp:979
+#: ../src/command/typesetting.cpp:470 ../src/dialog_gradient.cpp:979
 #: ../src/dialog_motion.cpp:277 ../src/dialog_motion.cpp:299
 #: ../src/dialog_motion.cpp:305 ../src/dialog_motion.cpp:364
 #: ../src/dialog_motion.cpp:442 ../src/typesetting_gradient.cpp:1710
 msgid "Motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:445
+#: ../src/command/typesetting.cpp:477
 msgid "&Trim"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:446 ../src/dialog_motion.cpp:847
+#: ../src/command/typesetting.cpp:478 ../src/dialog_motion.cpp:847
 #: ../src/dialog_motion.cpp:862 ../src/dialog_motion.cpp:865
 #: ../src/dialog_motion.cpp:880 ../src/dialog_motion.cpp:892
 #: ../src/dialog_motion.cpp:895 ../src/dialog_motion.cpp:913
 msgid "Motion trim"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:447
+#: ../src/command/typesetting.cpp:479
 msgid "Write the selected time range as JPEG frames or an H.264 MP4"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:457
+#: ../src/command/typesetting.cpp:489
 msgid "Trim &settings..."
 msgstr ""
 
-#: ../src/command/typesetting.cpp:458
+#: ../src/command/typesetting.cpp:490
 msgid "Motion trim settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:459
+#: ../src/command/typesetting.cpp:491
 msgid "Choose the motion trim format and output directory"
 msgstr ""
 
@@ -9344,85 +9363,93 @@ msgstr ""
 msgid "ImageEditor requires embedded web-view support, which is unavailable."
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1320
+#: ../src/typesetting_glitch.cpp:1326
 msgid "Chromatic split"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1320
+#: ../src/typesetting_glitch.cpp:1326
 msgid "Slice shift"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1321
+#: ../src/typesetting_glitch.cpp:1327
 msgid "Macroblock"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1321
+#: ../src/typesetting_glitch.cpp:1327
 msgid "Scanline tear"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1322
+#: ../src/typesetting_glitch.cpp:1328
 msgid "Block shuffle"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1322
+#: ../src/typesetting_glitch.cpp:1328
 msgid "Signal dropout"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1323
+#: ../src/typesetting_glitch.cpp:1329
 msgid "Ghost trail"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1323
+#: ../src/typesetting_glitch.cpp:1329
 msgid "VHS tracking"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1324
+#: ../src/typesetting_glitch.cpp:1330
 msgid "Pixel stretch"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1328
+#: ../src/typesetting_glitch.cpp:1334
 msgid "Cyan and magenta"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1328
+#: ../src/typesetting_glitch.cpp:1334
 msgid "Original colors"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1329
+#: ../src/typesetting_glitch.cpp:1335
 msgid "Blue and pink"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1329
+#: ../src/typesetting_glitch.cpp:1335
 msgid "RGB split"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1330
+#: ../src/typesetting_glitch.cpp:1336
 msgid "Custom colors"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1330
+#: ../src/typesetting_glitch.cpp:1336
 msgid "Dark"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1330
+#: ../src/typesetting_glitch.cpp:1336
 msgid "Light"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1362
+#: ../src/typesetting_glitch.cpp:1368
 #, c-format
 msgid "%s, %s, animation"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1363
+#: ../src/typesetting_glitch.cpp:1369
 #, c-format
 msgid "%s, %s, no animation"
 msgstr ""
 
-#: ../src/typesetting_glitch.cpp:1507
+#: ../src/typesetting_glitch.cpp:1505
+msgid "remove glitch effect"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1551
 msgid "apply glitch effect"
 msgstr ""
 
-#: ../src/typesetting_gradient.cpp:2130
+#: ../src/typesetting_gradient.cpp:2093
+msgid "remove gradient effect"
+msgstr ""
+
+#: ../src/typesetting_gradient.cpp:2163
 msgid "apply gradient"
 msgstr ""
 

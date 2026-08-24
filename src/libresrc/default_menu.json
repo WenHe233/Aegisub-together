@@ -37,12 +37,14 @@
     "grid_context_gradient" : [
         { "command" : "typesetting/gradient/edit" },
         { "command" : "typesetting/gradient/copy" },
+        { "command" : "typesetting/gradient/delete" },
         {},
         { "include" : "grid_context" }
     ],
     "grid_context_glitch" : [
         { "command" : "typesetting/glitch/edit" },
         { "command" : "typesetting/glitch/copy" },
+        { "command" : "typesetting/glitch/delete" },
         {},
         { "include" : "grid_context" }
     ],

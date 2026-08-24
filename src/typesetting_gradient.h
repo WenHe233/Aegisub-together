@@ -126,6 +126,9 @@ public:
 /// the selected lines contained a character which could be changed.
 size_t Apply(agi::Context *c, Settings const& settings);
 
+/// Remove selected generated gradient groups and restore their saved source rows.
+bool Revert(agi::Context *c);
+
 /// Colour at a normalized position. Exposed for the gradient preview control.
 agi::Color Sample(std::vector<Stop> const& stops, double position);
 

@@ -2062,6 +2062,39 @@ bool RegenerateGroupText(agi::Context *c, AssDialogue const& given_anchor,
 	return true;
 }
 
+bool Revert(agi::Context *c) {
+	auto groups = CollectSourceGroups(c);
+	Selection selection;
+	AssDialogue *active = nullptr;
+	auto old_active = c->selectionController->GetActiveLine();
+	std::vector<std::unique_ptr<AssDialogue>> removed;
+
+	for (auto& group : groups) {
+		if (!group.editing || !group.stored_source || group.existing.empty()) continue;
+		bool was_active = std::find(group.existing.begin(), group.existing.end(), old_active) !=
+			group.existing.end();
+		auto insert_at = c->ass->Events.iterator_to(*group.anchor);
+		auto original = new AssDialogue(*group.stored_source);
+		c->ass->DeleteExtradataValue(*original, gradient_data_key);
+		c->ass->DeleteExtradataValue(*original, gradient_source_key);
+		c->ass->Events.insert(insert_at, *original);
+		selection.insert(original);
+		if (!active || was_active) active = original;
+
+		for (auto line : group.existing) {
+			c->ass->Events.erase(c->ass->Events.iterator_to(*line));
+			removed.emplace_back(line);
+		}
+	}
+
+	if (selection.empty()) return false;
+	c->selectionController->SetSelectionAndActive(std::move(selection), active);
+	c->ass->CleanExtradata();
+	c->ass->Commit(_("remove gradient effect"), AssFile::COMMIT_DIAG_ADDREM |
+		AssFile::COMMIT_DIAG_FULL | AssFile::COMMIT_EXTRADATA);
+	return true;
+}
+
 size_t Apply(agi::Context *c, Settings const& settings) {
 	auto groups = CollectSourceGroups(c);
 	if (groups.empty()) return 0;
