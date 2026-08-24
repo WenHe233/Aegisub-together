@@ -524,7 +524,8 @@ class DialogColorPicker final : public wxDialog {
 	std::function<void (agi::Color)> callback;
 
 public:
-	DialogColorPicker(wxWindow *parent, agi::Color initial_color, std::function<void (agi::Color)> callback, bool alpha);
+	DialogColorPicker(wxWindow *parent, agi::Color initial_color,
+		std::function<void (agi::Color)> callback, bool alpha, bool allow_clear = false);
 	~DialogColorPicker();
 
 	void SetColor(agi::Color new_color);
@@ -554,7 +555,8 @@ static wxBitmap make_slider(Func func) {
 	});
 }
 
-DialogColorPicker::DialogColorPicker(wxWindow *parent, agi::Color initial_color, std::function<void (agi::Color)> callback, bool alpha)
+DialogColorPicker::DialogColorPicker(wxWindow *parent, agi::Color initial_color,
+		std::function<void (agi::Color)> callback, bool alpha, bool allow_clear)
 : wxDialog(parent, -1, _("Select Color"))
 , callback(std::move(callback))
 {
@@ -678,7 +680,14 @@ DialogColorPicker::DialogColorPicker(wxWindow *parent, agi::Color initial_color,
 	input_sizer->AddStretchSpacer(1);
 	input_sizer->Add(picker_sizer, 0, wxEXPAND);
 	input_sizer->AddStretchSpacer(2);
-	input_sizer->Add(button_sizer, 0, wxALIGN_RIGHT);
+	auto action_sizer = new wxBoxSizer(wxHORIZONTAL);
+	if (allow_clear) {
+		auto clear = new wxButton(this, wxID_CLEAR, _("Clear color"));
+		clear->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CLEAR); });
+		action_sizer->Add(clear, 0, wxRIGHT, 5);
+	}
+	action_sizer->Add(button_sizer, 0);
+	input_sizer->Add(action_sizer, 0, wxALIGN_RIGHT);
 
 	wxSizer *main_sizer = new wxBoxSizer(wxHORIZONTAL);
 	main_sizer->Add(spectrum_box_sizer, 1, wxALL | wxEXPAND, 5);
@@ -1208,4 +1217,22 @@ bool GetColorFromUser(wxWindow* parent, agi::Color original, bool alpha, std::fu
 	else
 		dialog.AddColorToRecent();
 	return ok;
+}
+
+bool GetOptionalColorFromUser(wxWindow *parent, std::optional<agi::Color> original,
+		std::function<void (std::optional<agi::Color>)> callback) {
+	agi::Color initial = original.value_or(agi::Color(255, 255, 255));
+	DialogColorPicker dialog(parent, initial,
+		[&](agi::Color color) { callback(color); }, false, true);
+	int result = dialog.ShowModal();
+	if (result == wxID_CLEAR) {
+		callback(std::nullopt);
+		return true;
+	}
+	if (result != wxID_OK) {
+		callback(original);
+		return false;
+	}
+	dialog.AddColorToRecent();
+	return true;
 }

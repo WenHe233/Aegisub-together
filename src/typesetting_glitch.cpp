@@ -94,18 +94,28 @@ std::optional<Values> DeserializeValues(std::string const& encoded) {
 
 std::string SerializeSettings(Settings settings) {
 	settings.base = Clamp(settings.base);
+	auto color_text = [](std::optional<agi::Color> const& color) {
+		return color ? color->GetHexFormatted() : std::string();
+	};
 	std::string animations;
 	for (auto animation : settings.animations) {
 		animation.from = Clamp(animation.from);
 		animation.to = Clamp(animation.to);
 		if (!animations.empty()) animations += ';';
-		animations += agi::format("%d,%d,%d,%d,%d,%d,%d,%d,%s,%s", animation.enabled,
+		animations += agi::format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%s,%s,%s,%d,%s,%s",
+			animation.enabled,
 			static_cast<int>(animation.timing), animation.start_time, animation.end_time,
-			animation.frame, animation.use_default_mode, static_cast<int>(animation.mode),
+			animation.frame, animation.use_default_effect_type,
+			static_cast<int>(animation.effect_type), animation.use_default_color_style,
+			static_cast<int>(animation.color_style), color_text(animation.custom_colors[0]),
+			color_text(animation.custom_colors[1]), color_text(animation.custom_colors[2]),
 			animation.show_base, SerializeValues(animation.from), SerializeValues(animation.to));
 	}
-	return agi::format("7|%d|%u|%d|%s|%s", static_cast<int>(settings.mode),
-		settings.seed, settings.show_base, SerializeValues(settings.base), animations);
+	return agi::format("9|%d|%d|%u|%d|%s,%s,%s|%s|%s",
+		static_cast<int>(settings.effect_type), static_cast<int>(settings.color_style),
+		settings.seed, settings.show_base, color_text(settings.custom_colors[0]),
+		color_text(settings.custom_colors[1]), color_text(settings.custom_colors[2]),
+		SerializeValues(settings.base), animations);
 }
 
 std::optional<Settings> DeserializeSettings(std::string const& encoded) {
@@ -118,30 +128,32 @@ std::optional<Settings> DeserializeSettings(std::string const& encoded) {
 		if (end == std::string::npos) break;
 		at = end + 1;
 	}
-	bool legacy = fields.size() == 5 && fields[0] == "1";
-	bool version_two = fields.size() == 6 && fields[0] == "2";
-	bool version_three = fields.size() == 6 && fields[0] == "3";
-	bool version_four = fields.size() == 6 && fields[0] == "4";
-	bool version_five = fields.size() == 6 && fields[0] == "5";
-	bool version_six = fields.size() == 6 && fields[0] == "6";
-	bool version_seven = fields.size() == 6 && fields[0] == "7";
-	if (!legacy && !version_two && !version_three && !version_four && !version_five &&
-		!version_six && !version_seven)
-		return std::nullopt;
+	if (fields.size() != 8 || fields[0] != "9") return std::nullopt;
 	try {
 		Settings settings;
-		settings.mode = static_cast<Mode>(std::clamp(std::stoi(fields[1]), 0, 16));
-		settings.seed = static_cast<uint32_t>(std::stoul(fields[2]));
-		settings.show_base = legacy || std::stoi(fields[3]) != 0;
-		size_t base_field = legacy ? 3 : 4;
-		size_t animations_field = legacy ? 4 : 5;
-		auto base = DeserializeValues(fields[base_field]);
+		settings.effect_type = static_cast<EffectType>(std::clamp(std::stoi(fields[1]), 0, 8));
+		settings.color_style = static_cast<ColorStyle>(std::clamp(std::stoi(fields[2]), 0, 6));
+		settings.seed = static_cast<uint32_t>(std::stoul(fields[3]));
+		settings.show_base = std::stoi(fields[4]) != 0;
+		std::vector<std::string> colors;
+		size_t color_at = 0;
+		for (;;) {
+			size_t comma = fields[5].find(',', color_at);
+			colors.push_back(fields[5].substr(color_at,
+				comma == std::string::npos ? std::string::npos : comma - color_at));
+			if (comma == std::string::npos) break;
+			color_at = comma + 1;
+		}
+		if (colors.size() != 3) return std::nullopt;
+		for (size_t i = 0; i < settings.custom_colors.size(); ++i)
+			if (!colors[i].empty()) settings.custom_colors[i] = agi::Color(colors[i]);
+		auto base = DeserializeValues(fields[6]);
 		if (!base) return std::nullopt;
 		settings.base = *base;
 		size_t item_at = 0;
-		while (item_at < fields[animations_field].size()) {
-			size_t item_end = fields[animations_field].find(';', item_at);
-			std::string item = fields[animations_field].substr(item_at,
+		while (item_at < fields[7].size()) {
+			size_t item_end = fields[7].find(';', item_at);
+			std::string item = fields[7].substr(item_at,
 				item_end == std::string::npos ? std::string::npos : item_end - item_at);
 			std::vector<std::string> parts;
 			size_t part_at = 0;
@@ -152,84 +164,28 @@ std::optional<Settings> DeserializeSettings(std::string const& encoded) {
 				if (comma == std::string::npos) break;
 				part_at = comma + 1;
 			}
-			if (parts.size() != 9 && parts.size() != 11 && parts.size() != 14 &&
-				parts.size() != 15 && parts.size() != 18 && parts.size() != 19 &&
-				parts.size() != 20)
-				return std::nullopt;
+			if (parts.size() != 25) return std::nullopt;
 			Animation animation;
 			animation.enabled = std::stoi(parts[0]) != 0;
-			animation.mode = settings.mode;
 			animation.show_base = settings.show_base;
-			size_t values_at = 3;
-			if (parts.size() == 20) {
-				animation.timing = std::stoi(parts[1]) == 1 ?
-					AnimationTiming::Frame : AnimationTiming::Range;
-				animation.start_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
-				animation.end_time = std::clamp(std::stoi(parts[3]), 0, 3600000);
-				animation.frame = std::clamp(std::stoi(parts[4]), 0, 1000000);
-				animation.use_default_mode = std::stoi(parts[5]) != 0;
-				animation.mode = static_cast<Mode>(std::clamp(std::stoi(parts[6]), 0, 16));
-				animation.show_base = std::stoi(parts[7]) != 0;
-				values_at = 8;
-			}
-			else if (parts.size() == 19) {
-				animation.timing = std::stoi(parts[1]) == 1 ?
-					AnimationTiming::Frame : AnimationTiming::Range;
-				animation.start_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
-				animation.end_time = std::clamp(std::stoi(parts[3]), 0, 3600000);
-				animation.frame = std::clamp(std::stoi(parts[4]), 0, 1000000);
-				animation.use_default_mode = std::stoi(parts[5]) != 0;
-				animation.mode = static_cast<Mode>(std::clamp(std::stoi(parts[6]), 0, 16));
-				values_at = 7;
-			}
-			else if (parts.size() == 18) {
-				animation.timing = std::stoi(parts[1]) == 1 ?
-					AnimationTiming::Frame : AnimationTiming::Range;
-				animation.start_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
-				animation.end_time = std::clamp(std::stoi(parts[3]), 0, 3600000);
-				animation.frame = std::clamp(std::stoi(parts[4]), 0, 1000000);
-				animation.use_default_mode = false;
-				animation.mode = static_cast<Mode>(std::clamp(std::stoi(parts[5]), 0, 16));
-				values_at = 6;
-			}
-			else {
-				animation.start_time = std::clamp(std::stoi(parts[1]), 0, 3600000);
-				animation.end_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
-				if (parts.size() == 14)
-					animation.use_default_mode = false;
-				if (parts.size() == 14)
-					animation.mode = static_cast<Mode>(std::clamp(std::stoi(parts[3]), 0, 16));
-			}
-			std::string from_text;
-			std::string to_text;
-			if (parts.size() == 9) {
-				from_text = parts[3] + "," + parts[4] + "," + parts[5];
-				to_text = parts[6] + "," + parts[7] + "," + parts[8];
-			}
-			else if (parts.size() == 11) {
-				from_text = parts[3] + "," + parts[4] + "," + parts[5] + "," + parts[6];
-				to_text = parts[7] + "," + parts[8] + "," + parts[9] + "," + parts[10];
-			}
-			else if (parts.size() == 14) {
-				from_text = parts[4] + "," + parts[5] + "," + parts[6] + "," +
-					parts[7] + "," + parts[8];
-				to_text = parts[9] + "," + parts[10] + "," + parts[11] + "," +
-					parts[12] + "," + parts[13];
-			}
-			else if (parts.size() == 15) {
-				from_text = parts[3] + "," + parts[4] + "," + parts[5] + "," +
-					parts[6] + "," + parts[7] + "," + parts[8];
-				to_text = parts[9] + "," + parts[10] + "," + parts[11] + "," +
-					parts[12] + "," + parts[13] + "," + parts[14];
-			}
-			else {
-				from_text = parts[values_at] + "," + parts[values_at + 1] + "," +
-					parts[values_at + 2] + "," + parts[values_at + 3] + "," +
-					parts[values_at + 4] + "," + parts[values_at + 5];
-				to_text = parts[values_at + 6] + "," + parts[values_at + 7] + "," +
-					parts[values_at + 8] + "," + parts[values_at + 9] + "," +
-					parts[values_at + 10] + "," + parts[values_at + 11];
-			}
+			animation.timing = std::stoi(parts[1]) == 1 ?
+				AnimationTiming::Frame : AnimationTiming::Range;
+			animation.start_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
+			animation.end_time = std::clamp(std::stoi(parts[3]), 0, 3600000);
+			animation.frame = std::clamp(std::stoi(parts[4]), 0, 1000000);
+			animation.use_default_effect_type = std::stoi(parts[5]) != 0;
+			animation.effect_type = static_cast<EffectType>(
+				std::clamp(std::stoi(parts[6]), 0, 8));
+			animation.use_default_color_style = std::stoi(parts[7]) != 0;
+			animation.color_style = static_cast<ColorStyle>(
+				std::clamp(std::stoi(parts[8]), 0, 6));
+			for (size_t i = 0; i < animation.custom_colors.size(); ++i)
+				if (!parts[9 + i].empty()) animation.custom_colors[i] = agi::Color(parts[9 + i]);
+			animation.show_base = std::stoi(parts[12]) != 0;
+			std::string from_text = parts[13] + "," + parts[14] + "," + parts[15] + "," +
+				parts[16] + "," + parts[17] + "," + parts[18];
+			std::string to_text = parts[19] + "," + parts[20] + "," + parts[21] + "," +
+				parts[22] + "," + parts[23] + "," + parts[24];
 			auto from = DeserializeValues(from_text);
 			auto to = DeserializeValues(to_text);
 			if (!from || !to) return std::nullopt;
@@ -506,29 +462,32 @@ std::string ApplyOpacity(std::string text, double opacity) {
 	return text;
 }
 
-std::string ApplyTint(std::string text, char const *bgr) {
-	if (!bgr) return text;
-	static std::regex colour(R"(\\(?:1c|c)&H[0-9A-Fa-f]{6}&)");
+std::string ApplyTint(std::string text, std::optional<agi::Color> const& colour) {
+	if (!colour) return text;
+	std::string ass = colour->GetAssOverrideFormatted();
+	static std::regex colour_tag(R"(\\(?:1c|c)&H[0-9A-Fa-f]{6}&)");
 	bool matched = false;
-	text = ReplaceMatches(text, colour, [&](std::smatch const&) {
-		return agi::format("\\1c&H%s&", bgr);
+	text = ReplaceMatches(text, colour_tag, [&](std::smatch const&) {
+		return "\\1c" + ass;
 	}, &matched);
-	if (!matched) text = InjectTags(std::move(text), agi::format("\\1c&H%s&", bgr));
+	if (!matched) text = InjectTags(std::move(text), "\\1c" + ass);
 	return text;
 }
 
 std::string OffsetPosition(agi::Context *c, AssDialogue const& source, std::string text,
-		double from_x, double to_x, int duration) {
+		double from_x, double from_y, double to_x, double to_y, int duration) {
 	static std::regex position(
 		R"(\\pos\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\))");
 	std::smatch found;
 	if (std::regex_search(text, found, position)) {
 		double x = std::stod(found[1].str());
 		double y = std::stod(found[2].str());
-		std::string tag = std::abs(from_x - to_x) < .001 ?
-			agi::format("\\pos(%s,%s)", Number(x + from_x), Number(y)) :
-			agi::format("\\move(%s,%s,%s,%s,0,%d)", Number(x + from_x), Number(y),
-				Number(x + to_x), Number(y), std::max(1, duration));
+		std::string tag = std::abs(from_x - to_x) < .001 &&
+			std::abs(from_y - to_y) < .001 ?
+			agi::format("\\pos(%s,%s)", Number(x + from_x), Number(y + from_y)) :
+			agi::format("\\move(%s,%s,%s,%s,0,%d)", Number(x + from_x),
+				Number(y + from_y), Number(x + to_x), Number(y + to_y),
+				std::max(1, duration));
 		text.replace(static_cast<size_t>(found.position()), static_cast<size_t>(found.length()), tag);
 		return text;
 	}
@@ -542,16 +501,18 @@ std::string OffsetPosition(agi::Context *c, AssDialogue const& source, std::stri
 		double y2 = std::stod(found[4].str());
 		std::string timing = found[5].matched ? found[5].str() : std::string();
 		std::string tag = agi::format("\\move(%s,%s,%s,%s%s)", Number(x1 + from_x),
-			Number(y1), Number(x2 + to_x), Number(y2), timing);
+			Number(y1 + from_y), Number(x2 + to_x), Number(y2 + to_y), timing);
 		text.replace(static_cast<size_t>(found.position()), static_cast<size_t>(found.length()), tag);
 		return text;
 	}
 
 	Vector2D at = LinePosition(c, source);
-	std::string tag = std::abs(from_x - to_x) < .001 ?
-		agi::format("\\pos(%s,%s)", Number(at.X() + from_x), Number(at.Y())) :
-		agi::format("\\move(%s,%s,%s,%s,0,%d)", Number(at.X() + from_x), Number(at.Y()),
-			Number(at.X() + to_x), Number(at.Y()), std::max(1, duration));
+	std::string tag = std::abs(from_x - to_x) < .001 &&
+		std::abs(from_y - to_y) < .001 ?
+		agi::format("\\pos(%s,%s)", Number(at.X() + from_x), Number(at.Y() + from_y)) :
+		agi::format("\\move(%s,%s,%s,%s,0,%d)", Number(at.X() + from_x),
+			Number(at.Y() + from_y), Number(at.X() + to_x), Number(at.Y() + to_y),
+			std::max(1, duration));
 	return InjectTags(std::move(text), tag);
 }
 
@@ -579,32 +540,45 @@ double Noise01(uint32_t seed, size_t source, int strip, int salt) {
 }
 
 struct Paint {
-	char const *bgr = nullptr;
+	std::optional<agi::Color> colour;
 	double opacity = 1.0;
 	double direction = 1.0;
 };
 
-std::vector<Paint> Paints(Mode mode) {
-	switch (mode) {
-		case Mode::Difference: return {{"FFFF00", .62, 1}, {"FF00FF", .48, -1}};
-		case Mode::SourceAtop: return {{nullptr, 1.0, 1}};
-		case Mode::DestinationOut: return {{"202020", .72, 1}};
-		case Mode::Lighter: return {{"FFFFFF", .62, 1}, {"FFFF00", .34, -1}};
-		case Mode::Multiply: return {{"503020", .72, 1}};
-		case Mode::Screen: return {{"FFFFFF", .48, 1}, {"FFFF00", .28, -1}};
-		case Mode::Overlay: return {{"FFFF00", .48, 1}, {"FF00FF", .42, -1}};
-		case Mode::Darken: return {{"402010", .72, 1}};
-		case Mode::Lighten: return {{"FFFFFF", .52, 1}};
-		case Mode::ColorDodge: return {{"FFFFAA", .58, 1}};
-		case Mode::ColorBurn: return {{"401040", .68, 1}};
-		case Mode::HardLight: return {{"FFFF00", .55, 1}, {"FF0080", .45, -1}};
-		case Mode::SoftLight: return {{"FFFFFF", .32, 1}};
-		case Mode::Exclusion: return {{"FFFF00", .46, 1}, {"FF00FF", .38, -1}};
-		case Mode::Hue: return {{"FFFF00", .52, 1}, {"FF00FF", .42, -1}};
-		case Mode::Color: return {{"FF7000", .55, 1}, {"7000FF", .42, -1}};
-		case Mode::Luminosity: return {{"FFFFFF", .5, 1}};
+std::vector<Paint> Paints(ColorStyle style,
+		std::array<std::optional<agi::Color>, 3> const& custom_colors) {
+	std::vector<Paint> custom;
+	constexpr std::array<double, 3> custom_opacity = {.65, .52, .42};
+	constexpr std::array<double, 3> custom_direction = {1.0, -1.0, 0.0};
+	if (style == ColorStyle::Custom) {
+		for (auto const& color : custom_colors) {
+			if (!color) continue;
+			size_t at = custom.size();
+			custom.push_back({color, custom_opacity[at], custom_direction[at]});
+		}
+		if (!custom.empty()) return custom;
 	}
-	return {{nullptr, 1.0, 1}};
+	switch (style) {
+		case ColorStyle::Original: return {{std::nullopt, 1.0, 1}};
+		case ColorStyle::CyanMagenta:
+			return {{agi::Color(0, 255, 255), .58, 1},
+				{agi::Color(255, 0, 255), .46, -1}};
+		case ColorStyle::Rgb:
+			return {{agi::Color(255, 40, 40), .58, 1},
+				{agi::Color(40, 255, 80), .42, 0},
+				{agi::Color(40, 80, 255), .52, -1}};
+		case ColorStyle::BluePink:
+			return {{agi::Color(0, 112, 255), .58, 1},
+				{agi::Color(255, 0, 112), .46, -1}};
+		case ColorStyle::Light:
+			return {{agi::Color(255, 255, 255), .56, 1},
+				{agi::Color(170, 255, 255), .3, -1}};
+		case ColorStyle::Dark:
+			return {{agi::Color(16, 32, 64), .72, 1},
+				{agi::Color(64, 16, 64), .36, -1}};
+		case ColorStyle::Custom: return {{std::nullopt, 1.0, 1}};
+	}
+	return {{std::nullopt, 1.0, 1}};
 }
 
 struct Phase {
@@ -613,7 +587,9 @@ struct Phase {
 	Values from;
 	Values to;
 	bool animated = false;
-	Mode mode = Mode::SourceAtop;
+	EffectType effect_type = EffectType::SliceShift;
+	ColorStyle color_style = ColorStyle::Original;
+	std::array<std::optional<agi::Color>, 3> custom_colors;
 	bool show_base = true;
 };
 
@@ -631,13 +607,14 @@ Values Interpolate(Values from, Values to, double factor) {
 
 Phase SlicePhase(Phase const& phase, int start, int end) {
 	if (!phase.animated || phase.end <= phase.start)
-		return {start, end, phase.from, phase.to, phase.animated, phase.mode,
+		return {start, end, phase.from, phase.to, phase.animated, phase.effect_type,
+			phase.color_style, phase.custom_colors,
 			phase.show_base};
 	double duration = static_cast<double>(phase.end - phase.start);
 	return {start, end,
 		Interpolate(phase.from, phase.to, (start - phase.start) / duration),
 		Interpolate(phase.from, phase.to, (end - phase.start) / duration),
-		true, phase.mode, phase.show_base};
+		true, phase.effect_type, phase.color_style, phase.custom_colors, phase.show_base};
 }
 
 struct ResolvedAnimation {
@@ -704,20 +681,28 @@ std::vector<Phase> Phases(agi::Context *c, Settings const& settings,
 		int start = std::max(cursor, resolved.start);
 		if (start >= resolved.end) continue;
 		if (start > cursor)
-			phases.push_back({cursor, start, current, current, false, settings.mode,
+			phases.push_back({cursor, start, current, current, false,
+				settings.effect_type, settings.color_style, settings.custom_colors,
 				settings.show_base});
-		Mode animation_mode = animation.use_default_mode ? settings.mode : animation.mode;
+		EffectType animation_effect = animation.use_default_effect_type ?
+			settings.effect_type : animation.effect_type;
+		ColorStyle animation_color = animation.use_default_color_style ?
+			settings.color_style : animation.color_style;
+		auto animation_colors = animation.use_default_color_style ?
+			settings.custom_colors : animation.custom_colors;
 		Phase range{resolved.start, resolved.end, animation.from, animation.to, true,
-			animation_mode, animation.show_base};
+			animation_effect, animation_color, animation_colors, animation.show_base};
 		phases.push_back(SlicePhase(range, start, resolved.end));
 		current = animation.to;
 		cursor = resolved.end;
 	}
 	if (cursor < duration)
-		phases.push_back({cursor, duration, current, current, false, settings.mode,
+		phases.push_back({cursor, duration, current, current, false,
+			settings.effect_type, settings.color_style, settings.custom_colors,
 			settings.show_base});
 	if (phases.empty() && duration > 0)
-		phases.push_back({0, duration, current, current, false, settings.mode,
+		phases.push_back({0, duration, current, current, false,
+			settings.effect_type, settings.color_style, settings.custom_colors,
 			settings.show_base});
 
 	// A single-frame animation temporarily replaces the underlying range/base phase,
@@ -733,10 +718,15 @@ std::vector<Phase> Phases(agi::Context *c, Settings const& settings,
 			}
 			if (phase.start < overlap_start)
 				replaced.push_back(SlicePhase(phase, phase.start, overlap_start));
-			Mode animation_mode = resolved.animation.use_default_mode ?
-				settings.mode : resolved.animation.mode;
+			EffectType animation_effect = resolved.animation.use_default_effect_type ?
+				settings.effect_type : resolved.animation.effect_type;
+			ColorStyle animation_color = resolved.animation.use_default_color_style ?
+				settings.color_style : resolved.animation.color_style;
+			auto animation_colors = resolved.animation.use_default_color_style ?
+				settings.custom_colors : resolved.animation.custom_colors;
 			replaced.push_back({overlap_start, overlap_end, resolved.animation.to,
-				resolved.animation.to, false, animation_mode, resolved.animation.show_base});
+				resolved.animation.to, false, animation_effect, animation_color,
+				animation_colors, resolved.animation.show_base});
 			if (overlap_end < phase.end)
 				replaced.push_back(SlicePhase(phase, overlap_end, phase.end));
 		}
@@ -778,8 +768,8 @@ std::vector<Phase> FramePhases(agi::Context *c, AssDialogue const& source,
 		double factor = ((start + end) * .5 - phase.start) /
 			std::max(1.0, static_cast<double>(phase.end - phase.start));
 		Values sampled = Interpolate(phase.from, phase.to, factor);
-		frames.push_back({start, end, sampled, sampled, false, phase.mode,
-			phase.show_base});
+		frames.push_back({start, end, sampled, sampled, false, phase.effect_type,
+			phase.color_style, phase.custom_colors, phase.show_base});
 	}
 	return frames;
 }
@@ -906,7 +896,7 @@ std::optional<Polygon> ParsePositiveClip(std::string const& text) {
 }
 
 std::optional<std::string> ApplyBandClip(std::string text, Polygon const& band,
-		bool had_clip, double translate_x = 0.0) {
+		bool had_clip, double translate_x = 0.0, double translate_y = 0.0) {
 	Polygon combined = band;
 	if (had_clip) {
 		auto existing = ParsePositiveClip(text);
@@ -918,9 +908,10 @@ std::optional<std::string> ApplyBandClip(std::string text, Polygon const& band,
 		static std::regex clips(R"(\\i?clip\([^)]*\))");
 		text = std::regex_replace(text, clips, "");
 	}
-	if (std::abs(translate_x) > .0001)
+	if (std::abs(translate_x) > .0001 || std::abs(translate_y) > .0001)
 		for (auto& point : combined)
-			point = point + Vector2D(static_cast<float>(translate_x), 0.f);
+			point = point + Vector2D(static_cast<float>(translate_x),
+				static_cast<float>(translate_y));
 	std::string body = PolygonClip(combined);
 	if (body.empty()) return std::nullopt;
 	return InjectTags(std::move(text), "\\clip(" + body + ")");
@@ -956,8 +947,9 @@ Polygon SlicePolygon(double angle, double normal_low, double normal_high,
 
 void AddOverlay(std::vector<AssDialogue>& out, agi::Context *c,
 		AssDialogue const& source, int start, int end,
-		double from_x, double to_x, double from_opacity, double to_opacity,
-		char const *bgr, std::optional<Polygon> clip) {
+		double from_x, double from_y, double to_x, double to_y,
+		double from_opacity, double to_opacity,
+		std::optional<agi::Color> const& colour, std::optional<Polygon> clip) {
 	if (end <= start || (from_opacity <= .0001 && to_opacity <= .0001)) return;
 	AssDialogue sampled(source);
 	typesetting::motion::SnapshotAnimations(c, sampled, (start + end) / 2, start);
@@ -968,17 +960,20 @@ void AddOverlay(std::vector<AssDialogue>& out, agi::Context *c,
 	generated.End = end;
 	std::string text = sampled.Text.get();
 	bool had_clip = HasClip(text);
-	text = OffsetPosition(c, sampled, std::move(text), from_x, to_x, end - start);
+	text = OffsetPosition(c, sampled, std::move(text), from_x, from_y, to_x, to_y,
+		end - start);
 	if (clip) {
 		// Intersect an existing source clip with the requested glitch slice first, then
 		// move that complete pixel region with the displaced content. Leaving the new
 		// clip behind at the source position cuts every shifted slice at the old bounds.
 		double clip_shift = (from_x + to_x) * .5;
-		auto clipped = ApplyBandClip(std::move(text), *clip, had_clip, clip_shift);
+		double clip_shift_y = (from_y + to_y) * .5;
+		auto clipped = ApplyBandClip(std::move(text), *clip, had_clip,
+			clip_shift, clip_shift_y);
 		if (!clipped) return;
 		text = std::move(*clipped);
 	}
-	text = ApplyTint(std::move(text), bgr);
+	text = ApplyTint(std::move(text), colour);
 	text = ApplyOpacity(std::move(text), from_opacity);
 	if (std::abs(from_opacity - to_opacity) > .001) {
 		int target_alpha = std::clamp(static_cast<int>(std::lround(
@@ -994,7 +989,39 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 		std::vector<AssDialogue *> const& sources, Bounds const& bounds,
 		Phase const& phase, Values from, Values to,
 		int height, double from_fade, double to_fade, uint32_t phase_seed) {
-	auto paints = Paints(phase.mode);
+	auto paints = Paints(phase.color_style, phase.custom_colors);
+	switch (phase.effect_type) {
+		case EffectType::ScanlineTear:
+			from.angle = to.angle = 90.0;
+			from.height = std::min(from.height, 3);
+			to.height = std::min(to.height, 3);
+			from.width = to.width = 100.0;
+			break;
+		case EffectType::Macroblock:
+		case EffectType::BlockShuffle:
+			from.angle = to.angle = 90.0;
+			from.height = std::max(from.height, 8);
+			to.height = std::max(to.height, 8);
+			from.width = std::max(from.width, 12.0);
+			to.width = std::max(to.width, 12.0);
+			break;
+		case EffectType::VhsTracking:
+			from.angle = to.angle = 90.0;
+			from.height = std::min(from.height, 4);
+			to.height = std::min(to.height, 4);
+			from.width = to.width = 100.0;
+			break;
+		case EffectType::Dropout:
+			from.angle = to.angle = 90.0;
+			from.height = std::min(from.height, 8);
+			to.height = std::min(to.height, 8);
+			break;
+		case EffectType::PixelStretch:
+			from.height = std::min(from.height, 5);
+			to.height = std::min(to.height, 5);
+			break;
+		default: break;
+	}
 	double peak_amount = std::max(from.amount, to.amount);
 	auto from_range = ProjectionRange(bounds, from.angle);
 	auto to_range = ProjectionRange(bounds, to.angle);
@@ -1022,9 +1049,17 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 	};
 	int from_regular_count = strip_count(from);
 	int to_regular_count = strip_count(to);
+	if (phase.effect_type == EffectType::Dropout) {
+		auto [from_rows, from_columns] = grid(from);
+		auto [to_rows, to_columns] = grid(to);
+		from_regular_count = from_rows * from_columns;
+		to_regular_count = to_rows * to_columns;
+	}
 	int regular_count = std::max(from_regular_count, to_regular_count);
-	int from_extra_count = detail_count(from.amount, from_regular_count);
-	int to_extra_count = detail_count(to.amount, to_regular_count);
+	int from_extra_count = phase.effect_type == EffectType::Dropout ? 0 :
+		detail_count(from.amount, from_regular_count);
+	int to_extra_count = phase.effect_type == EffectType::Dropout ? 0 :
+		detail_count(to.amount, to_regular_count);
 	int extra_count = std::max(from_extra_count, to_extra_count);
 	for (size_t source_index = 0; source_index < sources.size(); ++source_index) {
 		auto source = sources[source_index];
@@ -1044,34 +1079,93 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 				double to_opacity_scale = 1.0,
 				uint32_t seed = 0) {
 				seed = seed ? seed : phase_seed;
-				double displacement_jitter = .85 + .3 * Noise01(seed, noise_source,
-					band, 211 + static_cast<int>(paint_index));
-				double random_from = Offset(seed, noise_source, band,
-					static_cast<int>(paint_index), from.offset) * paint.direction *
-					displacement_scale * displacement_jitter;
-				double random_to = Offset(seed, noise_source, band,
-					static_cast<int>(paint_index), to.offset) * paint.direction *
-					displacement_scale * displacement_jitter;
-				AddOverlay(out, c, *source,
-					static_cast<int>(source->Start) + phase.start,
-					static_cast<int>(source->Start) + phase.end,
-					random_from, random_to,
-					from.opacity * paint.opacity * from_fade * from_opacity_scale,
-					to.opacity * paint.opacity * to_fade * to_opacity_scale,
-					paint.bgr, clip);
+				auto emit = [&](double scale, double from_alpha, double to_alpha,
+						uint32_t emit_seed) {
+					double displacement_jitter = .85 + .3 * Noise01(emit_seed, noise_source,
+						band, 211 + static_cast<int>(paint_index));
+					double from_x = Offset(emit_seed, noise_source, band,
+						static_cast<int>(paint_index), from.offset) * paint.direction *
+						scale * displacement_jitter;
+					double to_x = Offset(emit_seed, noise_source, band,
+						static_cast<int>(paint_index), to.offset) * paint.direction *
+						scale * displacement_jitter;
+					double from_y = 0.0, to_y = 0.0;
+					double y_scale = 0.0;
+					if (phase.effect_type == EffectType::Macroblock) y_scale = .35;
+					else if (phase.effect_type == EffectType::BlockShuffle) y_scale = .8;
+					else if (phase.effect_type == EffectType::VhsTracking) y_scale = .08;
+					else if (phase.effect_type == EffectType::GhostTrail) y_scale = .16;
+					if (y_scale > 0.0) {
+						from_y = Offset(emit_seed ^ 0x7f4a7c15U, noise_source, band,
+							static_cast<int>(paint_index) + 17, from.offset * y_scale) *
+							paint.direction * scale;
+						to_y = Offset(emit_seed ^ 0x7f4a7c15U, noise_source, band,
+							static_cast<int>(paint_index) + 17, to.offset * y_scale) *
+							paint.direction * scale;
+					}
+					if (phase.effect_type == EffectType::Macroblock ||
+						phase.effect_type == EffectType::BlockShuffle) {
+						double quantum = std::max(4.0, static_cast<double>(
+							std::max(from.height, to.height)));
+						from_x = std::round(from_x / quantum) * quantum;
+						to_x = std::round(to_x / quantum) * quantum;
+						from_y = std::round(from_y / quantum) * quantum;
+						to_y = std::round(to_y / quantum) * quantum;
+					}
+					if (phase.effect_type == EffectType::Dropout)
+						from_x = from_y = to_x = to_y = 0.0;
+					AddOverlay(out, c, *source,
+						static_cast<int>(source->Start) + phase.start,
+						static_cast<int>(source->Start) + phase.end,
+						from_x, from_y, to_x, to_y,
+						from.opacity * paint.opacity * from_fade * from_alpha,
+						to.opacity * paint.opacity * to_fade * to_alpha,
+						paint.colour, clip);
+				};
+				if (phase.effect_type == EffectType::PixelStretch) {
+					for (int echo = 0; echo < 6; ++echo) {
+						double echo_scale = displacement_scale * (.35 + echo * .42);
+						double echo_alpha = 1.0 / (1.0 + echo * .65);
+						emit(echo_scale, from_opacity_scale * echo_alpha,
+							to_opacity_scale * echo_alpha,
+							seed ^ static_cast<uint32_t>(echo * 0x45d9f3bU));
+					}
+				}
+				else emit(displacement_scale, from_opacity_scale, to_opacity_scale, seed);
 			};
+			if (phase.effect_type == EffectType::ChromaticSplit) {
+				double from_strength = from.amount / 100.0;
+				double to_strength = to.amount / 100.0;
+				add(source_band, std::nullopt, 1.0, from_strength, to_strength);
+				continue;
+			}
+			if (phase.effect_type == EffectType::GhostTrail) {
+				for (int echo = 1; echo <= 4; ++echo) {
+					double from_strength = from.amount / 100.0 / echo;
+					double to_strength = to.amount / 100.0 / echo;
+					add(source_band - echo, std::nullopt, .55 * echo,
+						from_strength, to_strength,
+						phase_seed ^ static_cast<uint32_t>(echo * 0x9e3779b9U));
+				}
+				continue;
+			}
 			if (atomic) {
 				auto [from_rows, from_columns] = grid(from);
 				auto [to_rows, to_columns] = grid(to);
 				(void)from_rows; (void)to_rows;
 				int columns = std::max(from_columns, to_columns);
 				for (int column = 0; column < columns; ++column) {
-					double from_active = column < from_columns && from.amount > 0.0 &&
-						Noise01(phase_seed, source_index, source_band * 131 + column, 31) *
-							100.0 < from.amount;
-					double to_active = column < to_columns && to.amount > 0.0 &&
-						Noise01(phase_seed, source_index, source_band * 131 + column, 31) *
-							100.0 < to.amount;
+					double from_noise = Noise01(phase_seed, source_index,
+						source_band * 131 + column, 31) * 100.0;
+					double to_noise = Noise01(phase_seed, source_index,
+						source_band * 131 + column, 31) * 100.0;
+					bool dropout = phase.effect_type == EffectType::Dropout;
+					double from_active = column < from_columns &&
+						(dropout ? from_noise >= from.amount * .85 :
+							from.amount > 0.0 && from_noise < from.amount);
+					double to_active = column < to_columns &&
+						(dropout ? to_noise >= to.amount * .85 :
+							to.amount > 0.0 && to_noise < to.amount);
 					Values const& geometry = from_active ? from : to;
 					auto normal = from_active ? from_range : to_range;
 					auto tangent = from_active ? from_tangent : to_tangent;
@@ -1091,7 +1185,7 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 						tangent_low, tangent_high);
 					int band = source_band * columns + column;
 					add(band, clip, 1.0, from_active, to_active);
-					if (peak_amount > 30.0)
+					if (peak_amount > 30.0 && !dropout)
 						add(band, clip, 1.5,
 							from.amount > 30.0 ? .48 * from_active : 0.0,
 							to.amount > 30.0 ? .48 * to_active : 0.0,
@@ -1102,6 +1196,12 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 				for (int band = 0; band < regular_count; ++band) {
 					bool from_active = band < from_regular_count;
 					bool to_active = band < to_regular_count;
+					if (phase.effect_type == EffectType::Dropout) {
+						double activity = Noise01(phase_seed, noise_source, band, 41) * 100.0;
+						from_active = from_active && activity >= from.amount * .85;
+						to_active = to_active && activity >= to.amount * .85;
+					}
+					if (!from_active && !to_active) continue;
 					Values const& geometry = from_active ? from : to;
 					auto normal = from_active ? from_range : to_range;
 					auto tangent = from_active ? from_tangent : to_tangent;
@@ -1128,7 +1228,9 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 					}
 					auto clip = SlicePolygon(geometry.angle, centre - geometry.height * .5,
 						centre + geometry.height * .5, tangent_low, tangent_high);
-					add(band, std::move(clip), 1.0,
+					double displacement_scale = phase.effect_type == EffectType::BlockShuffle ?
+						1.55 : 1.0;
+					add(band, std::move(clip), displacement_scale,
 						from_active ? 1.0 : 0.0, to_active ? 1.0 : 0.0);
 				}
 
@@ -1184,7 +1286,7 @@ std::vector<AssDialogue> GenerateGroup(agi::Context *c,
 		auto frames = FramePhases(c, *sources.front(), phase);
 		for (size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
 			auto const& frame = frames[frame_index];
-			if (frame.show_base) {
+			if (frame.show_base && frame.effect_type != EffectType::Dropout) {
 				for (auto source : sources) {
 					int start = static_cast<int>(source->Start) + frame.start;
 					int end = static_cast<int>(source->Start) + frame.end;
@@ -1214,10 +1316,18 @@ std::vector<AssDialogue> GenerateGroup(agi::Context *c,
 
 } // namespace
 
-std::vector<std::string> ModeNames() {
-	return {"difference", "source-atop", "destination-out", "lighter", "multiply",
-		"screen", "overlay", "darken", "lighten", "color-dodge", "color-burn",
-		"hard-light", "soft-light", "exclusion", "hue", "color", "luminosity"};
+std::vector<std::string> EffectTypeNames() {
+	return {from_wx(_("Slice shift")), from_wx(_("Chromatic split")),
+		from_wx(_("Scanline tear")), from_wx(_("Macroblock")),
+		from_wx(_("Block shuffle")), from_wx(_("Signal dropout")),
+		from_wx(_("Ghost trail")), from_wx(_("VHS tracking")),
+		from_wx(_("Pixel stretch"))};
+}
+
+std::vector<std::string> ColorStyleNames() {
+	return {from_wx(_("Original colors")), from_wx(_("Cyan and magenta")),
+		from_wx(_("RGB split")), from_wx(_("Blue and pink")),
+		from_wx(_("Light")), from_wx(_("Dark")), from_wx(_("Custom colors"))};
 }
 
 bool IsEffect(AssDialogue const *line) {
@@ -1245,11 +1355,14 @@ std::string Description(AssFile const& file, AssDialogue const& line) {
 	if (!encoded) return {};
 	auto settings = DeserializeSettings(*encoded);
 	if (!settings) return {};
-	auto names = ModeNames();
+	auto effects = EffectTypeNames();
+	auto colors = ColorStyleNames();
 	bool animated = std::any_of(settings->animations.begin(), settings->animations.end(),
 		[](Animation const& animation) { return animation.enabled; });
-	return from_wx(wxString::Format(animated ? _("%s, animation") : _("%s, no animation"),
-		to_wx(names[static_cast<size_t>(settings->mode)])));
+	return from_wx(wxString::Format(animated ? _("%s, %s, animation") :
+		_("%s, %s, no animation"),
+		to_wx(effects[static_cast<size_t>(settings->effect_type)]),
+		to_wx(colors[static_cast<size_t>(settings->color_style)])));
 }
 
 Settings LoadSettingsForSelection(agi::Context *c) {

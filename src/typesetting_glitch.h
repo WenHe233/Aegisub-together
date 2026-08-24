@@ -8,9 +8,13 @@
 
 #include "visual_tool_preview.h"
 
+#include <libaegisub/color.h>
+
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -20,24 +24,26 @@ class AssFile;
 
 namespace typesetting::glitch {
 
-enum class Mode {
-	Difference,
-	SourceAtop,
-	DestinationOut,
-	Lighter,
-	Multiply,
-	Screen,
-	Overlay,
-	Darken,
-	Lighten,
-	ColorDodge,
-	ColorBurn,
-	HardLight,
-	SoftLight,
-	Exclusion,
-	Hue,
-	Color,
-	Luminosity
+enum class EffectType {
+	SliceShift,
+	ChromaticSplit,
+	ScanlineTear,
+	Macroblock,
+	BlockShuffle,
+	Dropout,
+	GhostTrail,
+	VhsTracking,
+	PixelStretch
+};
+
+enum class ColorStyle {
+	Original,
+	CyanMagenta,
+	Rgb,
+	BluePink,
+	Light,
+	Dark,
+	Custom
 };
 
 struct Values {
@@ -60,22 +66,28 @@ struct Animation {
 	int start_time = 0;
 	int end_time = 1000;
 	int frame = 0;
-	bool use_default_mode = true;
-	Mode mode = Mode::SourceAtop;
+	bool use_default_effect_type = true;
+	EffectType effect_type = EffectType::SliceShift;
+	bool use_default_color_style = true;
+	ColorStyle color_style = ColorStyle::Original;
+	std::array<std::optional<agi::Color>, 3> custom_colors;
 	bool show_base = true;
 	Values from;
 	Values to{100.0, 50.0, 0.7, 10, 100.0, 90.0};
 };
 
 struct Settings {
-	Mode mode = Mode::SourceAtop;
+	EffectType effect_type = EffectType::SliceShift;
+	ColorStyle color_style = ColorStyle::Original;
+	std::array<std::optional<agi::Color>, 3> custom_colors;
 	Values base;
 	bool show_base = true;
 	uint32_t seed = 0x5a17c9e3U;
 	std::vector<Animation> animations;
 };
 
-std::vector<std::string> ModeNames();
+std::vector<std::string> EffectTypeNames();
+std::vector<std::string> ColorStyleNames();
 Settings LoadSettingsForSelection(agi::Context *c);
 bool SettingsFromClipboard(std::string clipboard, Settings& settings);
 

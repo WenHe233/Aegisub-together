@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Aegisub 3.2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-22 01:58+0200\n"
+"POT-Creation-Date: 2026-08-24 17:09+0200\n"
 "PO-Revision-Date: 2005-2014-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,7 +21,6 @@ msgstr ""
 #: ../src/aegisublocale.cpp:107 ../src/command/app.cpp:156
 msgid "Language"
 msgstr ""
-
 #: ../src/aegisublocale.cpp:107
 msgid "Please choose a language:"
 msgstr ""
@@ -34,7 +33,8 @@ msgstr ""
 msgid "ANSI"
 msgstr ""
 
-#: ../src/ass_style.cpp:198 ../src/command/video.cpp:146 ../src/dialog_glitch.cpp
+#: ../src/ass_style.cpp:198 ../src/command/video.cpp:146
+#: ../src/dialog_glitch.cpp:825 ../src/dialog_glitch.cpp:834
 msgid "Default"
 msgstr ""
 
@@ -308,22 +308,27 @@ msgid ""
 "%s"
 msgstr ""
 
-#: ../src/base_grid.cpp:652
+#: ../src/base_grid.cpp:653
 #, c-format
 msgid "Textbox (%d lines, text: %s)"
 msgstr ""
 
-#: ../src/base_grid.cpp:660
+#: ../src/base_grid.cpp:661
 #, c-format
 msgid "Gradient (%d lines, text: %s)"
 msgstr ""
 
-#: ../src/base_grid.cpp:662
+#: ../src/base_grid.cpp:663
 #, c-format
 msgid "Gradient (%d lines, %s, text: %s)"
 msgstr ""
 
-#: ../src/base_grid.cpp:667
+#: ../src/base_grid.cpp:670
+#, c-format
+msgid "Glitch effect (%d lines, %s)"
+msgstr ""
+
+#: ../src/base_grid.cpp:675
 #, c-format
 msgid "Image Mask (%d lines)"
 msgstr ""
@@ -565,7 +570,7 @@ msgid ""
 "Restart now?"
 msgstr ""
 
-#: ../src/command/app.cpp:167 ../src/preferences.cpp:834 ../src/toolbar.cpp:183
+#: ../src/command/app.cpp:167 ../src/preferences.cpp:834 ../src/toolbar.cpp:192
 msgid "Restart Aegisub?"
 msgstr ""
 
@@ -1002,497 +1007,497 @@ msgstr ""
 msgid "'%s' is not a valid command name"
 msgstr ""
 
-#: ../src/command/edit.cpp:241
+#: ../src/command/edit.cpp:245
 msgid "paste"
 msgstr ""
 
-#: ../src/command/edit.cpp:372
+#: ../src/command/edit.cpp:376
 msgid "set color"
 msgstr ""
 
-#: ../src/command/edit.cpp:498
+#: ../src/command/edit.cpp:502
 msgid "Primary Color..."
 msgstr ""
 
-#: ../src/command/edit.cpp:499
+#: ../src/command/edit.cpp:503
 msgid "Primary Color"
 msgstr ""
 
-#: ../src/command/edit.cpp:500
+#: ../src/command/edit.cpp:504
 msgid "Set the primary fill color (\\c) at the cursor position"
 msgstr ""
 
-#: ../src/command/edit.cpp:510
+#: ../src/command/edit.cpp:514
 msgid "Secondary Color..."
 msgstr ""
 
-#: ../src/command/edit.cpp:511
+#: ../src/command/edit.cpp:515
 msgid "Secondary Color"
 msgstr ""
 
-#: ../src/command/edit.cpp:512
+#: ../src/command/edit.cpp:516
 msgid "Set the secondary (karaoke) fill color (\\2c) at the cursor position"
 msgstr ""
 
-#: ../src/command/edit.cpp:522
+#: ../src/command/edit.cpp:526
 msgid "Outline Color..."
 msgstr ""
 
-#: ../src/command/edit.cpp:523
+#: ../src/command/edit.cpp:527
 msgid "Outline Color"
 msgstr ""
 
-#: ../src/command/edit.cpp:524
+#: ../src/command/edit.cpp:528
 msgid "Set the outline color (\\3c) at the cursor position"
 msgstr ""
 
-#: ../src/command/edit.cpp:534
+#: ../src/command/edit.cpp:538
 msgid "Shadow Color..."
 msgstr ""
 
-#: ../src/command/edit.cpp:535
+#: ../src/command/edit.cpp:539
 msgid "Shadow Color"
 msgstr ""
 
-#: ../src/command/edit.cpp:536
+#: ../src/command/edit.cpp:540
 msgid "Set the shadow color (\\4c) at the cursor position"
 msgstr ""
 
-#: ../src/command/edit.cpp:546 ../src/command/edit.cpp:547
+#: ../src/command/edit.cpp:550 ../src/command/edit.cpp:551
 msgid "Toggle Bold"
 msgstr ""
 
-#: ../src/command/edit.cpp:548
+#: ../src/command/edit.cpp:552
 msgid ""
 "Toggle bold (\\b) for the current selection or at the current cursor position"
 msgstr ""
 
-#: ../src/command/edit.cpp:551
+#: ../src/command/edit.cpp:555
 msgid "toggle bold"
 msgstr ""
 
-#: ../src/command/edit.cpp:558 ../src/command/edit.cpp:559
+#: ../src/command/edit.cpp:562 ../src/command/edit.cpp:563
 msgid "Toggle Italics"
 msgstr ""
 
-#: ../src/command/edit.cpp:560
+#: ../src/command/edit.cpp:564
 msgid ""
 "Toggle italics (\\i) for the current selection or at the current cursor "
 "position"
 msgstr ""
 
-#: ../src/command/edit.cpp:563
+#: ../src/command/edit.cpp:567
 msgid "toggle italic"
 msgstr ""
 
-#: ../src/command/edit.cpp:570 ../src/command/edit.cpp:571
+#: ../src/command/edit.cpp:574 ../src/command/edit.cpp:575
 msgid "Toggle Underline"
 msgstr ""
 
-#: ../src/command/edit.cpp:572
+#: ../src/command/edit.cpp:576
 msgid ""
 "Toggle underline (\\u) for the current selection or at the current cursor "
 "position"
 msgstr ""
 
-#: ../src/command/edit.cpp:575
+#: ../src/command/edit.cpp:579
 msgid "toggle underline"
 msgstr ""
 
-#: ../src/command/edit.cpp:582 ../src/command/edit.cpp:583
+#: ../src/command/edit.cpp:586 ../src/command/edit.cpp:587
 msgid "Toggle Strikeout"
 msgstr ""
 
-#: ../src/command/edit.cpp:584
+#: ../src/command/edit.cpp:588
 msgid ""
 "Toggle strikeout (\\s) for the current selection or at the current cursor "
 "position"
 msgstr ""
 
-#: ../src/command/edit.cpp:587
+#: ../src/command/edit.cpp:591
 msgid "toggle strikeout"
 msgstr ""
 
-#: ../src/command/edit.cpp:594
+#: ../src/command/edit.cpp:598
 msgid "Font Face..."
 msgstr ""
 
-#: ../src/command/edit.cpp:595 ../src/preferences_base.cpp:332
+#: ../src/command/edit.cpp:599 ../src/preferences_base.cpp:332
 msgid "Font Face"
 msgstr ""
 
-#: ../src/command/edit.cpp:596
+#: ../src/command/edit.cpp:600
 msgid "Select a font face and size"
 msgstr ""
 
-#: ../src/command/edit.cpp:745
+#: ../src/command/edit.cpp:749
 msgid "set font"
 msgstr ""
 
-#: ../src/command/edit.cpp:763
+#: ../src/command/edit.cpp:767
 msgid "Find and R&eplace..."
 msgstr ""
 
-#: ../src/command/edit.cpp:764
+#: ../src/command/edit.cpp:768
 msgid "Find and Replace"
 msgstr ""
 
-#: ../src/command/edit.cpp:765
+#: ../src/command/edit.cpp:769
 msgid "Find and replace words in subtitles"
 msgstr ""
 
-#: ../src/command/edit.cpp:775
+#: ../src/command/edit.cpp:779
 msgid "Find in &Folder..."
 msgstr ""
 
-#: ../src/command/edit.cpp:776 ../src/dialog_folder_search.cpp:524
+#: ../src/command/edit.cpp:780 ../src/dialog_folder_search.cpp:524
 #: ../src/dialog_folder_search.cpp:525 ../src/dialog_folder_search.cpp:528
 #: ../src/dialog_folder_search.cpp:563 ../src/dialog_folder_search.cpp:570
 msgid "Find in Folder"
 msgstr ""
 
-#: ../src/command/edit.cpp:777
+#: ../src/command/edit.cpp:781
 msgid "Find text in subtitle files under a folder"
 msgstr ""
 
-#: ../src/command/edit.cpp:882
+#: ../src/command/edit.cpp:887
 msgid "&Copy Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:883
+#: ../src/command/edit.cpp:888
 msgid "Copy Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:884
+#: ../src/command/edit.cpp:889
 msgid "Copy subtitles to the clipboard"
 msgstr ""
 
-#: ../src/command/edit.cpp:905
+#: ../src/command/edit.cpp:910
 msgid "Cu&t Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:906
+#: ../src/command/edit.cpp:911
 msgid "Cut Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:907
+#: ../src/command/edit.cpp:912
 msgid "Cut subtitles"
 msgstr ""
 
-#: ../src/command/edit.cpp:914
+#: ../src/command/edit.cpp:919
 msgid "cut lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:922
+#: ../src/command/edit.cpp:927
 msgid "De&lete Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:923
+#: ../src/command/edit.cpp:928
 msgid "Delete Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:924
+#: ../src/command/edit.cpp:929
 msgid "Delete currently selected lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:927
+#: ../src/command/edit.cpp:932
 msgid "delete lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1002
+#: ../src/command/edit.cpp:1007
 msgid "duplicate lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1002 ../src/command/edit.cpp:1467
+#: ../src/command/edit.cpp:1007 ../src/command/edit.cpp:1472
 msgid "split"
 msgstr ""
 
-#: ../src/command/edit.cpp:1009
+#: ../src/command/edit.cpp:1014
 msgid "&Duplicate Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1010
+#: ../src/command/edit.cpp:1015
 msgid "Duplicate Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1011
+#: ../src/command/edit.cpp:1016
 msgid "Duplicate the selected lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1020 ../src/command/edit.cpp:1021
+#: ../src/command/edit.cpp:1025 ../src/command/edit.cpp:1026
 msgid "Split lines after current frame"
 msgstr ""
 
-#: ../src/command/edit.cpp:1022
+#: ../src/command/edit.cpp:1027
 msgid ""
 "Split the current line into a line which ends on the current frame and a "
 "line which starts on the next frame"
 msgstr ""
 
-#: ../src/command/edit.cpp:1032 ../src/command/edit.cpp:1033
+#: ../src/command/edit.cpp:1037 ../src/command/edit.cpp:1038
 msgid "Split lines before current frame"
 msgstr ""
 
-#: ../src/command/edit.cpp:1034
+#: ../src/command/edit.cpp:1039
 msgid ""
 "Split the current line into a line which ends on the previous frame and a "
 "line which starts on the current frame"
 msgstr ""
 
-#: ../src/command/edit.cpp:1119
+#: ../src/command/edit.cpp:1124
 msgid "As &Karaoke"
 msgstr ""
 
-#: ../src/command/edit.cpp:1120
+#: ../src/command/edit.cpp:1125
 msgid "As Karaoke"
 msgstr ""
 
-#: ../src/command/edit.cpp:1121
+#: ../src/command/edit.cpp:1126
 msgid "Join selected lines in a single one, as karaoke"
 msgstr ""
 
-#: ../src/command/edit.cpp:1124
+#: ../src/command/edit.cpp:1129
 msgid "join as karaoke"
 msgstr ""
 
-#: ../src/command/edit.cpp:1130
+#: ../src/command/edit.cpp:1135
 msgid "&Concatenate"
 msgstr ""
 
-#: ../src/command/edit.cpp:1131
+#: ../src/command/edit.cpp:1136
 msgid "Concatenate"
 msgstr ""
 
-#: ../src/command/edit.cpp:1132
+#: ../src/command/edit.cpp:1137
 msgid "Join selected lines in a single one, concatenating text together"
 msgstr ""
 
-#: ../src/command/edit.cpp:1135 ../src/command/edit.cpp:1146
-#: ../src/command/edit.cpp:1157
+#: ../src/command/edit.cpp:1140 ../src/command/edit.cpp:1151
+#: ../src/command/edit.cpp:1162
 msgid "join lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1141
+#: ../src/command/edit.cpp:1146
 msgid "&Concatenate (with typesetting)"
 msgstr ""
 
-#: ../src/command/edit.cpp:1142
+#: ../src/command/edit.cpp:1147
 msgid "Concatenate (with typesetting)"
 msgstr ""
 
-#: ../src/command/edit.cpp:1143
+#: ../src/command/edit.cpp:1148
 msgid ""
 "Join selected lines in a single one, concatenating text together (with "
 "typesetting)"
 msgstr ""
 
-#: ../src/command/edit.cpp:1152
+#: ../src/command/edit.cpp:1157
 msgid "Keep &First"
 msgstr ""
 
-#: ../src/command/edit.cpp:1153
+#: ../src/command/edit.cpp:1158
 msgid "Keep First"
 msgstr ""
 
-#: ../src/command/edit.cpp:1154
+#: ../src/command/edit.cpp:1159
 msgid ""
 "Join selected lines in a single one, keeping text of first and discarding "
 "remaining"
 msgstr ""
 
-#: ../src/command/edit.cpp:1189
+#: ../src/command/edit.cpp:1194
 msgid "&Paste Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1190
+#: ../src/command/edit.cpp:1195
 msgid "Paste Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1191
+#: ../src/command/edit.cpp:1196
 msgid "Paste subtitles"
 msgstr ""
 
-#: ../src/command/edit.cpp:1220
+#: ../src/command/edit.cpp:1225
 msgid "Paste Lines &Over..."
 msgstr ""
 
-#: ../src/command/edit.cpp:1221
+#: ../src/command/edit.cpp:1226
 msgid "Paste Lines Over"
 msgstr ""
 
-#: ../src/command/edit.cpp:1222
+#: ../src/command/edit.cpp:1227
 msgid "Paste subtitles over others"
 msgstr ""
 
-#: ../src/command/edit.cpp:1304
+#: ../src/command/edit.cpp:1309
 msgid "Recom&bine Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1305
+#: ../src/command/edit.cpp:1310
 msgid "Recombine Lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1306
+#: ../src/command/edit.cpp:1311
 msgid "Recombine subtitles which have been split and merged"
 msgstr ""
 
-#: ../src/command/edit.cpp:1376
+#: ../src/command/edit.cpp:1381
 msgid "combining"
 msgstr ""
 
-#: ../src/command/edit.cpp:1382 ../src/command/edit.cpp:1383
+#: ../src/command/edit.cpp:1387 ../src/command/edit.cpp:1388
 msgid "Split Lines (by karaoke)"
 msgstr ""
 
-#: ../src/command/edit.cpp:1384
+#: ../src/command/edit.cpp:1389
 msgid "Use karaoke timing to split line into multiple smaller lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1418
+#: ../src/command/edit.cpp:1423
 msgid "splitting"
 msgstr ""
 
-#: ../src/command/edit.cpp:1472 ../src/command/edit.cpp:1473
+#: ../src/command/edit.cpp:1477 ../src/command/edit.cpp:1478
 #: ../src/subs_edit_ctrl.cpp:435
 msgid "Split at cursor (estimate times)"
 msgstr ""
 
-#: ../src/command/edit.cpp:1474
+#: ../src/command/edit.cpp:1479
 msgid ""
 "Split the current line at the cursor, dividing the original line's duration "
 "between the new ones"
 msgstr ""
 
-#: ../src/command/edit.cpp:1488 ../src/command/edit.cpp:1489
+#: ../src/command/edit.cpp:1493 ../src/command/edit.cpp:1494
 #: ../src/subs_edit_ctrl.cpp:434
 msgid "Split at cursor (preserve times)"
 msgstr ""
 
-#: ../src/command/edit.cpp:1490
+#: ../src/command/edit.cpp:1495
 msgid ""
 "Split the current line at the cursor, setting both lines to the original "
 "line's times"
 msgstr ""
 
-#: ../src/command/edit.cpp:1499 ../src/command/edit.cpp:1500
+#: ../src/command/edit.cpp:1504 ../src/command/edit.cpp:1505
 msgid "Split at cursor (at video frame)"
 msgstr ""
 
-#: ../src/command/edit.cpp:1501
+#: ../src/command/edit.cpp:1506
 msgid ""
 "Split the current line at the cursor, dividing the line's duration at the "
 "current video frame"
 msgstr ""
 
-#: ../src/command/edit.cpp:1517
+#: ../src/command/edit.cpp:1522
 msgid "Redo last undone action"
 msgstr ""
 
-#: ../src/command/edit.cpp:1522
-msgid "Nothing to &redo"
-msgstr ""
-
-#: ../src/command/edit.cpp:1523
-#, c-format
-msgid "&Redo %s"
-msgstr ""
-
 #: ../src/command/edit.cpp:1527
-msgid "Nothing to redo"
+msgid "Nothing to &redo"
 msgstr ""
 
 #: ../src/command/edit.cpp:1528
 #, c-format
+msgid "&Redo %s"
+msgstr ""
+
+#: ../src/command/edit.cpp:1532
+msgid "Nothing to redo"
+msgstr ""
+
+#: ../src/command/edit.cpp:1533
+#, c-format
 msgid "Redo %s"
 msgstr ""
 
-#: ../src/command/edit.cpp:1543
+#: ../src/command/edit.cpp:1548
 msgid "Undo last action"
 msgstr ""
 
-#: ../src/command/edit.cpp:1548
-msgid "Nothing to &undo"
-msgstr ""
-
-#: ../src/command/edit.cpp:1549
-#, c-format
-msgid "&Undo %s"
-msgstr ""
-
 #: ../src/command/edit.cpp:1553
-msgid "Nothing to undo"
+msgid "Nothing to &undo"
 msgstr ""
 
 #: ../src/command/edit.cpp:1554
 #, c-format
+msgid "&Undo %s"
+msgstr ""
+
+#: ../src/command/edit.cpp:1558
+msgid "Nothing to undo"
+msgstr ""
+
+#: ../src/command/edit.cpp:1559
+#, c-format
 msgid "Undo %s"
 msgstr ""
 
-#: ../src/command/edit.cpp:1568 ../src/command/edit.cpp:1569
+#: ../src/command/edit.cpp:1573 ../src/command/edit.cpp:1574
 msgid "Revert"
 msgstr ""
 
-#: ../src/command/edit.cpp:1570
+#: ../src/command/edit.cpp:1575
 msgid "Revert the active line to its initial state (shown in the upper editor)"
 msgstr ""
 
-#: ../src/command/edit.cpp:1575
+#: ../src/command/edit.cpp:1580
 msgid "revert line"
 msgstr ""
 
-#: ../src/command/edit.cpp:1581 ../src/command/edit.cpp:1582
+#: ../src/command/edit.cpp:1586 ../src/command/edit.cpp:1587
 #: ../src/preferences.cpp:527
 msgid "Clear"
 msgstr ""
 
-#: ../src/command/edit.cpp:1583
+#: ../src/command/edit.cpp:1588
 msgid "Clear the current line's text"
 msgstr ""
 
-#: ../src/command/edit.cpp:1588 ../src/command/edit.cpp:1607
+#: ../src/command/edit.cpp:1593 ../src/command/edit.cpp:1612
 msgid "clear line"
 msgstr ""
 
-#: ../src/command/edit.cpp:1595 ../src/command/edit.cpp:1596
+#: ../src/command/edit.cpp:1600 ../src/command/edit.cpp:1601
 msgid "Clear Text"
 msgstr ""
 
-#: ../src/command/edit.cpp:1597
+#: ../src/command/edit.cpp:1602
 msgid "Clear the current line's text, leaving override tags"
 msgstr ""
 
-#: ../src/command/edit.cpp:1613 ../src/command/edit.cpp:1614
+#: ../src/command/edit.cpp:1618 ../src/command/edit.cpp:1619
 #: ../src/command/tool.cpp:256
 msgid "Insert Original"
 msgstr ""
 
-#: ../src/command/edit.cpp:1615
+#: ../src/command/edit.cpp:1620
 msgid "Insert the original line text at the cursor"
 msgstr ""
 
-#: ../src/command/edit.cpp:1623
+#: ../src/command/edit.cpp:1628
 msgid "insert original"
 msgstr ""
 
-#: ../src/command/edit.cpp:1629 ../src/command/edit.cpp:1630
+#: ../src/command/edit.cpp:1634 ../src/command/edit.cpp:1635
 #: ../src/command/edit_change_text.cpp:415
 msgid "Change text"
 msgstr ""
 
-#: ../src/command/edit.cpp:1631
+#: ../src/command/edit.cpp:1636
 msgid "Change only text in the selected lines"
 msgstr ""
 
-#: ../src/command/edit.cpp:1678
+#: ../src/command/edit.cpp:1683
 msgid "Toggle text comment"
 msgstr ""
 
-#: ../src/command/edit.cpp:1682 ../src/command/edit.cpp:1721
+#: ../src/command/edit.cpp:1687 ../src/command/edit.cpp:1726
 #: ../src/dialog_paste_over.cpp:65
 msgid "Comment"
 msgstr ""
 
-#: ../src/command/edit.cpp:1682 ../src/command/edit.cpp:1708
+#: ../src/command/edit.cpp:1687 ../src/command/edit.cpp:1713
 msgid "Uncomment"
 msgstr ""
 
@@ -1566,7 +1571,7 @@ msgstr ""
 
 #: ../src/command/grid.cpp:142 ../src/command/grid.cpp:154
 #: ../src/dialog_paste_over.cpp:74 ../src/grid_column.cpp:263
-#: ../src/grid_column.cpp:264 ../src/subs_edit_box.cpp:257
+#: ../src/grid_column.cpp:264 ../src/subs_edit_box.cpp:259
 msgid "Effect"
 msgstr ""
 
@@ -2701,276 +2706,302 @@ msgstr ""
 msgid "Insert the untranslated text"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:84
+#: ../src/command/typesetting.cpp:85
 msgid "Transform"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:87
+#: ../src/command/typesetting.cpp:88
 msgid "Image mask not supported."
 msgstr ""
 
-#: ../src/command/typesetting.cpp:113
+#: ../src/command/typesetting.cpp:121
 msgid "&Free transform"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:114
+#: ../src/command/typesetting.cpp:122
 msgid "Free transform"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:115
+#: ../src/command/typesetting.cpp:123
 msgid "Scale, turn and move the selected lines on the video, written as tags"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:121
+#: ../src/command/typesetting.cpp:129
 msgid "&Arch"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:122
+#: ../src/command/typesetting.cpp:130
 msgid "Arch"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:123
+#: ../src/command/typesetting.cpp:131
 msgid "Bend the selected lines up or down by dragging on the video"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:129
+#: ../src/command/typesetting.cpp:137
 msgid "&Distort"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:130
+#: ../src/command/typesetting.cpp:138
 msgid "Distort"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:131
+#: ../src/command/typesetting.cpp:139
 msgid "Drag the four corners of the selected lines on the video"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:137
+#: ../src/command/typesetting.cpp:145
 msgid "Auto &perspective"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:138
+#: ../src/command/typesetting.cpp:146
 msgid "Auto perspective"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:139
+#: ../src/command/typesetting.cpp:147
 msgid ""
 "Draw four directed points and fit the selected lines into their perspective"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:156
+#: ../src/command/typesetting.cpp:168
 msgid "&Warp"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:157
+#: ../src/command/typesetting.cpp:169
 msgid "Warp"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:158
+#: ../src/command/typesetting.cpp:170
 msgid "Bend the selected lines by dragging a 3x3 mesh over the video"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:181 ../src/visual_tool_transform.cpp:1975
+#: ../src/command/typesetting.cpp:193 ../src/visual_tool_transform.cpp:2469
 msgid "The text could not be converted:"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:184 ../src/visual_tool_transform.cpp:1978
-#: ../src/visual_tool_transform.cpp:1989
+#: ../src/command/typesetting.cpp:196 ../src/visual_tool_transform.cpp:2472
+#: ../src/visual_tool_transform.cpp:2483
 msgid "Convert text to shapes"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:198
+#: ../src/command/typesetting.cpp:210
 msgid "flip horizontally"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:198
+#: ../src/command/typesetting.cpp:210
 msgid "flip vertically"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:208
+#: ../src/command/typesetting.cpp:220
 msgid "Flip &horizontally"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:209
+#: ../src/command/typesetting.cpp:221
 msgid "Flip horizontally"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:210
+#: ../src/command/typesetting.cpp:222
 msgid "Turn the selected lines into shapes and mirror them left to right"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:215
+#: ../src/command/typesetting.cpp:227
 msgid "Flip &vertically"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:216
+#: ../src/command/typesetting.cpp:228
 msgid "Flip vertically"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:217
+#: ../src/command/typesetting.cpp:229
 msgid "Turn the selected lines into shapes and mirror them top to bottom"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:223 ../src/command/typesetting.cpp:224
-#: ../src/command/typesetting.cpp:232 ../src/dialog_gradient.cpp:818
-#: ../src/dialog_gradient.cpp:825 ../src/dialog_gradient.cpp:835
-#: ../src/dialog_gradient.cpp:853
+#: ../src/command/typesetting.cpp:235 ../src/command/typesetting.cpp:236
+#: ../src/command/typesetting.cpp:244 ../src/dialog_gradient.cpp:817
+#: ../src/dialog_gradient.cpp:824 ../src/dialog_gradient.cpp:834
 msgid "Gradient"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:225
+#: ../src/command/typesetting.cpp:237
 msgid ""
 "Create a linear, radial or per-character colour gradient on the selected "
 "lines"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:240 ../src/command/typesetting.cpp:241
+#: ../src/command/typesetting.cpp:252 ../src/command/typesetting.cpp:253
 msgid "Edit gradient"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:242
+#: ../src/command/typesetting.cpp:254
 msgid "Edit the gradient settings of the selected generated gradient"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:257 ../src/command/typesetting.cpp:258
+#: ../src/command/typesetting.cpp:269 ../src/command/typesetting.cpp:270
 msgid "Copy gradient"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:259
+#: ../src/command/typesetting.cpp:271
 msgid "Copy the selected generated gradient rows and settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:274 ../src/command/typesetting.cpp:275
-#: ../src/command/typesetting.cpp:284 ../src/command/vis_tool.cpp:194
+#: ../src/command/typesetting.cpp:286 ../src/command/typesetting.cpp:287
+#: ../src/dialog_glitch.cpp:598 ../src/dialog_glitch.cpp:604
+#: ../src/dialog_glitch.cpp:623
+msgid "Glitch effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:288
+msgid ""
+"Create customizable, angled and animated glitch slices on the selected lines"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:302 ../src/command/typesetting.cpp:303
+msgid "Edit glitch effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:304
+msgid "Edit the settings of the selected generated glitch effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:317 ../src/command/typesetting.cpp:318
+msgid "Copy glitch effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:319
+msgid "Copy the selected generated glitch rows and settings"
+msgstr ""
+
+#: ../src/command/typesetting.cpp:332 ../src/command/typesetting.cpp:333
+#: ../src/command/typesetting.cpp:342 ../src/command/vis_tool.cpp:194
 #: ../src/command/vis_tool.cpp:195
 msgid "Textbox"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:276
+#: ../src/command/typesetting.cpp:334
 msgid "Put the selected lines into a wrapping textbox drawn on the video"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:294
+#: ../src/command/typesetting.cpp:352
 msgid "&Quick insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:295
+#: ../src/command/typesetting.cpp:353
 msgid "Quick image insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:296
+#: ../src/command/typesetting.cpp:354
 msgid "Insert images using the saved basic or dynamic settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:306
+#: ../src/command/typesetting.cpp:364
 msgid "&Insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:307 ../src/typesetting_image_insert.cpp:176
+#: ../src/command/typesetting.cpp:365 ../src/typesetting_image_insert.cpp:176
 #: ../src/typesetting_image_insert.cpp:354
 #: ../src/typesetting_image_insert.cpp:443
 msgid "Image insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:308
+#: ../src/command/typesetting.cpp:366
 msgid "Convert an image to optimized ImageMask subtitle drawings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:318
+#: ../src/command/typesetting.cpp:376
 msgid "With &editing..."
 msgstr ""
 
-#: ../src/command/typesetting.cpp:319
+#: ../src/command/typesetting.cpp:377
 msgid "ImageEditor insert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:320
+#: ../src/command/typesetting.cpp:378
 msgid "Edit the current video frame in ImageEditor before inserting the result"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:332
+#: ../src/command/typesetting.cpp:390
 msgid "&Settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:333 ../src/typesetting_image_insert.cpp:224
+#: ../src/command/typesetting.cpp:391 ../src/typesetting_image_insert.cpp:224
 msgid "Image insert settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:334
+#: ../src/command/typesetting.cpp:392
 msgid "Configure Quick insert and dynamic image filenames"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:341
+#: ../src/command/typesetting.cpp:399
 msgid "&Apply"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:342 ../src/dialog_motion.cpp:287
-#: ../src/dialog_motion.cpp:333
+#: ../src/command/typesetting.cpp:400 ../src/dialog_motion.cpp:404
+#: ../src/dialog_motion.cpp:450
 msgid "Apply motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:343
+#: ../src/command/typesetting.cpp:401
 msgid "Apply Mocha Corner Pin or Transform Data to the selected lines"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:354
+#: ../src/command/typesetting.cpp:412
 msgid "&Auto motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:355 ../src/visual_tool_auto_motion.cpp:161
+#: ../src/command/typesetting.cpp:413 ../src/visual_tool_auto_motion.cpp:161
 #: ../src/visual_tool_auto_motion.cpp:177
 #: ../src/visual_tool_auto_motion.cpp:192
 #: ../src/visual_tool_auto_motion.cpp:234
 msgid "Auto motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:356
+#: ../src/command/typesetting.cpp:414
 msgid "Select a video region and track its position, size and rotation"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:371
+#: ../src/command/typesetting.cpp:429
 msgid "&Revert"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:372
+#: ../src/command/typesetting.cpp:430
 msgid "Revert motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:373
+#: ../src/command/typesetting.cpp:431
 msgid "Restore the source lines saved by Apply or Auto motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:380 ../src/dialog_gradient.cpp:993
-#: ../src/dialog_motion.cpp:174 ../src/dialog_motion.cpp:196
-#: ../src/dialog_motion.cpp:202 ../src/dialog_motion.cpp:325
-#: ../src/typesetting_gradient.cpp:1710
+#: ../src/command/typesetting.cpp:438 ../src/dialog_gradient.cpp:979
+#: ../src/dialog_motion.cpp:277 ../src/dialog_motion.cpp:299
+#: ../src/dialog_motion.cpp:305 ../src/dialog_motion.cpp:364
+#: ../src/dialog_motion.cpp:442 ../src/typesetting_gradient.cpp:1710
 msgid "Motion"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:387
+#: ../src/command/typesetting.cpp:445
 msgid "&Trim"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:388 ../src/dialog_motion.cpp:678
-#: ../src/dialog_motion.cpp:693 ../src/dialog_motion.cpp:696
-#: ../src/dialog_motion.cpp:711 ../src/dialog_motion.cpp:723
-#: ../src/dialog_motion.cpp:726 ../src/dialog_motion.cpp:744
+#: ../src/command/typesetting.cpp:446 ../src/dialog_motion.cpp:847
+#: ../src/dialog_motion.cpp:862 ../src/dialog_motion.cpp:865
+#: ../src/dialog_motion.cpp:880 ../src/dialog_motion.cpp:892
+#: ../src/dialog_motion.cpp:895 ../src/dialog_motion.cpp:913
 msgid "Motion trim"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:389
+#: ../src/command/typesetting.cpp:447
 msgid "Write the selected time range as JPEG frames or an H.264 MP4"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:399
+#: ../src/command/typesetting.cpp:457
 msgid "Trim &settings..."
 msgstr ""
 
-#: ../src/command/typesetting.cpp:400
+#: ../src/command/typesetting.cpp:458
 msgid "Motion trim settings"
 msgstr ""
 
-#: ../src/command/typesetting.cpp:401
+#: ../src/command/typesetting.cpp:459
 msgid "Choose the motion trim format and output directory"
 msgstr ""
 
@@ -3514,8 +3545,8 @@ msgid "Rotate and shear subtitles to make them fit a given quad's perspective"
 msgstr ""
 
 #: ../src/command/vis_tool.cpp:250 ../src/command/vis_tool.cpp:251
-#: ../src/dialog_motion.cpp:424 ../src/dialog_motion.cpp:435
-#: ../src/visual_tool_auto_motion.cpp:346
+#: ../src/dialog_motion.cpp:543 ../src/dialog_motion.cpp:554
+#: ../src/visual_tool_auto_motion.cpp:346 ../src/visual_tool_transform.cpp:3200
 msgid "Scale"
 msgstr ""
 
@@ -3675,7 +3706,6 @@ msgid "Convert a segment between line and bicubic"
 msgstr ""
 
 #: ../src/command/vis_tool.cpp:472 ../src/command/vis_tool.cpp:473
-#: ../src/typesetting_embedded_image_editor.cpp:519
 msgid "Insert"
 msgstr ""
 
@@ -3978,17 +4008,18 @@ msgid "Delete stored secret"
 msgstr ""
 
 #: ../src/dialog_ai_connection.cpp:273 ../src/dialog_ai_karaoke.cpp:1360
-#: ../src/dialog_gradient.cpp:850 ../src/dialog_progress.cpp:196
-#: ../src/typesetting_embedded_image_editor.cpp:521
+#: ../src/dialog_progress.cpp:196
+#: ../src/typesetting_embedded_image_editor.cpp:762
 #: ../src/visual_tool_auto_motion.cpp:343 ../src/visual_tool_mask.cpp:686
 #: ../src/visual_tool_mask.cpp:1178 ../src/visual_tool_mask.cpp:2795
 #: ../src/visual_tool_preview.cpp:40 ../src/visual_tool_preview.cpp:41
-#: ../src/visual_tool_shape.cpp:815 ../src/visual_tool_textbox.cpp:695
-#: ../src/visual_tool_textbox.cpp:858 ../src/visual_tool_vector_clip.cpp:1280
+#: ../src/visual_tool_shape.cpp:815 ../src/visual_tool_textbox.cpp:709
+#: ../src/visual_tool_textbox.cpp:872 ../src/visual_tool_vector_clip.cpp:1280
 msgid "Cancel"
 msgstr ""
 
 #: ../src/dialog_ai_connection.cpp:274
+#: ../src/typesetting_embedded_image_editor.cpp:760
 msgid "Save"
 msgstr ""
 
@@ -4195,7 +4226,7 @@ msgid "Play full scene"
 msgstr ""
 
 #: ../src/dialog_ai_proofread.cpp:736 ../src/dialog_ai_translate.cpp:485
-#: ../src/dialog_gradient.cpp:964
+#: ../src/dialog_glitch.cpp:739 ../src/dialog_gradient.cpp:950
 msgid "Stop playback"
 msgstr ""
 
@@ -4389,7 +4420,7 @@ msgstr ""
 #: ../src/visual_tool_mask.cpp:1305 ../src/visual_tool_mask.cpp:2633
 #: ../src/visual_tool_mask.cpp:2638 ../src/visual_tool_mask.cpp:2746
 #: ../src/visual_tool_mask.cpp:2751 ../src/visual_tool_shape.cpp:461
-#: ../src/visual_tool_transform.cpp:2664 ../src/visual_tool_vector_clip.cpp:974
+#: ../src/visual_tool_vector_clip.cpp:974
 #: ../src/visual_tool_vector_clip.cpp:1249
 #: ../src/visual_tool_vector_clip.cpp:1532
 #: ../src/visual_tool_vector_clip.cpp:2802
@@ -4564,80 +4595,84 @@ msgstr ""
 msgid "%s [RECOVERED]"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:558
+#: ../src/dialog_colorpicker.cpp:560
 msgid "Select Color"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:572
+#: ../src/dialog_colorpicker.cpp:574
 msgid "Color spectrum"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:578
+#: ../src/dialog_colorpicker.cpp:580
 msgid "HSL/L"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:578
+#: ../src/dialog_colorpicker.cpp:580
 msgid "HSV/H"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:578
+#: ../src/dialog_colorpicker.cpp:580
 msgid "RGB/B"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:578
+#: ../src/dialog_colorpicker.cpp:580
 msgid "RGB/G"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:578
+#: ../src/dialog_colorpicker.cpp:580
 msgid "RGB/R"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:581
+#: ../src/dialog_colorpicker.cpp:583
 msgid "RGB color"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:582
+#: ../src/dialog_colorpicker.cpp:584
 msgid "HSL color"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:583
+#: ../src/dialog_colorpicker.cpp:585
 msgid "HSV color"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:620
+#: ../src/dialog_colorpicker.cpp:622
 msgid "Spectrum mode:"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:637
+#: ../src/dialog_colorpicker.cpp:639
 msgid "Blue:"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:637
+#: ../src/dialog_colorpicker.cpp:639
 msgid "Green:"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:637
+#: ../src/dialog_colorpicker.cpp:639
 msgid "Red:"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:640
+#: ../src/dialog_colorpicker.cpp:642
 msgid "Alpha:"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:647 ../src/dialog_colorpicker.cpp:650
+#: ../src/dialog_colorpicker.cpp:649 ../src/dialog_colorpicker.cpp:652
 msgid "Hue:"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:647
+#: ../src/dialog_colorpicker.cpp:649
 msgid "Lum.:"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:647 ../src/dialog_colorpicker.cpp:650
+#: ../src/dialog_colorpicker.cpp:649 ../src/dialog_colorpicker.cpp:652
 msgid "Sat.:"
 msgstr ""
 
-#: ../src/dialog_colorpicker.cpp:650
+#: ../src/dialog_colorpicker.cpp:652
 msgid "Value:"
+msgstr ""
+
+#: ../src/dialog_colorpicker.cpp:685
+msgid "Clear color"
 msgstr ""
 
 #: ../src/dialog_detached_video.cpp:64 ../src/dialog_detached_video.cpp:152
@@ -5126,7 +5161,7 @@ msgid "Remove from current list"
 msgstr ""
 
 #: ../src/dialog_fontpicker.cpp:1727 ../src/dialog_style_editor.cpp:187
-#: ../src/visual_tool_textbox.cpp:673 ../src/visual_tool_textbox.cpp:821
+#: ../src/visual_tool_textbox.cpp:687 ../src/visual_tool_textbox.cpp:835
 msgid "Font"
 msgstr ""
 
@@ -5333,16 +5368,164 @@ msgid ""
 "folder is entered, a default name will be used."
 msgstr ""
 
+#: ../src/dialog_glitch.cpp:198 ../src/dialog_gradient.cpp:382
+msgid ""
+"Drag the angle dial or enter an exact value. Double-click the dial to "
+"measure an angle on the video."
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:250
+msgid "No color selected"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:433
+msgid "(off)"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:435
+#, c-format
+msgid "Animation %zu: frame %d%s"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:437
+#, c-format
+msgid "Animation %zu: %d-%d ms%s"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:597
+msgid "An animation end time must be after its start time."
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:603
+msgid "No glitch effect could be generated for the selected lines."
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:631
+msgid "Glitch settings"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:634 ../src/dialog_glitch.cpp:823
+msgid "Effect:"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:652
+#, c-format
+msgid "Custom color %zu"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:658 ../src/dialog_gradient.cpp:886
+msgid "Angle:"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:701 ../src/dialog_glitch.cpp:892
+msgid "Amount (%):"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:702 ../src/dialog_glitch.cpp:893
+msgid "Offset:"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:712 ../src/dialog_glitch.cpp:894
+msgid "Height:"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:713 ../src/dialog_glitch.cpp:895
+msgid "Width (%):"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:714 ../src/dialog_glitch.cpp:896
+msgid "Opacity:"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:715 ../src/dialog_glitch.cpp:898
+msgid "Show base layer"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:724
+msgid "Playback"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:737 ../src/dialog_gradient.cpp:948
+msgid "Play line once"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:738 ../src/dialog_gradient.cpp:949
+msgid "Play line repeatedly"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:750 ../src/dialog_gradient.cpp:961
+msgid "Jump to line start"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:754 ../src/dialog_gradient.cpp:965
+msgid "Previous frame"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:758 ../src/dialog_gradient.cpp:969
+msgid "Next frame"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:762 ../src/dialog_gradient.cpp:973
+msgid "Jump to line end"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:766
+msgid "Animations"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:768
+#, c-format
+msgid "Total line duration: %d ms"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:776
+msgid "Add animation"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:778
+msgid "Remove animation"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:786
+msgid "Enabled"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:790
+msgid "Time"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:791
+msgid "Frame"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:794
+msgid "Timing"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:800
+msgid "Frame:"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:810
+msgid "Time (ms):"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:830
+msgid "Effect type"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:839
+msgid "Color style"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp:907
+msgid "Paste effect"
+msgstr ""
+
 #: ../src/dialog_gradient.cpp:227 ../src/dialog_gradient.cpp:637
 msgid ""
 "Click the bar to add a stop. Drag a square to move it; click it to choose a "
 "color; right-click it to remove it."
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:382
-msgid ""
-"Drag the angle dial or enter an exact value. Double-click the dial to "
-"measure an angle on the video."
 msgstr ""
 
 #: ../src/dialog_gradient.cpp:475
@@ -5425,22 +5608,22 @@ msgstr ""
 msgid "Copy stops from..."
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:620 ../src/dialog_gradient.cpp:1008
+#: ../src/dialog_gradient.cpp:620 ../src/dialog_gradient.cpp:994
 msgid "Bord color"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:620 ../src/dialog_gradient.cpp:1006
+#: ../src/dialog_gradient.cpp:620 ../src/dialog_gradient.cpp:992
 #: ../src/visual_tool_shape.cpp:736 ../src/visual_tool_shape.cpp:807
 #: ../src/visual_tool_shape.cpp:1000
 msgid "Color"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:621 ../src/dialog_gradient.cpp:1010
-#: ../src/visual_tool_textbox.cpp:678 ../src/visual_tool_textbox.cpp:831
+#: ../src/dialog_gradient.cpp:621 ../src/dialog_gradient.cpp:996
+#: ../src/visual_tool_textbox.cpp:692 ../src/visual_tool_textbox.cpp:845
 msgid "Shadow color"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:739
+#: ../src/dialog_gradient.cpp:738
 msgid ""
 "Gradient type\n"
 "Linear follows the selected angle. Radial expands from the center of the "
@@ -5478,109 +5661,72 @@ msgid ""
 "it. Pause stops playback. The arrow buttons step one video frame."
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:752
+#: ../src/dialog_gradient.cpp:751
 msgid "Gradient help"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:818
+#: ../src/dialog_gradient.cpp:817
 msgid "Enable at least one color block."
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:824
+#: ../src/dialog_gradient.cpp:823
 msgid "No selected lines could be converted to shapes."
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:825
+#: ../src/dialog_gradient.cpp:824
 msgid "No characters were found in the selected lines."
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:848 ../src/visual_tool_mask.cpp:517
-#: ../src/visual_tool_mask.cpp:685 ../src/visual_tool_mask.cpp:1176
-#: ../src/visual_tool_mask.cpp:2794 ../src/visual_tool_preview.cpp:37
-#: ../src/visual_tool_preview.cpp:38 ../src/visual_tool_shape.cpp:813
-#: ../src/visual_tool_textbox.cpp:694 ../src/visual_tool_textbox.cpp:857
-#: ../src/visual_tool_vector_clip.cpp:1276
-msgid "Accept"
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:864 ../src/preferences.cpp:510
+#: ../src/dialog_gradient.cpp:850 ../src/preferences.cpp:510
 #: ../src/visual_tool_auto_motion.cpp:348
 msgid "Linear"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:864
+#: ../src/dialog_gradient.cpp:850
 msgid "Radial"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:865
+#: ../src/dialog_gradient.cpp:851
 msgid "Gradient type"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:870
+#: ../src/dialog_gradient.cpp:856
 msgid "Output"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:872
+#: ../src/dialog_gradient.cpp:858
 msgid "By character"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:872
+#: ../src/dialog_gradient.cpp:858
 msgid "With shapes"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:885
+#: ../src/dialog_gradient.cpp:871
 msgid "Anti-strip overlap:"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:892
+#: ../src/dialog_gradient.cpp:878
 msgid ""
 "Overlap on each side of oblique, radial, and shape bands, in script units. "
 "Rectangular clips force this value to 0."
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:900
-msgid "Angle:"
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:932
+#: ../src/dialog_gradient.cpp:918
 msgid "Pixels per strip:"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:942
+#: ../src/dialog_gradient.cpp:928
 msgid ""
 "With shapes there will be no clips and you can give additional clip, blur, "
 "etc. You can edit the gradient after saving."
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:948 ../src/preferences.cpp:575
+#: ../src/dialog_gradient.cpp:934 ../src/preferences.cpp:575
 msgid "Info"
 msgstr ""
 
-#: ../src/dialog_gradient.cpp:962
-msgid "Play line once"
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:963
-msgid "Play line repeatedly"
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:975
-msgid "Jump to line start"
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:979
-msgid "Previous frame"
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:983
-msgid "Next frame"
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:987
-msgid "Jump to line end"
-msgstr ""
-
-#: ../src/dialog_gradient.cpp:1019
+#: ../src/dialog_gradient.cpp:1005
 msgid "Paste gradient"
 msgstr ""
 
@@ -5676,227 +5822,241 @@ msgstr ""
 msgid "Group all of the source text."
 msgstr ""
 
-#: ../src/dialog_motion.cpp:67
+#: ../src/dialog_motion.cpp:69
 #, c-format
 msgid "Mocha Corner Pin - %zu frames"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:67
+#: ../src/dialog_motion.cpp:69
 #, c-format
 msgid "Mocha Transform Data - %zu frames"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:70
+#: ../src/dialog_motion.cpp:72
 #, c-format
 msgid " - selected lines require %zu frames"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:170
+#: ../src/dialog_motion.cpp:216
+msgid "The Mocha project has nothing tracked in it"
+msgstr ""
+
+#: ../src/dialog_motion.cpp:223
+#, c-format
+msgid "Read from the Mocha project: %s, layer %s"
+msgstr ""
+
+#: ../src/dialog_motion.cpp:273
 msgid "No track data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:170
+#: ../src/dialog_motion.cpp:273
 msgid "No valid track data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:196 ../src/dialog_motion.cpp:202
+#: ../src/dialog_motion.cpp:299 ../src/dialog_motion.cpp:305
 #: ../src/video_color_pick.cpp:996
 msgid "There is no valid motion track on the clipboard."
 msgstr ""
 
-#: ../src/dialog_motion.cpp:287 ../src/dialog_motion.cpp:299
+#: ../src/dialog_motion.cpp:363
+msgid "The Mocha project does not cover the frames the selected lines need."
+msgstr ""
+
+#: ../src/dialog_motion.cpp:404 ../src/dialog_motion.cpp:416
 #: ../src/visual_tool_auto_motion.cpp:192
 #: ../src/visual_tool_auto_motion.cpp:204
 msgid "Preparing motion..."
 msgstr ""
 
-#: ../src/dialog_motion.cpp:303 ../src/visual_tool_auto_motion.cpp:208
+#: ../src/dialog_motion.cpp:420 ../src/visual_tool_auto_motion.cpp:208
 #, c-format
 msgid "Applying frame %zu of %zu"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:308 ../src/visual_tool_auto_motion.cpp:213
+#: ../src/dialog_motion.cpp:425 ../src/visual_tool_auto_motion.cpp:213
 #, c-format
 msgid "Writing subtitle row %zu of %zu"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:352
+#: ../src/dialog_motion.cpp:471
 msgid "No Transformation Data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:354
+#: ../src/dialog_motion.cpp:473
 msgid "Import Transformation Data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:364
+#: ../src/dialog_motion.cpp:483
 msgid "Clip only"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:366
+#: ../src/dialog_motion.cpp:485
 msgid "Track clips with separate data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:372
+#: ../src/dialog_motion.cpp:491
 msgid "No separate clip Transformation Data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:374
+#: ../src/dialog_motion.cpp:493
 msgid "Import clip Transformation Data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:383
+#: ../src/dialog_motion.cpp:502
 msgid "Transformation Data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:388
+#: ../src/dialog_motion.cpp:507
 msgid ""
 "Enable Perspective below, then paste the matching Mocha Corner Pin data."
 msgstr ""
 
-#: ../src/dialog_motion.cpp:392
+#: ../src/dialog_motion.cpp:511
 msgid "No main Corner Pin data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:394
+#: ../src/dialog_motion.cpp:513
 msgid "Import main Corner Pin"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:405
+#: ../src/dialog_motion.cpp:524
 msgid "No clip Corner Pin data"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:407
+#: ../src/dialog_motion.cpp:526
 msgid "Import clip Corner Pin"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:417
+#: ../src/dialog_motion.cpp:536
 msgid "Perspective - Corner pin"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:421
+#: ../src/dialog_motion.cpp:540
 msgid "Motion components"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:422 ../src/dialog_motion.cpp:433
+#: ../src/dialog_motion.cpp:541 ../src/dialog_motion.cpp:552
 #: ../src/visual_tool_auto_motion.cpp:344
 msgid "X"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:423 ../src/dialog_motion.cpp:434
+#: ../src/dialog_motion.cpp:542 ../src/dialog_motion.cpp:553
 #: ../src/visual_tool_auto_motion.cpp:345
 msgid "Y"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:425 ../src/dialog_motion.cpp:436
+#: ../src/dialog_motion.cpp:544 ../src/dialog_motion.cpp:555
+#: ../src/visual_tool_transform.cpp:3204
 msgid "Rotation"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:426 ../src/dialog_motion.cpp:437
+#: ../src/dialog_motion.cpp:545 ../src/dialog_motion.cpp:556
 msgid "Perspective"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:432
+#: ../src/dialog_motion.cpp:551
 msgid "Clip motion components"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:444
+#: ../src/dialog_motion.cpp:563
 msgid "Reference"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:445
+#: ../src/dialog_motion.cpp:564
 msgid "Main:"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:454
+#: ../src/dialog_motion.cpp:573
 msgid "Clip:"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:466
+#: ../src/dialog_motion.cpp:585
 msgid "Interpolate animations"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:468
+#: ../src/dialog_motion.cpp:587
 msgid "Linear motion"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:470
+#: ../src/dialog_motion.cpp:589
 msgid "Scale border"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:471
+#: ../src/dialog_motion.cpp:590
 msgid "Scale shadow"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:472
+#: ../src/dialog_motion.cpp:591
 msgid "Scale blur"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:473
+#: ../src/dialog_motion.cpp:595
 msgid "Apply options"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:493 ../src/dialog_motion.cpp:495
+#: ../src/dialog_motion.cpp:618 ../src/dialog_motion.cpp:620
 msgid "No valid track data on the clipboard"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:614
+#: ../src/dialog_motion.cpp:783
 msgid "Trim settings"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:617
+#: ../src/dialog_motion.cpp:786
 msgid "Output format:"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:619
+#: ../src/dialog_motion.cpp:788
 msgid "JPEG image sequence"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:620
+#: ../src/dialog_motion.cpp:789
 msgid "H.264 MP4 video"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:623
+#: ../src/dialog_motion.cpp:792
 msgid "Output directory:"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:625
+#: ../src/dialog_motion.cpp:794
 msgid "Choose trim output directory"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:627
+#: ../src/dialog_motion.cpp:796
 msgid "Organize output:"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:630
+#: ../src/dialog_motion.cpp:799
 msgid "Put each trim in its own folder"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:678
+#: ../src/dialog_motion.cpp:847
 msgid "The trim output directory could not be created."
 msgstr ""
 
-#: ../src/dialog_motion.cpp:692
+#: ../src/dialog_motion.cpp:861
 msgid "The JPEG trim already exists. Overwrite its image sequence?"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:696
+#: ../src/dialog_motion.cpp:865
 msgid "Writing JPEG frames..."
 msgstr ""
 
-#: ../src/dialog_motion.cpp:701
+#: ../src/dialog_motion.cpp:870
 #, c-format
 msgid "Writing frame %d of %d"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:711
+#: ../src/dialog_motion.cpp:880
 msgid "A JPEG frame could not be written."
 msgstr ""
 
-#: ../src/dialog_motion.cpp:723
+#: ../src/dialog_motion.cpp:892
 msgid "The H.264 trim already exists. Overwrite it?"
 msgstr ""
 
-#: ../src/dialog_motion.cpp:726
+#: ../src/dialog_motion.cpp:895
 msgid "Encoding H.264 video..."
 msgstr ""
 
@@ -5913,7 +6073,7 @@ msgid "Please select the fields that you want to paste over:"
 msgstr ""
 
 #: ../src/dialog_paste_over.cpp:70 ../src/grid_column.cpp:277
-#: ../src/grid_column.cpp:278 ../src/subs_edit_box.cpp:252
+#: ../src/grid_column.cpp:278 ../src/subs_edit_box.cpp:254
 msgid "Actor"
 msgstr ""
 
@@ -5973,7 +6133,7 @@ msgstr ""
 msgid "Editing:"
 msgstr ""
 
-#: ../src/dialog_glitch.cpp ../src/dialog_properties.cpp:118
+#: ../src/dialog_properties.cpp:118
 msgid "Timing:"
 msgstr ""
 
@@ -6577,17 +6737,17 @@ msgstr ""
 msgid "Secondary"
 msgstr ""
 
-#: ../src/dialog_style_editor.cpp:296 ../src/visual_tool_textbox.cpp:675
+#: ../src/dialog_style_editor.cpp:296 ../src/visual_tool_textbox.cpp:689
 msgid "Shadow"
 msgstr ""
 
 #: ../src/dialog_style_editor.cpp:307 ../src/grid_column.cpp:312
-#: ../src/visual_tool_textbox.cpp:839
+#: ../src/visual_tool_textbox.cpp:853
 msgid "Left"
 msgstr ""
 
 #: ../src/dialog_style_editor.cpp:307 ../src/grid_column.cpp:318
-#: ../src/visual_tool_textbox.cpp:843
+#: ../src/visual_tool_textbox.cpp:857
 msgid "Right"
 msgstr ""
 
@@ -6657,7 +6817,7 @@ msgstr ""
 msgid "Update script?"
 msgstr ""
 
-#: ../src/dialog_style_editor.cpp:473 ../src/subs_edit_box.cpp:768
+#: ../src/dialog_style_editor.cpp:473 ../src/subs_edit_box.cpp:808
 msgid "style change"
 msgstr ""
 
@@ -7582,7 +7742,7 @@ msgstr ""
 msgid "&Recent"
 msgstr ""
 
-#: ../src/menu.cpp:549
+#: ../src/menu.cpp:568
 msgid "No Automation macros loaded"
 msgstr ""
 
@@ -8607,7 +8767,7 @@ msgstr ""
 msgid "Command"
 msgstr ""
 
-#: ../src/preferences.cpp:833 ../src/toolbar.cpp:182
+#: ../src/preferences.cpp:833 ../src/toolbar.cpp:191
 msgid ""
 "Aegisub needs to be restarted so that the new appearance can be applied. "
 "Restart now?"
@@ -8807,130 +8967,130 @@ msgstr ""
 msgid "untitled"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:225
+#: ../src/subs_edit_box.cpp:227
 msgid "&Comment"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:226
+#: ../src/subs_edit_box.cpp:228
 msgid "Comment this line out. Commented lines don't show up on screen."
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:233
+#: ../src/subs_edit_box.cpp:235
 msgid "Style for this line"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:243 ../src/subs_edit_box.cpp:244
+#: ../src/subs_edit_box.cpp:245 ../src/subs_edit_box.cpp:246
 msgid "Edit"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:252
+#: ../src/subs_edit_box.cpp:254
 msgid ""
 "Actor name for this speech. This is only for reference, and is mainly "
 "useless."
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:257
+#: ../src/subs_edit_box.cpp:259
 msgid ""
 "Effect for this line. This can be used to store extra information for "
 "karaoke scripts, or for the effects supported by the renderer."
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:264
+#: ../src/subs_edit_box.cpp:266
 msgid "Number of characters in the longest line of this subtitle."
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:271
+#: ../src/subs_edit_box.cpp:273
 msgid "Layer number"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:275
+#: ../src/subs_edit_box.cpp:277
 msgid "Start time"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:276
+#: ../src/subs_edit_box.cpp:278
 msgid "End time"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:278
+#: ../src/subs_edit_box.cpp:280
 msgid "Line duration"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:281
+#: ../src/subs_edit_box.cpp:283
 msgid "Left Margin (0 = default from style)"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:281
+#: ../src/subs_edit_box.cpp:283
 msgid "left margin change"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:282
+#: ../src/subs_edit_box.cpp:284
 msgid "Right Margin (0 = default from style)"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:282
+#: ../src/subs_edit_box.cpp:284
 msgid "right margin change"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:283
+#: ../src/subs_edit_box.cpp:285
 msgid "Vertical Margin (0 = default from style)"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:283
+#: ../src/subs_edit_box.cpp:285
 msgid "vertical margin change"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:302
+#: ../src/subs_edit_box.cpp:304
 msgid "T&ime"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:302
+#: ../src/subs_edit_box.cpp:304
 msgid "Time by h:mm:ss.cs"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:303
+#: ../src/subs_edit_box.cpp:305
 msgid "F&rame"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:303
+#: ../src/subs_edit_box.cpp:305
 msgid "Time by frame number"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:306
+#: ../src/subs_edit_box.cpp:308
 msgid "Show Original"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:307
+#: ../src/subs_edit_box.cpp:309
 msgid ""
 "Show the contents of the subtitle line when it was first selected above the "
 "edit box. This is sometimes useful when editing subtitles or translating "
 "subtitles into another language."
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:311
+#: ../src/subs_edit_box.cpp:313
 msgid "Show Source"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:577
+#: ../src/subs_edit_box.cpp:579
 msgid "modify text"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:655
+#: ../src/subs_edit_box.cpp:695
 msgid "modify times"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:774
+#: ../src/subs_edit_box.cpp:814
 msgid "actor change"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:779
+#: ../src/subs_edit_box.cpp:819
 msgid "layer change"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:784
+#: ../src/subs_edit_box.cpp:824
 msgid "effect change"
 msgstr ""
 
-#: ../src/subs_edit_box.cpp:794
+#: ../src/subs_edit_box.cpp:834
 msgid "comment change"
 msgstr ""
 
@@ -9074,98 +9234,192 @@ msgstr ""
 msgid "This may take several minutes"
 msgstr ""
 
-#: ../src/text_to_shape.cpp:1340
+#: ../src/text_to_shape.cpp:1368
 msgid "Converting text to shapes is only implemented on Windows so far."
 msgstr ""
 
-#: ../src/text_to_shape.cpp:1345
+#: ../src/text_to_shape.cpp:1373
 msgid "The line already mixes text with a drawing."
 msgstr ""
 
-#: ../src/text_to_shape.cpp:1349
+#: ../src/text_to_shape.cpp:1377
 msgid "The line is karaoke timed, and the syllables would be lost."
 msgstr ""
 
-#: ../src/text_to_shape.cpp:1538
+#: ../src/text_to_shape.cpp:1566
 msgid "The outline of the text could not be read from the font."
 msgstr ""
 
-#: ../src/text_to_shape.cpp:1550
+#: ../src/text_to_shape.cpp:1578
 msgid ""
 "The text is wider than the margins allow, so the renderer would break it "
 "into rows this cannot work out yet."
 msgstr ""
 
-#: ../src/toolbar.cpp:164 ../src/toolbar.cpp:201
+#: ../src/toolbar.cpp:173 ../src/toolbar.cpp:231
 msgid "Disable Dark Mode"
 msgstr ""
 
-#: ../src/toolbar.cpp:165 ../src/toolbar.cpp:203
+#: ../src/toolbar.cpp:174 ../src/toolbar.cpp:231
 msgid "Enable Dark Mode"
 msgstr ""
 
-#: ../src/toolbar.cpp:209
+#: ../src/toolbar.cpp:220 ../src/toolbar.cpp:225
+msgid "Top Bar"
+msgstr ""
+
+#: ../src/toolbar.cpp:223
+msgid "Always show the bar above the video"
+msgstr ""
+
+#: ../src/toolbar.cpp:232
 msgid "Enable or disable dark mode and restart Aegisub"
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:67
-#: ../src/typesetting_embedded_image_editor.cpp:109
-#: ../src/typesetting_embedded_image_editor.cpp:116
-#: ../src/typesetting_embedded_image_editor.cpp:125
-#: ../src/typesetting_embedded_image_editor.cpp:129
-#: ../src/typesetting_embedded_image_editor.cpp:134
-#: ../src/typesetting_embedded_image_editor.cpp:402
-#: ../src/typesetting_embedded_image_editor.cpp:482
-#: ../src/typesetting_embedded_image_editor.cpp:578
-msgid "Image Editor"
-msgstr ""
-
-#: ../src/typesetting_embedded_image_editor.cpp:68
-msgid "Rendering the selected subtitles..."
-msgstr ""
-
-#: ../src/typesetting_embedded_image_editor.cpp:106
+#: ../src/typesetting_embedded_image_editor.cpp:108
+#, c-format
 msgid "Shape %d"
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:107
+#: ../src/typesetting_embedded_image_editor.cpp:109
+#: ../src/typesetting_embedded_image_editor.cpp:582
 msgid "Subtitle"
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:108
+#: ../src/typesetting_embedded_image_editor.cpp:214
 msgid "Open a video before starting ImageEditor."
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:115
+#: ../src/typesetting_embedded_image_editor.cpp:215
+#: ../src/typesetting_embedded_image_editor.cpp:222
+#: ../src/typesetting_embedded_image_editor.cpp:228
+#: ../src/typesetting_embedded_image_editor.cpp:240
+#: ../src/typesetting_embedded_image_editor.cpp:244
+#: ../src/typesetting_embedded_image_editor.cpp:249
+#: ../src/typesetting_embedded_image_editor.cpp:606
+#: ../src/typesetting_embedded_image_editor.cpp:700
+#: ../src/typesetting_embedded_image_editor.cpp:819
+msgid "Image Editor"
+msgstr ""
+
+#: ../src/typesetting_embedded_image_editor.cpp:221
 msgid "The current video frame could not be loaded."
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:133
+#: ../src/typesetting_embedded_image_editor.cpp:229
+msgid "Rendering the selected subtitles..."
+msgstr ""
+
+#: ../src/typesetting_embedded_image_editor.cpp:248
 msgid "The selected subtitles could not be rendered."
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:430
+#: ../src/typesetting_embedded_image_editor.cpp:581
+msgid "Scene"
+msgstr ""
+
+#: ../src/typesetting_embedded_image_editor.cpp:644
 msgid "The edited image was incomplete."
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:438
+#: ../src/typesetting_embedded_image_editor.cpp:652
 msgid "The edited PNG could not be loaded."
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:512
+#: ../src/typesetting_embedded_image_editor.cpp:666
+msgid ""
+"Saving returns every visible canvas layer to the subtitle except the Scene "
+"layer."
+msgstr ""
+
+#: ../src/typesetting_embedded_image_editor.cpp:754
 msgid "ImageEditor could not be loaded."
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:662
-msgid "Saving returns every visible canvas layer to the subtitle except the Scene layer."
-msgstr ""
-
-#: ../src/typesetting_embedded_image_editor.cpp:699
+#: ../src/typesetting_embedded_image_editor.cpp:759
 msgid "Loading..."
 msgstr ""
 
-#: ../src/typesetting_embedded_image_editor.cpp:577
+#: ../src/typesetting_embedded_image_editor.cpp:818
 msgid "ImageEditor requires embedded web-view support, which is unavailable."
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1320
+msgid "Chromatic split"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1320
+msgid "Slice shift"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1321
+msgid "Macroblock"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1321
+msgid "Scanline tear"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1322
+msgid "Block shuffle"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1322
+msgid "Signal dropout"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1323
+msgid "Ghost trail"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1323
+msgid "VHS tracking"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1324
+msgid "Pixel stretch"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1328
+msgid "Cyan and magenta"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1328
+msgid "Original colors"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1329
+msgid "Blue and pink"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1329
+msgid "RGB split"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1330
+msgid "Custom colors"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1330
+msgid "Dark"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1330
+msgid "Light"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1362
+#, c-format
+msgid "%s, %s, animation"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1363
+#, c-format
+msgid "%s, %s, no animation"
+msgstr ""
+
+#: ../src/typesetting_glitch.cpp:1507
+msgid "apply glitch effect"
 msgstr ""
 
 #: ../src/typesetting_gradient.cpp:2130
@@ -9277,7 +9531,7 @@ msgstr ""
 msgid "insert image"
 msgstr ""
 
-#: ../src/typesetting_textbox.cpp:950
+#: ../src/typesetting_textbox.cpp:960
 msgid "apply text box"
 msgstr ""
 
@@ -9425,7 +9679,7 @@ msgstr ""
 msgid "Recognizing the visible subject..."
 msgstr ""
 
-#: ../src/visual_tool.cpp:154
+#: ../src/visual_tool.cpp:157
 msgid "visual typesetting"
 msgstr ""
 
@@ -9445,7 +9699,7 @@ msgid "Tracking frame %d of %d"
 msgstr ""
 
 #: ../src/visual_tool_auto_motion.cpp:342 ../src/visual_tool_shape.cpp:737
-#: ../src/visual_tool_shape.cpp:1014 ../src/visual_tool_transform.cpp:2657
+#: ../src/visual_tool_shape.cpp:1014 ../src/visual_tool_transform.cpp:3190
 #: ../src/visual_tool_vector_clip.cpp:1021
 #: ../src/visual_tool_vector_clip.cpp:2860
 msgid "Accept (ENTER)"
@@ -9538,6 +9792,14 @@ msgstr ""
 msgid ""
 "Pull the outline onto the picture edge it traces, keeping the offset even "
 "along its length"
+msgstr ""
+
+#: ../src/visual_tool_mask.cpp:517 ../src/visual_tool_mask.cpp:685
+#: ../src/visual_tool_mask.cpp:1176 ../src/visual_tool_mask.cpp:2794
+#: ../src/visual_tool_preview.cpp:37 ../src/visual_tool_preview.cpp:38
+#: ../src/visual_tool_shape.cpp:813 ../src/visual_tool_textbox.cpp:708
+#: ../src/visual_tool_textbox.cpp:871 ../src/visual_tool_vector_clip.cpp:1276
+msgid "Accept"
 msgstr ""
 
 #: ../src/visual_tool_mask.cpp:519 ../src/visual_tool_mask.cpp:688
@@ -9884,7 +10146,7 @@ msgid "Corner radius: %d px"
 msgstr ""
 
 #: ../src/visual_tool_shape.cpp:738 ../src/visual_tool_shape.cpp:1016
-#: ../src/visual_tool_textbox.cpp:686 ../src/visual_tool_transform.cpp:2658
+#: ../src/visual_tool_textbox.cpp:700 ../src/visual_tool_transform.cpp:3191
 #: ../src/visual_tool_vector_clip.cpp:1022
 #: ../src/visual_tool_vector_clip.cpp:2861
 msgid "Cancel (ESC)"
@@ -9900,123 +10162,133 @@ msgstr ""
 msgid "Add shape"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:674
+#: ../src/visual_tool_textbox.cpp:688
 msgid "Border"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:676 ../src/visual_tool_textbox.cpp:829
+#: ../src/visual_tool_textbox.cpp:690 ../src/visual_tool_textbox.cpp:843
 msgid "Text color"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:677 ../src/visual_tool_textbox.cpp:830
+#: ../src/visual_tool_textbox.cpp:691 ../src/visual_tool_textbox.cpp:844
 msgid "Border color"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:679
+#: ../src/visual_tool_textbox.cpp:693
 msgid "Align left"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:680
+#: ../src/visual_tool_textbox.cpp:694
 msgid "Align centre"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:681
+#: ../src/visual_tool_textbox.cpp:695
 msgid "Align right"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:682 ../src/visual_tool_textbox.cpp:845
+#: ../src/visual_tool_textbox.cpp:696 ../src/visual_tool_textbox.cpp:859
 msgid "Justify"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:683
+#: ../src/visual_tool_textbox.cpp:697
 msgid "Line spacing"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:684
+#: ../src/visual_tool_textbox.cpp:698
 msgid "Padding"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:685
+#: ../src/visual_tool_textbox.cpp:699
 msgid "Accept (CTRL+ENTER)"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:693
+#: ../src/visual_tool_textbox.cpp:707
 msgid "Spacing"
 msgstr ""
 
-#: ../src/visual_tool_textbox.cpp:841
+#: ../src/visual_tool_textbox.cpp:855
 msgid "Centre"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:1986
+#: ../src/visual_tool_transform.cpp:2480
 msgid "Some lines were left as text:"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2489
+#: ../src/visual_tool_transform.cpp:3022
 msgid "auto perspective"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2490 ../src/visual_tool_transform.cpp:2600
+#: ../src/visual_tool_transform.cpp:3023 ../src/visual_tool_transform.cpp:3133
 msgid "distort"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2490
+#: ../src/visual_tool_transform.cpp:3023
 msgid "free transform"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2599
+#: ../src/visual_tool_transform.cpp:3132
 msgid "arch"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2600
+#: ../src/visual_tool_transform.cpp:3133
 msgid "warp"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2659
+#: ../src/visual_tool_transform.cpp:3192
 msgid "Reset"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2660
-msgid "recalculate bord"
-msgstr ""
-
-#: ../src/visual_tool_transform.cpp:2661
-msgid "recalculate shad"
-msgstr ""
-
-#: ../src/visual_tool_transform.cpp:2662
+#: ../src/visual_tool_transform.cpp:3198
 msgid "maintain bord & shad"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2663
-msgid "recalculate clip"
+#: ../src/visual_tool_transform.cpp:3201
+msgid "Scale axes together"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2666
+#: ../src/visual_tool_transform.cpp:3202
+msgid "Scale X"
+msgstr ""
+
+#: ../src/visual_tool_transform.cpp:3203
+msgid "Scale Y"
+msgstr ""
+
+#: ../src/visual_tool_transform.cpp:3205
+msgid "Shear X"
+msgstr ""
+
+#: ../src/visual_tool_transform.cpp:3206
+msgid "Shear Y"
+msgstr ""
+
+#: ../src/visual_tool_transform.cpp:3207
+msgid "Rotate X"
+msgstr ""
+
+#: ../src/visual_tool_transform.cpp:3208
+msgid "Rotate Y"
+msgstr ""
+
+#: ../src/visual_tool_transform.cpp:3210
 msgid "keep original size"
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2715
+#: ../src/visual_tool_transform.cpp:3291
 msgid "Drag the 4 points to adjust the perspective."
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2715
+#: ../src/visual_tool_transform.cpp:3291
 msgid "Draw 4 points."
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2720
+#: ../src/visual_tool_transform.cpp:3296
 #, c-format
 msgid "Line %d is fitted to the points, the rest follow it."
 msgstr ""
 
-#: ../src/visual_tool_transform.cpp:2724
+#: ../src/visual_tool_transform.cpp:3300
 msgid "The yellow dashed rectangle is the reference."
-msgstr ""
-
-#: ../src/visual_tool_transform.cpp:2761
-msgid ""
-"The bord and the shad can be scatchy, using the maintain option is advised. "
-"It will transform into a shape."
 msgstr ""
 
 #: ../src/visual_tool_vector_clip.cpp:119
@@ -10315,6 +10587,7 @@ msgid "strip tags"
 msgstr ""
 
 #: ../packages/desktop/aegisub.desktop.in.in:5
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:6
 msgid "Aegisub"
 msgstr ""
 
@@ -10330,180 +10603,99 @@ msgstr ""
 msgid "subtitles;subtitle;captions;captioning;video;audio;"
 msgstr ""
 
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:7
+msgid "Create and modify subtitles"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:9
+msgid ""
+"Aegisub is a free, cross-platform open source tool for creating and "
+"modifying subtitles. Aegisub makes it quick and easy to time subtitles to "
+"audio, and features many powerful tools for styling them, including a built-"
+"in real-time video preview."
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:10
+msgid ""
+"Aegisub was originally created as a tool to make typesetting, particularly "
+"in anime fansubs, a less painful experience. At the time of the start of the "
+"project, many other programs that supported the Advanced Substation Alpha "
+"format lacked (and in many cases, still lack; development on several "
+"competing programs have since been dropped for various reasons completely "
+"unrelated to Aegisub) many vital functions, or were too buggy and/or "
+"unreliable to be really useful."
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:11
+msgid ""
+"Since then, Aegisub has grown into a fully fledged, highly customizable "
+"subtitle editor. It features a lot of convenient tools to help you with "
+"timing, typesetting, editing and translating subtitles, as well as a "
+"powerful scripting environment called Automation (originally mostly intended "
+"for creating karaoke effects, Automation can now be used much else, "
+"including creating macros and various other convenient tools)."
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:12
+msgid "Some highlights of Aegisub:"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:14
+msgid "Simple and intuitive yet powerful interface for editing subtitles"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:15
+msgid "Support for many formats and character sets"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:16
+msgid "Powerful video mode"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:17
+msgid "Visual typesetting tools"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:18
+msgid "Intuitive and customizable audio timing mode"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:19
+msgid "Fully scriptable through the Automation module"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:43
+msgid "Typesetting"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:47
+msgid "Audio video"
+msgstr ""
+
+#: ../packages/desktop/aegisub.metainfo.xml.in.in:51
+msgid "Audio timing"
+msgstr ""
+
 #: packages/win_installer/fragment_strings.iss:1
-msgid "Installing runtime libraries..."
+msgid "Installing runtime libraries..."
 msgstr ""
 
 
 #: packages/win_installer/fragment_strings.iss:1
-msgid "Create a start menu icon"
+msgid "Create a start menu icon"
 msgstr ""
 
 
 #: packages/win_installer/fragment_strings.iss:1
-msgid "Automatically check for new versions of Aegisub"
+msgid "Automatically check for new versions of Aegisub"
 msgstr ""
 
 
 #: packages/win_installer/fragment_strings.iss:1
-msgid "Update Checker:"
+msgid "Update Checker:"
 msgstr ""
 
 
 #: packages/win_installer/fragment_strings.iss:1
-msgid "This will install Aegisub {#BUILD_GIT_VERSION_STRING} on your computer.%n%nAegisub is covered by the GNU General Public License version 2. This means you may use the application for any purpose without charge, but that no warranties of any kind are given either.%n%nSee the Aegisub website for information on obtaining the source code."
-msgstr ""
-
-#: ../src/typesetting_embedded_image_editor.cpp
-msgid "Scene"
-msgstr ""
-
-#: ../src/command/typesetting.cpp ../src/dialog_glitch.cpp
-msgid "Glitch effect"
-msgstr ""
-
-#: ../src/command/typesetting.cpp
-msgid "Edit glitch effect"
-msgstr ""
-
-#: ../src/command/typesetting.cpp
-msgid "Edit the settings of the selected generated glitch effect"
-msgstr ""
-
-#: ../src/command/typesetting.cpp
-msgid "Copy glitch effect"
-msgstr ""
-
-#: ../src/command/typesetting.cpp
-msgid "Copy the selected generated glitch rows and settings"
-msgstr ""
-
-#: ../src/command/typesetting.cpp
-msgid "Create customizable, angled and animated glitch slices on the selected lines"
-msgstr ""
-
-#: ../src/base_grid.cpp
-#, c-format
-msgid "Glitch effect (%d lines, %s)"
-msgstr ""
-
-#: ../src/typesetting_glitch.cpp
-msgid "apply glitch effect"
-msgstr ""
-
-#: ../src/typesetting_glitch.cpp
-#, c-format
-msgid "%s, animation"
-msgstr ""
-
-#: ../src/typesetting_glitch.cpp
-#, c-format
-msgid "%s, no animation"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "(off)"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-#, c-format
-msgid "Animation %zu: %d-%d ms%s"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-#, c-format
-msgid "Animation %zu: frame %d%s"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Time"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Frame"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Frame:"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "An animation end time must be after its start time."
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "No glitch effect could be generated for the selected lines."
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Glitch settings"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Mode:"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Amount (%):"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Offset:"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Opacity:"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Height:"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Width (%):"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Show base layer"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Playback"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Animations"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-#, c-format
-msgid "Total line duration: %d ms"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Add animation"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Remove animation"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "From"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "To"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Enabled"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Time (ms):"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Paste effect"
+msgid "This will install Aegisub {#BUILD_GIT_VERSION_STRING} on your computer.%n%nAegisub is covered by the GNU General Public License version 2. This means you may use the application for any purpose without charge, but that no warranties of any kind are given either.%n%nSee the Aegisub website for information on obtaining the source code."
 msgstr ""

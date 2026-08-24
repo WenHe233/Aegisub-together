@@ -20,6 +20,7 @@
 #include <libaegisub/color.h>
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <wx/font.h>
 #include <wx/string.h>
@@ -39,6 +40,10 @@ struct ResampleSettings;
 /// @param callback Function called whenever the selected color changes
 /// @return Did the user accept the new color?
 bool GetColorFromUser(wxWindow *parent, agi::Color original, bool alpha, std::function<void (agi::Color)> callback);
+
+/// Show the color picker with an additional action which clears the selected color.
+bool GetOptionalColorFromUser(wxWindow *parent, std::optional<agi::Color> original,
+	std::function<void (std::optional<agi::Color>)> callback);
 
 /// Add a color to the shared color picker history.
 void AddColorToRecent(agi::Color color);

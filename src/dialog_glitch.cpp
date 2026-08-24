@@ -33,6 +33,7 @@
 #include <wx/choice.h>
 #include <wx/dialog.h>
 #include <wx/dcbuffer.h>
+#include <wx/image.h>
 #include <wx/listbox.h>
 #include <wx/msgdlg.h>
 #include <wx/panel.h>
@@ -48,7 +49,8 @@ namespace {
 
 using typesetting::glitch::Animation;
 using typesetting::glitch::AnimationTiming;
-using typesetting::glitch::Mode;
+using typesetting::glitch::ColorStyle;
+using typesetting::glitch::EffectType;
 using typesetting::glitch::Settings;
 using typesetting::glitch::Values;
 
@@ -218,6 +220,62 @@ public:
 	}
 };
 
+class OptionalColourButton final : public wxButton {
+	std::optional<agi::Color> colour;
+	wxImage bitmap;
+	std::function<void()> changed;
+
+	void UpdateBitmap() {
+		auto data = bitmap.GetData();
+		for (int y = 0; y < bitmap.GetHeight(); ++y) {
+			for (int x = 0; x < bitmap.GetWidth(); ++x) {
+				size_t at = (static_cast<size_t>(y) * bitmap.GetWidth() + x) * 3;
+				if (colour) {
+					data[at] = colour->r;
+					data[at + 1] = colour->g;
+					data[at + 2] = colour->b;
+				}
+				else {
+					unsigned char shade = ((x / 4 + y / 4) & 1) ? 210 : 245;
+					data[at] = data[at + 1] = data[at + 2] = shade;
+					if (x == y || x == bitmap.GetWidth() - y - 1) {
+						data[at] = 130;
+						data[at + 1] = 130;
+						data[at + 2] = 130;
+					}
+				}
+			}
+		}
+		SetBitmapLabel(wxBitmap(bitmap));
+		SetToolTip(colour ? to_wx(colour->GetHexFormatted()) : _("No color selected"));
+	}
+
+public:
+	OptionalColourButton(wxWindow *parent, wxSize size,
+			std::optional<agi::Color> initial, std::function<void()> changed)
+	: wxButton(parent, wxID_ANY, "", wxDefaultPosition,
+		wxSize(size.GetWidth() + 6, size.GetHeight() + 6))
+	, colour(std::move(initial))
+	, bitmap(size)
+	, changed(std::move(changed)) {
+		UpdateBitmap();
+		Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+			GetOptionalColorFromUser(GetParent(), colour,
+				[this](std::optional<agi::Color> selected) {
+					colour = std::move(selected);
+					UpdateBitmap();
+					if (this->changed) this->changed();
+				});
+		});
+	}
+
+	std::optional<agi::Color> GetColor() const { return colour; }
+	void SetColor(std::optional<agi::Color> value) {
+		colour = std::move(value);
+		UpdateBitmap();
+	}
+};
+
 class DialogGlitch final : public wxDialog {
 	agi::Context *context;
 	Settings settings;
@@ -226,7 +284,9 @@ class DialogGlitch final : public wxDialog {
 	wxTimer playback_timer;
 	std::chrono::steady_clock::time_point last_preview;
 
-	wxChoice *mode = nullptr;
+	wxChoice *effect_type = nullptr;
+	wxChoice *color_style = nullptr;
+	std::array<OptionalColourButton *, 3> custom_colors{};
 	AngleDial *angle_dial = nullptr;
 	wxSpinCtrlDouble *angle = nullptr;
 	std::array<wxButton *, 4> angle_presets{};
@@ -244,7 +304,9 @@ class DialogGlitch final : public wxDialog {
 
 	wxListBox *animation_list = nullptr;
 	wxCheckBox *animation_enabled = nullptr;
-	wxChoice *animation_mode = nullptr;
+	wxChoice *animation_effect_type = nullptr;
+	wxChoice *animation_color_style = nullptr;
+	std::array<OptionalColourButton *, 3> animation_custom_colors{};
 	wxChoice *animation_timing = nullptr;
 	wxPanel *animation_frame_panel = nullptr;
 	wxPanel *animation_time_panel = nullptr;
@@ -320,14 +382,37 @@ class DialogGlitch final : public wxDialog {
 			loop_playback = false;
 	}
 
+	void UpdateCustomColorVisibility() {
+		bool base_custom = color_style &&
+			color_style->GetSelection() == static_cast<int>(ColorStyle::Custom);
+		for (auto button : custom_colors)
+			if (button) button->Show(base_custom);
+
+		bool animation_selected = active_animation >= 0 &&
+			active_animation < static_cast<int>(settings.animations.size());
+		bool animation_custom = animation_selected && animation_color_style &&
+			animation_color_style->GetSelection() ==
+				static_cast<int>(ColorStyle::Custom) + 1;
+		for (auto button : animation_custom_colors)
+			if (button) button->Show(animation_custom);
+		Layout();
+	}
+
 	void SaveAnimation() {
 		if (syncing || active_animation < 0 ||
 			active_animation >= static_cast<int>(settings.animations.size())) return;
 		auto& animation = settings.animations[static_cast<size_t>(active_animation)];
 		animation.enabled = animation_enabled->GetValue();
-		animation.use_default_mode = animation_mode->GetSelection() <= 0;
-		if (!animation.use_default_mode)
-			animation.mode = static_cast<Mode>(animation_mode->GetSelection() - 1);
+		animation.use_default_effect_type = animation_effect_type->GetSelection() <= 0;
+		if (!animation.use_default_effect_type)
+			animation.effect_type = static_cast<EffectType>(
+				animation_effect_type->GetSelection() - 1);
+		animation.use_default_color_style = animation_color_style->GetSelection() <= 0;
+		if (!animation.use_default_color_style)
+			animation.color_style = static_cast<ColorStyle>(
+				animation_color_style->GetSelection() - 1);
+		for (size_t i = 0; i < animation_custom_colors.size(); ++i)
+			animation.custom_colors[i] = animation_custom_colors[i]->GetColor();
 		animation.timing = animation_timing->GetSelection() == 1 ?
 			AnimationTiming::Frame : AnimationTiming::Range;
 		animation.start_time = static_cast<int>(std::lround(animation_start->GetValue()));
@@ -389,22 +474,29 @@ class DialogGlitch final : public wxDialog {
 		active_animation = selection;
 		bool enabled = selection >= 0 &&
 			selection < static_cast<int>(settings.animations.size());
-		std::array<wxWindow *, 17> animation_controls = {animation_enabled,
-			animation_mode, animation_timing, animation_start, animation_end, animation_frame,
+		std::array<wxWindow *, 21> animation_controls = {animation_enabled,
+			animation_effect_type, animation_color_style, animation_timing,
+			animation_start, animation_end, animation_frame,
 			from_amount, to_amount, from_offset, to_offset,
 			from_opacity, to_opacity, from_height, to_height, from_width, to_width,
-			animation_show_base};
+			animation_custom_colors[0], animation_custom_colors[1],
+			animation_custom_colors[2], animation_show_base};
 		for (wxWindow *control : animation_controls)
 			control->Enable(enabled);
 		if (!enabled) {
+			UpdateCustomColorVisibility();
 			UpdateAnimationTimingAvailability();
 			return;
 		}
 		auto const& animation = settings.animations[static_cast<size_t>(selection)];
 		syncing = true;
 		animation_enabled->SetValue(animation.enabled);
-		animation_mode->SetSelection(animation.use_default_mode ? 0 :
-			static_cast<int>(animation.mode) + 1);
+		animation_effect_type->SetSelection(animation.use_default_effect_type ? 0 :
+			static_cast<int>(animation.effect_type) + 1);
+		animation_color_style->SetSelection(animation.use_default_color_style ? 0 :
+			static_cast<int>(animation.color_style) + 1);
+		for (size_t i = 0; i < animation_custom_colors.size(); ++i)
+			animation_custom_colors[i]->SetColor(animation.custom_colors[i]);
 		animation_timing->SetSelection(animation.timing == AnimationTiming::Frame ? 1 : 0);
 		animation_start->SetValue(animation.start_time);
 		animation_end->SetValue(animation.end_time);
@@ -421,12 +513,16 @@ class DialogGlitch final : public wxDialog {
 		from_width->SetValue(animation.from.width);
 		to_width->SetValue(animation.to.width);
 		syncing = false;
+		UpdateCustomColorVisibility();
 		UpdateAnimationTimingAvailability();
 	}
 
 	void Read(bool immediate = false) {
 		if (syncing) return;
-		settings.mode = static_cast<typesetting::glitch::Mode>(mode->GetSelection());
+		settings.effect_type = static_cast<EffectType>(effect_type->GetSelection());
+		settings.color_style = static_cast<ColorStyle>(color_style->GetSelection());
+		for (size_t i = 0; i < custom_colors.size(); ++i)
+			settings.custom_colors[i] = custom_colors[i]->GetColor();
 		settings.base = BaseValues();
 		settings.show_base = show_base->GetValue();
 		SaveAnimation();
@@ -437,7 +533,8 @@ class DialogGlitch final : public wxDialog {
 	void AddAnimation() {
 		SaveAnimation();
 		Animation animation;
-		animation.mode = settings.mode;
+		animation.effect_type = settings.effect_type;
+		animation.color_style = settings.color_style;
 		animation.show_base = settings.show_base;
 		animation.from = BaseValues();
 		animation.to = animation.from;
@@ -454,7 +551,10 @@ class DialogGlitch final : public wxDialog {
 	void LoadClipboardSettings(Settings pasted) {
 		settings = std::move(pasted);
 		syncing = true;
-		mode->SetSelection(static_cast<int>(settings.mode));
+		effect_type->SetSelection(static_cast<int>(settings.effect_type));
+		color_style->SetSelection(static_cast<int>(settings.color_style));
+		for (size_t i = 0; i < custom_colors.size(); ++i)
+			custom_colors[i]->SetColor(settings.custom_colors[i]);
 		angle->SetValue(static_cast<int>(std::lround(settings.base.angle)));
 		angle_dial->SetValue(static_cast<int>(std::lround(angle->GetValue())));
 		amount->SetValue(static_cast<int>(std::lround(settings.base.amount)));
@@ -529,17 +629,30 @@ public:
 	, playback_timer(this) {
 		auto main = new wxBoxSizer(wxVERTICAL);
 		auto basic = new wxStaticBoxSizer(wxVERTICAL, this, _("Glitch settings"));
-		auto mode_row = new wxBoxSizer(wxHORIZONTAL);
-		mode_row->Add(new wxStaticText(basic->GetStaticBox(), wxID_ANY, _("Mode:")), 0,
+		auto effect_row = new wxBoxSizer(wxHORIZONTAL);
+		effect_row->Add(new wxStaticText(basic->GetStaticBox(), wxID_ANY,
+			_("Effect:")), 0,
 			wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
-		mode = new wxChoice(basic->GetStaticBox(), wxID_ANY);
-		for (auto const& name : typesetting::glitch::ModeNames()) mode->Append(to_wx(name));
-		mode->SetSelection(static_cast<int>(settings.mode));
-		mode_row->Add(mode, 1, wxEXPAND);
-		show_base = new wxCheckBox(basic->GetStaticBox(), wxID_ANY, _("Show base layer"));
-		show_base->SetValue(settings.show_base);
-		mode_row->Add(show_base, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 12);
-		basic->Add(mode_row, 0, wxEXPAND | wxALL, 8);
+		effect_type = new wxChoice(basic->GetStaticBox(), wxID_ANY);
+		for (auto const& name : typesetting::glitch::EffectTypeNames())
+			effect_type->Append(to_wx(name));
+		effect_type->SetSelection(static_cast<int>(settings.effect_type));
+		effect_type->SetMinSize(FromDIP(wxSize(180, -1)));
+		effect_row->Add(effect_type, 1, wxEXPAND | wxRIGHT, 8);
+		color_style = new wxChoice(basic->GetStaticBox(), wxID_ANY);
+		for (auto const& name : typesetting::glitch::ColorStyleNames())
+		color_style->Append(to_wx(name));
+		color_style->SetSelection(static_cast<int>(settings.color_style));
+		color_style->SetMinSize(FromDIP(wxSize(160, -1)));
+		effect_row->Add(color_style, 1, wxEXPAND | wxRIGHT, 5);
+		for (size_t i = 0; i < custom_colors.size(); ++i) {
+			custom_colors[i] = new OptionalColourButton(basic->GetStaticBox(),
+				FromDIP(wxSize(24, 16)), settings.custom_colors[i],
+				[this] { Read(true); });
+			custom_colors[i]->SetToolTip(wxString::Format(_("Custom color %zu"), i + 1));
+			effect_row->Add(custom_colors[i], 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 3);
+		}
+		basic->Add(effect_row, 0, wxEXPAND | wxALL, 8);
 
 		auto angle_row = new wxBoxSizer(wxHORIZONTAL);
 		angle_row->Add(new wxStaticText(basic->GetStaticBox(), wxID_ANY, _("Angle:")), 0,
@@ -599,7 +712,9 @@ public:
 		add_value(_("Height:"), height_slider, height);
 		add_value(_("Width (%):"), width_slider, width, true);
 		add_value(_("Opacity:"), opacity_slider, opacity);
-		values->AddSpacer(0);
+		show_base = new wxCheckBox(basic->GetStaticBox(), wxID_ANY, _("Show base layer"));
+		show_base->SetValue(settings.show_base);
+		values->Add(show_base, 0, wxALIGN_CENTER_VERTICAL);
 		values->AddSpacer(0);
 		values->AddSpacer(0);
 		basic->Add(values, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
@@ -666,27 +781,19 @@ public:
 		animation_top->Add(animation_buttons, 0, wxEXPAND);
 		animation_box->Add(animation_top, 0, wxEXPAND | wxALL, 8);
 
-		auto animation_options = new wxBoxSizer(wxHORIZONTAL);
+		auto animation_timing_row = new wxBoxSizer(wxHORIZONTAL);
 		animation_enabled = new wxCheckBox(animation_box->GetStaticBox(), wxID_ANY,
 			_("Enabled"));
-		animation_box->Add(animation_enabled, 0, wxLEFT | wxRIGHT | wxBOTTOM, 8);
-		animation_mode = new wxChoice(animation_box->GetStaticBox(), wxID_ANY);
-		animation_mode->Append(_("Default"));
-		for (auto const& name : typesetting::glitch::ModeNames())
-			animation_mode->Append(to_wx(name));
-		animation_mode->SetSelection(0);
-		animation_mode->SetMinSize(FromDIP(wxSize(118, -1)));
-		animation_options->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY,
-			_("Mode:")), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
-		animation_options->Add(animation_mode, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 12);
+		animation_timing_row->Add(animation_enabled, 0,
+			wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
 		animation_timing = new wxChoice(animation_box->GetStaticBox(), wxID_ANY);
 		animation_timing->Append(_("Time"));
 		animation_timing->Append(_("Frame"));
 		animation_timing->SetSelection(0);
-		animation_timing->SetMinSize(FromDIP(wxSize(92, -1)));
-		animation_options->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY,
-			_("Timing:")), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
-		animation_options->Add(animation_timing, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 12);
+		animation_timing->SetMinSize(FromDIP(wxSize(82, -1)));
+		animation_timing->SetToolTip(_("Timing"));
+		animation_timing_row->Add(animation_timing, 0,
+			wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
 		animation_frame_panel = new wxPanel(animation_box->GetStaticBox());
 		auto frame_sizer = new wxBoxSizer(wxHORIZONTAL);
 		animation_frame = DoubleControl(animation_frame_panel, 0, 1000000, 0, 1, 0, 72);
@@ -694,21 +801,56 @@ public:
 			0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
 		frame_sizer->Add(animation_frame, 0, wxALIGN_CENTER_VERTICAL);
 		animation_frame_panel->SetSizer(frame_sizer);
-		animation_options->Add(animation_frame_panel, 0, wxALIGN_CENTER_VERTICAL);
+		animation_timing_row->Add(animation_frame_panel, 0, wxALIGN_CENTER_VERTICAL);
 
 		animation_time_panel = new wxPanel(animation_box->GetStaticBox());
 		auto time_sizer = new wxBoxSizer(wxHORIZONTAL);
 		animation_start = DoubleControl(animation_time_panel, 0, 3600000, 0, 1, 0, 78);
 		animation_end = DoubleControl(animation_time_panel, 0, 3600000, 1000, 1, 0, 78);
 		time_sizer->Add(new wxStaticText(animation_time_panel, wxID_ANY, _("Time (ms):")),
-			0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 7);
+			0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
 		time_sizer->Add(animation_start, 0, wxALIGN_CENTER_VERTICAL);
 		time_sizer->Add(new wxStaticText(animation_time_panel, wxID_ANY, "->"), 0,
 			wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 7);
 		time_sizer->Add(animation_end, 0, wxALIGN_CENTER_VERTICAL);
 		animation_time_panel->SetSizer(time_sizer);
-		animation_options->Add(animation_time_panel, 0, wxALIGN_CENTER_VERTICAL);
-		animation_box->Add(animation_options, 0,
+		animation_timing_row->Add(animation_time_panel, 0, wxALIGN_CENTER_VERTICAL);
+		animation_box->Add(animation_timing_row, 0,
+			wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+		auto animation_effect_row = new wxBoxSizer(wxHORIZONTAL);
+		animation_effect_row->Add(new wxStaticText(animation_box->GetStaticBox(),
+			wxID_ANY, _("Effect:")), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+		animation_effect_type = new wxChoice(animation_box->GetStaticBox(), wxID_ANY);
+		animation_effect_type->Append(_("Default"));
+		for (auto const& name : typesetting::glitch::EffectTypeNames())
+			animation_effect_type->Append(to_wx(name));
+		animation_effect_type->SetSelection(0);
+		animation_effect_type->SetMinSize(FromDIP(wxSize(135, -1)));
+		animation_effect_type->SetToolTip(_("Effect type"));
+		animation_effect_row->Add(animation_effect_type, 1,
+			wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+		animation_color_style = new wxChoice(animation_box->GetStaticBox(), wxID_ANY);
+		animation_color_style->Append(_("Default"));
+		for (auto const& name : typesetting::glitch::ColorStyleNames())
+			animation_color_style->Append(to_wx(name));
+		animation_color_style->SetSelection(0);
+		animation_color_style->SetMinSize(FromDIP(wxSize(135, -1)));
+		animation_color_style->SetToolTip(_("Color style"));
+		animation_effect_row->Add(animation_color_style, 1,
+			wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+		for (size_t i = 0; i < animation_custom_colors.size(); ++i) {
+			animation_custom_colors[i] = new OptionalColourButton(
+				animation_box->GetStaticBox(), FromDIP(wxSize(20, 14)),
+				std::nullopt, [this] {
+					SaveAnimation();
+					RefreshAnimationList();
+					SchedulePreview(true);
+				});
+			animation_effect_row->Add(animation_custom_colors[i], 0,
+				wxALIGN_CENTER_VERTICAL | wxLEFT, 3);
+		}
+		animation_box->Add(animation_effect_row, 0,
 			wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
 		auto editor = new wxFlexGridSizer(2, 7, 12);
@@ -773,6 +915,7 @@ public:
 		bottom->AddStretchSpacer();
 		bottom->Add(CreateStdDialogButtonSizer(wxOK | wxCANCEL), 0, wxALIGN_CENTER_VERTICAL);
 		main->Add(bottom, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+		UpdateCustomColorVisibility();
 		SetSizerAndFit(main);
 		SetMinSize(FromDIP(wxSize(620, -1)));
 
@@ -784,7 +927,11 @@ public:
 			this->context->videoController->PlayLine();
 			if (!this->context->videoController->IsPlaying()) StopPlayback();
 		});
-		mode->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) { Read(true); });
+		effect_type->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) { Read(true); });
+		color_style->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) {
+			UpdateCustomColorVisibility();
+			Read(true);
+		});
 		angle->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent&) {
 			angle_dial->SetValue(static_cast<int>(std::lround(angle->GetValue())));
 			Read(true);
@@ -836,7 +983,13 @@ public:
 		auto animation_changed = [this](auto&) { SaveAnimation(); RefreshAnimationList(); SchedulePreview(); };
 		animation_enabled->Bind(wxEVT_CHECKBOX, animation_changed);
 		animation_show_base->Bind(wxEVT_CHECKBOX, animation_changed);
-		animation_mode->Bind(wxEVT_CHOICE, animation_changed);
+		animation_effect_type->Bind(wxEVT_CHOICE, animation_changed);
+		animation_color_style->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) {
+			SaveAnimation();
+			RefreshAnimationList();
+			UpdateCustomColorVisibility();
+			SchedulePreview();
+		});
 		animation_timing->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) {
 			SaveAnimation();
 			RefreshAnimationList();
