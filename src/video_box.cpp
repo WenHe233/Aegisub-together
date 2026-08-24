@@ -38,6 +38,7 @@
 #include "include/aegisub/toolbar.h"
 #include "options.h"
 #include "project.h"
+#include "right_click_action.h"
 #include "selection_controller.h"
 #include "theme.h"
 #include "video_controller.h"
@@ -95,10 +96,7 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached,
 		subsOpacitySlider->SetValue(100);
 		ApplySubsOpacity();
 	};
-	subsOpacitySlider->Bind(wxEVT_RIGHT_DOWN,
-		[reset_subs_opacity](wxMouseEvent&) { reset_subs_opacity(); });
-	subsOpacitySlider->Bind(wxEVT_CONTEXT_MENU,
-		[reset_subs_opacity](wxContextMenuEvent&) { reset_subs_opacity(); });
+	right_click_action::Bind(subsOpacitySlider, reset_subs_opacity);
 
 	auto brightnessSlider = new wxSlider(this, -1, 100, 0, 400, wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", 100) + " (" + _("Right click to reset") + ")");

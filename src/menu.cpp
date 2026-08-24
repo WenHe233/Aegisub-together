@@ -46,6 +46,10 @@
 #include <wx/menu.h>
 #include <wx/menuitem.h>
 
+#ifdef __WXGTK__
+#include <gtk/gtk.h>
+#endif
+
 #ifdef __WXMAC__
 #include <wx/app.h>
 #endif
@@ -446,9 +450,42 @@ wxMenu *build_menu(std::string const& name, agi::Context *c, CommandManager *cm,
 	return menu;
 }
 
+#ifdef __WXGTK__
+void OnAutomationMenuShow(GtkWidget *widget, gpointer data) {
+	auto owner = static_cast<wxWindow *>(data);
+	if (!owner)
+		return;
+
+	auto popup = gtk_widget_get_toplevel(widget);
+	if (!GTK_IS_WINDOW(popup))
+		return;
+
+	wxSize owner_size = owner->GetClientSize();
+	if (owner_size.GetWidth() <= 0 || owner_size.GetHeight() <= 0)
+		return;
+
+	GdkGeometry geometry{};
+	// The menu has not been laid out yet when "show" is emitted, so its
+	// preferred width can still be one pixel. Use the already-realized owner
+	// as the harmless horizontal ceiling and constrain only what matters here:
+	// the menu's vertical extent.
+	geometry.max_width = owner_size.GetWidth();
+	geometry.max_height = owner_size.GetHeight();
+	gtk_window_set_geometry_hints(GTK_WINDOW(popup), nullptr, &geometry,
+		GDK_HINT_MAX_SIZE);
+}
+
+void LimitAutomationMenuHeight(wxMenu *menu, wxWindow *owner) {
+	g_signal_connect(menu->m_menu, "show", G_CALLBACK(OnAutomationMenuShow), owner);
+}
+#else
+void LimitAutomationMenuHeight(wxMenu *, wxWindow *) { }
+#endif
+
 class AutomationMenu final : public wxMenu {
 	agi::Context *c;
 	CommandManager *cm;
+	wxWindow *owner;
 	agi::signal::Connection global_slot;
 	agi::signal::Connection local_slot;
 	std::vector<wxMenuItem *> all_items;
@@ -519,6 +556,7 @@ class AutomationMenu final : public wxMenu {
 				}
 				else {
 					auto submenu = new wxMenu;
+					LimitAutomationMenuHeight(submenu, am->owner);
 					parent->AppendSubMenu(submenu, to_wx(item.displayname));
 					item.GenerateMenu(submenu, am);
 				}
@@ -587,13 +625,16 @@ class AutomationMenu final : public wxMenu {
 			availability_changed(true);
 	}
 public:
-	AutomationMenu(agi::Context *c, CommandManager *cm, bool mutekiOnly = false)
+	AutomationMenu(agi::Context *c, CommandManager *cm, wxWindow *owner,
+		bool mutekiOnly = false)
 	: c(c)
 	, cm(cm)
+	, owner(owner)
 	, global_slot(config::global_scripts->AddScriptChangeListener(&AutomationMenu::Regenerate, this))
 	, local_slot(c->local_scripts->AddScriptChangeListener(&AutomationMenu::Regenerate, this))
 	, mutekiOnly(mutekiOnly)
 	{
+		LimitAutomationMenuHeight(this, owner);
 		if (!mutekiOnly) {
 			cm->AddCommand(cmd::get("am/meta"), this);
 			cm->AddCommand(cmd::get("am/last"), this);
@@ -641,9 +682,10 @@ namespace menu {
 			else {
 				read_entry(item, "special", &submenu);
 				if (submenu == "automation")
-					menu->Append(new AutomationMenu(c, &menu->cm), wxGetTranslation(to_wx(disp)));
+					menu->Append(new AutomationMenu(c, &menu->cm, window),
+						wxGetTranslation(to_wx(disp)));
 				else if (submenu == "muteki") {
-					auto muteki_menu = new AutomationMenu(c, &menu->cm, true);
+					auto muteki_menu = new AutomationMenu(c, &menu->cm, window, true);
 					menu->SetMutekiMenu(muteki_menu, wxGetTranslation(to_wx(disp)),
 						menu->GetMenuCount(), muteki_menu->HasMacros());
 					muteki_menu->SetAvailabilityCallback([menu_bar = menu.get()](bool visible) {

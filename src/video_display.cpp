@@ -47,6 +47,7 @@
 #include "include/aegisub/menu.h"
 #include "options.h"
 #include "project.h"
+#include "right_click_action.h"
 #include "spline_curve.h"
 #include "utils.h"
 #include "video_out_gl.h"
@@ -119,14 +120,10 @@ VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBo
 	zoomBox->Bind(wxEVT_TEXT_ENTER, &VideoDisplay::SetWindowZoomFromBoxText, this);
 
 	speedBox->Bind(wxEVT_COMBOBOX, &VideoDisplay::OnSpeedBoxChange, this);
-	speedBox->Bind(wxEVT_RIGHT_DOWN, &VideoDisplay::OnSpeedBoxReset, this);
-	speedBox->Bind(wxEVT_CONTEXT_MENU,
-		[this](wxContextMenuEvent&) { ResetSpeedBox(); });
+	right_click_action::Bind(speedBox, [this] { ResetSpeedBox(); });
 
 	brightnessSlider->Bind(wxEVT_SLIDER, &VideoDisplay::OnBrightnessSlider, this);
-	brightnessSlider->Bind(wxEVT_RIGHT_DOWN, &VideoDisplay::OnBrightnessReset, this);
-	brightnessSlider->Bind(wxEVT_CONTEXT_MENU,
-		[this](wxContextMenuEvent&) { ResetBrightness(); });
+	right_click_action::Bind(brightnessSlider, [this] { ResetBrightness(); });
 
 	con->videoController->Bind(EVT_FRAME_READY, &VideoDisplay::UploadFrameData, this);
 	connections = agi::signal::make_vector({
@@ -752,10 +749,6 @@ void VideoDisplay::ResetSpeedBox() {
 	con->videoController->SetPlaybackSpeed(1.0);
 }
 
-void VideoDisplay::OnSpeedBoxReset(wxMouseEvent &) {
-	ResetSpeedBox();
-}
-
 void VideoDisplay::OnBrightnessSlider(wxCommandEvent &) {
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", brightnessSlider->GetValue()) + " (" + _("Right click to reset") + ")");
 
@@ -767,10 +760,6 @@ void VideoDisplay::ResetBrightness() {
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", brightnessSlider->GetValue()) + " (" + _("Right click to reset") + ")");
 
 	Render();
-}
-
-void VideoDisplay::OnBrightnessReset(wxMouseEvent &) {
-	ResetBrightness();
 }
 
 void VideoDisplay::SetTool(std::unique_ptr<VisualToolBase> new_tool) {

@@ -193,12 +193,10 @@ class VideoDisplay final : public wxGLCanvas {
 	/// Set the brightness level to that indicated by the slider
 	void OnSpeedBoxChange(wxCommandEvent&);
 	void ResetSpeedBox();
-	void OnSpeedBoxReset(wxMouseEvent&);
 
 	/// Set the brightness level to that indicated by the slider
 	void OnBrightnessSlider(wxCommandEvent&);
 	void ResetBrightness();
-	void OnBrightnessReset(wxMouseEvent&);
 
 	/// @brief Key event handler
 	void OnKeyDown(wxKeyEvent &event);
