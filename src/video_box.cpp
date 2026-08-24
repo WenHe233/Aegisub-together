@@ -91,10 +91,14 @@ VideoBox::VideoBox(wxWindow *parent, bool isDetached,
 		wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
 	UpdateSubsOpacityTooltip();
 	subsOpacitySlider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&) { ApplySubsOpacity(); });
-	subsOpacitySlider->Bind(wxEVT_RIGHT_DOWN, [this](wxMouseEvent&) {
+	auto reset_subs_opacity = [this] {
 		subsOpacitySlider->SetValue(100);
 		ApplySubsOpacity();
-	});
+	};
+	subsOpacitySlider->Bind(wxEVT_RIGHT_DOWN,
+		[reset_subs_opacity](wxMouseEvent&) { reset_subs_opacity(); });
+	subsOpacitySlider->Bind(wxEVT_CONTEXT_MENU,
+		[reset_subs_opacity](wxContextMenuEvent&) { reset_subs_opacity(); });
 
 	auto brightnessSlider = new wxSlider(this, -1, 100, 0, 400, wxDefaultPosition, wxSize(50, -1), wxSL_HORIZONTAL);
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", 100) + " (" + _("Right click to reset") + ")");

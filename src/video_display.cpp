@@ -120,9 +120,13 @@ VideoDisplay::VideoDisplay(wxToolBar *toolbar, bool freeSize, wxComboBox *zoomBo
 
 	speedBox->Bind(wxEVT_COMBOBOX, &VideoDisplay::OnSpeedBoxChange, this);
 	speedBox->Bind(wxEVT_RIGHT_DOWN, &VideoDisplay::OnSpeedBoxReset, this);
+	speedBox->Bind(wxEVT_CONTEXT_MENU,
+		[this](wxContextMenuEvent&) { ResetSpeedBox(); });
 
 	brightnessSlider->Bind(wxEVT_SLIDER, &VideoDisplay::OnBrightnessSlider, this);
 	brightnessSlider->Bind(wxEVT_RIGHT_DOWN, &VideoDisplay::OnBrightnessReset, this);
+	brightnessSlider->Bind(wxEVT_CONTEXT_MENU,
+		[this](wxContextMenuEvent&) { ResetBrightness(); });
 
 	con->videoController->Bind(EVT_FRAME_READY, &VideoDisplay::UploadFrameData, this);
 	connections = agi::signal::make_vector({
@@ -741,11 +745,15 @@ void VideoDisplay::OnSpeedBoxChange(wxCommandEvent &) {
 	con->videoController->SetPlaybackSpeed(speed);
 }
 
-void VideoDisplay::OnSpeedBoxReset(wxMouseEvent &) {
+void VideoDisplay::ResetSpeedBox() {
 	speedBox->SetSelection(3);
 
 	con->audioController->SetPlaybackSpeed(1.0);
 	con->videoController->SetPlaybackSpeed(1.0);
+}
+
+void VideoDisplay::OnSpeedBoxReset(wxMouseEvent &) {
+	ResetSpeedBox();
 }
 
 void VideoDisplay::OnBrightnessSlider(wxCommandEvent &) {
@@ -754,11 +762,15 @@ void VideoDisplay::OnBrightnessSlider(wxCommandEvent &) {
 	Render();
 }
 
-void VideoDisplay::OnBrightnessReset(wxMouseEvent &) {
+void VideoDisplay::ResetBrightness() {
 	brightnessSlider->SetValue(100);
 	brightnessSlider->SetToolTip(fmt_tl("Brightness: %d%%", brightnessSlider->GetValue()) + " (" + _("Right click to reset") + ")");
 
 	Render();
+}
+
+void VideoDisplay::OnBrightnessReset(wxMouseEvent &) {
+	ResetBrightness();
 }
 
 void VideoDisplay::SetTool(std::unique_ptr<VisualToolBase> new_tool) {

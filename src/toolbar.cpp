@@ -201,17 +201,19 @@ namespace {
 
 			AddStretchableSpace();
 
-			// Six pixels either side of the words, on both buttons, rather than whatever the
-			// platform would otherwise give each of them. The width is taken from the widest
-			// label the button can ever carry, so it does not jump when the label changes.
-			auto pad_around_text = [this](wxWindow *button,
-					std::initializer_list<wxString> labels) {
+			// Explicit side padding on both buttons rather than the platform default. Windows
+			// uses five pixels per side; the portable fallback keeps the existing six. The
+			// widest possible label fixes the width when the dark-mode label changes.
+			int horizontal_padding = FromDIP(6);
+#ifdef __WXMSW__
+			horizontal_padding = FromDIP(5);
+#endif
+			auto padded_size = [this](wxWindow *button,
+					std::initializer_list<wxString> labels, int padding) {
 				int widest = 0;
 				for (auto const& label : labels)
 					widest = std::max(widest, button->GetTextExtent(label).GetWidth());
-				wxSize size(widest + 2 * FromDIP(6), button->GetBestSize().GetHeight());
-				button->SetSize(size);
-				button->SetMinSize(size);
+				return wxSize(widest + 2 * padding, button->GetBestSize().GetHeight());
 			};
 
 			// Pressed in, the bar above the video stays put even where the tool in force has
@@ -222,15 +224,24 @@ namespace {
 			top_bar_button->SetValue(OPT_GET("App/Show Top Bar")->GetBool());
 			top_bar_button->SetToolTip(_("Always show the bar above the video"));
 			top_bar_button->Bind(wxEVT_TOGGLEBUTTON, &Toolbar::OnToggleTopBar, this);
-			pad_around_text(top_bar_button, {_("Top Bar")});
-			AddControl(top_bar_button);
 
 			dark_mode_button = new wxButton(this, wxID_ANY, DarkModeButtonLabel(),
 				wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
-			pad_around_text(dark_mode_button,
-				{_("Disable Dark Mode"), _("Enable Dark Mode")});
 			dark_mode_button->SetToolTip(_("Enable or disable dark mode and restart Aegisub"));
 			dark_mode_button->Bind(wxEVT_BUTTON, &Toolbar::OnToggleDarkMode, this);
+
+			auto top_size = padded_size(top_bar_button, {_("Top Bar")}, horizontal_padding);
+			auto dark_size = padded_size(dark_mode_button,
+				{_("Disable Dark Mode"), _("Enable Dark Mode")}, horizontal_padding);
+			int shared_height = std::max(top_size.GetHeight(), dark_size.GetHeight());
+			top_size.SetHeight(shared_height);
+			dark_size.SetHeight(shared_height);
+			top_bar_button->SetSize(top_size);
+			dark_mode_button->SetSize(dark_size);
+			top_bar_button->SetMinSize(top_size);
+			dark_mode_button->SetMinSize(dark_size);
+
+			AddControl(top_bar_button);
 			AddControl(dark_mode_button);
 		}
 

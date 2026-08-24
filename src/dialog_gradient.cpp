@@ -25,8 +25,8 @@
 #include <memory>
 #include <vector>
 
-#include <wx/button.h>
 #include <wx/bmpbuttn.h>
+#include <wx/button.h>
 #include <wx/checkbox.h>
 #include <wx/choice.h>
 #include <wx/collpane.h>
@@ -951,7 +951,7 @@ public:
 		auto add_step = [&](wxString const& label, wxString const& tooltip,
 				std::function<void()> action) {
 			auto button = new wxButton(this, wxID_ANY, label, wxDefaultPosition,
-				FromDIP(wxSize(30, 28)));
+				FromDIP(wxSize(30, 28)), wxBU_EXACTFIT);
 			button->SetToolTip(tooltip);
 			button->Bind(wxEVT_BUTTON, [action = std::move(action)](wxCommandEvent&) {
 				action();

@@ -301,33 +301,16 @@ struct CommandMenuBar final : public wxMenuBar {
 		muteki_menu = menu;
 		muteki_label = label;
 		muteki_position = position;
-#ifdef __WXGTK__
-		// Removing and reinserting a top-level GTK menu after the menu bar has
-		// been realized can leave the neighbouring item unable to open on a
-		// direct click. Keep this entry attached and only change sensitivity.
-		Insert(std::min(muteki_position, static_cast<size_t>(GetMenuCount())),
-			muteki_menu, muteki_label);
-		muteki_attached = true;
-#endif
 		SetMutekiVisible(visible);
 	}
 
 	void SetMutekiVisible(bool visible) {
-#ifdef __WXGTK__
-		if (!muteki_menu) return;
-		for (size_t i = 0; i < GetMenuCount(); ++i) {
-			if (GetMenu(i) == muteki_menu) {
-				EnableTop(i, visible);
-				break;
-			}
-		}
-		return;
-#else
 		if (!muteki_menu || visible == muteki_attached)
 			return;
 
 		if (visible) {
-			Insert(std::min(muteki_position, static_cast<size_t>(GetMenuCount())), muteki_menu, muteki_label);
+			Insert(std::min(muteki_position, static_cast<size_t>(GetMenuCount())),
+				muteki_menu, muteki_label);
 			muteki_attached = true;
 			return;
 		}
@@ -339,7 +322,6 @@ struct CommandMenuBar final : public wxMenuBar {
 				break;
 			}
 		}
-#endif
 	}
 };
 
@@ -551,7 +533,7 @@ class AutomationMenu final : public wxMenu {
 
 		wxMenuItemList &items = GetMenuItems();
 
-		// Remove everything but automation manager and the separator
+		// Remove everything but automation manager and the separator.
 		const size_t itemStart = mutekiOnly ? 0 : 3;
 		while (items.size() > itemStart) {
 			Delete(items[items.size() - 1]);
@@ -578,9 +560,8 @@ class AutomationMenu final : public wxMenu {
 			if (mutekiOnly != isMuteki)
 				continue;
 
-			if (mutekiOnly) {
+			if (mutekiOnly)
 				name = StripMutekiPrefix(name);
-			}
 
 			WorkItem *parent = &top;
 			for (auto section : agi::Split(name, wxS('/'))) {
@@ -609,9 +590,9 @@ public:
 	AutomationMenu(agi::Context *c, CommandManager *cm, bool mutekiOnly = false)
 	: c(c)
 	, cm(cm)
-	, mutekiOnly(mutekiOnly)
 	, global_slot(config::global_scripts->AddScriptChangeListener(&AutomationMenu::Regenerate, this))
 	, local_slot(c->local_scripts->AddScriptChangeListener(&AutomationMenu::Regenerate, this))
+	, mutekiOnly(mutekiOnly)
 	{
 		if (!mutekiOnly) {
 			cm->AddCommand(cmd::get("am/meta"), this);
@@ -663,7 +644,8 @@ namespace menu {
 					menu->Append(new AutomationMenu(c, &menu->cm), wxGetTranslation(to_wx(disp)));
 				else if (submenu == "muteki") {
 					auto muteki_menu = new AutomationMenu(c, &menu->cm, true);
-					menu->SetMutekiMenu(muteki_menu, wxGetTranslation(to_wx(disp)), menu->GetMenuCount(), muteki_menu->HasMacros());
+					menu->SetMutekiMenu(muteki_menu, wxGetTranslation(to_wx(disp)),
+						menu->GetMenuCount(), muteki_menu->HasMacros());
 					muteki_menu->SetAvailabilityCallback([menu_bar = menu.get()](bool visible) {
 						menu_bar->SetMutekiVisible(visible);
 					});
