@@ -37,6 +37,7 @@
 #include <wx/button.h>
 #include <wx/dialog.h>
 #include <wx/display.h>
+#include <wx/filesys.h>
 #include <wx/image.h>
 #include <wx/mstream.h>
 #include <wx/msgdlg.h>
@@ -320,6 +321,20 @@ public:
 	}
 
 	bool IsUsable() const { return !files.empty(); }
+
+	wxFSFile *GetFile(wxString const& uri) override {
+		wxString path = ResourcePath(uri);
+		auto found = files.find(path);
+		if (found == files.end()) return nullptr;
+
+		return new wxFSFile(
+			new wxMemoryInputStream(found->second.data(), found->second.size()),
+			uri, ContentType(path), wxString()
+#if wxUSE_DATETIME
+			, wxDateTime::Now()
+#endif
+		);
+	}
 
 	void StartRequest(const wxWebViewHandlerRequest& request,
 		wxSharedPtr<wxWebViewHandlerResponse> response) override {
@@ -705,17 +720,32 @@ public:
 				})) return;
 
 		auto root = new wxBoxSizer(wxVERTICAL);
-		browser = wxWebView::New(this, wxID_ANY, "about:blank",
-			wxDefaultPosition, wxDefaultSize, BrowserBackend(), wxBORDER_NONE);
-		if (!browser) return;
-		browser->EnableContextMenu(false);
-
 		auto *resources = new ImageEditorResourceHandler;
 		if (!resources->IsUsable()) {
 			delete resources;
 			return;
 		}
-		browser->RegisterHandler(wxSharedPtr<wxWebViewHandler>(resources));
+		wxSharedPtr<wxWebViewHandler> resource_handler(resources);
+
+#ifdef __WXMAC__
+		// WKWebView requires custom scheme handlers to be registered on its
+		// configuration before the native view is created.
+		browser = wxWebView::New(BrowserBackend());
+		if (!browser) return;
+		browser->RegisterHandler(resource_handler);
+		if (!browser->Create(this, wxID_ANY, "about:blank", wxDefaultPosition,
+			wxDefaultSize, wxBORDER_NONE)) {
+			delete browser;
+			browser = nullptr;
+			return;
+		}
+#else
+		browser = wxWebView::New(this, wxID_ANY, "about:blank",
+			wxDefaultPosition, wxDefaultSize, BrowserBackend(), wxBORDER_NONE);
+		if (!browser) return;
+		browser->RegisterHandler(resource_handler);
+#endif
+		browser->EnableContextMenu(false);
 		if (!browser->AddScriptMessageHandler("aegisub") ||
 			!browser->AddUserScript(BridgeScript())) return;
 		browser->Bind(wxEVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,

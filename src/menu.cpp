@@ -301,10 +301,28 @@ struct CommandMenuBar final : public wxMenuBar {
 		muteki_menu = menu;
 		muteki_label = label;
 		muteki_position = position;
+#ifdef __WXGTK__
+		// Removing and reinserting a top-level GTK menu after the menu bar has
+		// been realized can leave the neighbouring item unable to open on a
+		// direct click. Keep this entry attached and only change sensitivity.
+		Insert(std::min(muteki_position, static_cast<size_t>(GetMenuCount())),
+			muteki_menu, muteki_label);
+		muteki_attached = true;
+#endif
 		SetMutekiVisible(visible);
 	}
 
 	void SetMutekiVisible(bool visible) {
+#ifdef __WXGTK__
+		if (!muteki_menu) return;
+		for (size_t i = 0; i < GetMenuCount(); ++i) {
+			if (GetMenu(i) == muteki_menu) {
+				EnableTop(i, visible);
+				break;
+			}
+		}
+		return;
+#else
 		if (!muteki_menu || visible == muteki_attached)
 			return;
 
@@ -321,6 +339,7 @@ struct CommandMenuBar final : public wxMenuBar {
 				break;
 			}
 		}
+#endif
 	}
 };
 
