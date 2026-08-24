@@ -296,6 +296,36 @@ struct typesetting_glitch final : public Command {
 	}
 };
 
+struct typesetting_glitch_edit final : public Command {
+	CMD_NAME("typesetting/glitch/edit")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Edit glitch effect")
+	STR_DISP("Edit glitch effect")
+	STR_HELP("Edit the settings of the selected generated glitch effect")
+
+	bool Validate(const agi::Context *c) override {
+		auto active = c->selectionController->GetActiveLine();
+		return active && c->imageMask->IsGlitchGroup(active);
+	}
+
+	void operator()(agi::Context *c) override { ShowGlitchDialog(c); }
+};
+
+struct typesetting_glitch_copy final : public Command {
+	CMD_NAME("typesetting/glitch/copy")
+	CMD_TYPE(COMMAND_VALIDATE)
+	STR_MENU("Copy glitch effect")
+	STR_DISP("Copy glitch effect")
+	STR_HELP("Copy the selected generated glitch rows and settings")
+
+	bool Validate(const agi::Context *c) override {
+		auto active = c->selectionController->GetActiveLine();
+		return active && c->imageMask->IsGlitchGroup(active);
+	}
+
+	void operator()(agi::Context *c) override { cmd::call("edit/line/copy", c); }
+};
+
 struct typesetting_textbox final : public Command {
 	CMD_NAME("typesetting/textbox")
 	CMD_TYPE(COMMAND_VALIDATE)
@@ -445,6 +475,8 @@ namespace cmd {
 		reg(std::make_unique<typesetting_gradient_edit>());
 		reg(std::make_unique<typesetting_gradient_copy>());
 		reg(std::make_unique<typesetting_glitch>());
+		reg(std::make_unique<typesetting_glitch_edit>());
+		reg(std::make_unique<typesetting_glitch_copy>());
 		reg(std::make_unique<typesetting_textbox>());
 		reg(std::make_unique<typesetting_image_insert_quick>());
 		reg(std::make_unique<typesetting_image_insert_insert>());

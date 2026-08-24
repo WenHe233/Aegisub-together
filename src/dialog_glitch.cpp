@@ -16,6 +16,7 @@
 #include "include/aegisub/context.h"
 #include "selection_controller.h"
 #include "typesetting_glitch.h"
+#include "utils.h"
 #include "video_controller.h"
 #include "video_display.h"
 
@@ -46,6 +47,8 @@
 namespace {
 
 using typesetting::glitch::Animation;
+using typesetting::glitch::AnimationTiming;
+using typesetting::glitch::Mode;
 using typesetting::glitch::Settings;
 using typesetting::glitch::Values;
 
@@ -219,44 +222,46 @@ class DialogGlitch final : public wxDialog {
 	agi::Context *context;
 	Settings settings;
 	typesetting::glitch::PreviewSession preview_session;
-	VisualToolPreviewInterface preview_interface;
 	wxTimer preview_timer;
 	wxTimer playback_timer;
 	std::chrono::steady_clock::time_point last_preview;
 
 	wxChoice *mode = nullptr;
 	AngleDial *angle_dial = nullptr;
-	wxSpinCtrl *angle = nullptr;
+	wxSpinCtrlDouble *angle = nullptr;
 	std::array<wxButton *, 4> angle_presets{};
 	wxSlider *amount_slider = nullptr;
-	wxSpinCtrl *amount = nullptr;
+	wxSpinCtrlDouble *amount = nullptr;
 	wxSlider *offset_slider = nullptr;
-	wxSpinCtrl *offset = nullptr;
+	wxSpinCtrlDouble *offset = nullptr;
 	wxSlider *opacity_slider = nullptr;
 	wxSpinCtrlDouble *opacity = nullptr;
 	wxSlider *height_slider = nullptr;
-	wxSpinCtrl *height = nullptr;
+	wxSpinCtrlDouble *height = nullptr;
 	wxSlider *width_slider = nullptr;
-	wxSpinCtrl *width = nullptr;
+	wxSpinCtrlDouble *width = nullptr;
 	wxCheckBox *show_base = nullptr;
-	wxStaticText *seed_label = nullptr;
 
 	wxListBox *animation_list = nullptr;
 	wxCheckBox *animation_enabled = nullptr;
-	wxSpinCtrl *animation_start = nullptr;
-	wxSpinCtrl *animation_end = nullptr;
+	wxChoice *animation_mode = nullptr;
+	wxChoice *animation_timing = nullptr;
+	wxPanel *animation_frame_panel = nullptr;
+	wxPanel *animation_time_panel = nullptr;
+	wxSpinCtrlDouble *animation_start = nullptr;
+	wxSpinCtrlDouble *animation_end = nullptr;
+	wxSpinCtrlDouble *animation_frame = nullptr;
 	wxSpinCtrlDouble *from_amount = nullptr;
 	wxSpinCtrlDouble *to_amount = nullptr;
 	wxSpinCtrlDouble *from_offset = nullptr;
 	wxSpinCtrlDouble *to_offset = nullptr;
 	wxSpinCtrlDouble *from_opacity = nullptr;
 	wxSpinCtrlDouble *to_opacity = nullptr;
-	wxSpinCtrl *from_height = nullptr;
-	wxSpinCtrl *to_height = nullptr;
+	wxSpinCtrlDouble *from_height = nullptr;
+	wxSpinCtrlDouble *to_height = nullptr;
 	wxSpinCtrlDouble *from_width = nullptr;
 	wxSpinCtrlDouble *to_width = nullptr;
-	wxSpinCtrl *from_angle = nullptr;
-	wxSpinCtrl *to_angle = nullptr;
+	wxCheckBox *animation_show_base = nullptr;
 	int active_animation = -1;
 	bool syncing = false;
 	bool accepted = false;
@@ -288,7 +293,8 @@ class DialogGlitch final : public wxDialog {
 
 	Values BaseValues() const {
 		return {static_cast<double>(amount->GetValue()),
-			static_cast<double>(offset->GetValue()), opacity->GetValue(), height->GetValue(),
+			static_cast<double>(offset->GetValue()), opacity->GetValue(),
+			static_cast<int>(std::lround(height->GetValue())),
 			static_cast<double>(width->GetValue()), static_cast<double>(angle->GetValue())};
 	}
 
@@ -319,21 +325,50 @@ class DialogGlitch final : public wxDialog {
 			active_animation >= static_cast<int>(settings.animations.size())) return;
 		auto& animation = settings.animations[static_cast<size_t>(active_animation)];
 		animation.enabled = animation_enabled->GetValue();
-		animation.start_time = animation_start->GetValue();
-		animation.end_time = animation_end->GetValue();
+		animation.use_default_mode = animation_mode->GetSelection() <= 0;
+		if (!animation.use_default_mode)
+			animation.mode = static_cast<Mode>(animation_mode->GetSelection() - 1);
+		animation.timing = animation_timing->GetSelection() == 1 ?
+			AnimationTiming::Frame : AnimationTiming::Range;
+		animation.start_time = static_cast<int>(std::lround(animation_start->GetValue()));
+		animation.end_time = static_cast<int>(std::lround(animation_end->GetValue()));
+		animation.frame = static_cast<int>(std::lround(animation_frame->GetValue()));
+		animation.show_base = animation_show_base->GetValue();
 		animation.from = {from_amount->GetValue(), from_offset->GetValue(),
-			from_opacity->GetValue(), from_height->GetValue(), from_width->GetValue(),
-			static_cast<double>(from_angle->GetValue())};
+			from_opacity->GetValue(), static_cast<int>(std::lround(from_height->GetValue())),
+			from_width->GetValue(),
+			static_cast<double>(angle->GetValue())};
 		animation.to = {to_amount->GetValue(), to_offset->GetValue(),
-			to_opacity->GetValue(), to_height->GetValue(), to_width->GetValue(),
-			static_cast<double>(to_angle->GetValue())};
+			to_opacity->GetValue(), static_cast<int>(std::lround(to_height->GetValue())),
+			to_width->GetValue(),
+			static_cast<double>(angle->GetValue())};
 	}
 
 	wxString AnimationLabel(Animation const& animation, size_t index) const {
 		wxString suffix = animation.enabled ? wxString() : " " + _("(off)");
+		if (animation.timing == AnimationTiming::Frame)
+			return wxString::Format(_("Animation %zu: frame %d%s"), index + 1,
+				animation.frame, suffix);
 		return wxString::Format(_("Animation %zu: %d-%d ms%s"), index + 1,
 			animation.start_time, animation.end_time,
 			suffix);
+	}
+
+	void UpdateAnimationTimingAvailability() {
+		bool selected = active_animation >= 0 &&
+			active_animation < static_cast<int>(settings.animations.size());
+		bool single_frame = selected && animation_timing->GetSelection() == 1;
+		animation_start->Enable(selected && !single_frame);
+		animation_end->Enable(selected && !single_frame);
+		animation_frame->Enable(selected && single_frame);
+		animation_time_panel->Show(selected && !single_frame);
+		animation_frame_panel->Show(selected && single_frame);
+		std::array<wxWindow *, 5> from_controls = {from_amount, from_offset,
+			from_opacity, from_height, from_width};
+		for (wxWindow *control : from_controls)
+			control->Enable(selected && !single_frame);
+		Layout();
+		if (GetSizer()) GetSizer()->Fit(this);
 	}
 
 	void RefreshAnimationList() {
@@ -354,18 +389,27 @@ class DialogGlitch final : public wxDialog {
 		active_animation = selection;
 		bool enabled = selection >= 0 &&
 			selection < static_cast<int>(settings.animations.size());
-		std::array<wxWindow *, 15> animation_controls = {animation_enabled,
-			animation_start, animation_end, from_amount, to_amount, from_offset, to_offset,
+		std::array<wxWindow *, 17> animation_controls = {animation_enabled,
+			animation_mode, animation_timing, animation_start, animation_end, animation_frame,
+			from_amount, to_amount, from_offset, to_offset,
 			from_opacity, to_opacity, from_height, to_height, from_width, to_width,
-			from_angle, to_angle};
+			animation_show_base};
 		for (wxWindow *control : animation_controls)
 			control->Enable(enabled);
-		if (!enabled) return;
+		if (!enabled) {
+			UpdateAnimationTimingAvailability();
+			return;
+		}
 		auto const& animation = settings.animations[static_cast<size_t>(selection)];
 		syncing = true;
 		animation_enabled->SetValue(animation.enabled);
+		animation_mode->SetSelection(animation.use_default_mode ? 0 :
+			static_cast<int>(animation.mode) + 1);
+		animation_timing->SetSelection(animation.timing == AnimationTiming::Frame ? 1 : 0);
 		animation_start->SetValue(animation.start_time);
 		animation_end->SetValue(animation.end_time);
+		animation_frame->SetValue(animation.frame);
+		animation_show_base->SetValue(animation.show_base);
 		from_amount->SetValue(animation.from.amount);
 		to_amount->SetValue(animation.to.amount);
 		from_offset->SetValue(animation.from.offset);
@@ -376,9 +420,8 @@ class DialogGlitch final : public wxDialog {
 		to_height->SetValue(animation.to.height);
 		from_width->SetValue(animation.from.width);
 		to_width->SetValue(animation.to.width);
-		from_angle->SetValue(static_cast<int>(std::lround(animation.from.angle)));
-		to_angle->SetValue(static_cast<int>(std::lround(animation.to.angle)));
 		syncing = false;
+		UpdateAnimationTimingAvailability();
 	}
 
 	void Read(bool immediate = false) {
@@ -391,27 +434,45 @@ class DialogGlitch final : public wxDialog {
 		SchedulePreview(immediate);
 	}
 
-	void NewPattern() {
-		settings.seed = settings.seed * 1664525U + 1013904223U;
-		seed_label->SetLabel(wxString::Format("%08X", settings.seed));
-		SchedulePreview(true);
-	}
-
 	void AddAnimation() {
 		SaveAnimation();
 		Animation animation;
+		animation.mode = settings.mode;
+		animation.show_base = settings.show_base;
 		animation.from = BaseValues();
 		animation.to = animation.from;
-		animation.to.amount = std::min(100.0, animation.from.amount + 25.0);
-		animation.to.offset = std::min(100.0, animation.from.offset + 25.0);
 		animation.to.opacity = std::max(0.0, animation.from.opacity - .3);
-		animation.to.height = std::max(1, animation.from.height / 2);
 		int duration = std::max(1, LineDuration());
 		animation.end_time = duration;
 		settings.animations.push_back(animation);
 		active_animation = static_cast<int>(settings.animations.size()) - 1;
 		RefreshAnimationList();
 		LoadAnimation(active_animation);
+		SchedulePreview(true);
+	}
+
+	void LoadClipboardSettings(Settings pasted) {
+		settings = std::move(pasted);
+		syncing = true;
+		mode->SetSelection(static_cast<int>(settings.mode));
+		angle->SetValue(static_cast<int>(std::lround(settings.base.angle)));
+		angle_dial->SetValue(static_cast<int>(std::lround(angle->GetValue())));
+		amount->SetValue(static_cast<int>(std::lround(settings.base.amount)));
+		amount_slider->SetValue(amount->GetValue());
+		offset->SetValue(static_cast<int>(std::lround(settings.base.offset)));
+		offset_slider->SetValue(offset->GetValue());
+		opacity->SetValue(settings.base.opacity);
+		opacity_slider->SetValue(static_cast<int>(std::lround(settings.base.opacity * 100)));
+		height->SetValue(settings.base.height);
+		height_slider->SetValue(settings.base.height);
+		width->SetValue(static_cast<int>(std::lround(settings.base.width)));
+		width_slider->SetValue(width->GetValue());
+		show_base->SetValue(settings.show_base);
+		syncing = false;
+		int const selection = settings.animations.empty() ? -1 : 0;
+		active_animation = -1;
+		RefreshAnimationList();
+		LoadAnimation(selection);
 		SchedulePreview(true);
 	}
 
@@ -431,7 +492,8 @@ class DialogGlitch final : public wxDialog {
 		preview_timer.Stop();
 		preview_pending = false;
 		for (auto const& animation : settings.animations) {
-			if (animation.enabled && animation.end_time <= animation.start_time) {
+			if (animation.enabled && animation.timing == AnimationTiming::Range &&
+				animation.end_time <= animation.start_time) {
 				wxMessageBox(_("An animation end time must be after its start time."),
 					_("Glitch effect"), wxOK | wxICON_WARNING, this);
 				return;
@@ -447,9 +509,10 @@ class DialogGlitch final : public wxDialog {
 	}
 
 	wxSpinCtrlDouble *DoubleControl(wxWindow *parent, double minimum, double maximum,
-		double value, double step, int digits = 2) {
+		double value, double step, int digits = 2, int control_width = 88) {
 		auto control = new wxSpinCtrlDouble(parent, wxID_ANY, "", wxDefaultPosition,
-			FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER,
+			FromDIP(wxSize(control_width, -1)),
+			wxSP_ARROW_KEYS | wxTE_PROCESS_ENTER,
 			minimum, maximum, value, step);
 		control->SetDigits(digits);
 		return control;
@@ -464,20 +527,6 @@ public:
 	, preview_session(context)
 	, preview_timer(this)
 	, playback_timer(this) {
-		preview_interface.AttachHost(context->videoDisplay->GetPreviewBar(), [this](int id) {
-			if (id == wxID_OK) Accept();
-			else if (id == wxID_CANCEL) EndModal(wxID_CANCEL);
-		}, {}, false);
-		VisualToolPreviewInterface::Page page;
-		page.controls = {
-			{wxID_OK, VisualToolPreviewInterface::ControlKind::Button, _("Accept"),
-				VisualToolPreviewInterface::ControlStyle::Accept},
-			{wxID_CANCEL, VisualToolPreviewInterface::ControlKind::Button, _("Cancel"),
-				VisualToolPreviewInterface::ControlStyle::Cancel}
-		};
-		page.message = _("Glitch effect");
-		preview_interface.SetPage(std::move(page));
-
 		auto main = new wxBoxSizer(wxVERTICAL);
 		auto basic = new wxStaticBoxSizer(wxVERTICAL, this, _("Glitch settings"));
 		auto mode_row = new wxBoxSizer(wxHORIZONTAL);
@@ -487,16 +536,18 @@ public:
 		for (auto const& name : typesetting::glitch::ModeNames()) mode->Append(to_wx(name));
 		mode->SetSelection(static_cast<int>(settings.mode));
 		mode_row->Add(mode, 1, wxEXPAND);
+		show_base = new wxCheckBox(basic->GetStaticBox(), wxID_ANY, _("Show base layer"));
+		show_base->SetValue(settings.show_base);
+		mode_row->Add(show_base, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 12);
 		basic->Add(mode_row, 0, wxEXPAND | wxALL, 8);
 
 		auto angle_row = new wxBoxSizer(wxHORIZONTAL);
 		angle_row->Add(new wxStaticText(basic->GetStaticBox(), wxID_ANY, _("Angle:")), 0,
 			wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
 		auto angle_controls = new wxBoxSizer(wxHORIZONTAL);
-		angle = new wxSpinCtrl(basic->GetStaticBox(), wxID_ANY, "", wxDefaultPosition,
-			FromDIP(wxSize(76, -1)), wxSP_ARROW_KEYS, 0, 359,
-			static_cast<int>(std::lround(settings.base.angle)));
-		angle_dial = new AngleDial(basic->GetStaticBox(), context, angle->GetValue(),
+		angle = DoubleControl(basic->GetStaticBox(), 0, 359, settings.base.angle, 1, 0, 68);
+		angle_dial = new AngleDial(basic->GetStaticBox(), context,
+			static_cast<int>(std::lround(angle->GetValue())),
 			[this](int value, bool immediate) {
 				syncing = true;
 				angle->SetValue(value);
@@ -517,55 +568,41 @@ public:
 		}
 		basic->Add(angle_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-		auto values = new wxFlexGridSizer(3, 4, 7);
+		auto values = new wxFlexGridSizer(6, 4, 7);
 		values->AddGrowableCol(1, 1);
-		auto add_value = [&](wxString const& label, wxSlider *& slider, wxWindow *spin) {
-			values->Add(new wxStaticText(basic->GetStaticBox(), wxID_ANY, label), 0,
-				wxALIGN_CENTER_VERTICAL);
+		values->AddGrowableCol(4, 1);
+		auto add_value = [&](wxString const& label, wxSlider *& slider, wxWindow *spin,
+				bool right_aligned = false) {
+			auto text = new wxStaticText(basic->GetStaticBox(), wxID_ANY, label,
+				wxDefaultPosition, wxDefaultSize, right_aligned ? wxALIGN_RIGHT : 0);
+			values->Add(text, 0, wxEXPAND | wxALIGN_CENTER_VERTICAL);
 			values->Add(slider, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
 			values->Add(spin, 0, wxALIGN_CENTER_VERTICAL);
 		};
 		amount_slider = new wxSlider(basic->GetStaticBox(), wxID_ANY,
 			static_cast<int>(settings.base.amount), 0, 100);
-		amount = new wxSpinCtrl(basic->GetStaticBox(), wxID_ANY, "", wxDefaultPosition,
-			FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS, 0, 100,
-			static_cast<int>(settings.base.amount));
-		add_value(_("Amount (%):"), amount_slider, amount);
+		amount = DoubleControl(basic->GetStaticBox(), 0, 100, settings.base.amount, 1, 0);
 		offset_slider = new wxSlider(basic->GetStaticBox(), wxID_ANY,
 			static_cast<int>(settings.base.offset), 0, 100);
-		offset = new wxSpinCtrl(basic->GetStaticBox(), wxID_ANY, "", wxDefaultPosition,
-			FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS, 0, 100,
-			static_cast<int>(settings.base.offset));
-		add_value(_("Offset:"), offset_slider, offset);
+		offset = DoubleControl(basic->GetStaticBox(), 0, 100, settings.base.offset, 1, 0);
+		add_value(_("Amount (%):"), amount_slider, amount);
+		add_value(_("Offset:"), offset_slider, offset, true);
 		opacity_slider = new wxSlider(basic->GetStaticBox(), wxID_ANY,
 			static_cast<int>(std::lround(settings.base.opacity * 100)), 0, 100);
 		opacity = DoubleControl(basic->GetStaticBox(), 0.0, 1.0, settings.base.opacity, .01);
-		add_value(_("Opacity:"), opacity_slider, opacity);
 		height_slider = new wxSlider(basic->GetStaticBox(), wxID_ANY,
 			settings.base.height, 1, 200);
-		height = new wxSpinCtrl(basic->GetStaticBox(), wxID_ANY, "", wxDefaultPosition,
-			FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS, 1, 200, settings.base.height);
-		add_value(_("Height:"), height_slider, height);
+		height = DoubleControl(basic->GetStaticBox(), 1, 200, settings.base.height, 1, 0);
 		width_slider = new wxSlider(basic->GetStaticBox(), wxID_ANY,
 			static_cast<int>(settings.base.width), 1, 100);
-		width = new wxSpinCtrl(basic->GetStaticBox(), wxID_ANY, "", wxDefaultPosition,
-			FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS, 1, 100,
-			static_cast<int>(settings.base.width));
-		add_value(_("Width (%):"), width_slider, width);
+		width = DoubleControl(basic->GetStaticBox(), 1, 100, settings.base.width, 1, 0);
+		add_value(_("Height:"), height_slider, height);
+		add_value(_("Width (%):"), width_slider, width, true);
+		add_value(_("Opacity:"), opacity_slider, opacity);
+		values->AddSpacer(0);
+		values->AddSpacer(0);
+		values->AddSpacer(0);
 		basic->Add(values, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-
-		auto pattern_row = new wxBoxSizer(wxHORIZONTAL);
-		auto reroll = new wxButton(basic->GetStaticBox(), wxID_ANY, _("New pattern"));
-		pattern_row->Add(reroll, 0, wxRIGHT, 8);
-		pattern_row->Add(new wxStaticText(basic->GetStaticBox(), wxID_ANY, _("Pattern:")),
-			0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
-		seed_label = new wxStaticText(basic->GetStaticBox(), wxID_ANY,
-			wxString::Format("%08X", settings.seed));
-		pattern_row->Add(seed_label, 0, wxALIGN_CENTER_VERTICAL);
-		basic->Add(pattern_row, 0, wxLEFT | wxRIGHT | wxBOTTOM, 8);
-		show_base = new wxCheckBox(basic->GetStaticBox(), wxID_ANY, _("Show base layer"));
-		show_base->SetValue(settings.show_base);
-		basic->Add(show_base, 0, wxLEFT | wxRIGHT | wxBOTTOM, 8);
 		main->Add(basic, 0, wxEXPAND | wxALL, 8);
 
 		auto transport = new wxBoxSizer(wxHORIZONTAL);
@@ -611,8 +648,6 @@ public:
 			StopPlayback();
 			cmd::call("video/jump/end", this->context);
 		});
-		main->Add(transport, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-
 		auto animation_box = new wxStaticBoxSizer(wxVERTICAL, this, _("Animations"));
 		auto total_duration = new wxStaticText(animation_box->GetStaticBox(), wxID_ANY,
 			wxString::Format(_("Total line duration: %d ms"), LineDuration()));
@@ -631,85 +666,115 @@ public:
 		animation_top->Add(animation_buttons, 0, wxEXPAND);
 		animation_box->Add(animation_top, 0, wxEXPAND | wxALL, 8);
 
-		auto editor = new wxFlexGridSizer(3, 7, 7);
-		editor->AddGrowableCol(1, 1);
-		editor->AddGrowableCol(2, 1);
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, ""));
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("From")),
-			0, wxALIGN_CENTER);
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("To")),
-			0, wxALIGN_CENTER);
+		auto animation_options = new wxBoxSizer(wxHORIZONTAL);
 		animation_enabled = new wxCheckBox(animation_box->GetStaticBox(), wxID_ANY,
 			_("Enabled"));
-		editor->Add(animation_enabled, 0, wxALIGN_CENTER_VERTICAL);
-		editor->AddSpacer(0);
-		editor->AddSpacer(0);
-		animation_start = new wxSpinCtrl(animation_box->GetStaticBox(), wxID_ANY, "",
-			wxDefaultPosition, FromDIP(wxSize(95, -1)), wxSP_ARROW_KEYS, 0, 3600000, 0);
-		animation_end = new wxSpinCtrl(animation_box->GetStaticBox(), wxID_ANY, "",
-			wxDefaultPosition, FromDIP(wxSize(95, -1)), wxSP_ARROW_KEYS, 0, 3600000, 1000);
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("Time (ms):")),
-			0, wxALIGN_CENTER_VERTICAL);
-		editor->Add(animation_start, 0, wxEXPAND);
-		editor->Add(animation_end, 0, wxEXPAND);
+		animation_box->Add(animation_enabled, 0, wxLEFT | wxRIGHT | wxBOTTOM, 8);
+		animation_mode = new wxChoice(animation_box->GetStaticBox(), wxID_ANY);
+		animation_mode->Append(_("Default"));
+		for (auto const& name : typesetting::glitch::ModeNames())
+			animation_mode->Append(to_wx(name));
+		animation_mode->SetSelection(0);
+		animation_mode->SetMinSize(FromDIP(wxSize(118, -1)));
+		animation_options->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY,
+			_("Mode:")), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+		animation_options->Add(animation_mode, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 12);
+		animation_timing = new wxChoice(animation_box->GetStaticBox(), wxID_ANY);
+		animation_timing->Append(_("Time"));
+		animation_timing->Append(_("Frame"));
+		animation_timing->SetSelection(0);
+		animation_timing->SetMinSize(FromDIP(wxSize(92, -1)));
+		animation_options->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY,
+			_("Timing:")), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+		animation_options->Add(animation_timing, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 12);
+		animation_frame_panel = new wxPanel(animation_box->GetStaticBox());
+		auto frame_sizer = new wxBoxSizer(wxHORIZONTAL);
+		animation_frame = DoubleControl(animation_frame_panel, 0, 1000000, 0, 1, 0, 72);
+		frame_sizer->Add(new wxStaticText(animation_frame_panel, wxID_ANY, _("Frame:")),
+			0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+		frame_sizer->Add(animation_frame, 0, wxALIGN_CENTER_VERTICAL);
+		animation_frame_panel->SetSizer(frame_sizer);
+		animation_options->Add(animation_frame_panel, 0, wxALIGN_CENTER_VERTICAL);
+
+		animation_time_panel = new wxPanel(animation_box->GetStaticBox());
+		auto time_sizer = new wxBoxSizer(wxHORIZONTAL);
+		animation_start = DoubleControl(animation_time_panel, 0, 3600000, 0, 1, 0, 78);
+		animation_end = DoubleControl(animation_time_panel, 0, 3600000, 1000, 1, 0, 78);
+		time_sizer->Add(new wxStaticText(animation_time_panel, wxID_ANY, _("Time (ms):")),
+			0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 7);
+		time_sizer->Add(animation_start, 0, wxALIGN_CENTER_VERTICAL);
+		time_sizer->Add(new wxStaticText(animation_time_panel, wxID_ANY, "->"), 0,
+			wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 7);
+		time_sizer->Add(animation_end, 0, wxALIGN_CENTER_VERTICAL);
+		animation_time_panel->SetSizer(time_sizer);
+		animation_options->Add(animation_time_panel, 0, wxALIGN_CENTER_VERTICAL);
+		animation_box->Add(animation_options, 0,
+			wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+
+		auto editor = new wxFlexGridSizer(2, 7, 12);
+		editor->AddGrowableCol(0, 1);
+		editor->AddGrowableCol(1, 1);
+		auto transition = [&](wxString const& label, wxWindow *from, wxWindow *to,
+				bool right_aligned = false) {
+			auto row = new wxBoxSizer(wxHORIZONTAL);
+			auto text = new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, label,
+				wxDefaultPosition, FromDIP(wxSize(82, -1)),
+				right_aligned ? wxALIGN_RIGHT : 0);
+			row->Add(text, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			row->Add(from, 0, wxALIGN_CENTER_VERTICAL);
+			row->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, "->"), 0,
+				wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 5);
+			row->Add(to, 0, wxALIGN_CENTER_VERTICAL);
+			return row;
+		};
 		from_amount = DoubleControl(animation_box->GetStaticBox(), 0, 100,
 			settings.base.amount, 1, 0);
 		to_amount = DoubleControl(animation_box->GetStaticBox(), 0, 100,
 			settings.base.amount, 1, 0);
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("Amount (%):")),
-			0, wxALIGN_CENTER_VERTICAL);
-		editor->Add(from_amount, 0, wxEXPAND);
-		editor->Add(to_amount, 0, wxEXPAND);
 		from_offset = DoubleControl(animation_box->GetStaticBox(), 0, 100,
 			settings.base.offset, 1, 0);
 		to_offset = DoubleControl(animation_box->GetStaticBox(), 0, 100,
 			settings.base.offset, 1, 0);
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("Offset:")),
-			0, wxALIGN_CENTER_VERTICAL);
-		editor->Add(from_offset, 0, wxEXPAND);
-		editor->Add(to_offset, 0, wxEXPAND);
 		from_opacity = DoubleControl(animation_box->GetStaticBox(), 0, 1,
 			settings.base.opacity, .01);
 		to_opacity = DoubleControl(animation_box->GetStaticBox(), 0, 1,
 			settings.base.opacity, .01);
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("Opacity:")),
-			0, wxALIGN_CENTER_VERTICAL);
-		editor->Add(from_opacity, 0, wxEXPAND);
-		editor->Add(to_opacity, 0, wxEXPAND);
-		from_height = new wxSpinCtrl(animation_box->GetStaticBox(), wxID_ANY, "",
-			wxDefaultPosition, FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS, 1, 200,
-			settings.base.height);
-		to_height = new wxSpinCtrl(animation_box->GetStaticBox(), wxID_ANY, "",
-			wxDefaultPosition, FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS, 1, 200,
-			settings.base.height);
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("Height:")),
-			0, wxALIGN_CENTER_VERTICAL);
-		editor->Add(from_height, 0, wxEXPAND);
-		editor->Add(to_height, 0, wxEXPAND);
+		from_height = DoubleControl(animation_box->GetStaticBox(), 1, 200,
+			settings.base.height, 1, 0);
+		to_height = DoubleControl(animation_box->GetStaticBox(), 1, 200,
+			settings.base.height, 1, 0);
 		from_width = DoubleControl(animation_box->GetStaticBox(), 1, 100,
 			settings.base.width, 1, 0);
 		to_width = DoubleControl(animation_box->GetStaticBox(), 1, 100,
 			settings.base.width, 1, 0);
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("Width (%):")),
-			0, wxALIGN_CENTER_VERTICAL);
-		editor->Add(from_width, 0, wxEXPAND);
-		editor->Add(to_width, 0, wxEXPAND);
-		from_angle = new wxSpinCtrl(animation_box->GetStaticBox(), wxID_ANY, "",
-			wxDefaultPosition, FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS, 0, 359,
-			static_cast<int>(std::lround(settings.base.angle)));
-		to_angle = new wxSpinCtrl(animation_box->GetStaticBox(), wxID_ANY, "",
-			wxDefaultPosition, FromDIP(wxSize(88, -1)), wxSP_ARROW_KEYS, 0, 359,
-			static_cast<int>(std::lround(settings.base.angle)));
-		editor->Add(new wxStaticText(animation_box->GetStaticBox(), wxID_ANY, _("Angle:")),
-			0, wxALIGN_CENTER_VERTICAL);
-		editor->Add(from_angle, 0, wxEXPAND);
-		editor->Add(to_angle, 0, wxEXPAND);
+		editor->Add(transition(_("Amount (%):"), from_amount, to_amount), 1, wxEXPAND);
+		editor->Add(transition(_("Offset:"), from_offset, to_offset, true), 1, wxEXPAND);
+		editor->Add(transition(_("Height:"), from_height, to_height), 1, wxEXPAND);
+		editor->Add(transition(_("Width (%):"), from_width, to_width, true), 1, wxEXPAND);
+		editor->Add(transition(_("Opacity:"), from_opacity, to_opacity), 1, wxEXPAND);
+		animation_show_base = new wxCheckBox(animation_box->GetStaticBox(), wxID_ANY,
+			_("Show base layer"));
+		animation_show_base->SetValue(settings.show_base);
+		editor->Add(animation_show_base, 0, wxALIGN_CENTER_VERTICAL);
 		animation_box->Add(editor, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 		main->Add(animation_box, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-		main->Add(CreateStdDialogButtonSizer(wxOK | wxCANCEL), 0,
-			wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+		main->Add(transport, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+		auto bottom = new wxBoxSizer(wxHORIZONTAL);
+		Settings clipboard_settings;
+		if (typesetting::glitch::SettingsFromClipboard(GetClipboard(), clipboard_settings)) {
+			auto load_effect = new wxButton(this, wxID_ANY, _("Paste effect"));
+			load_effect->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+				Settings pasted;
+				if (typesetting::glitch::SettingsFromClipboard(GetClipboard(), pasted))
+					LoadClipboardSettings(std::move(pasted));
+			});
+			bottom->Add(load_effect, 0, wxALIGN_CENTER_VERTICAL);
+		}
+		bottom->AddStretchSpacer();
+		bottom->Add(CreateStdDialogButtonSizer(wxOK | wxCANCEL), 0, wxALIGN_CENTER_VERTICAL);
+		main->Add(bottom, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 		SetSizerAndFit(main);
-		SetMinSize(FromDIP(wxSize(720, -1)));
+		SetMinSize(FromDIP(wxSize(620, -1)));
 
 		preview_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent&) {
 			if (preview_pending) RunPreview();
@@ -720,8 +785,8 @@ public:
 			if (!this->context->videoController->IsPlaying()) StopPlayback();
 		});
 		mode->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) { Read(true); });
-		angle->Bind(wxEVT_SPINCTRL, [this](wxSpinEvent&) {
-			angle_dial->SetValue(angle->GetValue());
+		angle->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent&) {
+			angle_dial->SetValue(static_cast<int>(std::lround(angle->GetValue())));
 			Read(true);
 		});
 		for (size_t i = 0; i < angle_presets.size(); ++i) {
@@ -735,14 +800,14 @@ public:
 		amount_slider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&) {
 			syncing = true; amount->SetValue(amount_slider->GetValue()); syncing = false; Read();
 		});
-		amount->Bind(wxEVT_SPINCTRL, [this](wxSpinEvent&) {
-			syncing = true; amount_slider->SetValue(amount->GetValue()); syncing = false; Read(true);
+		amount->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent&) {
+			syncing = true; amount_slider->SetValue(static_cast<int>(std::lround(amount->GetValue()))); syncing = false; Read(true);
 		});
 		offset_slider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&) {
 			syncing = true; offset->SetValue(offset_slider->GetValue()); syncing = false; Read();
 		});
-		offset->Bind(wxEVT_SPINCTRL, [this](wxSpinEvent&) {
-			syncing = true; offset_slider->SetValue(offset->GetValue()); syncing = false; Read(true);
+		offset->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent&) {
+			syncing = true; offset_slider->SetValue(static_cast<int>(std::lround(offset->GetValue()))); syncing = false; Read(true);
 		});
 		opacity_slider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&) {
 			syncing = true; opacity->SetValue(opacity_slider->GetValue() / 100.0); syncing = false; Read();
@@ -753,17 +818,16 @@ public:
 		height_slider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&) {
 			syncing = true; height->SetValue(height_slider->GetValue()); syncing = false; Read();
 		});
-		height->Bind(wxEVT_SPINCTRL, [this](wxSpinEvent&) {
-			syncing = true; height_slider->SetValue(height->GetValue()); syncing = false; Read(true);
+		height->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent&) {
+			syncing = true; height_slider->SetValue(static_cast<int>(std::lround(height->GetValue()))); syncing = false; Read(true);
 		});
 		width_slider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&) {
 			syncing = true; width->SetValue(width_slider->GetValue()); syncing = false; Read();
 		});
-		width->Bind(wxEVT_SPINCTRL, [this](wxSpinEvent&) {
-			syncing = true; width_slider->SetValue(width->GetValue()); syncing = false; Read(true);
+		width->Bind(wxEVT_SPINCTRLDOUBLE, [this](wxSpinDoubleEvent&) {
+			syncing = true; width_slider->SetValue(static_cast<int>(std::lround(width->GetValue()))); syncing = false; Read(true);
 		});
 		show_base->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent&) { Read(true); });
-		reroll->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { NewPattern(); });
 		add_animation->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { AddAnimation(); });
 		remove_animation->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { RemoveAnimation(); });
 		animation_list->Bind(wxEVT_LISTBOX, [this](wxCommandEvent& event) {
@@ -771,11 +835,17 @@ public:
 		});
 		auto animation_changed = [this](auto&) { SaveAnimation(); RefreshAnimationList(); SchedulePreview(); };
 		animation_enabled->Bind(wxEVT_CHECKBOX, animation_changed);
-		for (auto control : {animation_start, animation_end, from_height, to_height,
-			from_angle, to_angle})
-			control->Bind(wxEVT_SPINCTRL, animation_changed);
-		for (auto control : {from_amount, to_amount, from_offset, to_offset,
-			from_opacity, to_opacity, from_width, to_width})
+		animation_show_base->Bind(wxEVT_CHECKBOX, animation_changed);
+		animation_mode->Bind(wxEVT_CHOICE, animation_changed);
+		animation_timing->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) {
+			SaveAnimation();
+			RefreshAnimationList();
+			UpdateAnimationTimingAvailability();
+			SchedulePreview();
+		});
+		for (auto control : {animation_start, animation_end, animation_frame,
+			from_amount, to_amount, from_offset, to_offset,
+			from_opacity, to_opacity, from_height, to_height, from_width, to_width})
 			control->Bind(wxEVT_SPINCTRLDOUBLE, animation_changed);
 		Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { Accept(); }, wxID_OK);
 		Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent& event) {

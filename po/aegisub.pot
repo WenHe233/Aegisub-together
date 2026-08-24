@@ -34,7 +34,7 @@ msgstr ""
 msgid "ANSI"
 msgstr ""
 
-#: ../src/ass_style.cpp:198 ../src/command/video.cpp:146
+#: ../src/ass_style.cpp:198 ../src/command/video.cpp:146 ../src/dialog_glitch.cpp
 msgid "Default"
 msgstr ""
 
@@ -5973,7 +5973,7 @@ msgstr ""
 msgid "Editing:"
 msgstr ""
 
-#: ../src/dialog_properties.cpp:118
+#: ../src/dialog_glitch.cpp ../src/dialog_properties.cpp:118
 msgid "Timing:"
 msgstr ""
 
@@ -10363,6 +10363,22 @@ msgid "Glitch effect"
 msgstr ""
 
 #: ../src/command/typesetting.cpp
+msgid "Edit glitch effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp
+msgid "Edit the settings of the selected generated glitch effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp
+msgid "Copy glitch effect"
+msgstr ""
+
+#: ../src/command/typesetting.cpp
+msgid "Copy the selected generated glitch rows and settings"
+msgstr ""
+
+#: ../src/command/typesetting.cpp
 msgid "Create customizable, angled and animated glitch slices on the selected lines"
 msgstr ""
 
@@ -10392,6 +10408,23 @@ msgstr ""
 #: ../src/dialog_glitch.cpp
 #, c-format
 msgid "Animation %zu: %d-%d ms%s"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp
+#, c-format
+msgid "Animation %zu: frame %d%s"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp
+msgid "Time"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp
+msgid "Frame"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp
+msgid "Frame:"
 msgstr ""
 
 #: ../src/dialog_glitch.cpp
@@ -10428,14 +10461,6 @@ msgstr ""
 
 #: ../src/dialog_glitch.cpp
 msgid "Width (%):"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "New pattern"
-msgstr ""
-
-#: ../src/dialog_glitch.cpp
-msgid "Pattern:"
 msgstr ""
 
 #: ../src/dialog_glitch.cpp
@@ -10477,4 +10502,8 @@ msgstr ""
 
 #: ../src/dialog_glitch.cpp
 msgid "Time (ms):"
+msgstr ""
+
+#: ../src/dialog_glitch.cpp
+msgid "Paste effect"
 msgstr ""

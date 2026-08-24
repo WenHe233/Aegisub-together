@@ -23,6 +23,7 @@
 #include "video_controller.h"
 
 #include <libaegisub/format.h>
+#include <libaegisub/ass/uuencode.h>
 
 #include <algorithm>
 #include <array>
@@ -43,6 +44,8 @@ namespace {
 constexpr char const *effect_name = "glitch-fx";
 constexpr char const *data_key = "aegisub/glitch-fx";
 constexpr char const *source_key = "aegisub/glitch-fx-source";
+constexpr std::string_view clipboard_settings = "{:Aegisub Glitch Settings:";
+constexpr std::string_view clipboard_sources = "{:Aegisub Glitch Sources:";
 
 Values Clamp(Values value) {
 	value.amount = std::clamp(value.amount, 0.0, 100.0);
@@ -96,11 +99,12 @@ std::string SerializeSettings(Settings settings) {
 		animation.from = Clamp(animation.from);
 		animation.to = Clamp(animation.to);
 		if (!animations.empty()) animations += ';';
-		animations += agi::format("%d,%d,%d,%s,%s", animation.enabled,
-			animation.start_time, animation.end_time,
-			SerializeValues(animation.from), SerializeValues(animation.to));
+		animations += agi::format("%d,%d,%d,%d,%d,%d,%d,%d,%s,%s", animation.enabled,
+			static_cast<int>(animation.timing), animation.start_time, animation.end_time,
+			animation.frame, animation.use_default_mode, static_cast<int>(animation.mode),
+			animation.show_base, SerializeValues(animation.from), SerializeValues(animation.to));
 	}
-	return agi::format("4|%d|%u|%d|%s|%s", static_cast<int>(settings.mode),
+	return agi::format("7|%d|%u|%d|%s|%s", static_cast<int>(settings.mode),
 		settings.seed, settings.show_base, SerializeValues(settings.base), animations);
 }
 
@@ -118,7 +122,12 @@ std::optional<Settings> DeserializeSettings(std::string const& encoded) {
 	bool version_two = fields.size() == 6 && fields[0] == "2";
 	bool version_three = fields.size() == 6 && fields[0] == "3";
 	bool version_four = fields.size() == 6 && fields[0] == "4";
-	if (!legacy && !version_two && !version_three && !version_four) return std::nullopt;
+	bool version_five = fields.size() == 6 && fields[0] == "5";
+	bool version_six = fields.size() == 6 && fields[0] == "6";
+	bool version_seven = fields.size() == 6 && fields[0] == "7";
+	if (!legacy && !version_two && !version_three && !version_four && !version_five &&
+		!version_six && !version_seven)
+		return std::nullopt;
 	try {
 		Settings settings;
 		settings.mode = static_cast<Mode>(std::clamp(std::stoi(fields[1]), 0, 16));
@@ -144,12 +153,53 @@ std::optional<Settings> DeserializeSettings(std::string const& encoded) {
 				part_at = comma + 1;
 			}
 			if (parts.size() != 9 && parts.size() != 11 && parts.size() != 14 &&
-				parts.size() != 15)
+				parts.size() != 15 && parts.size() != 18 && parts.size() != 19 &&
+				parts.size() != 20)
 				return std::nullopt;
 			Animation animation;
 			animation.enabled = std::stoi(parts[0]) != 0;
-			animation.start_time = std::clamp(std::stoi(parts[1]), 0, 3600000);
-			animation.end_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
+			animation.mode = settings.mode;
+			animation.show_base = settings.show_base;
+			size_t values_at = 3;
+			if (parts.size() == 20) {
+				animation.timing = std::stoi(parts[1]) == 1 ?
+					AnimationTiming::Frame : AnimationTiming::Range;
+				animation.start_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
+				animation.end_time = std::clamp(std::stoi(parts[3]), 0, 3600000);
+				animation.frame = std::clamp(std::stoi(parts[4]), 0, 1000000);
+				animation.use_default_mode = std::stoi(parts[5]) != 0;
+				animation.mode = static_cast<Mode>(std::clamp(std::stoi(parts[6]), 0, 16));
+				animation.show_base = std::stoi(parts[7]) != 0;
+				values_at = 8;
+			}
+			else if (parts.size() == 19) {
+				animation.timing = std::stoi(parts[1]) == 1 ?
+					AnimationTiming::Frame : AnimationTiming::Range;
+				animation.start_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
+				animation.end_time = std::clamp(std::stoi(parts[3]), 0, 3600000);
+				animation.frame = std::clamp(std::stoi(parts[4]), 0, 1000000);
+				animation.use_default_mode = std::stoi(parts[5]) != 0;
+				animation.mode = static_cast<Mode>(std::clamp(std::stoi(parts[6]), 0, 16));
+				values_at = 7;
+			}
+			else if (parts.size() == 18) {
+				animation.timing = std::stoi(parts[1]) == 1 ?
+					AnimationTiming::Frame : AnimationTiming::Range;
+				animation.start_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
+				animation.end_time = std::clamp(std::stoi(parts[3]), 0, 3600000);
+				animation.frame = std::clamp(std::stoi(parts[4]), 0, 1000000);
+				animation.use_default_mode = false;
+				animation.mode = static_cast<Mode>(std::clamp(std::stoi(parts[5]), 0, 16));
+				values_at = 6;
+			}
+			else {
+				animation.start_time = std::clamp(std::stoi(parts[1]), 0, 3600000);
+				animation.end_time = std::clamp(std::stoi(parts[2]), 0, 3600000);
+				if (parts.size() == 14)
+					animation.use_default_mode = false;
+				if (parts.size() == 14)
+					animation.mode = static_cast<Mode>(std::clamp(std::stoi(parts[3]), 0, 16));
+			}
 			std::string from_text;
 			std::string to_text;
 			if (parts.size() == 9) {
@@ -166,11 +216,19 @@ std::optional<Settings> DeserializeSettings(std::string const& encoded) {
 				to_text = parts[9] + "," + parts[10] + "," + parts[11] + "," +
 					parts[12] + "," + parts[13];
 			}
-			else {
+			else if (parts.size() == 15) {
 				from_text = parts[3] + "," + parts[4] + "," + parts[5] + "," +
 					parts[6] + "," + parts[7] + "," + parts[8];
 				to_text = parts[9] + "," + parts[10] + "," + parts[11] + "," +
 					parts[12] + "," + parts[13] + "," + parts[14];
+			}
+			else {
+				from_text = parts[values_at] + "," + parts[values_at + 1] + "," +
+					parts[values_at + 2] + "," + parts[values_at + 3] + "," +
+					parts[values_at + 4] + "," + parts[values_at + 5];
+				to_text = parts[values_at + 6] + "," + parts[values_at + 7] + "," +
+					parts[values_at + 8] + "," + parts[values_at + 9] + "," +
+					parts[values_at + 10] + "," + parts[values_at + 11];
 			}
 			auto from = DeserializeValues(from_text);
 			auto to = DeserializeValues(to_text);
@@ -191,6 +249,24 @@ std::optional<std::string> Extra(AssFile const& file, AssDialogue const& line,
 	for (auto const& extra : file.GetExtradata(line.ExtradataIds))
 		if (extra.key == key) return extra.value;
 	return std::nullopt;
+}
+
+std::string ClipboardMarker(std::string_view prefix, std::string const& value) {
+	return std::string(prefix) + agi::ass::UUEncode(value.data(),
+		value.data() + value.size(), false) + "}";
+}
+
+std::optional<std::string> TakeClipboardMarker(std::string& text,
+		std::string_view prefix) {
+	auto start = text.find(prefix);
+	if (start == std::string::npos) return std::nullopt;
+	auto end = text.find('}', start + prefix.size());
+	if (end == std::string::npos) return std::nullopt;
+	auto encoded = std::string_view(text).substr(start + prefix.size(),
+		end - start - prefix.size());
+	auto decoded = agi::ass::UUDecode(encoded.data(), encoded.data() + encoded.size());
+	text.erase(start, end - start + 1);
+	return std::string(decoded.begin(), decoded.end());
 }
 
 std::string SerializeSources(std::vector<AssDialogue *> const& sources) {
@@ -538,41 +614,8 @@ struct Phase {
 	Values to;
 	bool animated = false;
 	Mode mode = Mode::SourceAtop;
+	bool show_base = true;
 };
-
-std::vector<Phase> Phases(Settings const& settings, int duration) {
-	std::vector<Animation> animations;
-	for (auto animation : settings.animations) {
-		if (!animation.enabled) continue;
-		animation.start_time = std::clamp(animation.start_time, 0, duration);
-		animation.end_time = std::clamp(animation.end_time, 0, duration);
-		if (animation.end_time <= animation.start_time) continue;
-		animation.from = Clamp(animation.from);
-		animation.to = Clamp(animation.to);
-		animations.push_back(animation);
-	}
-	std::stable_sort(animations.begin(), animations.end(), [](Animation const& left,
-		Animation const& right) { return left.start_time < right.start_time; });
-
-	std::vector<Phase> phases;
-	Values current = Clamp(settings.base);
-	int cursor = 0;
-	for (auto animation : animations) {
-		int start = std::max(cursor, animation.start_time);
-		if (start >= animation.end_time) continue;
-		if (start > cursor)
-			phases.push_back({cursor, start, current, current, false, settings.mode});
-		phases.push_back({start, animation.end_time, animation.from, animation.to, true,
-			settings.mode});
-		current = animation.to;
-		cursor = animation.end_time;
-	}
-	if (cursor < duration)
-		phases.push_back({cursor, duration, current, current, false, settings.mode});
-	if (phases.empty() && duration > 0)
-		phases.push_back({0, duration, current, current, false, settings.mode});
-	return phases;
-}
 
 Values Interpolate(Values from, Values to, double factor) {
 	factor = std::clamp(factor, 0.0, 1.0);
@@ -584,6 +627,122 @@ Values Interpolate(Values from, Values to, double factor) {
 		mix(from.opacity, to.opacity),
 		static_cast<int>(std::lround(mix(from.height, to.height))),
 		mix(from.width, to.width), from.angle + angle_delta * factor});
+}
+
+Phase SlicePhase(Phase const& phase, int start, int end) {
+	if (!phase.animated || phase.end <= phase.start)
+		return {start, end, phase.from, phase.to, phase.animated, phase.mode,
+			phase.show_base};
+	double duration = static_cast<double>(phase.end - phase.start);
+	return {start, end,
+		Interpolate(phase.from, phase.to, (start - phase.start) / duration),
+		Interpolate(phase.from, phase.to, (end - phase.start) / duration),
+		true, phase.mode, phase.show_base};
+}
+
+struct ResolvedAnimation {
+	Animation animation;
+	int start = 0;
+	int end = 0;
+};
+
+std::optional<std::pair<int, int>> AnimationInterval(agi::Context *c,
+		AssDialogue const& source, Animation const& animation, int duration) {
+	if (animation.timing == AnimationTiming::Range) {
+		int start = std::clamp(animation.start_time, 0, duration);
+		int end = std::clamp(animation.end_time, 0, duration);
+		if (end <= start) return std::nullopt;
+		return std::pair{start, end};
+	}
+
+	int start = 0;
+	int end = 0;
+	auto const& fps = c->project->Timecodes();
+	if (fps.IsLoaded()) {
+		int line_start = static_cast<int>(source.Start);
+		int first = fps.FrameAtTime(line_start, agi::vfr::START);
+		start = animation.frame == 0 ? 0 :
+			fps.TimeAtFrame(first + animation.frame, agi::vfr::START) - line_start;
+		end = fps.TimeAtFrame(first + animation.frame + 1, agi::vfr::START) - line_start;
+	}
+	else {
+		start = animation.frame * 40;
+		end = start + 40;
+	}
+	start = std::clamp(start, 0, duration);
+	end = std::clamp(end, 0, duration);
+	if (end <= start) return std::nullopt;
+	return std::pair{start, end};
+}
+
+std::vector<Phase> Phases(agi::Context *c, Settings const& settings,
+		AssDialogue const& source, int duration) {
+	std::vector<ResolvedAnimation> ranges;
+	std::vector<ResolvedAnimation> frames;
+	for (auto animation : settings.animations) {
+		if (!animation.enabled) continue;
+		animation.from = Clamp(animation.from);
+		animation.to = Clamp(animation.to);
+		animation.from.angle = settings.base.angle;
+		animation.to.angle = settings.base.angle;
+		auto interval = AnimationInterval(c, source, animation, duration);
+		if (!interval) continue;
+		ResolvedAnimation resolved{animation, interval->first, interval->second};
+		(animation.timing == AnimationTiming::Frame ? frames : ranges).push_back(resolved);
+	}
+	auto by_start = [](ResolvedAnimation const& left, ResolvedAnimation const& right) {
+		return left.start < right.start;
+	};
+	std::stable_sort(ranges.begin(), ranges.end(), by_start);
+	std::stable_sort(frames.begin(), frames.end(), by_start);
+
+	std::vector<Phase> phases;
+	Values current = Clamp(settings.base);
+	int cursor = 0;
+	for (auto const& resolved : ranges) {
+		auto const& animation = resolved.animation;
+		int start = std::max(cursor, resolved.start);
+		if (start >= resolved.end) continue;
+		if (start > cursor)
+			phases.push_back({cursor, start, current, current, false, settings.mode,
+				settings.show_base});
+		Mode animation_mode = animation.use_default_mode ? settings.mode : animation.mode;
+		Phase range{resolved.start, resolved.end, animation.from, animation.to, true,
+			animation_mode, animation.show_base};
+		phases.push_back(SlicePhase(range, start, resolved.end));
+		current = animation.to;
+		cursor = resolved.end;
+	}
+	if (cursor < duration)
+		phases.push_back({cursor, duration, current, current, false, settings.mode,
+			settings.show_base});
+	if (phases.empty() && duration > 0)
+		phases.push_back({0, duration, current, current, false, settings.mode,
+			settings.show_base});
+
+	// A single-frame animation temporarily replaces the underlying range/base phase,
+	// then the underlying phase continues exactly where its interpolation would be.
+	for (auto const& resolved : frames) {
+		std::vector<Phase> replaced;
+		for (auto const& phase : phases) {
+			int overlap_start = std::max(phase.start, resolved.start);
+			int overlap_end = std::min(phase.end, resolved.end);
+			if (overlap_end <= overlap_start) {
+				replaced.push_back(phase);
+				continue;
+			}
+			if (phase.start < overlap_start)
+				replaced.push_back(SlicePhase(phase, phase.start, overlap_start));
+			Mode animation_mode = resolved.animation.use_default_mode ?
+				settings.mode : resolved.animation.mode;
+			replaced.push_back({overlap_start, overlap_end, resolved.animation.to,
+				resolved.animation.to, false, animation_mode, resolved.animation.show_base});
+			if (overlap_end < phase.end)
+				replaced.push_back(SlicePhase(phase, overlap_end, phase.end));
+		}
+		phases = std::move(replaced);
+	}
+	return phases;
 }
 
 std::vector<Phase> FramePhases(agi::Context *c, AssDialogue const& source,
@@ -619,7 +778,8 @@ std::vector<Phase> FramePhases(agi::Context *c, AssDialogue const& source,
 		double factor = ((start + end) * .5 - phase.start) /
 			std::max(1.0, static_cast<double>(phase.end - phase.start));
 		Values sampled = Interpolate(phase.from, phase.to, factor);
-		frames.push_back({start, end, sampled, sampled, false, phase.mode});
+		frames.push_back({start, end, sampled, sampled, false, phase.mode,
+			phase.show_base});
 	}
 	return frames;
 }
@@ -746,16 +906,21 @@ std::optional<Polygon> ParsePositiveClip(std::string const& text) {
 }
 
 std::optional<std::string> ApplyBandClip(std::string text, Polygon const& band,
-		bool had_clip) {
+		bool had_clip, double translate_x = 0.0) {
 	Polygon combined = band;
 	if (had_clip) {
 		auto existing = ParsePositiveClip(text);
 		if (!existing) return text;
 		combined = IntersectConvex(std::move(*existing), band);
 		if (combined.size() < 3) return std::nullopt;
+	}
+	if (had_clip) {
 		static std::regex clips(R"(\\i?clip\([^)]*\))");
 		text = std::regex_replace(text, clips, "");
 	}
+	if (std::abs(translate_x) > .0001)
+		for (auto& point : combined)
+			point = point + Vector2D(static_cast<float>(translate_x), 0.f);
 	std::string body = PolygonClip(combined);
 	if (body.empty()) return std::nullopt;
 	return InjectTags(std::move(text), "\\clip(" + body + ")");
@@ -805,7 +970,11 @@ void AddOverlay(std::vector<AssDialogue>& out, agi::Context *c,
 	bool had_clip = HasClip(text);
 	text = OffsetPosition(c, sampled, std::move(text), from_x, to_x, end - start);
 	if (clip) {
-		auto clipped = ApplyBandClip(std::move(text), *clip, had_clip);
+		// Intersect an existing source clip with the requested glitch slice first, then
+		// move that complete pixel region with the displaced content. Leaving the new
+		// clip behind at the source position cuts every shifted slice at the old bounds.
+		double clip_shift = (from_x + to_x) * .5;
+		auto clipped = ApplyBandClip(std::move(text), *clip, had_clip, clip_shift);
 		if (!clipped) return;
 		text = std::move(*clipped);
 	}
@@ -859,7 +1028,9 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 	int extra_count = std::max(from_extra_count, to_extra_count);
 	for (size_t source_index = 0; source_index < sources.size(); ++source_index) {
 		auto source = sources[source_index];
-		bool atomic = imagemask::IsLine(source) || source->Effect.get() == "gradient-fx";
+		bool gradient = source->Effect.get() == "gradient-fx";
+		bool atomic = imagemask::IsLine(source);
+		size_t noise_source = gradient ? sources.size() : source_index;
 		int source_band = static_cast<int>(source_index);
 		if (imagemask::IsLine(source)) {
 			Vector2D position = LinePosition(c, *source);
@@ -873,12 +1044,14 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 				double to_opacity_scale = 1.0,
 				uint32_t seed = 0) {
 				seed = seed ? seed : phase_seed;
-				double random_from = Offset(seed, source_index, band,
+				double displacement_jitter = .85 + .3 * Noise01(seed, noise_source,
+					band, 211 + static_cast<int>(paint_index));
+				double random_from = Offset(seed, noise_source, band,
 					static_cast<int>(paint_index), from.offset) * paint.direction *
-					displacement_scale;
-				double random_to = Offset(seed, source_index, band,
+					displacement_scale * displacement_jitter;
+				double random_to = Offset(seed, noise_source, band,
 					static_cast<int>(paint_index), to.offset) * paint.direction *
-					displacement_scale;
+					displacement_scale * displacement_jitter;
 				AddOverlay(out, c, *source,
 					static_cast<int>(source->Start) + phase.start,
 					static_cast<int>(source->Start) + phase.end,
@@ -905,6 +1078,13 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 					int geometry_columns = from_active ? from_columns : to_columns;
 					double segment = (tangent.second - tangent.first) * geometry.width / 100.0;
 					double tangent_low = tangent.first + column * segment;
+					if (geometry.width < 99.999) {
+						double jitter = (Noise01(phase_seed, source_index,
+							source_band * 131 + column, 113 + static_cast<int>(paint_index)) *
+							.6 - .3) * (tangent.second - tangent.first);
+						tangent_low = std::clamp(tangent_low + jitter, tangent.first,
+							std::max(tangent.first, tangent.second - segment));
+					}
 					double tangent_high = std::min(tangent.second, tangent_low + segment);
 					if (column >= geometry_columns || tangent_high <= tangent_low) continue;
 					auto clip = SlicePolygon(geometry.angle, normal.first, normal.second,
@@ -934,7 +1114,18 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 						(normal.second - normal.first) / rows;
 					double segment = (tangent.second - tangent.first) * geometry.width / 100.0;
 					double tangent_low = tangent.first + column * segment;
+					if (geometry.width < 99.999) {
+						double jitter = (Noise01(phase_seed, noise_source, band,
+							127 + static_cast<int>(paint_index)) * .6 - .3) *
+							(tangent.second - tangent.first);
+						tangent_low = std::clamp(tangent_low + jitter, tangent.first,
+							std::max(tangent.first, tangent.second - segment));
+					}
 					double tangent_high = std::min(tangent.second, tangent_low + segment);
+					if (gradient && geometry.width >= 99.999) {
+						tangent_low -= 32.0;
+						tangent_high += 32.0;
+					}
 					auto clip = SlicePolygon(geometry.angle, centre - geometry.height * .5,
 						centre + geometry.height * .5, tangent_low, tangent_high);
 					add(band, std::move(clip), 1.0,
@@ -945,9 +1136,9 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 				// the regular bands have already modified it. ASS cannot sample its own
 				// rendered result, so two accumulated echoes approximate that feedback.
 				for (int strip = 0; strip < extra_count; ++strip) {
-					double y_unit = Noise01(phase_seed, source_index, strip,
+					double y_unit = Noise01(phase_seed, noise_source, strip,
 						static_cast<int>(paint_index) * 7 + 1);
-					double height_unit = Noise01(phase_seed, source_index, strip,
+					double height_unit = Noise01(phase_seed, noise_source, strip,
 						static_cast<int>(paint_index) * 7 + 2);
 					double strip_height = std::max(1.0, static_cast<double>(std::lround(
 						height * (.45 + 1.65 * height_unit))));
@@ -955,7 +1146,7 @@ void GeneratePass(std::vector<AssDialogue>& out, agi::Context *c,
 						from_range.second - from_range.first - strip_height);
 					double tangent_span = from_tangent.second - from_tangent.first;
 					double segment = tangent_span * from.width / 100.0;
-					double tangent_unit = Noise01(phase_seed, source_index, strip,
+					double tangent_unit = Noise01(phase_seed, noise_source, strip,
 						static_cast<int>(paint_index) * 7 + 3);
 					double tangent_low = from_tangent.first + tangent_unit *
 						std::max(0.0, tangent_span - segment);
@@ -985,27 +1176,33 @@ std::vector<AssDialogue> GenerateGroup(agi::Context *c,
 	if (duration <= 0) return out;
 	Bounds bounds = GroupBounds(c, sources);
 	out.reserve(sources.size() * 2);
-	if (settings.show_base)
-		for (auto source : sources) {
-			AssDialogue base(*source);
-			base.Comment = false;
-			base.Effect = effect_name;
-			out.push_back(std::move(base));
-		}
 
-	auto phases = Phases(settings, duration);
+	auto phases = Phases(c, settings, *sources.front(), duration);
 	for (size_t phase_index = 0; phase_index < phases.size(); ++phase_index) {
 		auto const& phase = phases[phase_index];
 		uint32_t phase_seed = settings.seed ^ static_cast<uint32_t>(phase_index * 0x9e3779b9U);
 		auto frames = FramePhases(c, *sources.front(), phase);
 		for (size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
 			auto const& frame = frames[frame_index];
+			if (frame.show_base) {
+				for (auto source : sources) {
+					int start = static_cast<int>(source->Start) + frame.start;
+					int end = static_cast<int>(source->Start) + frame.end;
+					AssDialogue base(*source);
+					typesetting::motion::SnapshotAnimations(c, base, (start + end) / 2, start);
+					base.Comment = false;
+					base.Effect = effect_name;
+					base.Start = start;
+					base.End = end;
+					out.push_back(std::move(base));
+				}
+			}
 			GeneratePass(out, c, sources, bounds, frame, frame.from, frame.to,
 				frame.from.height, 1.0, 1.0,
 				phase_seed ^ static_cast<uint32_t>(frame_index * 0x85ebca6bU));
 		}
 	}
-	if (out.empty() && !settings.show_base) {
+	if (out.empty()) {
 		AssDialogue empty(*sources.front());
 		empty.Comment = false;
 		empty.Effect = effect_name;
@@ -1065,6 +1262,49 @@ Settings LoadSettingsForSelection(agi::Context *c) {
 		}
 	}
 	return {};
+}
+
+bool SettingsFromClipboard(std::string clipboard, Settings& settings) {
+	try {
+		auto encoded_settings = TakeClipboardMarker(clipboard, clipboard_settings);
+		auto encoded_sources = TakeClipboardMarker(clipboard, clipboard_sources);
+		if (!encoded_settings || !encoded_sources ||
+			DeserializeSources(*encoded_sources).empty()) return false;
+		auto parsed = DeserializeSettings(*encoded_settings);
+		if (!parsed) return false;
+		settings = std::move(*parsed);
+		return true;
+	}
+	catch (...) { return false; }
+}
+
+std::string ClipboardMetadata(AssFile const& file, AssDialogue const& line) {
+	if (!IsSource(file, &line)) return {};
+	auto settings = Extra(file, line, data_key);
+	auto sources = Extra(file, line, source_key);
+	if (!settings || !sources) return {};
+	return ClipboardMarker(clipboard_settings, *settings) +
+		ClipboardMarker(clipboard_sources, *sources);
+}
+
+bool RestoreClipboardMetadata(AssFile& file, AssDialogue& line) {
+	std::string text = line.Text.get();
+	auto settings = TakeClipboardMarker(text, clipboard_settings);
+	auto sources = TakeClipboardMarker(text, clipboard_sources);
+	line.Text = std::move(text);
+	if (!settings || !sources || !IsEffect(&line) ||
+		!DeserializeSettings(*settings) || DeserializeSources(*sources).empty()) return false;
+	file.SetExtradataValue(line, data_key, *settings);
+	file.SetExtradataValue(line, source_key, *sources);
+	auto ids = line.ExtradataIds.get();
+	std::sort(ids.begin(), ids.end());
+	line.ExtradataIds = std::move(ids);
+	return true;
+}
+
+void ClearGroupMetadata(AssFile& file, AssDialogue& line) {
+	file.DeleteExtradataValue(line, data_key);
+	file.DeleteExtradataValue(line, source_key);
 }
 
 struct PreviewSession::Impl {

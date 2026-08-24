@@ -951,14 +951,21 @@ void BaseGrid::OnContextMenu(wxContextMenuEvent &evt) {
 	AssDialogue* d = pos == wxDefaultPosition ?
 		context->selectionController->GetActiveLine() : GetVisDialogue(row);
 
-	if (d && (context->imageMask->IsGroupStart(d) || context->imageMask->IsGradientGroup(d)) &&
+	if (d && (context->imageMask->IsGroupStart(d) ||
+		context->imageMask->IsGradientGroup(d) || context->imageMask->IsGlitchGroup(d)) &&
 		!context->selectionController->GetSelectedSet().count(d)) {
 		SelectRow(row, false);
 		context->selectionController->SetActiveLine(d);
 	}
 
 	if (pos == wxDefaultPosition || pos.y > lineHeight) {
-		if (d && context->imageMask->IsGradientGroup(d)) {
+		if (d && context->imageMask->IsGlitchGroup(d)) {
+			if (!glitch_context_menu)
+				glitch_context_menu = menu::GetMenu("grid_context_glitch",
+					(wxID_HIGHEST + 1) + 8750, context);
+			menu::OpenPopupMenu(glitch_context_menu.get(), this);
+		}
+		else if (d && context->imageMask->IsGradientGroup(d)) {
 			if (!gradient_context_menu)
 				gradient_context_menu = menu::GetMenu("grid_context_gradient",
 					(wxID_HIGHEST + 1) + 8500, context);

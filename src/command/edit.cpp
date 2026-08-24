@@ -53,6 +53,7 @@
 #include "../subs_controller.h"
 #include "../text_selection_controller.h"
 #include "../typesetting_gradient.h"
+#include "../typesetting_glitch.h"
 #include "../typesetting_textbox.h"
 #include "../utils.h"
 #include "../video_controller.h"
@@ -197,6 +198,7 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 	std::vector<AssDialogue *> pendingFoldStarts;
 	std::vector<std::pair<AssDialogue*, AssDialogue*>> foldsToAdd;
 	bool restored_gradient_metadata = false;
+	bool restored_glitch_metadata = false;
 	bool restored_textbox_metadata = false;
 
 	boost::char_separator<char> sep("\r\n");
@@ -226,6 +228,8 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 		inserted->Text = text;
 		restored_gradient_metadata |=
 			typesetting::gradient::RestoreClipboardMetadata(*c->ass, *inserted);
+		restored_glitch_metadata |=
+			typesetting::glitch::RestoreClipboardMetadata(*c->ass, *inserted);
 		restored_textbox_metadata |=
 			typesetting::textbox::RestoreClipboardMetadata(*c->ass, *inserted);
 
@@ -236,7 +240,7 @@ void paste_lines(agi::Context *c, bool paste_over, Paster&& paste_line) {
 
 	if (first) {
 		int commit_type = paste_over ? AssFile::COMMIT_DIAG_FULL : AssFile::COMMIT_DIAG_ADDREM;
-		if (restored_gradient_metadata || restored_textbox_metadata)
+		if (restored_gradient_metadata || restored_glitch_metadata || restored_textbox_metadata)
 			commit_type |= AssFile::COMMIT_EXTRADATA;
 		int commitId = c->ass->Commit(_("paste"), commit_type);
 
@@ -797,6 +801,7 @@ static void copy_lines(agi::Context *c) {
 			str += "{:Foldend}";
 
 		str += typesetting::gradient::ClipboardMetadata(*c->ass, *d);
+		str += typesetting::glitch::ClipboardMetadata(*c->ass, *d);
 		str += typesetting::textbox::ClipboardMetadata(*c->ass, *d);
 
 		std::string source_line(agi::Trim(d->SourceLineText.get()));

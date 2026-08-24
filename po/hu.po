@@ -31,7 +31,7 @@ msgstr ""
 msgid "ANSI"
 msgstr "ANSI"
 
-#: ../src/ass_style.cpp:198 ../src/command/video.cpp:146
+#: ../src/ass_style.cpp:198 ../src/command/video.cpp:146 ../src/dialog_glitch.cpp
 msgid "Default"
 msgstr "Alapértelmezett"
 
@@ -6232,7 +6232,7 @@ msgstr "Fordítás:"
 msgid "Editing:"
 msgstr "Lektor:"
 
-#: ../src/dialog_properties.cpp:118
+#: ../src/dialog_glitch.cpp ../src/dialog_properties.cpp:118
 msgid "Timing:"
 msgstr "Időzítés:"
 
@@ -11682,7 +11682,23 @@ msgstr "Jelenet"
 
 #: ../src/command/typesetting.cpp ../src/dialog_glitch.cpp
 msgid "Glitch effect"
-msgstr "Glitch effect"
+msgstr "Glitch effekt"
+
+#: ../src/command/typesetting.cpp
+msgid "Edit glitch effect"
+msgstr "Glitch effekt szerkesztése"
+
+#: ../src/command/typesetting.cpp
+msgid "Edit the settings of the selected generated glitch effect"
+msgstr "A kijelölt létrehozott glitch effekt beállításainak szerkesztése"
+
+#: ../src/command/typesetting.cpp
+msgid "Copy glitch effect"
+msgstr "Glitch effekt másolása"
+
+#: ../src/command/typesetting.cpp
+msgid "Copy the selected generated glitch rows and settings"
+msgstr "A kijelölt létrehozott glitch sorok és beállítások másolása"
 
 #: ../src/command/typesetting.cpp
 msgid "Create customizable, angled and animated glitch slices on the selected lines"
@@ -11691,7 +11707,7 @@ msgstr "Testreszabható, döntött és animált glitch-szeletek létrehozása a 
 #: ../src/base_grid.cpp
 #, c-format
 msgid "Glitch effect (%d lines, %s)"
-msgstr "Glitch effect (%d sor, %s)"
+msgstr "Glitch effekt (%d sor, %s)"
 
 #: ../src/typesetting_glitch.cpp
 msgid "apply glitch effect"
@@ -11715,6 +11731,23 @@ msgstr "(kikapcsolva)"
 #, c-format
 msgid "Animation %zu: %d-%d ms%s"
 msgstr "%zu. animáció: %d–%d ms%s"
+
+#: ../src/dialog_glitch.cpp
+#, c-format
+msgid "Animation %zu: frame %d%s"
+msgstr "%zu. animáció: %d. képkocka%s"
+
+#: ../src/dialog_glitch.cpp
+msgid "Time"
+msgstr "Idő"
+
+#: ../src/dialog_glitch.cpp
+msgid "Frame"
+msgstr "Képkocka"
+
+#: ../src/dialog_glitch.cpp
+msgid "Frame:"
+msgstr "Képkocka:"
 
 #: ../src/dialog_glitch.cpp
 msgid "An animation end time must be after its start time."
@@ -11751,14 +11784,6 @@ msgstr "Magasság:"
 #: ../src/dialog_glitch.cpp
 msgid "Width (%):"
 msgstr "Szélesség (%):"
-
-#: ../src/dialog_glitch.cpp
-msgid "New pattern"
-msgstr "Új minta"
-
-#: ../src/dialog_glitch.cpp
-msgid "Pattern:"
-msgstr "Minta:"
 
 #: ../src/dialog_glitch.cpp
 msgid "Show base layer"
@@ -11800,3 +11825,7 @@ msgstr "Engedélyezve"
 #: ../src/dialog_glitch.cpp
 msgid "Time (ms):"
 msgstr "Idő (ms):"
+
+#: ../src/dialog_glitch.cpp
+msgid "Paste effect"
+msgstr "Effekt beillesztése"

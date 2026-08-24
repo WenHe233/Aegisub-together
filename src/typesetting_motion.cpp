@@ -17,6 +17,7 @@
 #include "spline.h"
 #include "subtitle_line_combiner.h"
 #include "typesetting_perspective.h"
+#include "typesetting_glitch.h"
 #include "typesetting_transform.h"
 #include "video_controller.h"
 
@@ -1089,6 +1090,7 @@ bool Apply(agi::Context *context, Track const& main_track,
 	}
 	auto selected = context->selectionController->GetSelectedSet();
 	if (selected.empty()) { error = "Nincs kijelölt feliratsor."; return false; }
+	if (context->imageMask) context->imageMask->ExpandTypesettingSelection(selected);
 	int selection_start = std::numeric_limits<int>::max();
 	int selection_end = 0;
 	for (auto line : selected)
@@ -1134,6 +1136,15 @@ bool Apply(agi::Context *context, Track const& main_track,
 			return context->imageMask->GetGroupLines(line);
 		return std::vector<AssDialogue *>{line};
 	};
+	auto object_times = [](std::vector<AssDialogue *> const& originals) {
+		int start = std::numeric_limits<int>::max();
+		int end = 0;
+		for (auto original : originals) {
+			start = std::min(start, static_cast<int>(original->Start));
+			end = std::max(end, static_cast<int>(original->End));
+		}
+		return std::pair{start, end};
+	};
 
 	report(ApplyProgressStage::Preparing, 0, 1);
 	size_t apply_total = 0;
@@ -1142,9 +1153,10 @@ bool Apply(agi::Context *context, Track const& main_track,
 		if (counted.count(line)) continue;
 		auto originals = originals_for(line);
 		for (auto original : originals) counted.insert(original);
-		int start_frame = context->videoController->FrameAtTime(originals.front()->Start,
+		auto [object_start, object_end] = object_times(originals);
+		int start_frame = context->videoController->FrameAtTime(object_start,
 			agi::vfr::START);
-		int end_frame = context->videoController->FrameAtTime(originals.front()->End,
+		int end_frame = context->videoController->FrameAtTime(object_end,
 			agi::vfr::END);
 		apply_total += static_cast<size_t>(std::max(1, end_frame - start_frame + 1));
 	}
@@ -1166,11 +1178,15 @@ bool Apply(agi::Context *context, Track const& main_track,
 		std::sort(item.originals.begin(), item.originals.end(),
 			[](auto left, auto right) { return left->Row < right->Row; });
 
-		int start_frame = context->videoController->FrameAtTime(item.originals.front()->Start,
+		auto [object_start, object_end] = object_times(item.originals);
+		int start_frame = context->videoController->FrameAtTime(object_start,
 			agi::vfr::START);
-		int end_frame = context->videoController->FrameAtTime(item.originals.front()->End,
+		int end_frame = context->videoController->FrameAtTime(object_end,
 			agi::vfr::END);
 		bool mask = IsImageMaskLine(item.originals.front());
+		bool glitch_group = context->imageMask &&
+			context->imageMask->IsGlitchGroup(item.originals.front());
+		bool glitch_anchor_written = false;
 		auto raster = mask ? imagemask::Decode(item.originals) : std::nullopt;
 		if (mask && !raster) { error = "Az ImageMask képe nem olvasható vissza."; return false; }
 		int script_width = 0, script_height = 0;
@@ -1209,9 +1225,9 @@ bool Apply(agi::Context *context, Track const& main_track,
 			size_t sample = sample_for_frame(frame);
 			Homography main_map = AppliedMap(main_track, main_perspective_track, sample,
 				options.reference_sample, options.main, options.linear);
-			int start = std::max(static_cast<int>(item.originals.front()->Start),
+			int start = std::max(object_start,
 				context->videoController->TimeAtFrame(frame, agi::vfr::START));
-			int end = std::min(static_cast<int>(item.originals.front()->End),
+			int end = std::min(object_end,
 				context->videoController->TimeAtFrame(frame, agi::vfr::END));
 			if (end <= start) {
 				++apply_complete;
@@ -1244,7 +1260,16 @@ bool Apply(agi::Context *context, Track const& main_track,
 
 				bool alone = item.originals.size() == 1;
 				for (auto original : item.originals) {
+					if (!alone && (static_cast<int>(original->End) <= start ||
+						static_cast<int>(original->Start) >= end)) continue;
 					AssDialogue generated_line(*original);
+					if (glitch_group &&
+						typesetting::glitch::IsSource(*context->ass, &generated_line)) {
+						if (glitch_anchor_written)
+							typesetting::glitch::ClearGroupMetadata(*context->ass, generated_line);
+						else
+							glitch_anchor_written = true;
+					}
 					// A single line is written out plainly, as it always was. The rows of an
 					// object keep what says they belong together - the extradata a gradient and a
 					// textbox are known by - and keep being comments where they were meant to be

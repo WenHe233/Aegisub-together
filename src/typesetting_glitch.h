@@ -41,20 +41,30 @@ enum class Mode {
 };
 
 struct Values {
-	double amount = 60.0;
-	double offset = 60.0;
+	double amount = 100.0;
+	double offset = 50.0;
 	double opacity = 1.0;
-	int height = 12;
+	int height = 10;
 	double width = 100.0;
 	double angle = 90.0;
 };
 
+enum class AnimationTiming {
+	Range,
+	Frame
+};
+
 struct Animation {
 	bool enabled = true;
+	AnimationTiming timing = AnimationTiming::Range;
 	int start_time = 0;
 	int end_time = 1000;
+	int frame = 0;
+	bool use_default_mode = true;
+	Mode mode = Mode::SourceAtop;
+	bool show_base = true;
 	Values from;
-	Values to{85.0, 85.0, 0.7, 5, 100.0, 90.0};
+	Values to{100.0, 50.0, 0.7, 10, 100.0, 90.0};
 };
 
 struct Settings {
@@ -67,6 +77,11 @@ struct Settings {
 
 std::vector<std::string> ModeNames();
 Settings LoadSettingsForSelection(agi::Context *c);
+bool SettingsFromClipboard(std::string clipboard, Settings& settings);
+
+std::string ClipboardMetadata(AssFile const& file, AssDialogue const& line);
+bool RestoreClipboardMetadata(AssFile& file, AssDialogue& line);
+void ClearGroupMetadata(AssFile& file, AssDialogue& line);
 
 class PreviewSession final : public NonDestructivePreviewSession {
 	struct Impl;
