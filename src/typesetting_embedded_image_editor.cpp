@@ -19,6 +19,7 @@
 #include "project.h"
 #include "selection_controller.h"
 #include "subtitle_line_combiner.h"
+#include "typesetting_glitch.h"
 #include "video_controller.h"
 #include "video_frame.h"
 
@@ -799,6 +800,11 @@ public:
 } // namespace
 
 void EditWithImageEditor(agi::Context *context) {
+	if (glitch::SelectionHasEnabledAnimation(context)) {
+		wxMessageBox(_("A glitch effect with animation cannot be edited."),
+			_("Image Editor"), wxOK | wxICON_WARNING, context->parent);
+		return;
+	}
 	auto images = CaptureEditorImages(context);
 	if (!images) return;
 

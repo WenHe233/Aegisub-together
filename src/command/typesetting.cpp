@@ -94,6 +94,14 @@ namespace {
 		return false;
 	}
 
+	bool RefusedForAnimatedGlitch(agi::Context *c,
+			wxString const& title = _("Transform")) {
+		if (!typesetting::glitch::SelectionHasEnabledAnimation(c)) return false;
+		wxMessageBox(_("A glitch effect with animation cannot be transformed."), title,
+			wxOK | wxICON_WARNING, c->parent);
+		return true;
+	}
+
 	template<VisualToolTransformMode M>
 	struct transform_command : public Command {
 		CMD_TYPE(COMMAND_VALIDATE)
@@ -103,7 +111,7 @@ namespace {
 		}
 
 		void operator()(agi::Context *c) override {
-			if (RefusedForMask(c)) return;
+			if (RefusedForMask(c) || RefusedForAnimatedGlitch(c)) return;
 			// Already in a transform: say what it is doing now rather than putting another in its
 			// place. Replacing it takes the bar away and builds a new one, and picking one
 			// transform from inside another should not make the bar blink.
@@ -153,7 +161,7 @@ struct typesetting_transform_auto_perspective final : public Command {
 	}
 
 	void operator()(agi::Context *c) override {
-		if (RefusedForMask(c)) return;
+		if (RefusedForMask(c) || RefusedForAnimatedGlitch(c)) return;
 		if (auto *running = dynamic_cast<VisualToolTransform *>(c->videoDisplay->GetTool())) {
 			running->SetMode(VisualToolTransformMode::Distort, true);
 			return;
@@ -183,7 +191,7 @@ struct flip_command : public Command {
 	}
 
 	void operator()(agi::Context *c) override {
-		if (RefusedForMask(c)) return;
+		if (RefusedForMask(c) || RefusedForAnimatedGlitch(c)) return;
 		if (c->videoDisplay->ToolIsType(typeid(VisualToolTransform))) {
 			// A transform preview owns replacement rows in the asynchronous subtitle renderer.
 			// Tear it down before mirroring changes the real event list.
@@ -205,12 +213,15 @@ struct flip_command : public Command {
 		editor.Build(typesetting::FlipMap(editor.Box().centre, Horizontal), false);
 		editor.Apply();
 		auto const& added = editor.applied();
+		// Commit before selecting the replacement rows. Selection changes are stored in the
+		// current undo snapshot, so doing this in the opposite order replaces the pre-flip
+		// selection with IDs which do not exist after undoing the flip.
+		c->ass->Commit(Horizontal ? _("flip horizontally") : _("flip vertically"),
+			AssFile::COMMIT_DIAG_ADDREM | AssFile::COMMIT_DIAG_FULL);
 		if (!added.empty()) {
 			Selection selection(added.begin(), added.end());
 			c->selectionController->SetSelectionAndActive(std::move(selection), added.front());
 		}
-		c->ass->Commit(Horizontal ? _("flip horizontally") : _("flip vertically"),
-			AssFile::COMMIT_DIAG_ADDREM | AssFile::COMMIT_DIAG_FULL);
 		// A full canonical reload is intentional here: the operation can replace one source
 		// row with several drawing rows, which must supersede every queued transform preview.
 		c->videoController->ReloadSubtitles();

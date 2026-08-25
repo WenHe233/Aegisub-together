@@ -2958,6 +2958,14 @@ msgstr ""
 msgid "Glitch effect"
 msgstr "Glitch effekt"
 
+#: ../src/command/typesetting.cpp
+msgid "A glitch effect with animation cannot be transformed."
+msgstr "Animációval rendelkező glitch effekt nem transzformálható."
+
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "A glitch effect with animation cannot be edited."
+msgstr "Animációval rendelkező glitch effekt nem szerkeszthető."
+
 #: ../src/command/typesetting.cpp:305
 msgid ""
 "Create customizable, angled and animated glitch slices on the selected lines"
@@ -3100,12 +3108,16 @@ msgstr ""
 "Az Alkalmazás vagy az Automatikus lekövetés által mentett forrássorok "
 "visszaállítása"
 
-#: ../src/command/typesetting.cpp:470 ../src/dialog_gradient.cpp:979
+#: ../src/command/typesetting.cpp:470
 #: ../src/dialog_motion.cpp:277 ../src/dialog_motion.cpp:299
 #: ../src/dialog_motion.cpp:305 ../src/dialog_motion.cpp:364
-#: ../src/dialog_motion.cpp:442 ../src/typesetting_gradient.cpp:1710
+#: ../src/dialog_motion.cpp:442
 msgid "Motion"
 msgstr "Lekövetés"
+
+#: ../src/dialog_gradient.cpp ../src/typesetting_gradient.cpp
+msgid "Animation"
+msgstr "Animáció"
 
 #: ../src/command/typesetting.cpp:477
 msgid "&Trim"

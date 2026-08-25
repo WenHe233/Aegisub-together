@@ -699,17 +699,41 @@ bool VisualToolTransform::CollectTags() {
 	distort_angle_offset[0] = distort_angle_offset[1] = 0;
 
 	auto lines = TextBoxMode() ? textbox_lines : c->selectionController->GetSortedSelection();
+
+	// A real quadrilateral in the active row completely defines Auto perspective's source.
+	// Validate it first. Once it is known, the other rows still need their layout boxes and all
+	// authored transform tags for the final solve, but their exact glyph ink outlines do not
+	// participate in the map. On a long multi-line text row those outlines dominate tool entry.
+	AssDialogue *active_dialogue = auto_perspective ?
+		c->selectionController->GetActiveLine() : nullptr;
+	std::vector<Vector2D> active_outline;
+	std::optional<TagLine> active_tags;
+	bool active_selected = active_dialogue &&
+		std::find(lines.begin(), lines.end(), active_dialogue) != lines.end();
+	if (active_selected && IsDisplayed(active_dialogue)) {
+		active_tags = ReadLine(active_dialogue);
+		if (active_tags->drawing) {
+			active_outline = ShapeOutline(*active_tags);
+			if (SimplifyHull(ConvexHull(active_outline), 2.0).size() != 4)
+				active_outline.clear();
+		}
+	}
+	bool fast_active_reference = !active_outline.empty();
 	for (auto line : lines) {
 		if (!IsDisplayed(line)) continue;
-		tag_lines.push_back(ReadLine(line));
+		if (active_tags && line == active_dialogue)
+			tag_lines.push_back(std::move(*active_tags));
+		else
+			tag_lines.push_back(ReadLine(line, !fast_active_reference));
 	}
 	if (tag_lines.empty()) return false;
 
-	BuildBox();
+	BuildBox(fast_active_reference ? &active_outline : nullptr);
 	return true;
 }
 
-VisualToolTransform::TagLine VisualToolTransform::ReadLine(AssDialogue *line) {
+VisualToolTransform::TagLine VisualToolTransform::ReadLine(AssDialogue *line,
+		bool measure_ink) {
 	TagLine found;
 	found.line = line;
 	// \pos, \org, \an and \q belong to the line as a whole, so where they are said does
@@ -765,14 +789,6 @@ VisualToolTransform::TagLine VisualToolTransform::ReadLine(AssDialogue *line) {
 		FirstBlockNumber(blocks, "\\fr", style->angle));
 	found.angle_x = FirstBlockNumber(blocks, "\\frx", 0);
 	found.angle_y = FirstBlockNumber(blocks, "\\fry", 0);
-	// Guided perspective always starts from a flat row. The authored perspective and
-	// shear tags are removed from the preview copy and solved again from the four points.
-	if (auto_perspective) {
-		found.shear = Vector2D();
-		found.angle_x = 0;
-		found.angle_y = 0;
-		found.org = Vector2D();
-	}
 	found.align = GetLineAlignment(line);
 
 	// For text the extents start at zero, but a drawing's own coordinates can start
@@ -784,7 +800,8 @@ VisualToolTransform::TagLine VisualToolTransform::ReadLine(AssDialogue *line) {
 	found.box_second = extents.second;
 	// What the letters fill inside that cell. A font and a walk along every letter, so it is
 	// done here - once per line - rather than wherever the frame happens to be wanted.
-	found.has_ink = text_to_shape::MeasureInk(c, line, found.ink_first, found.ink_second);
+	found.has_ink = measure_ink &&
+		text_to_shape::MeasureInk(c, line, found.ink_first, found.ink_second);
 	Vector2D size = extents.second - extents.first;
 	found.size = Vector2D(size.X() * found.scale.X() / 100.f,
 	                      size.Y() * found.scale.Y() / 100.f);
@@ -994,7 +1011,8 @@ void VisualToolTransform::LineCorners(TagLine const& original, Vector2D corners[
 	}
 }
 
-void VisualToolTransform::BuildBox() {
+void VisualToolTransform::BuildBox(
+		std::vector<Vector2D> const *known_active_outline) {
 	if (tag_lines.empty()) return;
 
 	// The box lies the way the text lies, which only means something if the lines agree
@@ -1014,6 +1032,9 @@ void VisualToolTransform::BuildBox() {
 
 	std::vector<Vector2D> outline;
 	outline.reserve(tag_lines.size() * 4);
+	std::vector<Vector2D> active_outline;
+	AssDialogue *active_dialogue = auto_perspective ?
+		c->selectionController->GetActiveLine() : nullptr;
 	Vector2D low, high;
 	bool first = true;
 	// The free transform measures its box flat - no lean, nothing out of the plane - because
@@ -1027,7 +1048,17 @@ void VisualToolTransform::BuildBox() {
 		// box drawn round that air is not the box the mask is in - which is what made the frame
 		// on a rotated logo cover most of the frame instead of the logo.
 		std::vector<Vector2D> points;
-		if (found.drawing) points = ShapeOutline(found, measure_flat);
+		if (found.drawing) {
+			if (found.line == active_dialogue && known_active_outline && !measure_flat)
+				points = *known_active_outline;
+			else
+				points = ShapeOutline(found, measure_flat);
+		}
+		// Auto perspective may use the active quadrilateral as its source. Keep only a real
+		// drawing outline from this pass; the fallback box below must not turn a malformed or
+		// empty drawing into a reference quadrilateral.
+		if (found.line == active_dialogue && found.drawing && !points.empty())
+			active_outline = points;
 		if (points.empty()) {
 			// The letters where they can be measured, and the cell they sit in where they
 			// cannot. A cell is the same height whatever is set in it, so a frame round one is
@@ -1057,9 +1088,13 @@ void VisualToolTransform::BuildBox() {
 	// not the box the text is in. The smallest rectangle that holds the whole outline is, so it
 	// is taken whenever it is meaningfully tighter - and read the way round the text lies, so
 	// that the two scales go on meaning what they meant.
+	// Both the tight control box and the authored selection quadrilateral need this same hull.
+	// Calculating it once is important for drawings: their outlines can contain tens of
+	// thousands of points, while the hull that remains is normally tiny.
+	std::vector<Vector2D> outline_hull = ConvexHull(outline);
 	typesetting::OrientedBox tight;
 	double straight = 4.0 * (double)box.half.X() * box.half.Y();
-	if (MinimumAreaBox(SimplifyHull(ConvexHull(outline), 1.0), tight) &&
+	if (MinimumAreaBox(SimplifyHull(outline_hull, 1.0), tight) &&
 		(!(straight > 0) || 4.0 * tight.half.X() * tight.half.Y() < straight * .98)) {
 		FaceBox(tight, angle);
 		box = tight;
@@ -1085,7 +1120,7 @@ void VisualToolTransform::BuildBox() {
 	// still be reached in the letterbox, or by zooming out, which is the smaller trouble.
 	int script_w = 0, script_h = 0;
 	c->ass->GetResolution(script_w, script_h);
-	if (!auto_perspective && mode != VisualToolTransformMode::Free &&
+	if (mode != VisualToolTransformMode::Free &&
 		script_w > 0 && script_h > 0) {
 		// A little inside the edge, so the handles on the far side are never flush against it.
 		const float inset = 20.f;
@@ -1095,21 +1130,21 @@ void VisualToolTransform::BuildBox() {
 			Vector2D(script_w - inset, script_h - inset) - box.half);
 	}
 
-	BuildAutoPerspectiveBox();
-	BuildFrameShape();
+	BuildFrameShape(nullptr, &outline_hull);
+	BuildAutoPerspectiveBox(active_outline.empty() ? nullptr : &active_outline);
 }
 
-void VisualToolTransform::BuildFrameShape(std::vector<TagLine> const *given) {
+void VisualToolTransform::BuildFrameShape(std::vector<TagLine> const *given,
+		std::vector<Vector2D> const *selection_hull) {
 	if (!given) {
 		frame_shape = typesetting::PointMap();
 		rest_to_box = typesetting::PointMap();
 		box.Corners(frame_quad);
-		// The distort works from this too, so that what its four corners say is the change from
-		// the shape the selection rests in. Auto perspective is left alone: it solves a plane of
-		// its own from points picked out of the picture, and has no rest shape to be relative to.
+		// Distort and Auto perspective both work from this, so their target corners say the
+		// change from the visible shape the selection already rests in.
 		if (!(mode == VisualToolTransformMode::Free ||
 			mode == VisualToolTransformMode::Distort) ||
-			auto_perspective || TextBoxMode()) return;
+			TextBoxMode()) return;
 	}
 	std::vector<TagLine> const& lines = given ? *given : tag_lines;
 	if (lines.empty()) return;
@@ -1121,21 +1156,27 @@ void VisualToolTransform::BuildFrameShape(std::vector<TagLine> const *given) {
 	for (auto const& line : lines) if (Skewed(line)) { skewed = true; break; }
 	if (!skewed) return;
 
-	// Everything that is drawn, where it is really drawn.
-	std::vector<Vector2D> drawn;
-	for (auto const& line : lines) {
-		std::vector<Vector2D> points;
-		if (line.drawing) points = ShapeOutline(line);
-		if (points.empty()) {
-			Vector2D quad[4];
-			if (!InkCorners(line, quad)) LineCorners(line, quad);
-			points.assign(quad, quad + 4);
-		}
-		drawn.insert(drawn.end(), points.begin(), points.end());
+	std::vector<Vector2D> hull;
+	if (selection_hull) {
+		hull = SimplifyHull(*selection_hull, 2.0);
 	}
-	if (drawn.size() < 3) return;
-
-	std::vector<Vector2D> hull = SimplifyHull(ConvexHull(drawn), 2.0);
+	else {
+		// Everything that is drawn, where it is really drawn. This path is used by the
+		// converted-drawing editor, which has no BuildBox geometry available to share.
+		std::vector<Vector2D> drawn;
+		for (auto const& line : lines) {
+			std::vector<Vector2D> points;
+			if (line.drawing) points = ShapeOutline(line);
+			if (points.empty()) {
+				Vector2D quad[4];
+				if (!InkCorners(line, quad)) LineCorners(line, quad);
+				points.assign(quad, quad + 4);
+			}
+			drawn.insert(drawn.end(), points.begin(), points.end());
+		}
+		if (drawn.size() < 3) return;
+		hull = SimplifyHull(ConvexHull(drawn), 2.0);
+	}
 	if (hull.size() < 3) return;
 
 	// The exact answer where there is one: the tightest quadrilateral round the lot. A shape's
@@ -1305,78 +1346,53 @@ VisualToolTransform::TagLine const *VisualToolTransform::ActiveTagLine() const {
 	return found == tag_lines.end() ? nullptr : &*found;
 }
 
-bool VisualToolTransform::AutoPerspectiveFitsShape() const {
-	TagLine const *found = ActiveTagLine();
-	return found && found->drawing;
-}
-
-void VisualToolTransform::BuildAutoPerspectiveBox() {
+void VisualToolTransform::BuildAutoPerspectiveBox(
+		std::vector<Vector2D> const *active_outline) {
 	if (!auto_perspective) return;
+	if (source_moved) return;
 
-	// The four points are drawn where the active line is to end up, so a shape is the source of
-	// the map - not the box round everything that happens to be selected. It lands on the points
-	// exactly, and the rest of the selection follows it through the same map, keeping its size
-	// and its place relative to it.
-	//
-	// Measured the other way the fit depended on how far the other lines reached, which is not
-	// always where they are drawn: a row turned about its anchor sweeps a much larger box than
-	// the glyphs occupy, and letter spacing is not in the measurement at all. Both quietly made
-	// the block too big and left the active line short of the points drawn to be filled.
-	//
-	// Only a shape has an outline to be measured though. Text is measured rather than drawn, and
-	// one row of a selection is a worse answer than the box round all of it - so for text the
-	// box stays as it was built, round everything.
-	TagLine const *found = ActiveTagLine();
-	if (!found || !found->drawing) {
-		if (!source_moved) box.Corners(source_corners);
+	auto_perspective_active_reference = false;
+	TagLine const *active = ActiveTagLine();
+	if (!active || !active->drawing) {
+		std::copy(frame_quad, frame_quad + 4, source_corners);
 		return;
 	}
 
-	// A drawing is not an upright rectangle. The mask on a sign leans a degree or two, and its
-	// upright bounding box then has a triangle of air at every corner - fitted to the four
-	// points, that air is fitted with it and the shape lands short of them. The smallest
-	// rectangle that holds the outline is the one the shape really lies in, so that is what
-	// the box becomes.
-	std::vector<Vector2D> hull = SimplifyHull(ConvexHull(ShapeOutline(*found)), 1.0);
-	typesetting::OrientedBox tight;
-	if (MinimumAreaBox(hull, tight)) {
-		// A shape with no direction of its own - a circle, a blob - has a smallest rectangle at
-		// almost any angle, and picking one of them would tilt the frame for no reason. The
-		// tilt is only taken when it is worth something.
-		Vector2D upright[4];
-		LineCorners(*found, upright);
-		Vector2D low = upright[0], high = upright[0];
-		for (int i = 1; i < 4; ++i) { low = low.Min(upright[i]); high = high.Max(upright[i]); }
-		double straight = (double)(high.X() - low.X()) * (high.Y() - low.Y());
-		double tilted = 4.0 * tight.half.X() * tight.half.Y();
-		if (!(straight > 0) || tilted < straight * .98) {
-			FaceBox(tight, -found->angle);
-			box = tight;
-			box.half = box.half.Max(Vector2D(4.f, 4.f));
-			shear_frame_angle = box.angle;
-			SeedAutoPerspectiveSource(*found);
-			return;
+	// Only an actual quadrilateral drawing may stand in for the whole selection. Text and
+	// every other drawing use the complete selection frame, exactly as Distort does.
+	std::vector<Vector2D> source = active_outline ?
+		SimplifyHull(ConvexHull(*active_outline), 2.0) :
+		SimplifyHull(ConvexHull(ShapeOutline(*active)), 2.0);
+	if (source.size() != 4) {
+		std::copy(frame_quad, frame_quad + 4, source_corners);
+		return;
+	}
+	auto_perspective_active_reference = true;
+
+	// Match the active row's ring to the control box without crossing it. This preserves the
+	// corner meaning used by the four directed target points, regardless of which way the
+	// active row is rotated or projected.
+	Vector2D reference[4], ordered[4];
+	box.Corners(reference);
+	double best = 0;
+	bool found = false;
+	for (int backwards = 0; backwards < 2; ++backwards) {
+		for (int turn = 0; turn < 4; ++turn) {
+			Vector2D reading[4];
+			double away = 0;
+			for (int i = 0; i < 4; ++i) {
+				reading[i] = source[backwards ? (turn - i + 4) % 4 : (turn + i) % 4];
+				Vector2D delta = reading[i] - reference[i];
+				away += (double)delta.X() * delta.X() + (double)delta.Y() * delta.Y();
+			}
+			if (found && !(away < best)) continue;
+			found = true;
+			best = away;
+			std::copy(reading, reading + 4, ordered);
 		}
 	}
-
-	typesetting::OrientedBox frame;
-	frame.angle = -found->angle;
-	frame.centre = Vector2D(0.f, 0.f);
-
-	Vector2D line_corners[4];
-	LineCorners(*found, line_corners);
-	Vector2D low, high;
-	for (int i = 0; i < 4; ++i) {
-		Vector2D local = frame.ToLocal(line_corners[i]);
-		if (!i) { low = high = local; }
-		else { low = low.Min(local); high = high.Max(local); }
-	}
-
-	box.angle = frame.angle;
-	shear_frame_angle = frame.angle;
-	box.centre = frame.ToScript((low + high) / 2);
-	box.half = ((high - low) / 2).Max(Vector2D(4.f, 4.f));
-	SeedAutoPerspectiveSource(*found);
+	if (found) std::copy(ordered, ordered + 4, source_corners);
+	else std::copy(frame_quad, frame_quad + 4, source_corners);
 }
 
 VisualDraggableFeature *VisualToolTransform::FeatureAt(size_t index) {
@@ -1398,10 +1414,7 @@ std::vector<Vector2D> VisualToolTransform::ShapeOutline(TagLine const& found, bo
 	// measured where it would have been had it lain flat - on a sign mask at \frx46 \fry-53 that
 	// put every corner between seventy and two hundred and seventy pixels from the shape, and
 	// the frame nowhere near it.
-	// Guided perspective is the one caller that does not want this: it neutralises the line's
-	// own perspective on purpose and solves it again from four points, so what it has to measure
-	// is the shape lying flat.
-	auto placed = auto_perspective || unskewed ? text_to_shape::DrawingPlace() :
+	auto placed = unskewed ? text_to_shape::DrawingPlace() :
 		text_to_shape::PlaceDrawing(c, found.line, found.box_first, found.box_second);
 	if (placed.ok) {
 		for (auto& point : outline) point = placed.map(point);
@@ -1421,33 +1434,11 @@ std::vector<Vector2D> VisualToolTransform::ShapeOutline(TagLine const& found, bo
 	return outline;
 }
 
-void VisualToolTransform::SeedAutoPerspectiveSource(TagLine const& found) {
-	if (source_moved) return;
-	box.Corners(source_corners);
-
-	// A rectangle is only ever an approximation of a shape. When the shape is itself a
-	// quadrilateral - which a hand-drawn sign mask nearly always is - its own four corners are
-	// the exact answer, and nothing is left over at them to be stretched with the rest.
-	std::vector<Vector2D> quad = SimplifyHull(ConvexHull(ShapeOutline(found)), 2.0);
-	if (quad.size() != 4) return;
-
-	// In the order the box uses, so a corner of the source and a corner of the target mean the
-	// same corner of the picture.
-	bool taken[4] = {false, false, false, false};
-	for (int i = 0; i < 4; ++i) {
-		double best = 0;
-		int at = -1;
-		for (int j = 0; j < 4; ++j) {
-			if (taken[j]) continue;
-			double away = (quad[j] - source_corners[i]).Len();
-			if (at >= 0 && !(away < best)) continue;
-			best = away;
-			at = j;
-		}
-		if (at < 0) return;
-		taken[at] = true;
-		source_corners[i] = quad[at];
-	}
+typesetting::PointMap VisualToolTransform::DistortionMap(Vector2D const target[4],
+		typesetting::PointMap inverse) const {
+	auto forward = typesetting::QuadMap(box, target);
+	if (!forward || !inverse) return forward;
+	return [inverse, forward](Vector2D point) { return forward(inverse(point)); };
 }
 
 typesetting::PointMap VisualToolTransform::AutoPerspectiveMap() const {
@@ -1457,20 +1448,16 @@ typesetting::PointMap VisualToolTransform::AutoPerspectiveMap() const {
 		AutoPerspectiveOriginalSizeTarget(original_size_target))
 		target = original_size_target;
 
-	auto forward = typesetting::QuadMap(box, target);
 	// Until the four points are drawn there is no target, and the source must not act on its
 	// own: it would distort the lines before anything had been asked of it.
-	if (!touched) return forward;
+	if (!touched) return typesetting::QuadMap(box, target);
 
-	Vector2D upright[4];
-	box.Corners(upright);
-	bool untouched = true;
-	for (int i = 0; i < 4; ++i)
-		untouched = untouched && (source_corners[i] - upright[i]).Len() < 1e-3f;
-	if (untouched) return forward;
-
-	auto inverse = typesetting::QuadInverseMap(box, source_corners);
-	return [inverse, forward](Vector2D point) { return forward(inverse(point)); };
+	// Without a quadrilateral active reference this is literally Distort's selection inverse.
+	// A valid active quadrilateral (or manually adjusted source handles) replaces only that
+	// inverse; the shared projective solver and its application to all rows stay unchanged.
+	auto inverse = auto_perspective_active_reference || source_moved ?
+		typesetting::QuadInverseMap(box, source_corners) : rest_to_box;
+	return DistortionMap(target, inverse);
 }
 
 bool VisualToolTransform::AutoPerspectiveOriginalSizeTarget(Vector2D target[4]) const {
@@ -1778,10 +1765,25 @@ VisualToolTransform::Applied VisualToolTransform::ApplyGesture(
 
 	// Where the line really is now, where it has to end up, and what to write so that it
 	// does - the lean shift has to be taken off the one and put back on the other.
-	Vector2D standing = original.pos +
-		LeanOffset(ascent, original.shear.X(), original.scale.X(), original.angle);
-	out.pos = MapPoint(standing) - LeanOffset(ascent, out.shear_x, out.scale.X(), out.angle);
-	out.org = original.org ? MapPoint(original.org) : original.org;
+	Vector2D old_lean = LeanOffset(ascent, original.shear.X(), original.scale.X(),
+		original.angle);
+	Vector2D new_lean = LeanOffset(ascent, out.shear_x, out.scale.X(), out.angle);
+	if (!original.org) {
+		// With no explicit origin \pos is the pivot, so moving it moves the line directly.
+		out.pos = MapPoint(original.pos + old_lean) - new_lean;
+		out.org = original.org;
+		return out;
+	}
+
+	// With an explicit \org, \pos is not a point on screen: \frz first turns it about
+	// \org. Mapping that raw value made the gesture's turn act twice on the long vector
+	// between the two tags, which pulled drawings and text away from the rest of a selection.
+	// Map the visible anchor and the origin, then undo the newly solved turn to recover the
+	// \pos value which renders at that mapped anchor.
+	Vector2D standing = RotateAbout(original.pos, original.org, original.angle) + old_lean;
+	out.org = MapPoint(original.org);
+	Vector2D turned = MapPoint(standing) - out.org - new_lean;
+	out.pos = out.org + ApplyMatrix(Turn(-out.angle), turned);
 	return out;
 }
 
@@ -1923,9 +1925,6 @@ std::string VisualToolTransform::TagLineText(TagLine const& original) const {
 
 	AssDialogue copy(*original.line);
 	auto *tool = const_cast<VisualToolTransform *>(this);
-	if (auto_perspective)
-		for (auto const *tag : {"\\frx", "\\fry", "\\fax", "\\fay", "\\org"})
-			tool->RemoveOverride(&copy, tag);
 	if (original.ensure_q2)
 		tool->SetOverride(&copy, "\\q", "2");
 
@@ -2879,16 +2878,10 @@ void VisualToolTransform::SyncFeatures() {
 
 	// Everything that moves a corner comes through here, so this is the one place the map has
 	// to be worked out again.
-	if (mode == VisualToolTransformMode::Distort) {
-		auto quad = typesetting::QuadMap(box, corners);
-		// Taken back to the box first, so what the corners say is the change from the shape the
-		// selection rests in onto themselves - which is nothing at all until one is dragged.
-		if (quad && rest_to_box) {
-			auto into = rest_to_box;
-			distort_map = [quad, into](Vector2D point) { return quad(into(point)); };
-		}
-		else distort_map = quad;
-	}
+	// Taken back to the box first, so what the corners say is the change from the shape the
+	// selection rests in onto themselves - which is nothing at all until one is dragged.
+	if (mode == VisualToolTransformMode::Distort)
+		distort_map = DistortionMap(corners, rest_to_box);
 }
 
 void VisualToolTransform::Rebuild() {
@@ -3289,8 +3282,7 @@ void VisualToolTransform::UpdatePreviewInterface() const {
 			auto_perspective_keep_original_size);
 		wxString message = touched && auto_perspective_points.empty() ?
 			_("Drag the 4 points to adjust the perspective.") : _("Draw 4 points.");
-		// Only worth saying when one line really is the measure of the others.
-		if (!touched && tag_lines.size() > 1 && AutoPerspectiveFitsShape())
+		if (!touched && tag_lines.size() > 1 && auto_perspective_active_reference)
 			if (AssDialogue *active = c->selectionController->GetActiveLine()) {
 				std::string pattern =
 					from_wx(_("Line %d is fitted to the points, the rest follow it."));
@@ -3671,7 +3663,8 @@ bool VisualToolTransform::AddAutoPerspectivePoint(Vector2D point) {
 void VisualToolTransform::DrawAutoPerspectiveSource() {
 	if (touched) return;
 
-	// What the four points are fitted from: the active line's own box. Shown so the proportion
+	// What the four points are fitted from: an active quadrilateral, or otherwise the complete
+	// selection frame used by Distort. Shown so the proportion
 	// the result is stretched by is something to be seen rather than worked out backwards from
 	// the outcome - a tall box on a wide quadrilateral says at a glance why the text spreads.
 	wxColour yellow(255, 255, 0);

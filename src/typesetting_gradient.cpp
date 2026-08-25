@@ -1707,7 +1707,7 @@ std::string GroupDescription(AssFile const& file, AssDialogue const& line) {
 	add(parsed->primary, "\\c", "\\1a");
 	add(parsed->outline, "\\3c", "\\3a");
 	add(parsed->shadow, "\\4c", "\\4a");
-	if (parsed->motion.enabled) tags.emplace_back(from_wx(_("Motion")));
+	if (parsed->motion.enabled) tags.emplace_back(from_wx(_("Animation")));
 
 	std::string out;
 	for (auto const& tag : tags) {

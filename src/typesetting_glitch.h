@@ -89,6 +89,7 @@ struct Settings {
 std::vector<std::string> EffectTypeNames();
 std::vector<std::string> ColorStyleNames();
 Settings LoadSettingsForSelection(agi::Context *c);
+bool SelectionHasEnabledAnimation(agi::Context *c);
 bool SettingsFromClipboard(std::string clipboard, Settings& settings);
 
 std::string ClipboardMetadata(AssFile const& file, AssDialogue const& line);

@@ -976,7 +976,7 @@ public:
 		});
 		main->Add(utility_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
-		motion_editor = std::make_unique<MotionEditor>(this, _("Motion"),
+		motion_editor = std::make_unique<MotionEditor>(this, _("Animation"),
 			settings.motion, !settings.motion.enabled, relayout,
 			[this](bool immediate) { SchedulePreview(immediate); });
 		main->Add(motion_editor->Window(), 0,

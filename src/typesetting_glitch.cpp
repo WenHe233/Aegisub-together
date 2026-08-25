@@ -1372,6 +1372,19 @@ std::string Description(AssFile const& file, AssDialogue const& line) {
 		to_wx(colors[static_cast<size_t>(settings->color_style)])));
 }
 
+bool SelectionHasEnabledAnimation(agi::Context *c) {
+	for (auto const& group : CollectGroups(c, false)) {
+		if (!group.editing || !group.anchor) continue;
+		auto encoded = Extra(*c->ass, *group.anchor, data_key);
+		if (!encoded) continue;
+		auto settings = DeserializeSettings(*encoded);
+		if (settings && std::any_of(settings->animations.begin(), settings->animations.end(),
+				[](Animation const& animation) { return animation.enabled; }))
+			return true;
+	}
+	return false;
+}
+
 Settings LoadSettingsForSelection(agi::Context *c) {
 	// The grid may select any generated row in a collapsed glitch group, while only
 	// the first row carries the settings metadata. Resolve the selected group first

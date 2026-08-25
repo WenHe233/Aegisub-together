@@ -112,11 +112,13 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// applying the target plane's perspective. This deliberately rules out the percentage
 	/// slider: the two controls answer the same question.
 	bool auto_perspective_keep_original_size = false;
-	/// The rectangle the selection is proportioned by, as four points of its own. Seeded from
-	/// the active line's shape and then left to the user, who can drag them: no rectangle fits
-	/// every shape, and the one the fit is measured from is worth being able to say exactly.
+	/// The active row's visible source quadrilateral when it has one; otherwise the complete
+	/// selection frame used by Distort. It can be adjusted before the target is drawn.
 	Vector2D source_corners[4];
 	bool source_moved = false;
+	/// True only when the active row is itself a quadrilateral drawing. Otherwise Auto
+	/// perspective uses the complete selection's source frame exactly as Distort does.
+	bool auto_perspective_active_reference = false;
 	static constexpr size_t no_feature = static_cast<size_t>(-1);
 	/// Where the four source handles begin in `features`, or no_feature while they are hidden.
 	size_t source_feature_first = no_feature;
@@ -429,7 +431,10 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Read the selected lines as they are, for a transform written in tags.
 	bool CollectTags();
 	/// Everything one line says that the transform has to know, measured as it stands.
-	TagLine ReadLine(AssDialogue *line);
+	/// `measure_ink` asks for the exact glyph outline bounds. An active quadrilateral gives Auto
+	/// perspective its source directly, so measuring every other selected row's glyph outlines
+	/// there is expensive work whose result the projective map never consumes.
+	TagLine ReadLine(AssDialogue *line, bool measure_ink = true);
 	/// The lines the gesture is applied to: the selection, or its pieces once a lean has
 	/// asked for them.
 	std::vector<TagLine> const& Lines() const;
@@ -437,23 +442,26 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// that leans about its own point. Does nothing when no line needs it.
 	void EnsureShearSplit();
 	/// Measure the box the handles sit on, from the lines as they now stand.
-	void BuildBox();
-	/// Narrow the box down to the active line, which is what auto perspective fits.
-	void BuildAutoPerspectiveBox();
+	/// A known active outline was already validated while choosing Auto perspective's fast
+	/// reference path; reusing it avoids decoding and placing that drawing again.
+	void BuildBox(std::vector<Vector2D> const *known_active_outline = nullptr);
+	/// Seed the yellow source from an active quadrilateral or Distort's selection frame.
+	/// The optional outline is the already placed active drawing gathered while measuring the
+	/// box, so entering the tool does not parse and project the same drawing a second time.
+	void BuildAutoPerspectiveBox(std::vector<Vector2D> const *active_outline = nullptr);
 	/// The nth handle. The features are an intrusive list, and there are never more than a
 	/// handful of them, so walking to one costs nothing worth a lookup table.
 	VisualDraggableFeature *FeatureAt(size_t index);
 	/// The selected line the tool works from, or nothing when it is not among the lines
 	/// this tool collected.
 	TagLine const *ActiveTagLine() const;
-	/// Whether auto perspective has a shape to fit, rather than only measured text.
-	bool AutoPerspectiveFitsShape() const;
 	/// A line's drawing, taken to where the renderer puts it on screen.
 	std::vector<Vector2D> ShapeOutline(TagLine const& found, bool unskewed = false);
-	/// The four source points, from the active line's own shape.
-	void SeedAutoPerspectiveSource(TagLine const& found);
 	/// The map from the source quadrilateral onto the drawn one.
 	typesetting::PointMap AutoPerspectiveMap() const;
+	/// The projective mapping shared verbatim by Distort and Auto perspective.
+	typesetting::PointMap DistortionMap(Vector2D const target[4],
+		typesetting::PointMap inverse) const;
 	/// Build the quadrilateral occupied by the selection at its authored size, on the
 	/// perspective plane described by the four target points and centred inside them.
 	bool AutoPerspectiveOriginalSizeTarget(Vector2D target[4]) const;
@@ -505,7 +513,11 @@ class VisualToolTransform final : public VisualTool<VisualDraggableFeature> {
 	/// Given a set of lines, the shape is worked out from those instead of from the selection's
 	/// own - which is what lets the modes that convert text to drawings read the placement out
 	/// of the tags they still have.
-	void BuildFrameShape(std::vector<TagLine> const *given = nullptr);
+	/// The optional hull is the already calculated hull of the selection. Building the box and
+	/// finding its authored quadrilateral need the same geometry; sharing it avoids another full
+	/// walk and sort of every drawing point when the tool opens.
+	void BuildFrameShape(std::vector<TagLine> const *given = nullptr,
+		std::vector<Vector2D> const *selection_hull = nullptr);
 	/// The same, for the modes that work on converted drawings and have no tags to read: the
 	/// tightest parallelogram round the letters themselves.
 	void BuildEditorFrameShape();
