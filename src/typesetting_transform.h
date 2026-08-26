@@ -114,6 +114,10 @@ public:
 	/// that says nothing about the text. This is the smallest box that fits, whatever
 	/// angle it has to take, which for a line of text is the box along its baseline.
 	OrientedBox Box() const;
+	/// The same box without the minimum handle spacing added by the visual editor.
+	/// Geometry consumers such as Gradient need the actual ink bounds so that their
+	/// spatial range is not enlarged merely to make the transform handles usable.
+	OrientedBox ContentBox() const;
 
 	/// Why some lines had to be left alone, one message per reason.
 	std::vector<std::string> const& refusals() const;

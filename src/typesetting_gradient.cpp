@@ -28,13 +28,12 @@
 
 #include <wx/intl.h>
 
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
+#include <boost/polygon/polygon.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <iomanip>
 #include <limits>
 #include <memory>
@@ -1129,7 +1128,10 @@ struct Geometry {
 			{0, static_cast<double>(script_h)}};
 
 		if (!editor.ok()) return;
-		auto box = editor.Box();
+		// ShapeEditor's ordinary box is padded to keep visual-tool handles apart on
+		// short text. That padding is interaction chrome, not subtitle geometry: using
+		// it here stretches the gradient far above and below the actual glyphs.
+		auto box = editor.ContentBox();
 		centre = {box.centre.X(), box.centre.Y()};
 		Vector2D found[4];
 		box.Corners(found);
@@ -1257,9 +1259,25 @@ std::vector<PaintedClip> MakePaintedClips(agi::Context *c, AssDialogue const& so
 	return painted_clips;
 }
 
-namespace bg = boost::geometry;
-using ShapePoint = bg::model::d2::point_xy<double>;
-using ShapePolygon = bg::model::polygon<ShapePoint>;
+namespace bp = boost::polygon;
+using ShapeCoordinate = std::int64_t;
+using ShapePoint = bp::point_data<ShapeCoordinate>;
+using ShapePolygon = bp::polygon_data<ShapeCoordinate>;
+using ShapePolygonWithHoles = bp::polygon_with_holes_data<ShapeCoordinate>;
+using ShapeSet = bp::polygon_set_data<ShapeCoordinate>;
+
+// Integer polygon sets use a sweep-line implementation which tolerates touching,
+// overlapping and mildly malformed font outlines far better than floating-point
+// areal polygons. This scale retains the three decimal places emitted to ASS.
+constexpr double shape_coordinate_scale = 1024.0;
+
+ShapeCoordinate ShapeCoord(double value) {
+	return static_cast<ShapeCoordinate>(std::llround(value * shape_coordinate_scale));
+}
+
+float ScriptCoord(ShapeCoordinate value) {
+	return static_cast<float>(value / shape_coordinate_scale);
+}
 
 double ContourArea(std::vector<Vector2D> const& contour) {
 	if (contour.size() < 3) return 0;
@@ -1281,103 +1299,138 @@ bool ContourContains(std::vector<Vector2D> const& contour, Vector2D point) {
 	return inside;
 }
 
-void FillRing(ShapePolygon::ring_type& ring, std::vector<Vector2D> const& contour) {
-	ring.reserve(contour.size() + 1);
-	for (auto point : contour) ring.emplace_back(point.X(), point.Y());
-	if (!ring.empty()) ring.push_back(ring.front());
+struct ContourBounds {
+	double left = 0;
+	double top = 0;
+	double right = 0;
+	double bottom = 0;
+};
+
+ContourBounds BoundsOf(std::vector<Vector2D> const& contour) {
+	ContourBounds bounds{contour.front().X(), contour.front().Y(),
+		contour.front().X(), contour.front().Y()};
+	for (auto point : contour) {
+		bounds.left = std::min(bounds.left, static_cast<double>(point.X()));
+		bounds.top = std::min(bounds.top, static_cast<double>(point.Y()));
+		bounds.right = std::max(bounds.right, static_cast<double>(point.X()));
+		bounds.bottom = std::max(bounds.bottom, static_cast<double>(point.Y()));
+	}
+	return bounds;
 }
 
-/// Turn non-zero-wound ASS contours into polygons while keeping each hole with the
-/// smallest outer ring around it. Separate letters remain separate polygons, which is
-/// also safe for the deliberately overlapping rings used to draw a border.
-std::vector<ShapePolygon> ContourPolygons(
-		std::vector<std::vector<Vector2D>> const& contours) {
-	double reference_area = 0;
-	for (auto const& contour : contours)
-		if (std::abs(ContourArea(contour)) > std::abs(reference_area))
-			reference_area = ContourArea(contour);
-	if (std::abs(reference_area) < 1e-8) return {};
+bool BoundsContain(ContourBounds const& outer, ContourBounds const& inner) {
+	constexpr double tolerance = 1e-4;
+	return outer.left <= inner.left + tolerance && outer.top <= inner.top + tolerance &&
+		outer.right >= inner.right - tolerance && outer.bottom >= inner.bottom - tolerance;
+}
 
-	std::vector<size_t> outers;
-	std::vector<int> parent(contours.size(), -1);
-	for (size_t i = 0; i < contours.size(); ++i)
-		if (contours[i].size() >= 3 && ContourArea(contours[i]) * reference_area > 0)
-			outers.push_back(i);
+/// A point alone is not enough to decide that one outline is a hole in another.
+/// Connected handwritten glyphs routinely overlap, so the first point of the next
+/// letter can sit inside the previous one even though the rest of its contour does not.
+bool ContourEncloses(std::vector<Vector2D> const& outer,
+		std::vector<Vector2D> const& inner) {
+	for (auto point : inner)
+		if (!ContourContains(outer, point)) return false;
+	return true;
+}
+
+ShapePolygon PolygonOf(std::vector<Vector2D> const& contour) {
+	std::vector<ShapePoint> points;
+	points.reserve(contour.size());
+	for (auto point : contour)
+		points.emplace_back(ShapeCoord(point.X()), ShapeCoord(point.Y()));
+	ShapePolygon polygon;
+	bp::set_points(polygon, points.begin(), points.end());
+	return polygon;
+}
+
+/// Turn ASS contours into polygons while keeping each hole with the smallest outer ring
+/// around it. Containment rather than winding determines the hierarchy: real-world fonts
+/// are not uniformly wound, while nesting still unambiguously distinguishes a counter
+/// from a neighbouring or overlapping letter.
+ShapeSet ContourPolygons(
+		std::vector<std::vector<Vector2D>> const& contours) {
+	std::vector<double> areas(contours.size());
+	std::vector<ContourBounds> bounds(contours.size());
 	for (size_t i = 0; i < contours.size(); ++i) {
-		if (contours[i].size() < 3 || ContourArea(contours[i]) * reference_area >= 0) continue;
+		if (contours[i].size() < 3) continue;
+		areas[i] = std::abs(ContourArea(contours[i]));
+		bounds[i] = BoundsOf(contours[i]);
+	}
+
+	std::vector<int> parent(contours.size(), -1);
+	for (size_t i = 0; i < contours.size(); ++i) {
+		if (areas[i] < 1e-8) continue;
 		double smallest = std::numeric_limits<double>::max();
-		for (size_t outer : outers) {
-			double area = std::abs(ContourArea(contours[outer]));
-			if (area < smallest && ContourContains(contours[outer], contours[i].front())) {
-				smallest = area;
-				parent[i] = static_cast<int>(outer);
+		for (size_t candidate = 0; candidate < contours.size(); ++candidate) {
+			if (candidate == i || areas[candidate] <= areas[i] ||
+				areas[candidate] >= smallest ||
+				!BoundsContain(bounds[candidate], bounds[i])) continue;
+			if (ContourEncloses(contours[candidate], contours[i])) {
+				smallest = areas[candidate];
+				parent[i] = static_cast<int>(candidate);
 			}
 		}
 	}
 
-	std::vector<ShapePolygon> polygons;
-	for (size_t outer : outers) {
-		ShapePolygon polygon;
-		FillRing(polygon.outer(), contours[outer]);
-		for (size_t i = 0; i < parent.size(); ++i) {
-			if (parent[i] != static_cast<int>(outer)) continue;
-			FillRing(polygon.inners().emplace_back(), contours[i]);
-		}
-		bg::correct(polygon);
-		bg::remove_spikes(polygon);
-		if (polygon.outer().size() >= 4 && bg::is_valid(polygon))
-			polygons.push_back(std::move(polygon));
-	}
-	// A malformed or unusually wound contour is still better treated as a filled island
-	// than silently discarded.
+	std::vector<int> depth(contours.size(), 0);
 	for (size_t i = 0; i < contours.size(); ++i) {
-		if (contours[i].size() < 3 || parent[i] >= 0 ||
-			std::find(outers.begin(), outers.end(), i) != outers.end()) continue;
-		ShapePolygon polygon;
-		FillRing(polygon.outer(), contours[i]);
-		bg::correct(polygon);
-		bg::remove_spikes(polygon);
-		if (polygon.outer().size() >= 4 && bg::is_valid(polygon))
-			polygons.push_back(std::move(polygon));
+		int at = parent[i];
+		while (at >= 0 && depth[i] <= static_cast<int>(contours.size())) {
+			++depth[i];
+			at = parent[at];
+		}
 	}
-	return polygons;
+
+	ShapeSet shapes;
+	for (size_t i = 0; i < contours.size(); ++i) {
+		if (areas[i] < 1e-8) continue;
+		shapes.insert(PolygonOf(contours[i]), depth[i] % 2 != 0);
+	}
+	return shapes;
 }
 
-template<typename Ring>
-void AppendShapeRing(std::vector<std::vector<Vector2D>>& contours, Ring const& ring) {
-	if (ring.size() < 4) return;
+template<typename Polygon>
+void AppendShapeRing(std::vector<std::vector<Vector2D>>& contours,
+		Polygon const& polygon) {
 	std::vector<Vector2D> contour;
-	contour.reserve(ring.size() - 1);
-	for (size_t i = 0; i + 1 < ring.size(); ++i)
-		contour.emplace_back(static_cast<float>(ring[i].x()),
-			static_cast<float>(ring[i].y()));
-	contours.push_back(std::move(contour));
+	for (auto point = bp::begin_points(polygon); point != bp::end_points(polygon); ++point)
+		contour.emplace_back(ScriptCoord(bp::x(*point)), ScriptCoord(bp::y(*point)));
+	if (contour.size() >= 3) contours.push_back(std::move(contour));
 }
 
 std::vector<std::vector<Vector2D>> IntersectShapes(
-		std::vector<ShapePolygon> const& shapes, ShapePolygon const& boundary) {
+		ShapeSet const& shapes, ShapeSet const& boundary) {
+	using namespace boost::polygon::operators;
+	ShapeSet clipped = shapes & boundary;
+	std::vector<ShapePolygonWithHoles> pieces;
+	clipped.get(pieces);
 	std::vector<std::vector<Vector2D>> contours;
-	for (auto const& shape : shapes) {
-		std::vector<ShapePolygon> pieces;
-		try { bg::intersection(shape, boundary, pieces); }
-		catch (...) { continue; }
-		for (auto const& piece : pieces) {
-			AppendShapeRing(contours, piece.outer());
-			for (auto const& inner : piece.inners()) AppendShapeRing(contours, inner);
-		}
+	for (auto const& piece : pieces) {
+		AppendShapeRing(contours, piece);
+		for (auto hole = bp::begin_holes(piece); hole != bp::end_holes(piece); ++hole)
+			AppendShapeRing(contours, *hole);
 	}
 	return contours;
 }
 
-ShapePolygon PolygonBoundary(std::vector<Point> const& points) {
+ShapePolygon PolygonOf(std::vector<Point> const& points) {
+	std::vector<ShapePoint> converted;
+	converted.reserve(points.size());
+	for (auto point : points)
+		converted.emplace_back(ShapeCoord(point.x), ShapeCoord(point.y));
 	ShapePolygon polygon;
-	for (auto point : points) polygon.outer().emplace_back(point.x, point.y);
-	if (!polygon.outer().empty()) polygon.outer().push_back(polygon.outer().front());
-	bg::correct(polygon);
+	bp::set_points(polygon, converted.begin(), converted.end());
 	return polygon;
 }
 
-ShapePolygon LinearBoundary(Point direction, double low, double high, bool first, bool last,
+ShapeSet PolygonBoundary(std::vector<Point> const& points) {
+	ShapeSet boundary;
+	if (points.size() >= 3) boundary.insert(PolygonOf(points));
+	return boundary;
+}
+
+ShapeSet LinearBoundary(Point direction, double low, double high, bool first, bool last,
 		int script_w, int script_h, double requested_overlap) {
 	double overlap = VectorSeamOverlap(requested_overlap);
 	double margin = std::max(script_w, script_h) * .5 + 64.0;
@@ -1396,16 +1449,18 @@ ShapePolygon LinearBoundary(Point direction, double low, double high, bool first
 	return PolygonBoundary(shape);
 }
 
-void CircleRing(ShapePolygon::ring_type& ring, Point centre, double radius, int segments) {
+std::vector<Point> CircleRing(Point centre, double radius, int segments) {
+	std::vector<Point> ring;
+	ring.reserve(segments);
 	for (int i = 0; i < segments; ++i) {
 		double radians = i * 2.0 * 3.14159265358979323846 / segments;
-		ring.emplace_back(centre.x + std::cos(radians) * radius,
-			centre.y + std::sin(radians) * radius);
+		ring.push_back({centre.x + std::cos(radians) * radius,
+			centre.y + std::sin(radians) * radius});
 	}
-	if (!ring.empty()) ring.push_back(ring.front());
+	return ring;
 }
 
-ShapePolygon RadialBoundary(Point centre, double low, double high, bool first, bool last,
+ShapeSet RadialBoundary(Point centre, double low, double high, bool first, bool last,
 		int script_w, int script_h, double requested_overlap) {
 	double margin = std::max(script_w, script_h) * .5 + 64.0;
 	double overlap = VectorSeamOverlap(requested_overlap);
@@ -1413,11 +1468,11 @@ ShapePolygon RadialBoundary(Point centre, double low, double high, bool first, b
 	double outer = high + overlap + (last ? margin : 0.0);
 	int segments = std::clamp(static_cast<int>(std::ceil(
 		3.14159265358979323846 * std::sqrt(std::max(outer, 1.0) / .5))), 32, 256);
-	ShapePolygon polygon;
-	CircleRing(polygon.outer(), centre, outer, segments);
-	if (inner > 1e-6) CircleRing(polygon.inners().emplace_back(), centre, inner, segments);
-	bg::correct(polygon);
-	return polygon;
+	ShapeSet boundary;
+	boundary.insert(PolygonOf(CircleRing(centre, outer, segments)));
+	if (inner > 1e-6)
+		boundary.insert(PolygonOf(CircleRing(centre, inner, segments)), true);
+	return boundary;
 }
 
 struct ShapeSliceTemplate {
@@ -1448,7 +1503,7 @@ PreparedShapes PrepareShapes(Settings const& settings, Geometry& geometry) {
 	if (!geometry.shapes_built) return out;
 	auto range = FindRange(settings, geometry);
 	auto bands = MakeBands(settings, range.low, range.high);
-	std::vector<ShapePolygon> boundaries;
+	std::vector<ShapeSet> boundaries;
 	boundaries.reserve(bands.size());
 	for (size_t i = 0; i < bands.size(); ++i) {
 		bool first = i == 0, last = i + 1 == bands.size();
@@ -1463,7 +1518,7 @@ PreparedShapes PrepareShapes(Settings const& settings, Geometry& geometry) {
 		ShapeLayerTemplate prepared{layer.source, layer.kind, layer.text, {}, layer.covered};
 		auto polygons = ContourPolygons(layer.contours);
 		for (size_t i = 0; i < bands.size() && i < boundaries.size(); ++i) {
-			if (polygons.empty() || boundaries[i].outer().size() < 4) continue;
+			if (polygons.empty() || boundaries[i].empty()) continue;
 			auto clipped = IntersectShapes(polygons, boundaries[i]);
 			auto text = geometry.editor.TextForContours(layer, clipped);
 			if (!text.empty()) prepared.slices.push_back({bands[i].factor, std::move(text)});

@@ -1397,6 +1397,7 @@ struct ShapeEditor::Impl {
 	std::vector<std::vector<Vector2D>> contours;
 	std::vector<ShapeLayer> layers;
 	OrientedBox box;
+	OrientedBox content_box;
 	int refused = 0;
 	size_t shape_count = 0;
 };
@@ -1517,6 +1518,7 @@ ShapeEditor::ShapeEditor(const agi::Context *c, std::vector<AssDialogue *> const
 	}
 
 	impl->box = SmallestBox(all_points);
+	impl->content_box = impl->box;
 
 	// A floor on the box, because on a small shape the handles would otherwise sit almost
 	// on top of one another and the gentlest drag would tear it apart. The mapping is the
@@ -1530,6 +1532,7 @@ ShapeEditor::ShapeEditor(const agi::Context *c, std::vector<AssDialogue *> const
 bool ShapeEditor::ok() const { return impl->shape_count > 0; }
 int ShapeEditor::refused() const { return impl->refused; }
 OrientedBox ShapeEditor::Box() const { return impl->box; }
+OrientedBox ShapeEditor::ContentBox() const { return impl->content_box; }
 std::vector<std::string> const& ShapeEditor::refusals() const { return impl->refusals; }
 std::vector<std::vector<Vector2D>> const& ShapeEditor::contours() const {
 	return impl->contours;
