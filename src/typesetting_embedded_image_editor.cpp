@@ -254,6 +254,7 @@ std::optional<EditorImages> CaptureEditorImages(agi::Context *context) {
 
 #if wxUSE_WEBVIEW
 
+#if wxCHECK_VERSION(3, 3, 0)
 class MemoryResponseData final : public wxWebViewHandlerResponseData {
 	std::vector<unsigned char> data;
 	wxMemoryInputStream stream;
@@ -265,6 +266,7 @@ public:
 
 	wxInputStream *GetStream() override { return &stream; }
 };
+#endif
 
 wxString ContentType(wxString const& path) {
 	if (path.EndsWith(".html")) return "text/html; charset=utf-8";
@@ -337,6 +339,7 @@ public:
 		);
 	}
 
+#if wxCHECK_VERSION(3, 3, 0)
 	void StartRequest(const wxWebViewHandlerRequest& request,
 		wxSharedPtr<wxWebViewHandlerResponse> response) override {
 		wxString path = ResourcePath(request.GetURI());
@@ -353,6 +356,7 @@ public:
 		response->Finish(wxSharedPtr<wxWebViewHandlerResponseData>(
 			new MemoryResponseData(found->second)));
 	}
+#endif
 };
 
 wxString BrowserBackend() {
