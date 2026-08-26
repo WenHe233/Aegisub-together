@@ -3,6 +3,7 @@
 
 	var hiddenSelectionCommands = new Set([
 		"Remove BG", "Subject", "Select Subject",
+		"Quick Mask Mode", "Gyorsmaszk mód", "Gyorsmaszk módban",
 		"Háttér eltávolítása", "Tárgy", "Tárgy kijelölése"
 	]);
 	var windowRemovedLabels = new Set([
@@ -11,6 +12,75 @@
 		"Helyi meghajtó"
 	]);
 	var localizedPhrases = new Map();
+	var hardcodedPhraseSpecs = new Map([
+		["Perspective Warp", {hu: "Perspektivikus torzítás", parts: ["Perspective", "Warp"]}],
+		["Skew", {hu: "Nyírás", parts: ["Shear"]}],
+		["Assign Profile", {hu: "Profil hozzárendelése", parts: ["Apply", "Profile"]}],
+		["Convert to Profile", {hu: "Átalakítás profillá", parts: ["Convert to Shape", "Profile"]}],
+		["Convert To Profile", {hu: "Átalakítás profillá", parts: ["Convert to Shape", "Profile"]}],
+		["Wavelet Decompose", {hu: "Wavelet-felbontás", parts: ["Wave", "Separate"]}],
+		["Text", {hu: "Szöveg", parts: ["Text"]}],
+		["Scale Effects", {hu: "Effektusok méretezése", parts: ["Scale Effects"]}],
+		["Current Path", {hu: "Aktuális görbe", parts: ["Current Path"]}],
+		["Combine Shapes", {hu: "Alakzatok egyesítése", parts: ["Merge", "Shapes"]}],
+		["Make Frames", {hu: "Képkockák létrehozása", parts: ["Create", "Frames"]}],
+		["Unmake Frames", {hu: "Képkockák visszaalakítása", parts: ["Delete", "Frames"]}],
+		["Defringe", {hu: "Perem eltávolítása", parts: ["Defringe"]}],
+		["Grow", {hu: "Növelés", parts: ["Grow"]}],
+		["Similar", {hu: "Hasonló", parts: ["Similar"]}],
+		["Camera Raw", {hu: "Camera Raw", parts: ["Camera Raw"]}],
+		["Vanishing Point", {hu: "Távlatpont", parts: ["Perspective", "Point"]}],
+		["Normal Map", {hu: "Normáltérkép", parts: ["Normal Map"]}],
+		["Texture Dilation", {hu: "Textúra kiterjesztése", parts: ["Texture", "Expand"]}],
+		["Blur Gallery", {hu: "Életlenítési galéria", parts: ["Blur Gallery"]}],
+		["Field Blur", {hu: "Mező életlenítése", parts: ["Field Blur"]}],
+		["Iris Blur", {hu: "Írisz életlenítése", parts: ["Iris Blur"]}],
+		["Tilt-Shift", {hu: "Tilt-shift", parts: ["Tilt-Shift"]}],
+		["Path Blur", {hu: "Útvonal életlenítése", parts: ["Path Blur"]}],
+		["Spin Blur", {hu: "Forgó életlenítés", parts: ["Spin Blur"]}],
+		["Reduce Noise", {hu: "Zajcsökkentés", parts: ["Reduce Noise"]}],
+		["Flame", {hu: "Láng", parts: ["Flame"]}],
+		["Fibers", {hu: "Szálak", parts: ["Fibers"]}],
+		["Solarize", {hu: "Szolarizálás", parts: ["Solarize"]}],
+		["Trace Contour", {hu: "Kontúr követése", parts: ["Trace Contour"]}],
+		["Wind", {hu: "Szél", parts: ["Wind"]}],
+		["Color to Alpha", {hu: "Szín alfává", parts: ["Color to Alpha"]}],
+		["Particles", {hu: "Részecskék", parts: ["Particles"]}],
+		["Fourier", {hu: "Fourier", parts: ["Fourier"]}],
+		["Fourier Transform", {hu: "Fourier-transzformáció", parts: ["Fourier", "Transform"]}],
+		["Inverse Fourier Transform", {hu: "Inverz Fourier-transzformáció", parts: ["Inverse", "Fourier", "Transform"]}],
+		["Character Styles", {hu: "Karakterstílusok", parts: ["Character", "Styles"]}],
+		["Vector Info", {hu: "Vektorinformáció", parts: ["Vector Mask", "Info"]}],
+		["Main Menu", {hu: "Főmenü", parts: ["More", "Menu"]}],
+		["Navigation", {hu: "Navigáció", parts: ["Navigator"]}],
+		["Vertical scroll", {hu: "Függőleges görgetés", parts: ["Vertical", "Move"]}],
+		["Horizontal scroll", {hu: "Vízszintes görgetés", parts: ["Horizontal", "Move"]}],
+		["Wheel", {hu: "Egér görgő", parts: ["Move"]}],
+		["Zooming", {hu: "Nagyítás", parts: ["Zoom In"]}],
+		["Quick tools (press to enable, release to disable)", {hu: "Gyorseszközök (lenyomva engedélyezés, felengedve kikapcsolás)", parts: ["Quick Selection", "Tools", "Enable", "Disable"]}],
+		["Tools", {hu: "Eszközök", parts: ["Tools"]}],
+		["Decrease Brush Size", {hu: "Ecsetméret csökkentése", parts: ["Decrease", "Brush", "Size"]}],
+		["Increase Brush Size", {hu: "Ecsetméret növelése", parts: ["Increase", "Brush", "Size"]}],
+		["Decrease Hardness", {hu: "Keménység csökkentése", parts: ["Decrease", "Hardness"]}],
+		["Increase Hardness", {hu: "Keménység növelése", parts: ["Increase", "Hardness"]}],
+		["Color Sampler", {hu: "Színmintavevő", parts: ["Color Sampler"]}],
+		["Magic Eraser", {hu: "Varázsradír", parts: ["Magic Eraser"]}],
+		["Add Anchor Point", {hu: "Rögzítési pont hozzáadása", parts: ["Add", "Anchor", "Point"]}],
+		["Delete Anchor Point", {hu: "Rögzítési pont törlése", parts: ["Delete", "Anchor", "Point"]}],
+		["Convert Point", {hu: "Pont átalakítása", parts: ["Transform", "Point"]}],
+		["New Smart Obj. via Copy", {hu: "Új intelligens objektum másolással", parts: ["New", "Smart Object", "Copy"]}],
+		["Open (Edit Contents)", {hu: "Megnyitás (tartalom szerkesztése)", parts: ["Open", "Edit", "Content Aware"]}],
+		["Edit Contents", {hu: "Tartalom szerkesztése", parts: ["Edit", "Content Aware"]}],
+		["Reset Transform", {hu: "Transzformáció visszaállítása", parts: ["Reset", "Transform"]}],
+		["Replace Contents", {hu: "Tartalom cseréje", parts: ["Replace", "Content Aware"]}],
+		["Export Contents", {hu: "Tartalom exportálása", parts: ["Export Layers", "Content Aware"]}],
+		["Convert to Layers", {hu: "Átalakítás rétegekké", parts: ["Convert to Shape", "Layers"]}],
+		["Convert To Layers", {hu: "Átalakítás rétegekké", parts: ["Convert to Shape", "Layers"]}],
+		["Turn into JPG", {hu: "Átalakítás JPG-vé", parts: ["Convert to Shape", "JPG"]}],
+		["Standard Deviation", {hu: "Szórás", parts: ["Standard", "Distribution"]}],
+		["Summation", {hu: "Összegzés", parts: ["Add"]}],
+		["Variance", {hu: "Variancia", parts: ["Distribution"]}]
+	]);
 	var localizationLoading = false;
 	var openAndPlacePending = false;
 	var shortcutPending = false;
@@ -96,6 +166,45 @@
 		var translated = localizedPhrases.get(english);
 		if (translated && translated !== english) return translated;
 		return language().indexOf("hu") === 0 && hungarian ? hungarian : english;
+	}
+
+	function localizedHardcodedText(english) {
+		var specification = hardcodedPhraseSpecs.get(english);
+		if (!specification) return null;
+		if (language().indexOf("hu") === 0) return specification.hu;
+		var direct = localizedPhrases.get(english);
+		if (direct && direct !== english) return direct;
+		if (!specification.parts || language().indexOf("en") === 0) return english;
+		return specification.parts.map(function (part) {
+			var translated = localizedPhrases.get(part);
+			return translated && translated !== part ? translated : part;
+		}).join(" ");
+	}
+
+	function translatedUiValue(value) {
+		var source = String(value || "");
+		var leading = source.match(/^\s*/)[0];
+		var trailing = source.match(/\s*$/)[0];
+		var core = source.slice(leading.length, source.length - trailing.length);
+		var ellipsis = "";
+		var ellipsisMatch = core.match(/(\.{3}|…)$/);
+		if (ellipsisMatch) {
+			ellipsis = ellipsisMatch[1];
+			core = core.slice(0, -ellipsis.length).trimEnd();
+		}
+		var translated = localizedHardcodedText(core);
+		if (!translated) {
+			var shortcut = core.match(/^(.*?)(\s+\([^()]{1,12}\))$/);
+			if (shortcut) {
+				translated = localizedHardcodedText(shortcut[1]);
+				if (translated) translated += shortcut[2];
+			}
+		}
+		if (!translated && /(^|\s)Wheel$/.test(core)) {
+			var wheel = localizedHardcodedText("Wheel");
+			if (wheel) translated = core.slice(0, -5) + wheel;
+		}
+		return translated ? leading + translated + ellipsis + trailing : source;
 	}
 
 	function normalizedLabel(value) {
@@ -291,6 +400,60 @@
 		}
 	}
 
+	function isViewMenu(panel) {
+		var labels = labelsIn(panel);
+		for (var i = 0; i < labels.length; i++) {
+			if (matchesLocalized(labels[i].textContent, "Zoom In", "Nagyítás") ||
+				matchesLocalized(labels[i].textContent, "Rulers", "Vonalzók"))
+				return true;
+		}
+		return false;
+	}
+
+	function removeViewMode(panel) {
+		if (!isViewMenu(panel)) return;
+		var labels = labelsIn(panel);
+		for (var i = labels.length - 1; i >= 0; i--) {
+			if (matchesLocalized(labels[i].textContent, "Mode", "Mód"))
+				removeMenuItem(labels[i]);
+		}
+	}
+
+	function localizeHardcodedUi() {
+		var roots = document.querySelectorAll(".contextpanel, .window, .toolbar, .tools");
+		for (var i = 0; i < roots.length; i++) {
+			var walker = document.createTreeWalker(roots[i], NodeFilter.SHOW_TEXT);
+			var node;
+			while ((node = walker.nextNode())) {
+				var translated = translatedUiValue(node.nodeValue);
+				if (translated !== node.nodeValue) node.nodeValue = translated;
+			}
+		}
+		var titled = document.querySelectorAll("[title], [aria-label]");
+		for (var j = 0; j < titled.length; j++) {
+			for (var k = 0; k < 2; k++) {
+				var attribute = k ? "aria-label" : "title";
+				if (!titled[j].hasAttribute(attribute)) continue;
+				var value = titled[j].getAttribute(attribute);
+				var translatedValue = translatedUiValue(value);
+				if (translatedValue !== value)
+					titled[j].setAttribute(attribute, translatedValue);
+			}
+		}
+	}
+
+	function hideRemovedToolbarControls() {
+		var controls = document.querySelectorAll("[title], [aria-label]");
+		for (var i = 0; i < controls.length; i++) {
+			if (controls[i].closest(".contextpanel")) continue;
+			var text = controls[i].getAttribute("title") ||
+				controls[i].getAttribute("aria-label") || "";
+			if (matchesLocalized(text, "Quick Mask Mode", "Gyorsmaszk mód") ||
+				normalizedLabel(text) === "Virtual Keys")
+				hideControl(controls[i]);
+		}
+	}
+
 	function isEditMenu(panel) {
 		var labels = labelsIn(panel);
 		for (var i = 0; i < labels.length; i++) {
@@ -367,6 +530,7 @@
 		for (var i = 0; i < panels.length; i++) {
 			addImageImport(panels[i]);
 			removeUnwantedMenuItems(panels[i]);
+			removeViewMode(panels[i]);
 		}
 		activateOpenAndPlace();
 		activateKeyboardShortcuts();
@@ -471,7 +635,9 @@
 
 	function scanDocument() {
 		loadLocalization();
+		localizeHardcodedUi();
 		hideTopBarItems();
+		hideRemovedToolbarControls();
 		installShortcutButton();
 		customizeMenus();
 		installCanvasNavigation();
