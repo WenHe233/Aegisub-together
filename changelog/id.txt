@@ -1,3 +1,42 @@
+Versi 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Mode Gelap, yang harus diaktifkan secara terpisah, dengan ikon baru dan warna yang dapat disesuaikan secara terpisah
+- Bilah atas dapat selalu terlihat jika kita mengaktifkannya (agar tidak mengganggu dengan harus mengaktifkan dan menonaktifkannya)
+- Penyempurnaan alat transformasi
+    - pada setiap elemen, persegi panjang pengubah ukuran ditampilkan dengan benar
+    - opsi untuk menonaktifkan pengubahan ukuran perspektif otomatis dan perubahan dengan pratinjau yang semestinya
+    - pengubahan bentuk bebas dengan pergerakan ke arah x dan y, pergerakan menggunakan tombol panah, rotasi yang lebih nyaman, penggeser terpisah
+    - penggeser terpisah saat melakukan distorsi
+    - saat membengkokkan dan melengkungkan, dapat memilih beberapa titik dan memindahkannya sekaligus
+    - bug pencerminan
+- Motion
+    - auto motion untuk hal-hal dasar
+    - trimming dengan pembuatan rangkaian gambar bawaan dan pembuatan video (avi dan h265 juga didukung), tidak memerlukan exe apa pun
+    - fitur ini didasarkan pada skrip yang sudah ada, tetapi sekaligus mendukung perspektif dan track yang dijalankan pada clip terpisah
+    - saat menggunakan Mocha dan menyimpan hasilnya (CTRL + S atau simpan setelah pelacakan), tidak perlu menyalin ekspor, data akan dibaca secara otomatis dari file *.mocha
+- Penyisipan gambar
+    - membuat image mask yang sepenuhnya mendukung PNG
+    - item menu pengaturan untuk penyisipan cepat
+    - image mask dapat dipindahkan dengan alat posisi dan bergerak dalam bilangan bulat, serta hanya menampilkan satu titik pegangan posisi pada video
+- Penyisipan gambar dengan penyuntingan
+    - penyuntingan seperti Photoshop akan muncul dengan frame saat ini dan setiap baris yang dipilih sebagai lapisan terpisah
+    - hampir semuanya bekerja seperti atau mirip dengan yang diharapkan di Photoshop
+    - hasil akhir yang terlihat akan dimasukkan ke subtitle sebagai image mask dengan menimpa baris yang dipilih
+    - misalnya, dapat digunakan untuk penghapusan berbasis konten secara gratis
+- Efek Glitch
+    - berbagai efek dapat ditambahkan, disalin, dan disunting kemudian
+    - juga mendukung gradient, kotak teks, dan image mask
+    - juga dapat dianimasikan, bahkan per frame
+- Perbaikan bug dan penyempurnaan lainnya
+    - bug baris sumber kosong
+    - dukungan karakter UTF8 saat mencari di dalam folder
+    - dukungan perspektif pada penyuntingan mask + beberapa yang sama sekaligus
+    - pemeriksaan setelah suara AI tidak menutup jendela dan tidak lagi memerlukan baris sumber
+    - pemeriksaan lanjutan AI memberikan ringkasan dan menulis koreksi ke bidang efek, serta dapat menjalankan pemeriksaan sebelumnya dan memiliki tombol lewati semua
+    - perbaikan jumlah lapisan kotak teks
+    - bug pemilihan fold
+    - perbaikan penggabungan saat menduplikasi image mask
+
 Versi 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Bilah atas dihapus dari video dan menjadi lebih ringkas

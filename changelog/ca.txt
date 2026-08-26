@@ -1,3 +1,42 @@
+Versió 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Mode fosc, que cal activar per separat, amb icones noves i colors personalitzables per separat
+- La barra superior pot estar sempre visible si l'activem (perquè no molesti haver-la d'activar i desactivar)
+- Refinament de les eines de transformació
+    - el rectangle d'ajustament es mostra correctament en tots els elements
+    - possibilitat de desactivar l'ajust automàtic de perspectiva i canvis amb una previsualització adequada
+    - transformació lliure amb moviment en les direccions x i y, moviment amb les fletxes, rotació més còmoda i controls lliscants separats
+    - controls lliscants separats per a la distorsió
+    - en doblegar i corbar, es poden seleccionar diversos punts i moure'ls alhora
+    - error del mirall
+- Motion
+    - auto motion per a coses bàsiques
+    - retall amb creació integrada de seqüències d'imatges i creació de vídeo (també admet avi i h265), no cal cap exe
+    - la funció es basa en l'script existent, però admet alhora la perspectiva i el track executat sobre un clip separat
+    - amb Mocha, si desem el resultat (CTRL + S o desar després del seguiment), no cal copiar l'exportació, les dades es llegeixen automàticament del fitxer *.mocha
+- Inserció d'imatges
+    - crea una màscara image, que gestiona completament els PNG
+    - opció de configuració per a la inserció ràpida
+    - les màscares image es poden moure amb l'eina de posició i es mouen en nombres enters, i al vídeo només es mostra un punt d'ancoratge de posició
+- Inserció d'imatges amb edició
+    - apareix una edició semblant a Photoshop amb el fotograma actual i cada fila seleccionada com a capa individual
+    - pràcticament tot funciona tal com esperaríem a Photoshop o d'una manera similar
+    - el resultat visible s'insereix als subtítols com una màscara image, sobreescrivint les files seleccionades
+    - per exemple, es pot utilitzar per a un desenfocament gratuït sensible al contingut
+- Efecte Glitch
+    - s'hi poden afegir diversos efectes, copiar-los i editar-los posteriorment
+    - també admet gradient, quadre de text i màscara image
+    - també es pot animar, fins i tot fotograma a fotograma
+- Correccions d'errors i altres refinaments
+    - error de la fila d'origen buida
+    - compatibilitat amb caràcters UTF8 en la cerca dins de carpetes
+    - compatibilitat amb la perspectiva en l'edició de màscares + aplicar les mateixes alhora
+    - la comprovació posterior a la veu AI no tanca la finestra i no cal afegir-hi la fila d'origen
+    - la comprovació posterior AI mostra un resum i escriu la correcció al camp d'efecte; també es pot executar l'anterior i hi ha un botó per ometre-ho tot
+    - nombre de capa del quadre de text corregit
+    - error en la selecció de fold
+    - correcció de la fusió en duplicar una màscara d'imatge
+
 Versió 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - La barra superior s'ha eliminat del vídeo i és més compacta

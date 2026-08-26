@@ -10249,3 +10249,1764 @@ msgstr "ImageEditor nécessite une prise en charge intégrée de la vue Web, qui
 #: ../src/typesetting_embedded_image_editor.cpp
 msgid "Scene"
 msgstr "Scène"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/aegisublocale.cpp:107
+msgid "Please choose a language:"
+msgstr "Sélectionner un dossier :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_base.cpp:465
+#, c-format
+msgid "Warning when loading Automation script '%s':\\n%s"
+msgstr "Impossible de charger le script d’automatisation suivant : '%s':\\n%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_lua.cpp:199
+#, c-format
+msgid "Warning in Automation script '%s':\\n%s"
+msgstr "Impossible de charger le script d’automatisation suivant : '%s':\\n%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_lua.cpp:682
+msgid "Could not initialize Lua state"
+msgstr "Impossible de coller le style"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_lua.cpp:1133
+#, c-format
+msgid "Selected row %d is out of bounds (must be 1-%u)"
+msgstr "Sélectionner toutes les lignes de dialogue."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_lua.cpp:1139
+#, c-format
+msgid "Selected row %d is not a dialogue line"
+msgstr "Sélectionner toutes les lignes de dialogue."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp:670
+#, c-format
+msgid "Glitch effect (%d lines, %s)"
+msgstr "Effet glitch (%d lignes, %s)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:94
+msgid "Check up to 100 lines and two minutes of subtitles against Japanese audio and any available source lines"
+msgstr "Vérifier au maximum 100 lignes et deux minutes de sous-titres à partir de l’audio japonais et des lignes sources disponibles"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:184
+msgid "New AI post-check"
+msgstr "Nouvelle post-vérification IA"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:185
+msgid "Start a new AI post-check and approve corrections one by one"
+msgstr "Lancer une nouvelle post-vérification IA, puis approuver les corrections une par une"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:220
+msgid "The chosen scope contains no subtitle text to check."
+msgstr "Aucune ligne de dialogue vérifiable dans la portée sélectionnée."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:249
+msgid "Latest"
+msgstr "Récent"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:250
+msgid "Latest AI post-check"
+msgstr "Dernière post-vérification IA"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:251
+msgid "Review the latest AI post-check again without an active AI connection"
+msgstr "Réexaminer la dernière post-vérification IA sans connexion IA active"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/app.cpp:167
+msgid "Aegisub needs to be restarted so that the new language can be applied. Restart now?"
+msgstr "Aegisub doit être redémarré pour appliquer la nouvelle apparence. Redémarrer maintenant ?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/app.cpp:167 ../src/preferences.cpp:834 ../src/toolbar.cpp:192
+msgid "Restart Aegisub?"
+msgstr "Redémarrer Aegisub ?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:177
+msgid "Save Audio Clip"
+msgstr "Enregistrer le clip audio"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:408 ../src/command/audio.cpp:409
+msgid "Go to selection start"
+msgstr "Aller à la sélection"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:410
+msgid "Scroll the audio display to center on the start of current audio selection"
+msgstr "Accéder à la sélection dans l’affichage visuel de l’audio."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:419 ../src/command/audio.cpp:420
+msgid "Go to selection end"
+msgstr "Aller à la sélection"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:421
+msgid "Scroll the audio display to center on the end of current audio selection"
+msgstr "Accéder à la section sélectionnée dans l’affichage visuel de l’audio."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:449 ../src/command/grid.cpp:450
+msgid "Create new Fold"
+msgstr "Nouvelle liste"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:451
+msgid "Create a new fold collapsing the selected lines into a group"
+msgstr "Créer un calque de forme dans la zone sélectionnée"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:469 ../src/command/grid.cpp:470
+msgid "Open Folds"
+msgstr "Ouvrir un fichier MKV"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:471
+msgid "Expand the folds under the selected lines"
+msgstr "Augmenter la durée du fondu d’entrée."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:485 ../src/command/grid.cpp:486
+msgid "Close Folds"
+msgstr "Fermer l’audio"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:487
+msgid "Collapse the folds around the selected lines"
+msgstr "Augmenter la durée du fondu de sortie."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:501 ../src/command/grid.cpp:502
+msgid "Clear Folds"
+msgstr "Supprimer"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:503
+msgid "Remove the folds around the selected lines"
+msgstr "Augmenter la durée du fondu de sortie."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:517 ../src/command/grid.cpp:518
+msgid "Toggle Folds"
+msgstr "Sélectionner le style gras."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:519
+msgid "Open or close the folds around the selected lines"
+msgstr "Aucun caractère traitable n’a été trouvé dans les lignes sélectionnées."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:533 ../src/command/grid.cpp:534
+#: ../src/command/grid.cpp:535
+msgid "Open all Folds"
+msgstr "Ouvrir un fichier MKV"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:544 ../src/command/grid.cpp:545
+#: ../src/command/grid.cpp:546
+msgid "Close all Folds"
+msgstr "Fermer l’audio"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:555 ../src/command/grid.cpp:556
+msgid "Clear all Folds"
+msgstr "Supprimer"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:557
+msgid "Remove all Folds"
+msgstr "Supprimer le cadre"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/help.cpp:94
+msgid "Open the visual typesetting guides"
+msgstr "édition visuelle"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/keyframe.cpp:72
+msgid "Open Keyframes File"
+msgstr "Ouvrir un fichier d’images clés"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/keyframe.cpp:97
+msgid "Save Keyframes File"
+msgstr "Enregistrer le fichier d’images clés"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/keyframe.cpp:97 ../src/command/timecode.cpp:73
+#: ../src/command/timecode.cpp:93
+msgid "Text Files"
+msgstr "Calque de texte"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/subtitle.cpp:302 ../src/command/subtitle.cpp:358
+#: ../src/dialog_style_manager.cpp:667
+msgid "Open Subtitles File"
+msgstr "Ouvrir un fichier de sous-titres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/subtitle.cpp:401
+msgid "Save Subtitles File"
+msgstr "Enregistrer le fichier de sous-titres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/timecode.cpp:103
+msgid "Error saving timecodes"
+msgstr "Fermer les codes temporels"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:87
+msgid "Transform"
+msgstr "Transformations"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:288 ../src/command/typesetting.cpp:289
+msgid "Remove gradient effect"
+msgstr "Annuler le dégradé"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:290
+msgid "Remove the selected generated gradient and restore its original source line"
+msgstr "Supprimer l’effet de dégradé généré sélectionné et restaurer la ligne source d’origine"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:303 ../src/command/typesetting.cpp:304
+#: ../src/dialog_glitch.cpp:598 ../src/dialog_glitch.cpp:604
+#: ../src/dialog_glitch.cpp:623
+msgid "Glitch effect"
+msgstr "Effet glitch"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "A glitch effect with animation cannot be transformed."
+msgstr "Un effet glitch animé ne peut pas être transformé."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "A glitch effect with animation cannot be edited."
+msgstr "Un effet glitch animé ne peut pas être modifié."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:305
+msgid "Create customizable, angled and animated glitch slices on the selected lines"
+msgstr "Créer des segments glitch personnalisables, inclinés et animés sur les lignes sélectionnées"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:319 ../src/command/typesetting.cpp:320
+msgid "Edit glitch effect"
+msgstr "Modifier l’effet glitch"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:321
+msgid "Edit the settings of the selected generated glitch effect"
+msgstr "Modifier les paramètres de l’effet glitch créé sélectionné"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:334 ../src/command/typesetting.cpp:335
+msgid "Copy glitch effect"
+msgstr "Copier l’effet glitch"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:336
+msgid "Copy the selected generated glitch rows and settings"
+msgstr "Copier les lignes et les paramètres de l’effet glitch créé sélectionné"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:349 ../src/command/typesetting.cpp:350
+msgid "Remove glitch effect"
+msgstr "Annuler l’effet glitch"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:351
+msgid "Remove the selected generated glitch effect and restore its original source lines"
+msgstr "Supprimer l’effet glitch généré sélectionné et restaurer les lignes sources d’origine"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:384
+msgid "&Quick insert"
+msgstr "&Collage rapide"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:385
+msgid "Quick image insert"
+msgstr "Collage rapide d’image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:386
+msgid "Insert images using the saved basic or dynamic settings"
+msgstr "Insérer des images avec les paramètres de base ou dynamiques enregistrés"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:396
+msgid "&Insert"
+msgstr "&Coller"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:397 ../src/typesetting_image_insert.cpp:176
+#: ../src/typesetting_image_insert.cpp:354
+#: ../src/typesetting_image_insert.cpp:443
+msgid "Image insert"
+msgstr "Insérer une image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:398
+msgid "Convert an image to optimized ImageMask subtitle drawings"
+msgstr "Convertir une image en dessins de sous-titres ImageMask optimisés"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:408
+msgid "With &editing..."
+msgstr "&Édition..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:409
+msgid "ImageEditor insert"
+msgstr "Insérer une image avec ImageEditor"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:410
+msgid "Edit the current video frame in ImageEditor before inserting the result"
+msgstr "Modifier l’image vidéo actuelle dans ImageEditor avant l’insertion"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:422
+msgid "&Settings"
+msgstr "&Paramètres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:423 ../src/typesetting_image_insert.cpp:224
+msgid "Image insert settings"
+msgstr "Paramètres d’insertion d’image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:424
+msgid "Configure Quick insert and dynamic image filenames"
+msgstr "Configurer le collage rapide et les noms de fichiers image dynamiques"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:431
+msgid "&Apply"
+msgstr "&Appliquer"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:432 ../src/dialog_motion.cpp:404
+#: ../src/dialog_motion.cpp:450
+msgid "Apply motion"
+msgstr "Appliquer le suivi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:433
+msgid "Apply Mocha Corner Pin or Transform Data to the selected lines"
+msgstr "Appliquer Mocha Corner Pin ou Transform Data aux lignes sélectionnées"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:444
+msgid "&Auto motion"
+msgstr "&Suivi automatique"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:445 ../src/visual_tool_auto_motion.cpp:161
+#: ../src/visual_tool_auto_motion.cpp:177
+#: ../src/visual_tool_auto_motion.cpp:192
+#: ../src/visual_tool_auto_motion.cpp:234
+msgid "Auto motion"
+msgstr "Suivi automatique"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:446
+msgid "Select a video region and track its position, size and rotation"
+msgstr "Sélectionner une zone vidéo, puis suivre sa position, sa taille et sa rotation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:461
+msgid "&Revert"
+msgstr "&Réinitialiser"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:462
+msgid "Revert motion"
+msgstr "Réinitialiser le suivi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:463
+msgid "Restore the source lines saved by Apply or Auto motion"
+msgstr "Restaurer les lignes sources enregistrées par Appliquer ou Suivi automatique"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp ../src/typesetting_gradient.cpp
+msgid "Animation"
+msgstr "Animation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:477
+msgid "&Trim"
+msgstr "&Trim"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:478 ../src/dialog_motion.cpp:847
+#: ../src/dialog_motion.cpp:862 ../src/dialog_motion.cpp:865
+#: ../src/dialog_motion.cpp:880 ../src/dialog_motion.cpp:892
+#: ../src/dialog_motion.cpp:895 ../src/dialog_motion.cpp:913
+msgid "Motion trim"
+msgstr "Trim du suivi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:479
+msgid "Write the selected time range as JPEG frames or an H.264 MP4"
+msgstr "Exporter la plage temporelle sélectionnée sous forme d’images JPEG ou de vidéo H.264 MP4"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:489
+msgid "Trim &settings..."
+msgstr "Paramètres du &trim..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:490
+msgid "Motion trim settings"
+msgstr "Paramètres du trim de suivi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:491
+msgid "Choose the motion trim format and output directory"
+msgstr "Sélectionner le format et le dossier de sortie du trim de suivi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:595
+msgid "Open Video File"
+msgstr "Ouvrir un fichier vidéo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:637
+msgid "Play the video starting on this position"
+msgstr "Lire la vidéo à partir de la position actuelle."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:649
+msgid "Play the video for the current line"
+msgstr "Lire l’audio de la ligne actuelle"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:675
+msgid "Reset Video &Pan"
+msgstr "Ouvrir la dernière vidéo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:676
+msgid "Reset Video Pan"
+msgstr "Ouvrir la dernière vidéo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:677
+msgid "Reset the video's position in the video display"
+msgstr "Faire défiler l’affichage visuel de la piste audio vers la gauche."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:862
+msgid "Toggle Clip Info"
+msgstr "Afficher les informations du clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:242 ../src/command/vis_tool.cpp:243
+msgid "Apply 3D Perspective"
+msgstr "Perspective"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:320 ../src/command/vis_tool.cpp:321
+msgid "Show Grid"
+msgstr "Uniquement la précédente"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:328 ../src/command/vis_tool.cpp:329
+msgid "\\org Mode: Center"
+msgstr "Mode : pipette"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:344 ../src/command/vis_tool.cpp:345
+msgid "\\org Mode: No \\fax"
+msgstr "Mode : pipette"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:360 ../src/command/vis_tool.cpp:361
+msgid "\\org Mode: Keep"
+msgstr "Mode : pipette"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:375 ../src/command/vis_tool.cpp:376
+msgid "Cycle \\org mode"
+msgstr "Basculer entre les modes d’affichage des balises."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:377
+msgid "Cycles through the three \\org modes"
+msgstr "Choisir parmi les options d’affichage des balises."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:417
+msgid "Append a line"
+msgstr "Insérer une ligne droite"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:424
+msgid "Append a bezier bicubic curve"
+msgstr "Insérer un arc"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:467
+msgid "Convert a segment between line and bicubic"
+msgstr "Basculer entre un segment droit et un segment en arc"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:474
+msgid "Insert a control point"
+msgstr "Insérer un point de contrôle"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:488
+msgid "Remove a control point"
+msgstr "Supprimer le point de contrôle"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:495
+msgid "Draw a freehand shape"
+msgstr "Dessiner une forme à main levée"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:502
+msgid "Draw a smoothed freehand shape"
+msgstr "Dessiner une forme courbe à main levée"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:596
+msgid "Toggle locking"
+msgstr "Sélectionner le style souligné."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:407
+msgid "Replaying the latest AI post-check without an AI connection."
+msgstr "Réexaminer la dernière post-vérification par IA sans connexion à l’IA."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:508
+#, c-format
+msgid "Line %d   %s - %s"
+msgstr "Ligne %d.   %s – %s   CPS actuel : %d"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:530
+msgid "Previously accepted"
+msgstr "Déjà accepté"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:770
+msgid "Skip all"
+msgstr "Tout ignorer"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:836
+msgid "There is no latest AI post-check available for this subtitle."
+msgstr "Aucune post-vérification par IA récente n’est disponible pour ce sous-titre."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_attachments.cpp:139 ../src/dialog_attachments.cpp:170
+msgid "Font Files"
+msgstr "Police"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_attachments.cpp:149 ../src/dialog_attachments.cpp:170
+msgid "Graphic Files"
+msgstr "joindre un graphique"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_automation.cpp:291
+#, c-format
+msgid "\\nScript info:\\nName: %s\\nDescription: %s\\nAuthor: %s\\nVersion: %s\\nFull path: %s\\nState: %s\\n"
+msgstr "\\nDonnées du script\\nNom : %s\\nDescription : %s\\nAuteur : %s\\nNuméro de version : %s\\nChemin : %s\\nÉtat : %s\\n\\nFonctionnalités fournies par le script :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_automation.cpp:300
+#, c-format
+msgid "Warning: %s\\n"
+msgstr "2 : Avertissement (warning)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_colorpicker.cpp:685
+msgid "Clear color"
+msgstr "Effacer la couleur"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_export.cpp:190
+msgid "Export Subtitles File"
+msgstr "Exporter le fichier de sous-titres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_export.cpp:205 ../src/dialog_export.cpp:208
+#: ../src/dialog_export.cpp:211
+msgid "Error exporting subtitles"
+msgstr "Erreur lors de l’importation des styles"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:250
+msgid "No color selected"
+msgstr "Aucune couleur sélectionnée"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:433
+msgid "(off)"
+msgstr "(désactivé)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:435
+#, c-format
+msgid "Animation %zu: frame %d%s"
+msgstr "Animation %zu : image %d%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:437
+#, c-format
+msgid "Animation %zu: %d-%d ms%s"
+msgstr "%zu. animation : %d–%d ms%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:597
+msgid "An animation end time must be after its start time."
+msgstr "L’heure de fin de l’animation doit être postérieure à son heure de début."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:603
+msgid "No glitch effect could be generated for the selected lines."
+msgstr "Impossible de créer un effet glitch pour les lignes sélectionnées."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:631
+msgid "Glitch settings"
+msgstr "Paramètres de l’effet glitch"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:634 ../src/dialog_glitch.cpp:823
+msgid "Effect:"
+msgstr "Effet :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:652
+#, c-format
+msgid "Custom color %zu"
+msgstr "Couleur personnalisée %zu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:701 ../src/dialog_glitch.cpp:892
+msgid "Amount (%):"
+msgstr "Intensité (%) :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:702 ../src/dialog_glitch.cpp:893
+msgid "Offset:"
+msgstr "Décalage :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:712 ../src/dialog_glitch.cpp:894
+msgid "Height:"
+msgstr "Hauteur :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:713 ../src/dialog_glitch.cpp:895
+msgid "Width (%):"
+msgstr "Largeur (%) :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:714 ../src/dialog_glitch.cpp:896
+msgid "Opacity:"
+msgstr "Opacité :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:715 ../src/dialog_glitch.cpp:898
+msgid "Show base layer"
+msgstr "Afficher le calque de base"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:724
+msgid "Playback"
+msgstr "Lire"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:750 ../src/dialog_gradient.cpp:961
+msgid "Jump to line start"
+msgstr "Aller au début de la ligne"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:762 ../src/dialog_gradient.cpp:973
+msgid "Jump to line end"
+msgstr "Répéter jusqu’à la fin de la ligne"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:766
+msgid "Animations"
+msgstr "Animations"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:768
+#, c-format
+msgid "Total line duration: %d ms"
+msgstr "Durée totale de la ligne : %d ms"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:776
+msgid "Add animation"
+msgstr "Ajouter une animation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:778
+msgid "Remove animation"
+msgstr "Supprimer l’animation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:786
+msgid "Enabled"
+msgstr "Activé"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:790
+msgid "Time"
+msgstr "Temps"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:791
+msgid "Frame"
+msgstr "Image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:794
+msgid "Timing"
+msgstr "Synchronisation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:800
+msgid "Frame:"
+msgstr "Image :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:810
+msgid "Time (ms):"
+msgstr "Temps (ms) :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:830
+msgid "Effect type"
+msgstr "Type d’effet"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:839
+msgid "Color style"
+msgstr "Style de couleur"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:907
+msgid "Paste effect"
+msgstr "Insérer un effet"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_kara_timing_copy.cpp:386
+msgid "Kanji timer"
+msgstr "Minuteur kanji"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_kara_timing_copy.cpp:408
+msgid "Attempt to &interpolate kanji"
+msgstr "I&nterpoler le kanji"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:69
+#, c-format
+msgid "Mocha Corner Pin - %zu frames"
+msgstr "Mocha Corner Pin – %zu images"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:69
+#, c-format
+msgid "Mocha Transform Data - %zu frames"
+msgstr "Mocha Transform Data – %zu images"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:72
+#, c-format
+msgid " - selected lines require %zu frames"
+msgstr "– %zu images nécessaires pour les lignes sélectionnées"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:273
+msgid "No track data"
+msgstr "Aucune donnée de suivi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:273
+msgid "No valid track data"
+msgstr "Aucune donnée de suivi valide"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:363
+msgid "The Mocha project does not cover the frames the selected lines need."
+msgstr "Impossible de créer l’effet glitch pour les lignes sélectionnées."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:404 ../src/dialog_motion.cpp:416
+#: ../src/visual_tool_auto_motion.cpp:192
+#: ../src/visual_tool_auto_motion.cpp:204
+msgid "Preparing motion..."
+msgstr "Préparation du suivi..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:420 ../src/visual_tool_auto_motion.cpp:208
+#, c-format
+msgid "Applying frame %zu of %zu"
+msgstr "Application de l’image %zu/%zu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:425 ../src/visual_tool_auto_motion.cpp:213
+#, c-format
+msgid "Writing subtitle row %zu of %zu"
+msgstr "Écriture de la ligne de sous-titres %zu/%zu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:471
+msgid "No Transformation Data"
+msgstr "Aucune donnée de transformation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:473
+msgid "Import Transformation Data"
+msgstr "Importer les données de transformation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:483
+msgid "Clip only"
+msgstr "Clip uniquement"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:485
+msgid "Track clips with separate data"
+msgstr "Suivre les clips avec des données distinctes"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:491
+msgid "No separate clip Transformation Data"
+msgstr "Aucune donnée de transformation distincte pour le clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:493
+msgid "Import clip Transformation Data"
+msgstr "Importer les données de transformation du clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:502
+msgid "Transformation Data"
+msgstr "Données de transformation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:507
+msgid "Enable Perspective below, then paste the matching Mocha Corner Pin data."
+msgstr "Activez Perspective ci-dessous, puis collez les données Mocha Corner Pin correspondantes."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:511
+msgid "No main Corner Pin data"
+msgstr "Aucune donnée Corner Pin principale"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:513
+msgid "Import main Corner Pin"
+msgstr "Importer le Corner Pin principal"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:524
+msgid "No clip Corner Pin data"
+msgstr "Aucune donnée Corner Pin pour le clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:526
+msgid "Import clip Corner Pin"
+msgstr "Importer les données Corner Pin du clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:536
+msgid "Perspective - Corner pin"
+msgstr "Perspective – Corner Pin"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:540
+msgid "Motion components"
+msgstr "Composants du suivi"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:541 ../src/dialog_motion.cpp:552
+#: ../src/visual_tool_auto_motion.cpp:344
+msgid "X"
+msgstr "X"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:542 ../src/dialog_motion.cpp:553
+#: ../src/visual_tool_auto_motion.cpp:345
+msgid "Y"
+msgstr "Y"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:544 ../src/dialog_motion.cpp:555
+#: ../src/visual_tool_transform.cpp:3204
+msgid "Rotation"
+msgstr "Rotation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:545 ../src/dialog_motion.cpp:556
+msgid "Perspective"
+msgstr "Perspective"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:551
+msgid "Clip motion components"
+msgstr "Composants du suivi du clip"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:563
+msgid "Reference"
+msgstr "Référence"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:564
+msgid "Main:"
+msgstr "Principal :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:573
+msgid "Clip:"
+msgstr "Clip:"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:585
+msgid "Interpolate animations"
+msgstr "Interpoler les animations"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:587
+msgid "Linear motion"
+msgstr "Suivi linéaire"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:589
+msgid "Scale border"
+msgstr "Mise à l’échelle de la bordure"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:590
+msgid "Scale shadow"
+msgstr "Mise à l’échelle de l’ombre"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:591
+msgid "Scale blur"
+msgstr "Mise à l’échelle du flou"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:595
+msgid "Apply options"
+msgstr "Paramètres de l’application"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:618 ../src/dialog_motion.cpp:620
+msgid "No valid track data on the clipboard"
+msgstr "Aucune donnée de suivi valide dans le presse-papiers"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:783
+msgid "Trim settings"
+msgstr "Paramètres de Trim"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:786
+msgid "Output format:"
+msgstr "Format de sortie :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:788
+msgid "JPEG image sequence"
+msgstr "Séquence d’images JPEG"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:789
+msgid "H.264 MP4 video"
+msgstr "Vidéo MP4 H.264"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:792
+msgid "Output directory:"
+msgstr "Dossier de sortie :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:794
+msgid "Choose trim output directory"
+msgstr "Sélectionner le dossier de sortie de Trim"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:796
+msgid "Organize output:"
+msgstr "Organisation de la sortie :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:799
+msgid "Put each trim in its own folder"
+msgstr "Placer chaque Trim dans un dossier distinct"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:847
+msgid "The trim output directory could not be created."
+msgstr "Impossible de créer le dossier de sortie de Trim."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:861
+msgid "The JPEG trim already exists. Overwrite its image sequence?"
+msgstr "Le Trim JPEG existe déjà. Remplacer sa séquence d’images ?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:865
+msgid "Writing JPEG frames..."
+msgstr "Écriture des images JPEG..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:870
+#, c-format
+msgid "Writing frame %d of %d"
+msgstr "Écriture de l’image %d/%d"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:880
+msgid "A JPEG frame could not be written."
+msgstr "Impossible d’écrire une image JPEG."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:892
+msgid "The H.264 trim already exists. Overwrite it?"
+msgstr "Le H.264 trim existe déjà. Le remplacer ?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:895
+msgid "Encoding H.264 video..."
+msgstr "Encodage de la vidéo H.264..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_properties.cpp:145
+msgid "Script: "
+msgstr "Sous-titres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_properties.cpp:151
+msgid "From video"
+msgstr "&Depuis la vidéo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_spellchecker.cpp:143
+msgid "No spellchecker available."
+msgstr "Aucune suggestion du correcteur orthographique"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_spellchecker.cpp:149
+msgid "No spellchecker dictionaries available."
+msgstr "Description des modifications indisponible."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_style_editor.cpp:179
+msgid "Border boxes"
+msgstr "Couleur de bordure"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_style_editor.cpp:327
+msgid "Border style:"
+msgstr "trier les styles"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_style_manager.cpp:682
+msgid "Unsupported subtitle format"
+msgstr "Exporter le fichier de sous-titres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:82
+msgid "add fold"
+msgstr "supprimer la ligne"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:311
+msgid "clear all folds"
+msgstr "supprimer la ligne"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:318
+msgid "open all folds"
+msgstr "Supprimer le cadre"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:325
+msgid "close all folds"
+msgstr "supprimer la ligne"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:344
+msgid "clear folds"
+msgstr "supprimer la ligne"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:353
+msgid "open folds"
+msgstr "Ouvrir un fichier MKV"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:362
+msgid "close folds"
+msgstr "Fermer l’audio"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:371
+msgid "toggle folds"
+msgstr "gras"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/grid_column.cpp:134
+msgid "Folds"
+msgstr "Dossier :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp:433 ../src/main.cpp:474
+msgid "Error saving config file"
+msgstr "Erreur lors de l’importation des styles"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Pans the video"
+msgstr "Lire la vidéo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Pans the video (X/Y swapped)"
+msgstr "Lire la vidéo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Resizes the video box"
+msgstr "Lire la vidéo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Zooms the video"
+msgstr "Agrandit la vidéo."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Zooms the video (reversed)"
+msgstr "Agrandit la vidéo."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:197
+msgid "Scrolling on the video display"
+msgstr "Fait défiler la forme d’onde audio vers la gauche."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:198
+msgid "Ctrl+Scrolling on the video display"
+msgstr "Fait défiler la forme d’onde audio vers la gauche."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:199
+msgid "Shift+Scrolling on the video display"
+msgstr "Fait défiler la forme d’onde audio vers la gauche."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:254
+msgid "Visual Tools"
+msgstr "Outils de mise en forme visuelle"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:258
+msgid "Dark Mode"
+msgstr "Mode sombre"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:259
+msgid "Enable dark mode"
+msgstr "Activer le mode sombre"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:338 ../src/preferences.cpp:404
+msgid "Selected comment foreground"
+msgstr "Couleur du texte du commentaire sélectionné"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:339 ../src/preferences.cpp:405
+msgid "Selected fold foreground"
+msgstr "Couleur du texte du groupe sélectionné réduit"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:340 ../src/preferences.cpp:406
+msgid "Selected combined foreground"
+msgstr "Couleur du texte de la ligne sélectionnée fusionnée"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:341 ../src/preferences.cpp:407
+msgid "Selected left column foreground"
+msgstr "Couleur du texte de la colonne de gauche sélectionnée"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:346 ../src/preferences.cpp:412
+msgid "Open fold background"
+msgstr "Arrière-plan du groupe ouvert"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:347 ../src/preferences.cpp:413
+msgid "Closed fold background"
+msgstr "Arrière-plan du groupe réduit"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:354 ../src/preferences.cpp:420
+msgid "CPS foreground"
+msgstr "Couleur du texte du CPS"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:364
+msgid "Dark Colors"
+msgstr "Couleurs sombres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:375
+msgid "Progress"
+msgstr "Indicateur de progression"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:377
+msgid "Toolbar background"
+msgstr "Arrière-plan de la barre d’outils"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:378
+msgid "Active toolbar button background"
+msgstr "Arrière-plan du bouton actif de la barre d’outils"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:380
+msgid "Subtitle edit box"
+msgstr "Éditeur de sous-titres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:399
+msgid "Subtitle grid"
+msgstr "Tableau des sous-titres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:475
+msgid "Changing these settings might result in bugs and/or crashes. Do not touch these unless you know what you're doing."
+msgstr "La modification des paramètres listés ici peut entraîner des erreurs, des blocages ou un comportement inhabituel.\\nNe les modifiez que si vous savez ce que vous faites !"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:575
+msgid "Debug"
+msgstr "4 : Débogage (debug)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:575
+msgid "Fatal"
+msgstr "0 : Critique (fatal)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:575 ../src/project.cpp:474
+msgid "Warning"
+msgstr "2 : Avertissement (warning)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:719
+msgid "Search"
+msgstr "&Rechercher"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:735 ../src/preferences.cpp:738
+msgid "Hotkey"
+msgstr "Raccourcis clavier"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:736 ../src/preferences.cpp:741
+msgid "Command"
+msgstr "Commandes"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:833 ../src/toolbar.cpp:191
+msgid "Aegisub needs to be restarted so that the new appearance can be applied. Restart now?"
+msgstr "Aegisub doit être redémarré pour appliquer la nouvelle apparence. Le redémarrer maintenant ?"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences_base.cpp:254
+msgid "Restore default colors"
+msgstr "Rétablir les couleurs par défaut"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/project.cpp:127
+msgid "Error loading file"
+msgstr "Erreur lors de l’importation des styles"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/project.cpp:153 ../src/project.cpp:172
+#, c-format
+msgid "%s not found."
+msgstr "Fichier introuvable"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/project.cpp:527
+msgid "Failed to parse timecodes file: "
+msgstr "Fichier de codes temporels : %s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/project.cpp:553
+msgid "Failed to parse keyframes file: "
+msgstr "Fichier de trames clés : %s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/subs_preview.cpp:143
+msgid "No subtitles provider"
+msgstr "Contrôleur de sortie des sous-titres"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/toolbar.cpp:173 ../src/toolbar.cpp:231
+msgid "Disable Dark Mode"
+msgstr "Désactiver le mode sombre"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/toolbar.cpp:174 ../src/toolbar.cpp:231
+msgid "Enable Dark Mode"
+msgstr "Activer le mode sombre"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/toolbar.cpp:220 ../src/toolbar.cpp:225
+msgid "Top Bar"
+msgstr "Barre supérieure"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/toolbar.cpp:223
+msgid "Always show the bar above the video"
+msgstr "Toujours afficher la barre au-dessus de la vidéo"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1326
+msgid "Chromatic split"
+msgstr "Séparation chromatique"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1326
+msgid "Slice shift"
+msgstr "Décalage en bandes"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1327
+msgid "Macroblock"
+msgstr "Macrobloc"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1327
+msgid "Scanline tear"
+msgstr "Déchirement des lignes de balayage"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1328
+msgid "Block shuffle"
+msgstr "Mélange de blocs"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1328
+msgid "Signal dropout"
+msgstr "Perte de signal"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1329
+msgid "Ghost trail"
+msgstr "Traînée d’image fantôme"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1329
+msgid "VHS tracking"
+msgstr "Suivi de piste VHS"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1330
+msgid "Pixel stretch"
+msgstr "Étirement des pixels"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1334
+msgid "Cyan and magenta"
+msgstr "Cyan et magenta"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1334
+msgid "Original colors"
+msgstr "Couleurs d’origine"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1335
+msgid "Blue and pink"
+msgstr "Bleu et rose"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1335
+msgid "RGB split"
+msgstr "Séparation RGB"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1336
+msgid "Custom colors"
+msgstr "Couleurs personnalisées"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1336
+msgid "Dark"
+msgstr "Sombre"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1336
+msgid "Light"
+msgstr "Clair"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1368
+#, c-format
+msgid "%s, %s, animation"
+msgstr "%s, %s, avec animation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1369
+#, c-format
+msgid "%s, %s, no animation"
+msgstr "%s, %s, sans animation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1505
+msgid "remove glitch effect"
+msgstr "Supprimer l’effet glitch"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1551
+msgid "apply glitch effect"
+msgstr "Appliquer l’effet glitch"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_gradient.cpp:2093
+msgid "remove gradient effect"
+msgstr "Supprimer l’effet dégradé"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:52
+msgid "Image files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|All files (*.*)|*.*"
+msgstr "Fichiers image (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|Tous les fichiers (*.*)|*.*"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:113
+msgid "(Optional; black is opaque, white is transparent)"
+msgstr "(Facultatif ; le noir est opaque, le blanc transparent)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:120
+msgid "(PNG transparency is handled automatically; no alpha image is needed.)"
+msgstr "(La transparence PNG est gérée automatiquement ; aucune image alpha n’est nécessaire.)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:138
+msgid "Compression:"
+msgstr "Compression :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:143
+msgid "1 keeps every source colour exact; larger values merge nearby colours."
+msgstr "La valeur 1 préserve exactement toutes les couleurs sources ; les valeurs supérieures fusionnent les couleurs proches."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:145
+msgid "Resize image (%):"
+msgstr "Redimensionnement de l’image (%) :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:153
+msgid "Pixel size:"
+msgstr "Taille en pixels :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:183
+#: ../src/typesetting_image_insert.cpp:236
+msgid "Image:"
+msgstr "Image :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:186
+#: ../src/typesetting_image_insert.cpp:239
+msgid "Select image"
+msgstr "Sélectionner une image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:191
+#: ../src/typesetting_image_insert.cpp:244
+msgid "Alpha image:"
+msgstr "Image alpha :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:194
+#: ../src/typesetting_image_insert.cpp:247
+msgid "Select alpha image"
+msgstr "Sélectionner une image alpha"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:255
+msgid "Basic"
+msgstr "Par défaut"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:260
+msgid "Use a separate alpha image"
+msgstr "Utiliser une image alpha distincte"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:265
+msgid "Image folder:"
+msgstr "Dossier d’images :"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:268
+msgid "Select image folder"
+msgstr "Sélectionner un dossier d’images"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:273
+msgid "Name files *.[ext] and *-alpha.[ext], where * is the subtitle line text. Quick insert finds each selected line's image in this folder."
+msgstr "Les noms de fichiers doivent être au format *.[ext] et *-alpha.[ext], où * correspond au texte de la ligne de sous-titres. Gyors beillesztés recherche dans ce dossier les images des lignes sélectionnées."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:288
+msgid "Dynamic"
+msgstr "Dynamique"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:354
+msgid "Loading image..."
+msgstr "Chargement de l’image..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:361
+#, c-format
+msgid "%s (%d of %d)"
+msgstr "%s - Copie (%d)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:364
+msgid "Loading image"
+msgstr "Charger une image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:380
+msgid "Preparing image"
+msgstr "Préparation de l’image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:391
+msgid "Encoding image"
+msgstr "Encodage de l’image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:400
+msgid "Image ready"
+msgstr "Image terminée"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:421
+msgid "insert image"
+msgstr "Insérer l’image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_provider_manager.cpp:78
+msgid "file not found."
+msgstr "Fichier introuvable"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_provider_manager.cpp:84
+msgid "video is not in a supported format."
+msgstr "Les lignes de masque d’image ne sont pas prises en charge."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_provider_manager.cpp:101
+msgid "Could not open "
+msgstr "Impossible d’insérer le style"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:160
+msgid "The frame on which the tracking area was drawn must be inside the selected lines."
+msgstr "Les lignes sélectionnées doivent contenir l’image clé sur laquelle vous avez dessiné la zone de suivi."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:177
+msgid "Preparing tracker..."
+msgstr "Préparation du suivi..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:184
+#, c-format
+msgid "Tracking frame %d of %d"
+msgstr "Suivi de l’image clé %d/%d"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:347
+msgid "Rotate"
+msgstr "Rotation"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:440
+msgid "Tracking the selected region..."
+msgstr "Suivi de la zone sélectionnée..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:441
+msgid "Select at least one motion component."
+msgstr "Sélectionnez au moins un composant de suivi."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:443
+#, c-format
+msgid "Tracking area ready on frame %d. The direction is automatic; press Esc to redraw."
+msgstr "La zone de suivi est prête sur l’image clé %d. La direction est automatique ; appuyez sur Échap pour la redessiner."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:445
+msgid "Add points around stable details on the reference frame."
+msgstr "Ajoutez des points autour des détails stables de l’image clé de référence."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:446
+msgid "Add at least three points to define the tracking area."
+msgstr "Ajoutez au moins trois points pour définir la zone de suivi."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_drag.cpp:162 ../src/visual_tool_drag.cpp:232
+msgid "Center selected lines in a drawn rectangle (right-click for modes)"
+msgstr "Centrer les lignes sélectionnées dans le rectangle dessiné (modes : clic droit)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_mask.cpp:1192
+#, c-format
+msgid "%zu contours found."
+msgstr "Toutes les polices ont été trouvées.\\n"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3192
+msgid "Reset"
+msgstr "Rétablir"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3201
+msgid "Scale axes together"
+msgstr "Mise à l’échelle conjointe des axes"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3202
+msgid "Scale X"
+msgstr "Mise à l’échelle X"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3203
+msgid "Scale Y"
+msgstr "Mise à l’échelle Y"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3205
+msgid "Shear X"
+msgstr "Inclinaison X"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3206
+msgid "Shear Y"
+msgstr "Inclinaison Y"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3207
+msgid "Rotate X"
+msgstr "Rotation X"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3208
+msgid "Rotate Y"
+msgstr "Rotation Y"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3210
+msgid "keep original size"
+msgstr "Conserver la taille d’origine"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3291
+msgid "Drag the 4 points to adjust the perspective."
+msgstr "Déplacez les 4 points pour ajuster la perspective."
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "A&I"
+msgstr "IA"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "Muteki Fansub"
+msgstr "Mise à jour de Muteki"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "Karaoke"
+msgstr "En karaoké"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "&Motion"
+msgstr "&Suivi"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "&Image insert"
+msgstr "&Insertion d’image"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../automation/autoload/macro-2-mkfullwitdh.lua:6
+msgid "Make text fullwidth"
+msgstr "Convertir en pleine largeur"
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+msgid "Installing runtime libraries...\\r"
+msgstr "Installation des composants d’exécution..."
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+msgid "Create a start menu icon\\r"
+msgstr "Créer une entrée dans le menu Démarrer"
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+msgid "Automatically check for new versions of Aegisub\\r"
+msgstr "Rechercher automatiquement les mises à jour d’Aegisub"
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+msgid "Update Checker:\\r"
+msgstr "Rechercher les mises à jour :"
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+#, c-format
+msgid "This will install Aegisub {#BUILD_GIT_VERSION_STRING} on your computer.%n%nAegisub is covered by the GNU General Public License version 2. This means you may use the application for any purpose without charge, but that no warranties of any kind are given either.%n%nSee the Aegisub website for information on obtaining the source code.\\r"
+msgstr "Le programme d’installation va maintenant installer Aegisub version {#BUILD_GIT_VERSION_STRING} sur votre ordinateur.%n%nAegisub est distribué sous licence GNU General Public License version 2. Cela signifie que vous pouvez utiliser le programme gratuitement, mais que les développeurs ne fournissent aucune garantie quant à son fonctionnement.%n%nPour plus d’informations, consultez le site web d’Aegisub, où vous pourrez notamment obtenir le code source du programme."

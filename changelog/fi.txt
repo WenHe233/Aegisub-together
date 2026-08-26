@@ -1,3 +1,42 @@
+Versio 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Dark-tila, joka on otettava erikseen käyttöön, uudet kuvakkeet ja erikseen mukautettavat värit
+- Yläpalkki voidaan pitää aina näkyvissä, jos otamme sen käyttöön (jotta sen jatkuva päälle ja pois kytkeminen ei häiritse)
+- Muunnostyökalujen hienosäätö
+    - koonmuutosneliö näkyy oikein jokaisella elementillä
+    - mahdollisuus poistaa automaattinen perspektiivin koonmuutos käytöstä ja kunnollinen esikatselumuutos
+    - vapaa muotoilu x- ja y-suunnassa siirtämällä, nuolilla siirtäminen, helpompi kiertäminen, erilliset liukusäätimet
+    - vääristämisessä erilliset liukusäätimet
+    - taivutuksessa ja kaareutuksessa voidaan valita useita pisteitä ja siirtää niitä samanaikaisesti
+    - peilausbugi
+- Motion
+    - auto motion perusasioille
+    - trimmaus sisäänrakennetulla kuvasarjojen ja videoiden luomisella (avi ja h265 ovat myös tuettuja), exe-tiedostoja ei tarvita
+    - toiminto perustuu olemassa olevaan scripten, mutta tukee samanaikaisesti sekä perspektiiviä että erilliselle clipille suoritettua trackia
+    - Mocha-ohjelmaa käytettäessä, jos tallennamme tuloksen (seurannan jälkeen CTRL + S tai tallennus), vientiä ei tarvitse kopioida, vaan se lukee tiedot automaattisesti *.mocha-tiedostosta
+- Kuvan lisääminen
+    - luo image-maskin, joka käsittelee myös PNG-tiedostoja täysin
+    - asetukset-valikkokohta nopeaa lisäämistä varten
+    - image-maskien siirtäminen on mahdollista paikkatyökalulla ja se siirtää kokonaisina lukuina, minkä lisäksi se näyttää videolla vain yhden paikan kahvan
+- Kuvan lisääminen muokkauksella
+    - avautuu Photoshopin kaltainen muokkaus nykyisellä kuvakehyksellä ja valittujen rivien yksittäisillä tasoilla
+    - lähes kaikki toimii samalla tavalla tai samankaltaisesti kuin odottaisimme Photoshopissa
+    - näkyvä lopputulos kirjoitetaan tekstitykseen image-maskina korvaamalla valitut rivit
+    - voidaan käyttää esimerkiksi ilmaiseen sisältötietoiseen peittämiseen
+- Glitch-efekti
+    - siihen voidaan lisätä useita efektejä, joita voidaan kopioida ja muokata myöhemmin
+    - tukee gradienttia, tekstilaatikkoa ja image-maskia
+    - niitä voidaan myös animoida, jopa kuva kuvalta
+- Virheenkorjauksia ja muita hienosäätöjä
+    - tyhjän lähderivin bugi
+    - UTF8-merkkien tuen lisääminen kansiosta haettaessa
+    - maskin muokkauksen perspektiivituki + samojen muokkaaminen samanaikaisesti
+    - AI-äänen jälkeinen tarkistus ei sulje ikkunaa, eikä lähderiviä tarvita sen kanssa
+    - AI-jälkitarkistus antaa yhteenvedon ja kirjoittaa korjauksen efektikenttään, lisäksi edellinen voidaan suorittaa ja käytettävissä on ohita kaikki -painike
+    - tekstilaatikon tasonumeron korjaus
+    - fold-valinnan bugi
+    - kuvamaskien yhdistämisen korjaus monistamisen yhteydessä
+
 Versio 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Yläpalkki poistettiin videosta ja siitä tehtiin kompaktimpi

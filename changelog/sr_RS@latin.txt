@@ -1,3 +1,42 @@
+Verzija 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Tamni režim, koji se posebno uključuje, sa novim ikonama i zasebno prilagodljivim bojama
+- Gornja traka može uvek da bude vidljiva ako je uključimo (da ne bi smetalo njeno uključivanje i isključivanje)
+- Usavršavanje alata za transformaciju
+    - kod svakog elementa se pravougaonik za promenu veličine ispravno prikazuje
+    - mogućnost isključivanja automatske perspektivne promene veličine i pravilna promena uz pregled
+    - slobodno oblikovanje pomeranjem u smeru x i y, pomeranje strelicama, praktičnije rotiranje, zasebni klizači
+    - zasebni klizači kod izobličenja
+    - kod savijanja i zaobljavanja omogućeno je označavanje više tačaka i njihovo istovremeno pomeranje
+    - ispravka greške sa ogledanjem
+- Motion
+    - auto motion za osnovne stvari
+    - trimovanje uz ugrađeno pravljenje sekvence slika i pravljenje videa (podržani su i avi i h265), nije potreban nikakav exe
+    - funkcija se zasniva na postojećem skriptu, ali istovremeno podržava i perspektivu i track pokrenut nad zasebnim klipom
+    - pri korišćenju Mocha-e, ako sačuvamo rezultat (CTRL + S ili čuvanje nakon praćenja), nije potrebno kopiranje izvoza, podaci se automatski učitavaju iz *.mocha datoteke
+- Umetanje slike
+    - kreira image masku, koja u potpunosti podržava i PNG
+    - stavka u meniju za podešavanja brzog umetanja
+    - pomeranje image maski je moguće pomoću alata za pozicioniranje i vrši se u celim brojevima, a na videu se prikazuje samo jedna poziciona hvataljka
+- Umetanje slike sa uređivanjem
+    - otvara se uređivanje nalik Photoshopu sa trenutnim kadrom i zasebnim slojem za svaki od označenih redova
+    - gotovo sve funkcioniše onako ili slično kao što bismo očekivali u Photoshopu
+    - vidljivi konačni rezultat se upisuje u titl kao image mask prepisivanjem označenih redova
+    - npr. može se koristiti za besplatno uklanjanje sadržaja uz pomoć konteksta
+- Glitch efekat
+    - može se dodati više vrsta efekata, koji se naknadno mogu kopirati i uređivati
+    - podržava i gradient, tekstualni okvir i image masku
+    - moguće je i animiranje, čak i kadar po kadar
+- Ispravke grešaka, ostala poboljšanja
+    - greška sa praznim izvornim redom
+    - podrška za UTF8 znakove pri pretraživanju u fascikli
+    - podrška za perspektivu pri uređivanju maske + istovremena obrada istih
+    - provera nakon AI glasa ne zatvara prozor i za nju nije potreban izvorni red
+    - AI naknadna provera daje rezime i upisuje ispravku u polje efekta, moguće je pokrenuti prethodnu proveru i postoji dugme za preskakanje svih
+    - ispravljen broj sloja tekstualnog okvira
+    - ispravljena greška sa označavanjem fold
+    - ispravka spajanja pri dupliranju maske slike
+
 Verzija 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Gornja traka je uklonjena iz videa i postala je kompaktnija

@@ -1,3 +1,42 @@
+Sürüm 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Ayrı olarak etkinleştirilmesi gereken, yeni ikonlara ve ayrı özelleştirilebilir renklere sahip Dark modu
+- Etkinleştirdiğimizde üst çubuk her zaman görünür olabilir (açıp kapatmakla uğraştırmaması için)
+- Dönüştürme araçlarının iyileştirilmesi
+    - her öğede yeniden boyutlandırma dikdörtgeni doğru şekilde görüntülenir
+    - otomatik perspektif yeniden boyutlandırmayı kapatma seçeneği ve düzgün önizlemeli değişiklik
+    - serbest biçimlendirmede x ve y yönünde taşıma, oklarla taşıma, daha kolay döndürme, ayrı kaydırıcılar
+    - çarpıtmada ayrı kaydırıcılar
+    - bükme ve kavis vermede birden fazla noktanın seçilip aynı anda taşınabilmesi
+    - ayna bug'ı
+- Motion
+    - temel işlemler için otomatik motion
+    - yerleşik görüntü dizisi oluşturma ve video oluşturma ile kırpma (avi ve h265 de desteklenir), herhangi bir exe gerekmez
+    - işlev mevcut script temel alınarak çalışır, ancak aynı anda hem perspektifi hem de ayrı clip üzerinde çalıştırılan track'i destekler
+    - Mocha kullanırken sonucu kaydettiğimizde (takipten sonra CTRL + S veya kaydetme), dışa aktarmayı kopyalamaya gerek kalmaz, verileri *.mocha dosyasından kendisi okur
+- Görüntü ekleme
+    - PNG'yi de tamamen destekleyen bir image mask oluşturur
+    - hızlı ekleme için ayarlar menü öğesi
+    - image mask'leri pozisyon aracıyla taşımak mümkündür ve tam sayılarla taşır, ayrıca videoda yalnızca bir pozisyon tutamacı görüntüler
+- Düzenlemeli görüntü ekleme
+    - geçerli kare ve seçili satırların ayrı ayrı katmanlarıyla Photoshop benzeri bir düzenleme açılır
+    - neredeyse her şey Photoshop'ta beklediğimiz şekilde veya benzer şekilde çalışır
+    - görünür nihai sonuç, seçili satırların üzerine yazılarak altyazıya bir image mask olarak işlenir
+    - örneğin ücretsiz içerik duyarlı kapatma için kullanılabilir
+- Glitch efekti
+    - birden fazla efekt eklenebilir, kopyalanabilir ve sonradan düzenlenebilir
+    - gradient'i, metin kutusunu ve image mask'i de destekler
+    - kare kare olacak şekilde bile animasyon yapılabilir
+- Hata düzeltmeleri, diğer iyileştirmeler
+    - boş kaynak satırı bug'ı
+    - klasörde aramada UTF8 karakter desteği
+    - maske düzenlemede perspektif desteği + aynı olanları aynı anda
+    - AI ses sonrası kontrol penceriyi kapatmaz ve kaynak satırı eklemeye gerek kalmaz
+    - AI son kontrolü özet verir ve düzeltmeyi efekt alanına yazar, ayrıca önceki çalıştırılabilir ve tümünü atla düğmesi vardır
+    - metin kutusu katman numarası düzeltildi
+    - fold seçimi bug'ı
+    - image mask çoğaltılırken birleştirme düzeltildi
+
 Sürüm 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Üst çubuk videodan kaldırıldı ve daha kompakt hâle getirildi

@@ -10100,3 +10100,1764 @@ msgstr "ImageEditor 需要嵌入式 Web 視圖支持，但該支援不可用。"
 #: ../src/typesetting_embedded_image_editor.cpp
 msgid "Scene"
 msgstr "場景"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/aegisublocale.cpp:107
+msgid "Please choose a language:"
+msgstr "選擇資料夾："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_base.cpp:465
+#, c-format
+msgid "Warning when loading Automation script '%s':\\n%s"
+msgstr "無法載入以下自動化指令碼：'%s':\\n%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_lua.cpp:199
+#, c-format
+msgid "Warning in Automation script '%s':\\n%s"
+msgstr "無法載入以下自動化指令碼：'%s':\\n%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_lua.cpp:682
+msgid "Could not initialize Lua state"
+msgstr "無法貼上樣式"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_lua.cpp:1133
+#, c-format
+msgid "Selected row %d is out of bounds (must be 1-%u)"
+msgstr "選取所有對話行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/auto4_lua.cpp:1139
+#, c-format
+msgid "Selected row %d is not a dialogue line"
+msgstr "選取所有對話行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/base_grid.cpp:670
+#, c-format
+msgid "Glitch effect (%d lines, %s)"
+msgstr "Glitch 效果（%d 行，%s）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:94
+msgid "Check up to 100 lines and two minutes of subtitles against Japanese audio and any available source lines"
+msgstr "根據日語音訊和可用的來源行，檢查最多 100 行及兩分鐘的字幕"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:184
+msgid "New AI post-check"
+msgstr "新增 AI 後續校對"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:185
+msgid "Start a new AI post-check and approve corrections one by one"
+msgstr "啟動新的 AI 後續校對，然後逐一核准修正"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:220
+msgid "The chosen scope contains no subtitle text to check."
+msgstr "選取範圍內沒有可校對的對話行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:249
+msgid "Latest"
+msgstr "最近"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:250
+msgid "Latest AI post-check"
+msgstr "最近的 AI 後續校對"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/ai.cpp:251
+msgid "Review the latest AI post-check again without an active AI connection"
+msgstr "在沒有作用中 AI 連線的情況下重新檢視最近的 AI 後續校對"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/app.cpp:167
+msgid "Aegisub needs to be restarted so that the new language can be applied. Restart now?"
+msgstr "必須重新啟動 Aegisub 才能套用新的外觀。現在重新啟動嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/app.cpp:167 ../src/preferences.cpp:834 ../src/toolbar.cpp:192
+msgid "Restart Aegisub?"
+msgstr "要重新啟動 Aegisub 嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:177
+msgid "Save Audio Clip"
+msgstr "儲存音訊片段"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:408 ../src/command/audio.cpp:409
+msgid "Go to selection start"
+msgstr "跳至選取範圍"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:410
+msgid "Scroll the audio display to center on the start of current audio selection"
+msgstr "在音訊波形檢視中跳至選取的區段。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:419 ../src/command/audio.cpp:420
+msgid "Go to selection end"
+msgstr "跳至選取範圍"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/audio.cpp:421
+msgid "Scroll the audio display to center on the end of current audio selection"
+msgstr "在音訊波形顯示中跳至選取的區段。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:449 ../src/command/grid.cpp:450
+msgid "Create new Fold"
+msgstr "新增清單"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:451
+msgid "Create a new fold collapsing the selected lines into a group"
+msgstr "在選取區域建立形狀圖層"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:469 ../src/command/grid.cpp:470
+msgid "Open Folds"
+msgstr "開啟 MKV 檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:471
+msgid "Expand the folds under the selected lines"
+msgstr "增加淡入時間。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:485 ../src/command/grid.cpp:486
+msgid "Close Folds"
+msgstr "關閉音訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:487
+msgid "Collapse the folds around the selected lines"
+msgstr "增加淡出時間。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:501 ../src/command/grid.cpp:502
+msgid "Clear Folds"
+msgstr "刪除"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:503
+msgid "Remove the folds around the selected lines"
+msgstr "增加淡出時間。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:517 ../src/command/grid.cpp:518
+msgid "Toggle Folds"
+msgstr "選取粗體樣式。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:519
+msgid "Open or close the folds around the selected lines"
+msgstr "選取的行中沒有可處理的字元。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:533 ../src/command/grid.cpp:534
+#: ../src/command/grid.cpp:535
+msgid "Open all Folds"
+msgstr "開啟 MKV 檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:544 ../src/command/grid.cpp:545
+#: ../src/command/grid.cpp:546
+msgid "Close all Folds"
+msgstr "關閉音訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:555 ../src/command/grid.cpp:556
+msgid "Clear all Folds"
+msgstr "刪除"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/grid.cpp:557
+msgid "Remove all Folds"
+msgstr "移除畫面框"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/help.cpp:94
+msgid "Open the visual typesetting guides"
+msgstr "視覺編輯"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/keyframe.cpp:72
+msgid "Open Keyframes File"
+msgstr "開啟關鍵影格檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/keyframe.cpp:97
+msgid "Save Keyframes File"
+msgstr "儲存關鍵影格檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/keyframe.cpp:97 ../src/command/timecode.cpp:73
+#: ../src/command/timecode.cpp:93
+msgid "Text Files"
+msgstr "文字圖層"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/subtitle.cpp:302 ../src/command/subtitle.cpp:358
+#: ../src/dialog_style_manager.cpp:667
+msgid "Open Subtitles File"
+msgstr "開啟字幕檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/subtitle.cpp:401
+msgid "Save Subtitles File"
+msgstr "儲存字幕檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/timecode.cpp:103
+msgid "Error saving timecodes"
+msgstr "收合時間碼"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:87
+msgid "Transform"
+msgstr "變形"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:288 ../src/command/typesetting.cpp:289
+msgid "Remove gradient effect"
+msgstr "復原漸層"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:290
+msgid "Remove the selected generated gradient and restore its original source line"
+msgstr "刪除選取的已產生漸層效果並還原原始來源行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:303 ../src/command/typesetting.cpp:304
+#: ../src/dialog_glitch.cpp:598 ../src/dialog_glitch.cpp:604
+#: ../src/dialog_glitch.cpp:623
+msgid "Glitch effect"
+msgstr "Glitch 效果"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp
+msgid "A glitch effect with animation cannot be transformed."
+msgstr "具有動畫的 Glitch 效果無法變形。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_embedded_image_editor.cpp
+msgid "A glitch effect with animation cannot be edited."
+msgstr "具有動畫的 Glitch 效果無法編輯。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:305
+msgid "Create customizable, angled and animated glitch slices on the selected lines"
+msgstr "在選取的行上建立可自訂、傾斜且具動畫的 Glitch 切片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:319 ../src/command/typesetting.cpp:320
+msgid "Edit glitch effect"
+msgstr "編輯 Glitch 效果"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:321
+msgid "Edit the settings of the selected generated glitch effect"
+msgstr "編輯選取的已建立 Glitch 效果設定"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:334 ../src/command/typesetting.cpp:335
+msgid "Copy glitch effect"
+msgstr "複製 Glitch 效果"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:336
+msgid "Copy the selected generated glitch rows and settings"
+msgstr "複製選取的已建立 Glitch 行與設定"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:349 ../src/command/typesetting.cpp:350
+msgid "Remove glitch effect"
+msgstr "復原 Glitch 效果"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:351
+msgid "Remove the selected generated glitch effect and restore its original source lines"
+msgstr "刪除選取的已產生 Glitch 效果並還原原始來源行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:384
+msgid "&Quick insert"
+msgstr "&快速貼上"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:385
+msgid "Quick image insert"
+msgstr "快速貼上圖片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:386
+msgid "Insert images using the saved basic or dynamic settings"
+msgstr "使用已儲存的基本或動態設定貼上圖片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:396
+msgid "&Insert"
+msgstr "&貼上"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:397 ../src/typesetting_image_insert.cpp:176
+#: ../src/typesetting_image_insert.cpp:354
+#: ../src/typesetting_image_insert.cpp:443
+msgid "Image insert"
+msgstr "貼上圖片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:398
+msgid "Convert an image to optimized ImageMask subtitle drawings"
+msgstr "將影像轉換為最佳化的 ImageMask 字幕繪圖"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:408
+msgid "With &editing..."
+msgstr "&編輯..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:409
+msgid "ImageEditor insert"
+msgstr "使用 ImageEditor 插入影像"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:410
+msgid "Edit the current video frame in ImageEditor before inserting the result"
+msgstr "在插入前於 ImageEditor 中編輯目前的影片畫格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:422
+msgid "&Settings"
+msgstr "&設定"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:423 ../src/typesetting_image_insert.cpp:224
+msgid "Image insert settings"
+msgstr "影像插入設定"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:424
+msgid "Configure Quick insert and dynamic image filenames"
+msgstr "設定快速插入與動態影像檔名"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:431
+msgid "&Apply"
+msgstr "&套用"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:432 ../src/dialog_motion.cpp:404
+#: ../src/dialog_motion.cpp:450
+msgid "Apply motion"
+msgstr "套用追蹤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:433
+msgid "Apply Mocha Corner Pin or Transform Data to the selected lines"
+msgstr "將 Mocha Corner Pin 或 Transform Data 套用至選取的行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:444
+msgid "&Auto motion"
+msgstr "&自動追蹤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:445 ../src/visual_tool_auto_motion.cpp:161
+#: ../src/visual_tool_auto_motion.cpp:177
+#: ../src/visual_tool_auto_motion.cpp:192
+#: ../src/visual_tool_auto_motion.cpp:234
+msgid "Auto motion"
+msgstr "自動追蹤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:446
+msgid "Select a video region and track its position, size and rotation"
+msgstr "選取影片區域，然後追蹤其位置、大小與旋轉"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:461
+msgid "&Revert"
+msgstr "&重設"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:462
+msgid "Revert motion"
+msgstr "重設追蹤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:463
+msgid "Restore the source lines saved by Apply or Auto motion"
+msgstr "還原由套用或自動追蹤儲存的來源行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_gradient.cpp ../src/typesetting_gradient.cpp
+msgid "Animation"
+msgstr "動畫"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:477
+msgid "&Trim"
+msgstr "&Trim"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:478 ../src/dialog_motion.cpp:847
+#: ../src/dialog_motion.cpp:862 ../src/dialog_motion.cpp:865
+#: ../src/dialog_motion.cpp:880 ../src/dialog_motion.cpp:892
+#: ../src/dialog_motion.cpp:895 ../src/dialog_motion.cpp:913
+msgid "Motion trim"
+msgstr "追蹤 Trim"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:479
+msgid "Write the selected time range as JPEG frames or an H.264 MP4"
+msgstr "將選取的時間範圍輸出為 JPEG 畫格或 H.264 MP4 影片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:489
+msgid "Trim &settings..."
+msgstr "Trim &設定..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:490
+msgid "Motion trim settings"
+msgstr "追蹤 Trim 設定"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/typesetting.cpp:491
+msgid "Choose the motion trim format and output directory"
+msgstr "選擇追蹤 Trim 格式與輸出資料夾"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:595
+msgid "Open Video File"
+msgstr "開啟視訊檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:637
+msgid "Play the video starting on this position"
+msgstr "從目前位置播放視訊。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:649
+msgid "Play the video for the current line"
+msgstr "播放目前行的音訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:675
+msgid "Reset Video &Pan"
+msgstr "開啟最近使用的視訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:676
+msgid "Reset Video Pan"
+msgstr "開啟最近使用的視訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:677
+msgid "Reset the video's position in the video display"
+msgstr "向左捲動音訊軌的波形顯示。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/video.cpp:862
+msgid "Toggle Clip Info"
+msgstr "顯示剪輯資訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:242 ../src/command/vis_tool.cpp:243
+msgid "Apply 3D Perspective"
+msgstr "透視"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:320 ../src/command/vis_tool.cpp:321
+msgid "Show Grid"
+msgstr "僅上一個"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:328 ../src/command/vis_tool.cpp:329
+msgid "\\org Mode: Center"
+msgstr "模式：滴管"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:344 ../src/command/vis_tool.cpp:345
+msgid "\\org Mode: No \\fax"
+msgstr "模式：滴管"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:360 ../src/command/vis_tool.cpp:361
+msgid "\\org Mode: Keep"
+msgstr "模式：滴管"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:375 ../src/command/vis_tool.cpp:376
+msgid "Cycle \\org mode"
+msgstr "切換標籤顯示模式。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:377
+msgid "Cycles through the three \\org modes"
+msgstr "選擇標籤顯示選項。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:417
+msgid "Append a line"
+msgstr "插入直線"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:424
+msgid "Append a bezier bicubic curve"
+msgstr "插入弧線"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:467
+msgid "Convert a segment between line and bicubic"
+msgstr "切換直線與弧線區段類型"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:474
+msgid "Insert a control point"
+msgstr "插入控制點"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:488
+msgid "Remove a control point"
+msgstr "移除控制點"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:495
+msgid "Draw a freehand shape"
+msgstr "繪製自由手繪形狀"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:502
+msgid "Draw a smoothed freehand shape"
+msgstr "繪製彎曲自由手繪形狀"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/command/vis_tool.cpp:596
+msgid "Toggle locking"
+msgstr "選取底線樣式。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:407
+msgid "Replaying the latest AI post-check without an AI connection."
+msgstr "在沒有 AI 連線的情況下重新檢視最近的 AI 後檢查。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:508
+#, c-format
+msgid "Line %d   %s - %s"
+msgstr "第%d行   %s – %s   目前 CPS：%d"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:530
+msgid "Previously accepted"
+msgstr "先前已接受"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:770
+msgid "Skip all"
+msgstr "全部略過"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_ai_proofread.cpp:836
+msgid "There is no latest AI post-check available for this subtitle."
+msgstr "此字幕沒有可用的最近 AI 後檢查。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_attachments.cpp:139 ../src/dialog_attachments.cpp:170
+msgid "Font Files"
+msgstr "字型"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_attachments.cpp:149 ../src/dialog_attachments.cpp:170
+msgid "Graphic Files"
+msgstr "附加圖像"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_automation.cpp:291
+#, c-format
+msgid "\\nScript info:\\nName: %s\\nDescription: %s\\nAuthor: %s\\nVersion: %s\\nFull path: %s\\nState: %s\\n"
+msgstr "\\n腳本資訊\\n名稱：%s\\n描述：%s\\n作者：%s\\n版本號：%s\\n路徑：%s\\n狀態：%s\\n\\n腳本提供的功能："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_automation.cpp:300
+#, c-format
+msgid "Warning: %s\\n"
+msgstr "2：警告（warning）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_colorpicker.cpp:685
+msgid "Clear color"
+msgstr "清除顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_export.cpp:190
+msgid "Export Subtitles File"
+msgstr "匯出字幕檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_export.cpp:205 ../src/dialog_export.cpp:208
+#: ../src/dialog_export.cpp:211
+msgid "Error exporting subtitles"
+msgstr "匯入樣式時發生錯誤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:250
+msgid "No color selected"
+msgstr "未選取顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:433
+msgid "(off)"
+msgstr "（已停用）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:435
+#, c-format
+msgid "Animation %zu: frame %d%s"
+msgstr "第%zu個動畫：第%d幀%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:437
+#, c-format
+msgid "Animation %zu: %d-%d ms%s"
+msgstr "%zu. 動畫：%d–%d 毫秒%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:597
+msgid "An animation end time must be after its start time."
+msgstr "動畫結束時間必須晚於開始時間。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:603
+msgid "No glitch effect could be generated for the selected lines."
+msgstr "無法為選取的行建立故障效果。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:631
+msgid "Glitch settings"
+msgstr "故障設定"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:634 ../src/dialog_glitch.cpp:823
+msgid "Effect:"
+msgstr "效果："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:652
+#, c-format
+msgid "Custom color %zu"
+msgstr "自訂色彩 %zu"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:701 ../src/dialog_glitch.cpp:892
+msgid "Amount (%):"
+msgstr "幅度 (%)："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:702 ../src/dialog_glitch.cpp:893
+msgid "Offset:"
+msgstr "偏移："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:712 ../src/dialog_glitch.cpp:894
+msgid "Height:"
+msgstr "高度："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:713 ../src/dialog_glitch.cpp:895
+msgid "Width (%):"
+msgstr "寬度 (%)："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:714 ../src/dialog_glitch.cpp:896
+msgid "Opacity:"
+msgstr "不透明度："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:715 ../src/dialog_glitch.cpp:898
+msgid "Show base layer"
+msgstr "顯示基礎圖層"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:724
+msgid "Playback"
+msgstr "播放"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:750 ../src/dialog_gradient.cpp:961
+msgid "Jump to line start"
+msgstr "跳至行首"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:762 ../src/dialog_gradient.cpp:973
+msgid "Jump to line end"
+msgstr "重複播放至行尾"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:766
+msgid "Animations"
+msgstr "動畫"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:768
+#, c-format
+msgid "Total line duration: %d ms"
+msgstr "行的總時長：%d 毫秒"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:776
+msgid "Add animation"
+msgstr "新增動畫"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:778
+msgid "Remove animation"
+msgstr "移除動畫"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:786
+msgid "Enabled"
+msgstr "已啟用"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:790
+msgid "Time"
+msgstr "時間"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:791
+msgid "Frame"
+msgstr "影格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:794
+msgid "Timing"
+msgstr "時間軸"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:800
+msgid "Frame:"
+msgstr "影格："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:810
+msgid "Time (ms):"
+msgstr "時間（毫秒）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:830
+msgid "Effect type"
+msgstr "效果類型"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:839
+msgid "Color style"
+msgstr "色彩樣式"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_glitch.cpp:907
+msgid "Paste effect"
+msgstr "插入效果"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_kara_timing_copy.cpp:386
+msgid "Kanji timer"
+msgstr "漢字計時器"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_kara_timing_copy.cpp:408
+msgid "Attempt to &interpolate kanji"
+msgstr "漢字&插值"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:69
+#, c-format
+msgid "Mocha Corner Pin - %zu frames"
+msgstr "Mocha Corner Pin – %zu 個影格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:69
+#, c-format
+msgid "Mocha Transform Data - %zu frames"
+msgstr "Mocha Transform Data – %zu 個影格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:72
+#, c-format
+msgid " - selected lines require %zu frames"
+msgstr "– 選取的行需要 %zu 個影格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:273
+msgid "No track data"
+msgstr "沒有追蹤資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:273
+msgid "No valid track data"
+msgstr "沒有有效的追蹤資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:363
+msgid "The Mocha project does not cover the frames the selected lines need."
+msgstr "無法為選取的行建立 glitch 效果。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:404 ../src/dialog_motion.cpp:416
+#: ../src/visual_tool_auto_motion.cpp:192
+#: ../src/visual_tool_auto_motion.cpp:204
+msgid "Preparing motion..."
+msgstr "準備追蹤中..."
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:420 ../src/visual_tool_auto_motion.cpp:208
+#, c-format
+msgid "Applying frame %zu of %zu"
+msgstr "套用第 %zu/%zu 個影格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:425 ../src/visual_tool_auto_motion.cpp:213
+#, c-format
+msgid "Writing subtitle row %zu of %zu"
+msgstr "寫入第 %zu/%zu 行字幕"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:471
+msgid "No Transformation Data"
+msgstr "沒有轉換資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:473
+msgid "Import Transformation Data"
+msgstr "匯入變形資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:483
+msgid "Clip only"
+msgstr "僅限片段"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:485
+msgid "Track clips with separate data"
+msgstr "以個別資料追蹤片段"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:491
+msgid "No separate clip Transformation Data"
+msgstr "片段沒有個別變形資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:493
+msgid "Import clip Transformation Data"
+msgstr "匯入片段變形資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:502
+msgid "Transformation Data"
+msgstr "變形資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:507
+msgid "Enable Perspective below, then paste the matching Mocha Corner Pin data."
+msgstr "請在下方啟用「透視」，然後貼上相應的 Mocha Corner Pin 資料。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:511
+msgid "No main Corner Pin data"
+msgstr "沒有主要 Corner Pin 資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:513
+msgid "Import main Corner Pin"
+msgstr "匯入主要 Corner Pin"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:524
+msgid "No clip Corner Pin data"
+msgstr "片段沒有 Corner Pin 資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:526
+msgid "Import clip Corner Pin"
+msgstr "匯入片段 Corner Pin 資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:536
+msgid "Perspective - Corner pin"
+msgstr "透視 – Corner Pin"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:540
+msgid "Motion components"
+msgstr "追蹤元件"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:541 ../src/dialog_motion.cpp:552
+#: ../src/visual_tool_auto_motion.cpp:344
+msgid "X"
+msgstr "X"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:542 ../src/dialog_motion.cpp:553
+#: ../src/visual_tool_auto_motion.cpp:345
+msgid "Y"
+msgstr "Y"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:544 ../src/dialog_motion.cpp:555
+#: ../src/visual_tool_transform.cpp:3204
+msgid "Rotation"
+msgstr "旋轉"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:545 ../src/dialog_motion.cpp:556
+msgid "Perspective"
+msgstr "透視"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:551
+msgid "Clip motion components"
+msgstr "片段追蹤元件"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:563
+msgid "Reference"
+msgstr "參考"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:564
+msgid "Main:"
+msgstr "主要："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:573
+msgid "Clip:"
+msgstr "片段："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:585
+msgid "Interpolate animations"
+msgstr "插值動畫"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:587
+msgid "Linear motion"
+msgstr "線性追蹤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:589
+msgid "Scale border"
+msgstr "縮放邊框"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:590
+msgid "Scale shadow"
+msgstr "縮放陰影"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:591
+msgid "Scale blur"
+msgstr "縮放模糊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:595
+msgid "Apply options"
+msgstr "應用程式設定"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:618 ../src/dialog_motion.cpp:620
+msgid "No valid track data on the clipboard"
+msgstr "剪貼簿中沒有有效的追蹤資料"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:783
+msgid "Trim settings"
+msgstr "Trim 設定"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:786
+msgid "Output format:"
+msgstr "輸出格式："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:788
+msgid "JPEG image sequence"
+msgstr "JPEG 影像序列"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:789
+msgid "H.264 MP4 video"
+msgstr "H.264 MP4 影片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:792
+msgid "Output directory:"
+msgstr "輸出資料夾："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:794
+msgid "Choose trim output directory"
+msgstr "選擇 Trim 輸出資料夾"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:796
+msgid "Organize output:"
+msgstr "輸出整理："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:799
+msgid "Put each trim in its own folder"
+msgstr "每個 Trim 放入個別資料夾"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:847
+msgid "The trim output directory could not be created."
+msgstr "無法建立 Trim 輸出資料夾。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:861
+msgid "The JPEG trim already exists. Overwrite its image sequence?"
+msgstr "JPEG Trim 已存在。要覆寫影像序列嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:865
+msgid "Writing JPEG frames..."
+msgstr "正在寫入 JPEG 影格……"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:870
+#, c-format
+msgid "Writing frame %d of %d"
+msgstr "正在寫入第 %d/%d 個影格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:880
+msgid "A JPEG frame could not be written."
+msgstr "無法寫出 JPEG 畫格。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:892
+msgid "The H.264 trim already exists. Overwrite it?"
+msgstr "H.264 剪輯已存在。要覆寫嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_motion.cpp:895
+msgid "Encoding H.264 video..."
+msgstr "正在編碼 H.264 視訊……"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_properties.cpp:145
+msgid "Script: "
+msgstr "字幕"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_properties.cpp:151
+msgid "From video"
+msgstr "&從視訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_spellchecker.cpp:143
+msgid "No spellchecker available."
+msgstr "沒有拼字檢查建議"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_spellchecker.cpp:149
+msgid "No spellchecker dictionaries available."
+msgstr "無法取得變更記錄。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_style_editor.cpp:179
+msgid "Border boxes"
+msgstr "邊框顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_style_editor.cpp:327
+msgid "Border style:"
+msgstr "排序樣式"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/dialog_style_manager.cpp:682
+msgid "Unsupported subtitle format"
+msgstr "匯出字幕檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:82
+msgid "add fold"
+msgstr "刪除行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:311
+msgid "clear all folds"
+msgstr "刪除行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:318
+msgid "open all folds"
+msgstr "移除邊框"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:325
+msgid "close all folds"
+msgstr "刪除行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:344
+msgid "clear folds"
+msgstr "刪除行"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:353
+msgid "open folds"
+msgstr "開啟 MKV 檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:362
+msgid "close folds"
+msgstr "關閉音訊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/fold_controller.cpp:371
+msgid "toggle folds"
+msgstr "粗體"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/grid_column.cpp:134
+msgid "Folds"
+msgstr "資料夾："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/main.cpp:433 ../src/main.cpp:474
+msgid "Error saving config file"
+msgstr "匯入樣式時發生錯誤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Pans the video"
+msgstr "播放影片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Pans the video (X/Y swapped)"
+msgstr "播放影片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Resizes the video box"
+msgstr "播放影片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Zooms the video"
+msgstr "放大影片。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:195
+msgid "Zooms the video (reversed)"
+msgstr "放大影片。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:197
+msgid "Scrolling on the video display"
+msgstr "向左捲動音訊波形。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:198
+msgid "Ctrl+Scrolling on the video display"
+msgstr "向左捲動音訊波形。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:199
+msgid "Shift+Scrolling on the video display"
+msgstr "向左捲動音訊波形。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:254
+msgid "Visual Tools"
+msgstr "視覺樣式工具"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:258
+msgid "Dark Mode"
+msgstr "深色模式"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:259
+msgid "Enable dark mode"
+msgstr "啟用深色模式"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:338 ../src/preferences.cpp:404
+msgid "Selected comment foreground"
+msgstr "選取的註解字型顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:339 ../src/preferences.cpp:405
+msgid "Selected fold foreground"
+msgstr "選取的收合群組字型顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:340 ../src/preferences.cpp:406
+msgid "Selected combined foreground"
+msgstr "選取的合併列字型顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:341 ../src/preferences.cpp:407
+msgid "Selected left column foreground"
+msgstr "選取的左側欄字型顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:346 ../src/preferences.cpp:412
+msgid "Open fold background"
+msgstr "展開群組背景"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:347 ../src/preferences.cpp:413
+msgid "Closed fold background"
+msgstr "收合群組背景"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:354 ../src/preferences.cpp:420
+msgid "CPS foreground"
+msgstr "CPS 字型顏色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:364
+msgid "Dark Colors"
+msgstr "深色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:375
+msgid "Progress"
+msgstr "進度列"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:377
+msgid "Toolbar background"
+msgstr "工具列背景"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:378
+msgid "Active toolbar button background"
+msgstr "作用中工具列按鈕背景"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:380
+msgid "Subtitle edit box"
+msgstr "字幕編輯器"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:399
+msgid "Subtitle grid"
+msgstr "字幕表格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:475
+msgid "Changing these settings might result in bugs and/or crashes. Do not touch these unless you know what you're doing."
+msgstr "變更此處列出的設定可能會導致錯誤、當機或異常行為。\\n除非您知道自己在做什麼，否則請勿修改這些設定！"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:575
+msgid "Debug"
+msgstr "4：除錯"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:575
+msgid "Fatal"
+msgstr "0：嚴重"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:575 ../src/project.cpp:474
+msgid "Warning"
+msgstr "2：警告"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:719
+msgid "Search"
+msgstr "&搜尋"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:735 ../src/preferences.cpp:738
+msgid "Hotkey"
+msgstr "快速鍵"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:736 ../src/preferences.cpp:741
+msgid "Command"
+msgstr "指令"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences.cpp:833 ../src/toolbar.cpp:191
+msgid "Aegisub needs to be restarted so that the new appearance can be applied. Restart now?"
+msgstr "套用新外觀需要重新啟動 Aegisub。要立即重新啟動嗎？"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/preferences_base.cpp:254
+msgid "Restore default colors"
+msgstr "還原預設色彩"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/project.cpp:127
+msgid "Error loading file"
+msgstr "匯入樣式時發生錯誤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/project.cpp:153 ../src/project.cpp:172
+#, c-format
+msgid "%s not found."
+msgstr "找不到檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/project.cpp:527
+msgid "Failed to parse timecodes file: "
+msgstr "時間碼檔案：%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/project.cpp:553
+msgid "Failed to parse keyframes file: "
+msgstr "關鍵影格檔案：%s"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/subs_preview.cpp:143
+msgid "No subtitles provider"
+msgstr "字幕輸出控制項"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/toolbar.cpp:173 ../src/toolbar.cpp:231
+msgid "Disable Dark Mode"
+msgstr "關閉深色模式"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/toolbar.cpp:174 ../src/toolbar.cpp:231
+msgid "Enable Dark Mode"
+msgstr "開啟深色模式"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/toolbar.cpp:220 ../src/toolbar.cpp:225
+msgid "Top Bar"
+msgstr "頂部橫條"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/toolbar.cpp:223
+msgid "Always show the bar above the video"
+msgstr "始終顯示影片上方的橫條"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1326
+msgid "Chromatic split"
+msgstr "色彩分離"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1326
+msgid "Slice shift"
+msgstr "切片位移"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1327
+msgid "Macroblock"
+msgstr "巨集區塊"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1327
+msgid "Scanline tear"
+msgstr "掃描線撕裂"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1328
+msgid "Block shuffle"
+msgstr "區塊混合"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1328
+msgid "Signal dropout"
+msgstr "訊號遺失"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1329
+msgid "Ghost trail"
+msgstr "殘影"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1329
+msgid "VHS tracking"
+msgstr "VHS 追蹤"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1330
+msgid "Pixel stretch"
+msgstr "像素拉伸"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1334
+msgid "Cyan and magenta"
+msgstr "青色與洋紅色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1334
+msgid "Original colors"
+msgstr "原始色彩"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1335
+msgid "Blue and pink"
+msgstr "藍色與粉紅色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1335
+msgid "RGB split"
+msgstr "RGB 分離"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1336
+msgid "Custom colors"
+msgstr "自訂色彩"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1336
+msgid "Dark"
+msgstr "深色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1336
+msgid "Light"
+msgstr "淺色"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1368
+#, c-format
+msgid "%s, %s, animation"
+msgstr "%s、%s，含動畫"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1369
+#, c-format
+msgid "%s, %s, no animation"
+msgstr "%s、%s，不含動畫"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1505
+msgid "remove glitch effect"
+msgstr "刪除 glitch 效果"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_glitch.cpp:1551
+msgid "apply glitch effect"
+msgstr "套用 glitch 效果"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_gradient.cpp:2093
+msgid "remove gradient effect"
+msgstr "刪除 gradient 效果"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:52
+msgid "Image files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|All files (*.*)|*.*"
+msgstr "影像檔案 (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|所有檔案 (*.*)|*.*"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:113
+msgid "(Optional; black is opaque, white is transparent)"
+msgstr "（非必要；黑色不透明，白色透明）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:120
+msgid "(PNG transparency is handled automatically; no alpha image is needed.)"
+msgstr "（自動處理 PNG 透明度；不需要 alpha 影像。）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:138
+msgid "Compression:"
+msgstr "壓縮："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:143
+msgid "1 keeps every source colour exact; larger values merge nearby colours."
+msgstr "1 會精確保留所有來源色彩；較大的值會合併相近色彩。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:145
+msgid "Resize image (%):"
+msgstr "影像縮放（%）："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:153
+msgid "Pixel size:"
+msgstr "像素尺寸："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:183
+#: ../src/typesetting_image_insert.cpp:236
+msgid "Image:"
+msgstr "影像："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:186
+#: ../src/typesetting_image_insert.cpp:239
+msgid "Select image"
+msgstr "選取影像"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:191
+#: ../src/typesetting_image_insert.cpp:244
+msgid "Alpha image:"
+msgstr "Alpha 影像："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:194
+#: ../src/typesetting_image_insert.cpp:247
+msgid "Select alpha image"
+msgstr "選取 Alpha 影像"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:255
+msgid "Basic"
+msgstr "基本"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:260
+msgid "Use a separate alpha image"
+msgstr "使用個別 Alpha 影像"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:265
+msgid "Image folder:"
+msgstr "影像資料夾："
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:268
+msgid "Select image folder"
+msgstr "選取影像資料夾"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:273
+msgid "Name files *.[ext] and *-alpha.[ext], where * is the subtitle line text. Quick insert finds each selected line's image in this folder."
+msgstr "檔名格式應為 *.[ext] 和 *-alpha.[ext]，其中 * 代表字幕列文字。Gyors beillesztés 會在此資料夾中尋找各個選取字幕列的影像。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:288
+msgid "Dynamic"
+msgstr "動態"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:354
+msgid "Loading image..."
+msgstr "圖片載入中…"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:361
+#, c-format
+msgid "%s (%d of %d)"
+msgstr "%s - 複本 (%d)"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:364
+msgid "Loading image"
+msgstr "載入圖片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:380
+msgid "Preparing image"
+msgstr "準備圖片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:391
+msgid "Encoding image"
+msgstr "圖片編碼中"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:400
+msgid "Image ready"
+msgstr "圖片已完成"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/typesetting_image_insert.cpp:421
+msgid "insert image"
+msgstr "貼上圖片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_provider_manager.cpp:78
+msgid "file not found."
+msgstr "找不到檔案"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_provider_manager.cpp:84
+msgid "video is not in a supported format."
+msgstr "不支援圖片遮罩行。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/video_provider_manager.cpp:101
+msgid "Could not open "
+msgstr "無法貼上樣式"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:160
+msgid "The frame on which the tracking area was drawn must be inside the selected lines."
+msgstr "選取的行必須包含繪製追蹤區域的影格。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:177
+msgid "Preparing tracker..."
+msgstr "追蹤器準備中…"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:184
+#, c-format
+msgid "Tracking frame %d of %d"
+msgstr "追蹤第 %d/%d 個影格"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:347
+msgid "Rotate"
+msgstr "旋轉"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:440
+msgid "Tracking the selected region..."
+msgstr "追蹤選取區域…"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:441
+msgid "Select at least one motion component."
+msgstr "請至少選取一個追蹤元件。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:443
+#, c-format
+msgid "Tracking area ready on frame %d. The direction is automatic; press Esc to redraw."
+msgstr "追蹤區域已在第 %d 個影格準備就緒。方向為自動；若要重新繪製，請按 Esc。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:445
+msgid "Add points around stable details on the reference frame."
+msgstr "請在參考影格的穩定細節周圍新增點。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_auto_motion.cpp:446
+msgid "Add at least three points to define the tracking area."
+msgstr "請至少新增三個點以定義追蹤區域。"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_drag.cpp:162 ../src/visual_tool_drag.cpp:232
+msgid "Center selected lines in a drawn rectangle (right-click for modes)"
+msgstr "將選取的行置中於繪製的矩形中（模式：按右鍵）"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_mask.cpp:1192
+#, c-format
+msgid "%zu contours found."
+msgstr "已找到所有字型。\\n"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3192
+msgid "Reset"
+msgstr "還原"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3201
+msgid "Scale axes together"
+msgstr "同時縮放軸"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3202
+msgid "Scale X"
+msgstr "X 縮放"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3203
+msgid "Scale Y"
+msgstr "Y 縮放"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3205
+msgid "Shear X"
+msgstr "X 傾斜"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3206
+msgid "Shear Y"
+msgstr "Y 傾斜"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3207
+msgid "Rotate X"
+msgstr "X 旋轉"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3208
+msgid "Rotate Y"
+msgstr "Y 旋轉"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3210
+msgid "keep original size"
+msgstr "保留原始大小"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../src/visual_tool_transform.cpp:3291
+msgid "Drag the 4 points to adjust the perspective."
+msgstr "移動 4 個點以微調透視。"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "A&I"
+msgstr "AI"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "Muteki Fansub"
+msgstr "Muteki 更新"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "Karaoke"
+msgstr "作為卡拉 OK"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "&Motion"
+msgstr "&追蹤"
+
+# machine translation from Hungarian, not reviewed yet
+#: default_menu.json:0
+msgid "&Image insert"
+msgstr "&插入圖片"
+
+# machine translation from Hungarian, not reviewed yet
+#: ../automation/autoload/macro-2-mkfullwitdh.lua:6
+msgid "Make text fullwidth"
+msgstr "轉換為全寬"
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+msgid "Installing runtime libraries...\\r"
+msgstr "正在安裝執行階段元件..."
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+msgid "Create a start menu icon\\r"
+msgstr "建立開始功能表項目"
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+msgid "Automatically check for new versions of Aegisub\\r"
+msgstr "自動檢查 Aegisub 更新"
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+msgid "Update Checker:\\r"
+msgstr "檢查更新："
+
+# machine translation from Hungarian, not reviewed yet
+#: packages/win_installer/fragment_strings.iss:1
+#, c-format
+msgid "This will install Aegisub {#BUILD_GIT_VERSION_STRING} on your computer.%n%nAegisub is covered by the GNU General Public License version 2. This means you may use the application for any purpose without charge, but that no warranties of any kind are given either.%n%nSee the Aegisub website for information on obtaining the source code.\\r"
+msgstr "安裝程式現在將在您的電腦上安裝 Aegisub {#BUILD_GIT_VERSION_STRING} 版本。%n%nAegisub 程式受 GNU General Public License version 2 授權條款保護。這表示您可以免費使用本程式，但開發者不對程式的運作提供任何保證。%n%n如需更多資訊，請造訪 Aegisub 網站，您也可以在網站上取得本程式的原始碼。"

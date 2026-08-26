@@ -1,3 +1,42 @@
+Versión 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Modo escuro, que debe activarse por separado, con novas iconas e cores personalizables por separado
+- A barra superior pode permanecer sempre visible se a activamos (para que non moleste ter que activala e desactivala)
+- Melloras das ferramentas de transformación
+    - o rectángulo de redimensionamento aparece correctamente en todos os elementos
+    - posibilidade de desactivar o redimensionamento automático da perspectiva e cambios cunha previsualización adecuada
+    - transformación libre con movemento nas direccións x e y, movemento coas frechas, rotación máis cómoda e controles deslizantes separados
+    - controles deslizantes separados para a distorsión
+    - ao dobrar e curvar, pódense seleccionar varios puntos e movelos á vez
+    - erro da reflexión
+- Movemento
+    - movemento automático para cousas básicas
+    - recorte coa creación integrada dunha secuencia de imaxes e de vídeo (tamén se admiten avi e h265), non se precisa ningún exe
+    - a función baséase no script existente, pero admite á vez a perspectiva e o track executado sobre un clip separado
+    - ao usar Mocha, se gardamos o resultado (despois do seguimento, CTRL + S ou gardar), non é necesario copiar a exportación, os datos lense automaticamente do ficheiro *.mocha
+- Inserción de imaxes
+    - crea unha máscara image, que admite PNG completamente
+    - apartado de configuracións para a inserción rápida
+    - é posible mover as máscaras image coa ferramenta de posición e móveas en números enteiros, ademais de mostrar só un punto de control de posición no vídeo
+- Inserción de imaxes con edición
+    - aparece unha edición similar á de Photoshop co fotograma actual e cada unha das liñas seleccionadas como capa
+    - practicamente todo funciona como esperaríamos en Photoshop ou de forma semellante
+    - o resultado visible insírese no subtítulo escribindo unha máscara image mediante a sobrescritura das liñas seleccionadas
+    - por exemplo, pódese usar para ocultación gratuíta sensible ao contido
+- Efecto Glitch
+    - pódense engadir varios efectos, copiar e editar posteriormente
+    - tamén admite gradientes, caixas de texto e máscaras image
+    - tamén se poden animar, incluso fotograma a fotograma
+- Corrección de erros e outras melloras
+    - erro das liñas de fonte baleiras
+    - compatibilidade con caracteres UTF8 ao buscar nun cartafol
+    - compatibilidade coa perspectiva na edición de máscaras + aplicar as iguais á vez
+    - a comprobación posterior á voz da AI non pecha a xanela e xa non precisa a liña de fonte
+    - a comprobación posterior da AI mostra un resumo e escribe a corrección no campo de efectos; ademais, pódese executar a anterior e hai un botón para omitir todas
+    - número de capa da caixa de texto fixo
+    - erro na selección de fold
+    - corrección da fusión ao duplicar unha máscara de imaxe
+
 Versión 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - A barra superior eliminouse do vídeo e fíxose máis compacta

@@ -1,3 +1,42 @@
+Version 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Dark mode, which must be enabled separately, with new icons and separately customizable colors
+- The top bar can always be visible if enabled (so toggling it on and off does not get in the way)
+- Refinement of transformation tools
+    - the scaling rectangle is displayed correctly for every element
+    - option to disable automatic perspective scaling and proper previewed changes
+    - free transformation movement in the x and y directions, movement with arrows, more convenient rotation, separate sliders
+    - separate sliders for distortion
+    - when bending and curving, multiple points can be selected and moved at once
+    - mirroring bug
+- Motion
+    - auto motion for basic tasks
+    - trimming with built-in image sequence creation and video creation (avi and h265 are also supported), no exe is needed
+    - the function is based on the existing script, but supports both perspective and tracking run on a separate clip at the same time
+    - when using Mocha, if we save the result (CTRL + S or save after tracking), copying the export is not needed, it automatically reads the data from the *.mocha file
+- Image insertion
+    - creates an image mask that fully supports PNG
+    - settings menu item for quick insertion
+    - image masks can be moved with the position tool and move in whole numbers, and only one position handle is displayed on the video
+- Image insertion with editing
+    - a Photoshop-like editor opens with the current frame and the selected lines as individual layers
+    - almost everything works the way or similarly to how we would expect it to work in Photoshop
+    - the visible final result is written into the subtitle as an image mask by overwriting the selected lines
+    - e.g. it can be used for free content-aware masking
+- Glitch effect
+    - multiple effects can be added, copied and edited afterwards
+    - supports gradients, text boxes and image masks
+    - it can also be animated, even frame by frame
+- Bug fixes and other refinements
+    - empty source line bug
+    - support for UTF8 characters when searching in a folder
+    - mask editing perspective support + simultaneous editing of identical ones
+    - the check after AI voice does not close the window and no source line is needed for it
+    - AI post-checking provides a summary and writes the correction into the effect field, and the previous one can be run and there is a skip all button
+    - text box layer number fix
+    - fold selection bug
+    - fix for merging during image mask duplication
+
 Version 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Top bar removed from the video and made more compact

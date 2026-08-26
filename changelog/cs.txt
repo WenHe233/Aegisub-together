@@ -1,3 +1,42 @@
+Verze 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Tmavý režim, který je nutné zapnout samostatně, s novými ikonami a samostatně přizpůsobitelnými barvami
+- Horní lišta může být vždy viditelná, pokud ji zapneme (aby nerušilo její zapínání a vypínání)
+- Vylepšení nástrojů transformace
+    - u každého prvku se obdélník pro změnu velikosti zobrazuje správně
+    - možnost vypnutí automatické perspektivní změny velikosti a řádná změna s náhledem
+    - volná deformace s pohybem ve směru x a y, pohyb pomocí šipek, pohodlnější otáčení, samostatné posuvníky
+    - při deformaci samostatné posuvníky
+    - při ohýbání a zakřivení lze označit více bodů a pohybovat jimi současně
+    - oprava chyby zrcadlení
+- Motion
+    - auto motion pro základní věci
+    - ořezávání s vestavěným vytvářením obrazové sekvence a videa (podporováno je i avi a h265), není potřeba žádné exe
+    - funkce je založena na stávajícím skriptu, podporuje však současně perspektivu i track spuštěný na samostatném clipu
+    - při použití Mocha není po uložení výsledku (po trackování pomocí CTRL + S nebo po uložení) potřeba kopírovat export, data se automaticky načtou ze souboru *.mocha
+- Vkládání obrázku
+    - vytváří image masku, která plně podporuje i PNG
+    - položka nastavení pro rychlé vložení
+    - image masky lze přesouvat pomocí pozičního nástroje a posouvají se v celých číslech, přičemž ve videu se zobrazuje pouze jeden poziční úchyt
+- Vkládání obrázku s úpravami
+    - zobrazí se úpravy podobné Photoshopu s aktuálním snímkem a jednotlivými vrstvami označených řádků
+    - téměř vše funguje tak nebo podobně, jak bychom očekávali ve Photoshopu
+    - viditelný výsledek se do titulků zapíše jako image maska přepsáním označených řádků
+    - lze například použít pro bezplatné obsahově citlivé rozmazání
+- Glitch efekt
+    - lze přidat více efektů, které lze později kopírovat a upravovat
+    - podporuje gradient, textové pole i image masku
+    - lze jej také animovat, dokonce i po jednotlivých snímcích
+- Opravy chyb a další vylepšení
+    - oprava chyby prázdného zdrojového řádku
+    - podpora UTF8 znaků při hledání ve složce
+    - podpora perspektivy při úpravě masky + možnost upravovat stejné masky současně
+    - kontrola po AI hlase nezavírá okno a není k ní potřeba zdrojový řádek
+    - následná kontrola AI zobrazí souhrn a zapíše opravu do pole efektu, lze také spustit předchozí kontrolu a je k dispozici tlačítko pro přeskočení všech
+    - oprava čísla vrstvy textového pole
+    - oprava chyby označení fold
+    - oprava sloučení při duplikování image masky
+
 Verze 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Horní lišta byla z videa odstraněna a stala se kompaktnější

@@ -1,3 +1,42 @@
+Phiên bản 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Chế độ Dark, cần được bật riêng, với các biểu tượng mới và màu sắc có thể tùy chỉnh riêng
+- Thanh trên cùng có thể luôn hiển thị nếu bật (để không bị làm phiền bởi việc bật tắt)
+- Tinh chỉnh các công cụ biến đổi
+    - hình chữ nhật điều chỉnh kích thước hiển thị chính xác ở mọi thành phần
+    - có thể tắt tự động điều chỉnh phối cảnh và thay đổi với phần xem trước đầy đủ
+    - biến đổi tự do theo hướng x và y, di chuyển bằng các phím mũi tên, xoay thuận tiện hơn, các thanh trượt riêng
+    - các thanh trượt riêng khi làm méo
+    - khi uốn và bẻ cong, có thể chọn nhiều điểm và di chuyển cùng lúc
+    - sửa lỗi lật
+- Motion
+    - auto motion cho các thao tác cơ bản
+    - trim với khả năng tạo chuỗi hình ảnh tích hợp và tạo video (hỗ trợ cả avi và h265), không cần bất kỳ exe nào
+    - chức năng này dựa trên script hiện có, nhưng đồng thời hỗ trợ cả phối cảnh và track chạy trên clip riêng
+    - khi sử dụng Mocha, nếu lưu kết quả (CTRL + S hoặc lưu sau khi theo dõi), không cần sao chép export, dữ liệu sẽ tự động được đọc từ tệp *.mocha
+- Chèn hình ảnh
+    - tạo image mask, hỗ trợ đầy đủ cả PNG
+    - mục cài đặt để chèn nhanh
+    - có thể di chuyển image mask bằng công cụ vị trí và di chuyển theo số nguyên, đồng thời chỉ hiển thị một điểm điều khiển vị trí trên video
+- Chèn hình ảnh bằng chỉnh sửa
+    - mở trình chỉnh sửa giống Photoshop với khung hình hiện tại và từng dòng được chọn dưới dạng các lớp riêng
+    - hầu hết mọi thứ hoạt động giống hoặc tương tự như những gì ta mong đợi trong Photoshop
+    - kết quả hiển thị được ghi vào phụ đề dưới dạng image mask bằng cách ghi đè các dòng được chọn
+    - ví dụ có thể dùng để xóa nội dung miễn phí theo ngữ cảnh
+- Hiệu ứng Glitch
+    - có thể thêm nhiều loại hiệu ứng, sao chép và chỉnh sửa về sau
+    - hỗ trợ gradient, hộp văn bản và image mask
+    - cũng có thể tạo hoạt ảnh, thậm chí theo từng khung hình
+- Sửa lỗi, các tinh chỉnh khác
+    - lỗi dòng nguồn trống
+    - hỗ trợ ký tự UTF8 khi tìm kiếm trong thư mục
+    - hỗ trợ phối cảnh khi chỉnh sửa mask + đồng thời thực hiện với các mask giống nhau
+    - kiểm tra sau giọng nói AI không đóng cửa sổ và không cần thêm dòng nguồn
+    - kiểm tra AI sau xử lý cung cấp bản tóm tắt và ghi phần hiệu chỉnh vào trường hiệu ứng, đồng thời có thể chạy lại lần trước và có nút bỏ qua tất cả
+    - sửa số lớp của hộp văn bản
+    - lỗi chọn fold
+    - sửa lỗi hợp nhất khi nhân bản image mask
+
 Phiên bản 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Thanh trên đã bị loại khỏi video và trở nên gọn hơn

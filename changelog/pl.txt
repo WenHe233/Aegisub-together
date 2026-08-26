@@ -1,3 +1,42 @@
+Wersja 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Tryb ciemny, który trzeba osobno włączyć, z nowymi ikonami i osobno konfigurowalnymi kolorami
+- Górny pasek może być zawsze widoczny po włączeniu tej opcji (żeby nie przeszkadzało jego ciągłe włączanie i wyłączanie)
+- Udoskonalenie narzędzi transformacji
+    - prostokąt skalowania wyświetla się poprawnie przy każdym elemencie
+    - możliwość wyłączenia automatycznego skalowania perspektywy i poprawiona zmiana z podglądem
+    - swobodne przekształcanie: przesuwanie w kierunkach x i y, przesuwanie za pomocą strzałek, wygodniejsze obracanie, osobne suwaki
+    - osobne suwaki przy zniekształcaniu
+    - przy zginaniu i wyginaniu można zaznaczyć wiele punktów i przesuwać je jednocześnie
+    - naprawiono błąd odbicia lustrzanego
+- Motion
+    - auto motion dla podstawowych rzeczy
+    - przycinanie z wbudowanym tworzeniem sekwencji obrazów i tworzeniem wideo (obsługiwane są również avi i h265), nie jest potrzebny żaden exe
+    - funkcja bazuje na istniejącym skrypcie, ale jednocześnie obsługuje perspektywę oraz track uruchomiony dla osobnego clipu
+    - podczas korzystania z Mocha po zapisaniu wyniku (po śledzeniu CTRL + S lub zapisaniu) nie trzeba kopiować eksportu, dane są automatycznie wczytywane z pliku *.mocha
+- Wstawianie obrazu
+    - tworzy maskę image, która w pełni obsługuje również PNG
+    - pozycja ustawień do szybkiego wstawiania
+    - maski image można przesuwać za pomocą narzędzia pozycji i przesuwają się o liczby całkowite, a także wyświetlany jest tylko jeden uchwyt pozycji na obrazie wideo
+- Wstawianie obrazu z edycją
+    - pojawia się edycja podobna do Photoshopa z aktualną klatką i osobnymi warstwami dla zaznaczonych wierszy
+    - niemal wszystko działa tak, jak można by tego oczekiwać w Photoshopie lub podobnie
+    - widoczny rezultat jest wpisywany do napisów jako maska image poprzez nadpisanie zaznaczonych wierszy
+    - można tego używać np. do bezpłatnego usuwania obiektów z uwzględnieniem zawartości
+- Efekt Glitch
+    - można dodawać wiele rodzajów efektów, kopiować je i edytować później
+    - obsługuje gradient, pole tekstowe i maskę image
+    - można je również animować, nawet klatka po klatce
+- Poprawki błędów i inne udoskonalenia
+    - błąd pustego wiersza źródłowego
+    - obsługa znaków UTF8 podczas wyszukiwania w folderze
+    - obsługa perspektywy przy edycji maski + jednoczesna zmiana takich samych elementów
+    - kontrola po głosie AI nie zamyka okna i nie wymaga do tego wiersza źródłowego
+    - kontrola AI po przetworzeniu wyświetla podsumowanie i wpisuje korektę w polu efektu, można również uruchomić poprzednią oraz dostępny jest przycisk pomijania wszystkich
+    - poprawiono numer warstwy pola tekstowego
+    - naprawiono błąd zaznaczania fold
+    - naprawiono scalanie przy duplikowaniu maski obrazu
+
 Wersja 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Górny pasek został usunięty z wideo i stał się bardziej kompaktowy

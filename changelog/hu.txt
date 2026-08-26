@@ -1,3 +1,42 @@
+Verzió 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Dark mód, amit külön be kell kapcsolni, új ikonokkal és külön testreszabható színekkel
+- Felső sáv mindig látszódhat, ha bekapcsoljuk (hogy ne zavarjon a ki-be kapcsolgatása)
+- Transzformációs eszközök finomítása
+    - minden elemnél a méretező négyszög helyesen jelenik meg
+    - automatikus perspektíva méretezés kikapcsolásának lehetősége és rendes előnézetes változtatás
+    - szabad alakítás x és y irányban mozgatás, nyilakkal való mozgatás, kényelmesebb forgatás, külön csúszkák
+    - torzításnál külön csúszkák
+    - hajlítás és ívelésnél lehessen több pontot kijelölni és egyszerre mozgatni
+    - tükrözés bug
+- Motion
+    - auto motion alapvető dolgokra
+    - trimmelés beépített képsorozat készítésével és videó készítéssel (avi és h265 is támogatott), semmilyen exe nem kell
+    - a funkció a meglévő scripten alapul, viszont egyszerre támogatja a perspektívát is meg a külön clipre futtatott tracket
+    - Mocha használatával ha lementjük az eredményt (lekövetés után CTRL + S vagy mentés), nem kell az export másolása, magától beolvassa az adatokat a *.mocha fájlból
+- Képbeillesztés
+    - image maszkot hoz létre, ami PNG-t is kezel teljes mértékben
+    - beállítások menüpont a gyors beillesztéshez
+    - az image maszkok mozgatása lehetséges a pozíciós eszközzel és egész számokban mozgat, valamint csak egy pozíciós fogópontot jelenít meg a videón
+- Képbeillesztés szerkesztéssel
+    - feljön egy Photoshop szerű szerkesztés az aktuális képkockával és a kijelölt sorok egyenkénti rétegével
+    - szinte minden úgy vagy hasonlóképpen működik, mint ahogy a Photoshopban várnánk
+    - a látható végeredményt a kijelölt sorok felülírásával egy image maszk íródik be a feliratba
+    - pl. használható ingyenes tartalomérzékeny kitakarásra
+- Glitch effekt
+    - többféle effekt adható hozzá, másolható és szerkeszthető utólag
+    - gradientet, szövegdobozt és image maszkot is támogat
+    - animálni is lehet, akár képkockánként is
+- Hibajavítások, egyéb finomítások
+    - üres forrás sor bug
+    - mappában keresés UTF8 karakterek támogatása
+    - maszk szerkesztés perspektíva támogatása + ugyanolyanokat egyszerre
+    - AI hang utáni ellenőrzés nem zárja le az ablakot és nem kell a forrás sor hozzá
+    - AI utóellenőrzés ad összegzőt és beírja a korrekciót az effekt mezőbe, valamint lehet futtatni az előzőt és van összes kihagyása gomb
+    - szövegdoboz rétegszám fix
+    - fold kijelölés bug
+    - képmaszk duplikáláskori összevonás fix
+
 Verzió 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Felső sáv kikerült a videóból és kompaktabb lett

@@ -1,3 +1,42 @@
+Versie 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Dark-modus, die afzonderlijk moet worden ingeschakeld, met nieuwe pictogrammen en afzonderlijk aanpasbare kleuren
+- De bovenste balk kan altijd zichtbaar zijn als we deze inschakelen (zodat het steeds in- en uitschakelen niet stoort)
+- Verfijning van de transformatietools
+    - bij elk element wordt de schaalrechthoek correct weergegeven
+    - mogelijkheid om het automatisch schalen van het perspectief uit te schakelen en een juiste voorbeeldweergave bij wijzigingen
+    - vrije vervorming met verplaatsing in de x- en y-richting, verplaatsing met pijltjestoetsen, comfortabeler draaien, afzonderlijke schuifregelaars
+    - afzonderlijke schuifregelaars bij vervorming
+    - bij buigen en krommen kunnen meerdere punten worden geselecteerd en tegelijk verplaatst
+    - spiegelbug
+- Motion
+    - auto motion voor basisbewerkingen
+    - trimmen met ingebouwde afbeeldingsreeks- en videoproductie (avi en h265 worden ook ondersteund), er is geen exe nodig
+    - de functie is gebaseerd op het bestaande script, maar ondersteunt tegelijkertijd zowel perspectief als een track die op een afzonderlijke clip wordt uitgevoerd
+    - bij gebruik van Mocha hoeft de export niet te worden gekopieerd als we het resultaat opslaan (CTRL + S of opslaan na het volgen), de gegevens worden automatisch uit het *.mocha-bestand ingelezen
+- Afbeelding invoegen
+    - maakt een image-masker aan dat PNG volledig ondersteunt
+    - instellingenmenu voor snel invoegen
+    - image-maskers kunnen met de positietool worden verplaatst en worden in gehele getallen verplaatst, waarbij bovendien slechts één positiehandvat op de video wordt weergegeven
+- Afbeelding invoegen met bewerking
+    - er wordt een Photoshop-achtige bewerking geopend met de huidige beeldframe en de geselecteerde regels als afzonderlijke lagen
+    - vrijwel alles werkt zoals of op vergelijkbare wijze als we dat in Photoshop zouden verwachten
+    - het zichtbare eindresultaat wordt door de geselecteerde regels te overschrijven als een image-masker in de ondertiteling geschreven
+    - kan bijvoorbeeld worden gebruikt voor gratis inhoudsgevoelige verwijdering
+- Glitch-effect
+    - er kunnen meerdere effecten worden toegevoegd, gekopieerd en achteraf bewerkt
+    - ondersteunt ook gradient, tekstvak en image-masker
+    - kan ook worden geanimeerd, zelfs per beeldframe
+- Bugfixes en overige verfijningen
+    - bug met lege bronregel
+    - ondersteuning voor UTF8-tekens bij zoeken in mappen
+    - perspectiefondersteuning bij het bewerken van maskers + dezelfde tegelijk
+    - de controle na AI-stem sluit het venster niet en de bronregel is er niet voor nodig
+    - de AI-nacontrole geeft een samenvatting en schrijft de correctie in het effectveld, daarnaast kan de vorige opnieuw worden uitgevoerd en is er een knop om alles over te slaan
+    - vast aantal lagen voor tekstvakken
+    - bug bij het selecteren van fold
+    - fix voor het samenvoegen bij het dupliceren van een beeldmasker
+
 Versie 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Bovenste balk is uit de video verwijderd en compacter gemaakt

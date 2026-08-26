@@ -1,3 +1,42 @@
+Bertsioa 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Dark modua, bereiz aktibatu behar dena, ikono berriekin eta bereiz pertsonaliza daitezkeen koloreekin
+- Goiko barra beti ikusgai egon daiteke, aktibatzen badugu (piztu eta itzaltzeak eragozpenik sor ez dezan)
+- Transformatzeko tresnen fintzea
+    - elementu guztietan tamainaz aldatzeko laukizuzena zuzen bistaratzen da
+    - perspektibaren tamaina-aldaketa automatikoa desaktibatzeko aukera eta aurrebistarekin egindako aldaketa egokia
+    - forma libreko moldaketa x eta y norabideetan mugitzea, geziekin mugitzea, biraketa erosoagoa, graduatzaile bereiziak
+    - distortsioan graduatzaile bereiziak
+    - tolestean eta kurbatzean hainbat puntu hautatu eta aldi berean mugitu ahal izatea
+    - ispiluaren bug-a
+- Motion
+    - auto motion oinarrizko gauzetarako
+    - trim egitea irudi-sekuentzia eta bideoa sortzeko aukera integratuarekin (avi eta h265 ere onartzen ditu), ez da exe-rik behar
+    - funtzioa lehendik dagoen scriptean oinarritzen da, baina aldi berean perspektiba eta clip bereizian exekutatutako track-a onartzen ditu
+    - Mocha erabiliz emaitza gordetzen badugu (jarraipena egin ondoren CTRL + S edo gordetzea), ez da esportazioa kopiatu behar, datuak automatikoki irakurtzen ditu *.mocha fitxategitik
+- Irudia txertatzea
+    - image mask bat sortzen du, PNG erabat onartzen duena
+    - ezarpenen menu-puntua azkar txertatzeko
+    - image mask-ak posizio-tresnarekin mugi daitezke eta zenbaki osoetan mugitzen dira; gainera, posizio-helduleku bakarra bistaratzen du bideoan
+- Irudia edizioarekin txertatzea
+    - Photoshop-en antzeko edizio bat agertzen da uneko fotogramarekin eta hautatutako lerroen banakako geruzekin
+    - ia denak Photoshop-en espero genukeen bezala edo antzera funtzionatzen du
+    - ikusgai dagoen azken emaitza image mask gisa txertatzen da azpitituluan, hautatutako lerroak gainidatziz
+    - adibidez, doako edukiarekiko sentikorra den estaltze-lanerako erabil daiteke
+- Glitch efektua
+    - hainbat efektu mota gehitu, kopiatu eta gero editatu daitezke
+    - gradientea, testu-koadroa eta image mask ere onartzen ditu
+    - animatu ere egin daiteke, baita fotogramaz fotograma ere
+- Akats-konponketak eta beste fintze batzuk
+    - iturburu-lerro hutsaren bug-a
+    - karpetan bilatzean UTF8 karaktereen euskarria
+    - maskaren edizioan perspektibaren euskarria + berdinak aldi berean
+    - AI ahotsaren ondorengo egiaztapenak ez du leihoa ixten eta ez du iturburu-lerrorik behar
+    - AI ondorengo egiaztapenak laburpena ematen du eta zuzenketa efektuaren eremuan idazten du; gainera, aurrekoa exekutatu daiteke eta denak saltatzeko botoia dago
+    - testu-koadroaren geruza-zenbakiaren konponketa
+    - fold hautatzearen bug-a
+    - irudi-maskaren bikoizketako bateratzearen konponketa
+
 Bertsioa 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - Goiko barra bideotik kendu da eta trinkoagoa bihurtu da

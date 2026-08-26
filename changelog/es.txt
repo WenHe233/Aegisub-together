@@ -1,3 +1,42 @@
+Versión 5.0 ---
+https://github.com/croni1012/Aegisub/releases/download/v5.0/aegisub-nyaa-edition-v5.0-update.zip
+- Modo oscuro, que debe activarse por separado, con nuevos iconos y colores personalizables por separado
+- La barra superior puede permanecer siempre visible si la activamos (para que no moleste tener que activarla y desactivarla)
+- Mejoras en las herramientas de transformación
+    - el rectángulo de ajuste aparece correctamente en todos los elementos
+    - posibilidad de desactivar el ajuste automático de perspectiva y cambios con una vista previa adecuada
+    - transformación libre con movimiento en las direcciones x e y, movimiento con las flechas, rotación más cómoda y deslizadores separados
+    - deslizadores separados para la distorsión
+    - en la deformación y el arqueado se pueden seleccionar varios puntos y moverlos a la vez
+    - error de reflejo
+- Motion
+    - auto motion para tareas básicas
+    - recorte con generación integrada de secuencias de imágenes y creación de vídeo (también compatible con avi y h265), no se necesita ningún exe
+    - la función se basa en el script existente, pero admite simultáneamente la perspectiva y el track ejecutado sobre un clip separado
+    - al usar Mocha, si guardamos el resultado (CTRL + S o guardar después del seguimiento), no es necesario copiar la exportación, los datos se leen automáticamente del archivo *.mocha
+- Inserción de imágenes
+    - crea una máscara de imagen que también gestiona completamente los PNG
+    - opción de configuración para la inserción rápida
+    - las máscaras de imagen se pueden mover con la herramienta de posición y se mueven en números enteros; además, solo muestra un punto de control de posición en el vídeo
+- Inserción de imágenes con edición
+    - aparece una edición similar a Photoshop con el fotograma actual y cada una de las líneas seleccionadas como una capa
+    - casi todo funciona tal y como esperaríamos en Photoshop o de forma similar
+    - el resultado visible se inserta en el subtítulo como una máscara de imagen sobrescribiendo las líneas seleccionadas
+    - por ejemplo, se puede utilizar para realizar un borrado sensible al contenido de forma gratuita
+- Efecto Glitch
+    - se pueden añadir varios efectos, copiarse y editarse posteriormente
+    - también admite gradientes, cuadros de texto y máscaras de imagen
+    - también se puede animar, incluso fotograma a fotograma
+- Correcciones de errores y otras mejoras
+    - error de línea de origen vacía
+    - compatibilidad con caracteres UTF8 al buscar en carpetas
+    - compatibilidad con la perspectiva al editar máscaras + aplicar las mismas simultáneamente
+    - la comprobación posterior al audio de AI no cierra la ventana y ya no necesita la línea de origen
+    - la comprobación posterior de AI proporciona un resumen e introduce la corrección en el campo de efectos; además, se puede ejecutar la anterior y hay un botón para omitir todas
+    - número de capa del cuadro de texto fijo
+    - error de selección de fold
+    - corrección de la fusión al duplicar una máscara de imagen
+
 Versión 4.7 ---
 https://github.com/croni1012/Aegisub/releases/download/v4.7/aegisub-nyaa-edition-v4.7-update.zip
 - La barra superior se eliminó del vídeo y se volvió más compacta
