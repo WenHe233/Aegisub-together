@@ -871,6 +871,50 @@ std::string InjectLineTags(std::string const& clean, std::string const& tags,
 	return out;
 }
 
+/// Every clip/channel copy must share an explicit anchor, otherwise subtitle collision
+/// avoidance stacks the copies instead of painting them on top of one another. Resolve
+/// unpositioned lines from their alignment and effective margins, as the visual tools do.
+/// Keep authored positions and moves, and leave the saved original source untouched.
+std::string PositionedClipText(AssFile& file, AssDialogue const& source,
+		Settings const& settings) {
+	auto clean = CleanText(source, settings, true);
+	AssStyle fallback;
+	auto style = file.GetStyle(source.Style.get());
+	if (!style) style = &fallback;
+	int alignment = style->alignment;
+	bool found_alignment = false;
+	for (auto const& block : source.ParseTags()) {
+		if (block->GetType() != AssBlockType::OVERRIDE) continue;
+		for (auto const& tag : static_cast<AssDialogueBlockOverride const*>(block.get())->Tags) {
+			size_t coordinates = tag.Name == "\\pos" ? 2 : tag.Name == "\\move" ? 4 : 0;
+			if (coordinates && tag.Params.size() >= coordinates &&
+				std::none_of(tag.Params.begin(), tag.Params.begin() + coordinates,
+					[](AssOverrideParameter const& param) { return param.omitted; }))
+				return clean;
+			if (!found_alignment && (tag.Name == "\\an" || tag.Name == "\\a")) {
+				found_alignment = true;
+				if (tag.Params.empty() || tag.Params.front().omitted) continue;
+				int value = tag.Params.front().Get<int>();
+				if (tag.Name == "\\a") value = AssStyle::SsaToAss(value);
+				if (value >= 1 && value <= 9) alignment = value;
+			}
+		}
+	}
+
+	auto margin = source.Margin;
+	for (size_t i = 0; i < margin.size(); ++i)
+		if (!margin[i]) margin[i] = style->Margin[i];
+	int script_w = 0, script_h = 0;
+	file.GetResolution(script_w, script_h);
+	int horizontal = (alignment - 1) % 3;
+	int vertical = (alignment - 1) / 3;
+	double x = horizontal == 0 ? margin[0] : horizontal == 1 ?
+		(script_w + margin[0] - margin[1]) / 2.0 : script_w - margin[1];
+	double y = vertical == 0 ? script_h - margin[2] : vertical == 1 ?
+		script_h / 2.0 : margin[2];
+	return InjectLineTags(clean, "\\pos(" + Number(x) + ',' + Number(y) + ')');
+}
+
 std::string CanonicalTagName(std::string const& name) {
 	if (name == "\\c") return "\\1c";
 	if (name == "\\fr") return "\\frz";
@@ -1664,7 +1708,7 @@ std::vector<std::vector<std::string>> GenerateOutputs(agi::Context *c,
 				if (ChannelEnabled(settings, channel)) {
 					auto channel_settings = merged ? settings : ChannelSettings(settings, channel);
 					if (merged) channel_settings.shadow.enabled = false;
-					auto clean = CleanText(*sources[i], channel_settings, true);
+					auto clean = PositionedClipText(*c->ass, *sources[i], channel_settings);
 					for (auto const& band : painted[ChannelIndex(channel)])
 						output[i].push_back(NormalizeGeneratedText(*c->ass, *sources[i],
 							InjectLineTags(clean, band.paint + isolation +
@@ -1672,7 +1716,7 @@ std::vector<std::vector<std::string>> GenerateOutputs(agi::Context *c,
 				}
 				else if (ChannelVisible(appearance, channel)) {
 					auto no_channels = ChannelSettings(settings, std::nullopt);
-					auto clean = CleanText(*sources[i], no_channels, true);
+					auto clean = PositionedClipText(*c->ass, *sources[i], no_channels);
 					output[i].push_back(NormalizeGeneratedText(*c->ass, *sources[i],
 						InjectLineTags(clean, isolation, true), false));
 				}
@@ -1832,7 +1876,7 @@ struct PreviewSession::Impl {
 			auto& cached = clean_text[mask];
 			cached.reserve(geometry.selected.size());
 			for (auto source : geometry.selected)
-				cached.push_back(CleanText(*source, settings, true));
+				cached.push_back(PositionedClipText(*context->ass, *source, settings));
 			clean_text_ready[mask] = true;
 		}
 		return clean_text[mask];
