@@ -280,6 +280,7 @@ class DialogGlitch final : public wxDialog {
 	agi::Context *context;
 	Settings settings;
 	typesetting::glitch::PreviewSession preview_session;
+	// Bind handlers on the timers themselves, so keep their default self ownership.
 	wxTimer preview_timer;
 	wxTimer playback_timer;
 	std::chrono::steady_clock::time_point last_preview;
@@ -624,9 +625,7 @@ public:
 		wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, context(context)
 	, settings(typesetting::glitch::LoadSettingsForSelection(context))
-	, preview_session(context)
-	, preview_timer(this)
-	, playback_timer(this) {
+	, preview_session(context) {
 		auto main = new wxBoxSizer(wxVERTICAL);
 		auto basic = new wxStaticBoxSizer(wxVERTICAL, this, _("Glitch settings"));
 		auto effect_row = new wxBoxSizer(wxHORIZONTAL);

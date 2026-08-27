@@ -656,6 +656,7 @@ class DialogGradient final : public wxDialog {
 	agi::Context *context;
 	Settings settings;
 	typesetting::gradient::PreviewSession preview_session;
+	// Bind handlers on the timers themselves, so keep their default self ownership.
 	wxTimer preview_timer;
 	wxTimer playback_timer;
 	wxRadioBox *kind = nullptr;
@@ -835,9 +836,7 @@ public:
 		wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, context(context)
 	, settings(typesetting::gradient::LoadSettingsForSelection(context))
-	, preview_session(context)
-	, preview_timer(this)
-	, playback_timer(this) {
+	, preview_session(context) {
 		settings.shared_motion = true;
 		bool rectangular = UsesRectangularClip(settings);
 		non_rect_overlap = rectangular ? 0.4 : settings.anti_strip_overlap;
