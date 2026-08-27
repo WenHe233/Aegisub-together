@@ -3687,6 +3687,8 @@ void VisualToolTransform::DrawAutoPerspectiveSource() {
 }
 
 void VisualToolTransform::DrawAutoPerspectivePath() {
+	// Strengthen the completed quad and its handles without changing the drawing preview.
+	constexpr float completed_opacity_scale = 1.25f;
 	auto draw_target = [&](size_t index, Vector2D point, bool quiet) {
 		auto *handle = target_feature_first == no_feature ? nullptr :
 			FeatureAt(target_feature_first + index);
@@ -3694,7 +3696,8 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 		wxColour outline = to_wx(line_color_secondary_opt->GetColor());
 		wxColour active = to_wx(highlight_color_secondary_opt->GetColor());
 		gl.SetLineColour(under_mouse ? active : outline,
-			under_mouse ? 1.f : quiet ? .66f : 1.f, under_mouse ? 2 : 1);
+			under_mouse ? 1.f : quiet ? .66f * completed_opacity_scale : 1.f,
+			under_mouse ? 2 : 1);
 		gl.SetFillColour(*wxBLACK, 0.f);
 		Vector2D at = handle ? handle->pos : FromScriptCoords(point);
 		gl.DrawRectangle(at - Vector2D(5.f, 5.f), at + Vector2D(5.f, 5.f));
@@ -3704,7 +3707,7 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 		if (!touched) return;
 
 		wxColour path = to_wx(line_color_secondary_opt->GetColor());
-		gl.SetLineColour(path, .62f, 1);
+		gl.SetLineColour(path, .62f * completed_opacity_scale, 1);
 		for (int i = 0; i < 4; ++i)
 			gl.DrawLine(FromScriptCoords(corners[i]), FromScriptCoords(corners[(i + 1) % 4]));
 		for (int i = 0; i < 4; ++i)
@@ -3716,9 +3719,10 @@ void VisualToolTransform::DrawAutoPerspectivePath() {
 		wxColour outline = to_wx(line_color_secondary_opt->GetColor());
 		wxColour fill = to_wx(highlight_color_primary_opt->GetColor());
 		bool under_mouse = move == active_feature;
-		gl.SetLineColour(outline, under_mouse ? .75f : .53f, under_mouse ? 2 : 1);
+		gl.SetLineColour(outline, (under_mouse ? .75f : .53f) * completed_opacity_scale,
+			under_mouse ? 2 : 1);
 		gl.DrawLine(bottom, move->pos);
-		gl.SetFillColour(fill, under_mouse ? .55f : .38f);
+		gl.SetFillColour(fill, (under_mouse ? .55f : .38f) * completed_opacity_scale);
 		move->Draw(gl);
 		return;
 	}
