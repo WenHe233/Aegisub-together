@@ -118,7 +118,7 @@ public:
 		std::string transcription_model, std::string custom_instructions = {},
 		std::atomic_bool *cancelled = nullptr);
 
-	void TestConnection() const;
+	void TestConnection(std::string const& base_url = {}) const;
 	std::string Transcribe(agi::fs::path const& audio_file) const;
 	TimedTranscript TranscribeTimed(agi::fs::path const& audio_file) const;
 	KaraokeResult CreateKaraoke(KaraokeMode mode,

@@ -12067,3 +12067,7 @@ msgstr ""
 
 #~ msgid "To"
 #~ msgstr "Vég"
+
+#: src/dialog_ai_connection.cpp
+msgid "API base URL:"
+msgstr "API alap URL:"
