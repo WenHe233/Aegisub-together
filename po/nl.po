@@ -11935,3 +11935,7 @@ msgstr "Het installatieprogramma installeert nu Aegisub versie {#BUILD_GIT_VERSI
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "Basis-URL van API:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "Het wijzigen hiervan kan problemen veroorzaken."

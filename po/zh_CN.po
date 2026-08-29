@@ -12103,3 +12103,7 @@ msgstr "安装程序现在将在您的计算机上安装 Aegisub {#BUILD_GIT_VER
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "API 基础 URL："
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "更改此项可能会导致问题。"

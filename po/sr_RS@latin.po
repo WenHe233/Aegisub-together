@@ -11883,3 +11883,7 @@ msgstr "Instalacioni program će sada instalirati verziju Aegisub {#BUILD_GIT_VE
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "Osnovni URL API-ja:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "Promena ovoga može izazvati probleme."

@@ -11980,3 +11980,7 @@ msgstr "Инсталационната програма ще инсталира 
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "Базов URL на API:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "Промяната на това може да причини проблеми."

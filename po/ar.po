@@ -11860,3 +11860,7 @@ msgstr "سيقوم برنامج التثبيت الآن بتثبيت الإصد�
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "عنوان URL الأساسي لواجهة API:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "قد يؤدي تغيير هذا إلى حدوث مشكلات."

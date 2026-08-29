@@ -11944,3 +11944,7 @@ msgstr "Penginstal akan menginstal Aegisub versi {#BUILD_GIT_VERSION_STRING} ke 
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "URL dasar API:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "Mengubah ini dapat menyebabkan masalah."

@@ -10742,3 +10742,7 @@ msgstr ""
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr ""
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr ""

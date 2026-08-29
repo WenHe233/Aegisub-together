@@ -12014,3 +12014,7 @@ msgstr "Le programme d’installation va maintenant installer Aegisub version {#
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "URL de base de l’API :"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "La modification de ce paramètre peut entraîner des problèmes."

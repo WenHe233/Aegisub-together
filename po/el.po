@@ -12032,3 +12032,7 @@ msgstr "Το πρόγραμμα εγκατάστασης θα εγκαταστή
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "Βασικό URL API:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "Η αλλαγή αυτής της ρύθμισης μπορεί να προκαλέσει προβλήματα."

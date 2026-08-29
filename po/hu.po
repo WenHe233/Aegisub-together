@@ -12071,3 +12071,7 @@ msgstr ""
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "API alap URL:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "Ennek a módosítása problémákat okozhat."

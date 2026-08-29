@@ -11831,3 +11831,7 @@ msgstr "このインストーラーは、Aegisub {#BUILD_GIT_VERSION_STRING} を
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "API ベース URL:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "この設定を変更すると問題が発生する可能性があります。"

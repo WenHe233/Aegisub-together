@@ -11951,3 +11951,7 @@ msgstr "Зараз інсталятор встановить на ваш ком�
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "Базова URL-адреса API:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "Зміна цього параметра може спричинити проблеми."

@@ -11912,3 +11912,7 @@ msgstr "Il programma di installazione installerà ora sul computer la versione {
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "URL di base dell'API:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "La modifica di questa impostazione potrebbe causare problemi."

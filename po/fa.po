@@ -11807,3 +11807,7 @@ msgstr "برنامهٔ نصب اکنون نسخهٔ Aegisub {#BUILD_GIT_VERSION_
 #: src/dialog_ai_connection.cpp
 msgid "API base URL:"
 msgstr "نشانی پایهٔ API:"
+
+#: ../src/dialog_ai_connection.cpp:214
+msgid "Changing this could cause issues."
+msgstr "تغییر این مورد ممکن است باعث بروز مشکل شود."
