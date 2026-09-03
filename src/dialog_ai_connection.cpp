@@ -209,6 +209,7 @@ public:
 		openai_form->Add(new wxStaticText(this, wxID_ANY, _("API base URL:")), 0, wxALIGN_CENTER_VERTICAL);
 		api_base_url = new wxTextCtrl(this, wxID_ANY,
 			to_wx(OPT_GET("AI/OpenAI/Base URL")->GetString()));
+		api_base_url->SetHint(to_wx(ai::DefaultApiBase()));
 		openai_form->Add(api_base_url, wxSizerFlags(1).Expand());
 		openai_form->AddSpacer(0);
 		auto api_base_warning = new wxStaticText(this, wxID_ANY, _("Changing this could cause issues."));

@@ -992,6 +992,10 @@ bool delete_secret_service_secret(char const *account, std::string *message) {
 
 } // namespace
 
+std::string DefaultApiBase() {
+	return default_api_base;
+}
+
 OpenAIClient::OpenAIClient(std::string api_key, std::string model,
 	std::string transcription_model, std::string custom_instructions,
 	std::atomic_bool *cancelled)
@@ -1006,13 +1010,13 @@ OpenAIClient::OpenAIClient(std::string api_key, std::string model,
 }
 
 void OpenAIClient::TestConnection(std::string const& base_url) const {
+	auto const base = normalize_api_base(base_url);
 	CurlHandle curl;
 	std::string response;
 	configure_common(curl, api_key, &response, cancelled);
 	char *escaped = curl_easy_escape(curl, model.c_str(), static_cast<int>(model.size()));
 	if (!escaped) throw Error("A modellnév kódolása sikertelen.");
-	std::string url = (base_url.empty() ? api_base() : normalize_api_base(base_url)) +
-		"/models/" + escaped;
+	std::string url = base + "/models/" + escaped;
 	curl_free(escaped);
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 	auto headers = authenticated_headers(api_key, false);
