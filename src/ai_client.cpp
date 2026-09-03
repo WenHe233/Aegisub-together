@@ -15,6 +15,7 @@
 #include <wx/base64.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
@@ -39,8 +40,30 @@ namespace {
 
 constexpr char default_api_base[] = "https://api.openai.com/v1";
 
+bool has_scheme(std::string const& url, char const *scheme) {
+	auto const length = std::strlen(scheme);
+	return url.size() >= length &&
+		std::equal(scheme, scheme + length, url.begin(), [](char a, char b) {
+			return a == std::tolower(static_cast<unsigned char>(b));
+		});
+}
+
 std::string normalize_api_base(std::string base) {
+	auto const first = base.find_first_not_of(" \t\r\n");
+	if (first == std::string::npos)
+		base.clear();
+	else
+		base = base.substr(first, base.find_last_not_of(" \t\r\n") - first + 1);
+
 	if (base.empty()) base = default_api_base;
+
+	// The API key travels to this address in an Authorization header, so assume
+	// TLS when the user leaves the scheme out and refuse anything but HTTP(S).
+	if (base.find("://") == std::string::npos)
+		base.insert(0, "https://");
+	else if (!has_scheme(base, "http://") && !has_scheme(base, "https://"))
+		throw Error("Az API alapcímének http:// vagy https:// protokollt kell használnia.");
+
 	while (base.size() > 1 && base.back() == '/')
 		base.pop_back();
 	return base;
@@ -49,6 +72,7 @@ std::string normalize_api_base(std::string base) {
 std::string api_base() {
 	return normalize_api_base(OPT_GET("AI/OpenAI/Base URL")->GetString());
 }
+
 constexpr size_t proofread_max_input_chars = 900000;
 constexpr size_t proofread_max_lines_per_request = 300;
 #ifdef _WIN32
@@ -129,6 +153,15 @@ public:
 void configure_common(CURL *curl, std::string const& api_key,
 	std::string *response, std::atomic_bool *cancelled) {
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	// The API base URL is user-configurable, so keep transfers on HTTP(S)
+	// instead of letting curl pick a protocol out of the configured address.
+#if LIBCURL_VERSION_NUM >= 0x075500
+	curl_easy_setopt(curl, CURLOPT_PROTOCOLS_STR, "http,https");
+	curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS_STR, "http,https");
+#else
+	curl_easy_setopt(curl, CURLOPT_PROTOCOLS, static_cast<long>(CURLPROTO_HTTP | CURLPROTO_HTTPS));
+	curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, static_cast<long>(CURLPROTO_HTTP | CURLPROTO_HTTPS));
+#endif
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, "Aegisub-Muteki/AI");
 	// Long transcription and review requests have no client-side time limit.
 	// They remain cancellable through the transfer callback below.
