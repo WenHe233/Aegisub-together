@@ -12025,6 +12025,6 @@ msgstr "O instalador instalará agora a versão {#BUILD_GIT_VERSION_STRING} do A
 msgid "API base URL:"
 msgstr "URL base da API:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "Alterar isso pode causar problemas."

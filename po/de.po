@@ -11990,6 +11990,6 @@ msgstr "Der Installer wird jetzt Aegisub Version {#BUILD_GIT_VERSION_STRING} auf
 msgid "API base URL:"
 msgstr "API-Basis-URL:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "Das Ändern dieser Einstellung kann zu Problemen führen."

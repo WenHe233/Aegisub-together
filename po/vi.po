@@ -11986,6 +11986,6 @@ msgstr "Trình cài đặt sẽ cài đặt phiên bản Aegisub {#BUILD_GIT_VER
 msgid "API base URL:"
 msgstr "URL cơ sở của API:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "Thay đổi mục này có thể gây ra sự cố."

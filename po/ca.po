@@ -12034,6 +12034,6 @@ msgstr "L’instal·lador instal·larà ara la versió {#BUILD_GIT_VERSION_STRIN
 msgid "API base URL:"
 msgstr "URL base de l'API:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "Canviar això pot causar problemes."

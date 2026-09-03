@@ -12212,6 +12212,6 @@ msgstr "이제 설치 프로그램이 Aegisub {#BUILD_GIT_VERSION_STRING} 버전
 msgid "API base URL:"
 msgstr "API 기본 URL:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "이 설정을 변경하면 문제가 발생할 수 있습니다."

@@ -11825,6 +11825,6 @@ msgstr "Instalator zainstaluje teraz na komputerze program Aegisub w wersji {#BU
 msgid "API base URL:"
 msgstr "Bazowy adres URL API:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "Zmiana tego ustawienia może powodować problemy."

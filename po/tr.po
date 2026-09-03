@@ -12211,6 +12211,6 @@ msgstr "Yükleyici şimdi Aegisub {#BUILD_GIT_VERSION_STRING} sürümünü bilgi
 msgid "API base URL:"
 msgstr "API temel URL'si:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "Bunu değiştirmek sorunlara neden olabilir."

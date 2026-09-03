@@ -11903,6 +11903,6 @@ msgstr "Instalátor nyní nainstaluje do počítače Aegisub {#BUILD_GIT_VERSION
 msgid "API base URL:"
 msgstr "Základní URL API:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "Změna tohoto nastavení může způsobit problémy."

@@ -11884,6 +11884,6 @@ msgstr "Инсталациони програм ће сада инсталира
 msgid "API base URL:"
 msgstr "Основни URL API-ја:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: src/dialog_ai_connection.cpp
 msgid "Changing this could cause issues."
 msgstr "Промена овога може изазвати проблеме."

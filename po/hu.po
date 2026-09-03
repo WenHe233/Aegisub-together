@@ -12068,10 +12068,10 @@ msgstr ""
 #~ msgid "To"
 #~ msgstr "Vég"
 
-#: src/dialog_ai_connection.cpp
+#: ../src/dialog_ai_connection.cpp:209
 msgid "API base URL:"
 msgstr "API alap URL:"
 
-#: ../src/dialog_ai_connection.cpp:214
+#: ../src/dialog_ai_connection.cpp:215
 msgid "Changing this could cause issues."
 msgstr "Ennek a módosítása problémákat okozhat."
